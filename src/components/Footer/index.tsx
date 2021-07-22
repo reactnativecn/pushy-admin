@@ -7,8 +7,8 @@ export default () => {
       copyright={`2020 ${defaultMessage}`}
       links={[
         {
-          key: 'Ant Design Pro',
-          title: 'Ant Design Pro',
+          key: 'Pushy 热更新',
+          title: 'Pushy 热更新',
           href: 'https://pro.ant.design',
           blankTarget: true,
         },
