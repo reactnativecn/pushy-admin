@@ -1,12 +1,13 @@
 import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import { PageLoading } from '@ant-design/pro-layout';
-import { notification } from 'antd';
+// import { notification } from 'antd';
 import type { RequestConfig, RunTimeLayoutConfig } from 'umi';
 import { history, Link } from 'umi';
 import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
 import { currentUser as queryCurrentUser } from '@/services/pushy/api';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
+import { getAuthHeader } from '@/utils/token';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
@@ -84,20 +85,25 @@ export async function getInitialState(): Promise<{
     502: Gateway error. ',
     503: The service is unavailable. ',
     504: The gateway timed out. ',
- * @see https://beta-pro.ant.design/docs/request-cn
+ * @see https://pro.ant.design/zh-CN/docs/request
  */
 export const request: RequestConfig = {
-  errorHandler: (error: any) => {
-    const { response } = error;
+  // errorHandler: (error: any) => {
+  //   const { response } = error;
 
-    if (!response) {
-      notification.error({
-        description: '您的网络发生异常，无法连接服务器',
-        message: '网络异常',
-      });
-    }
-    throw error;
-  },
+  //   if (!response) {
+  //     notification.error({
+  //       description: '您的网络发生异常，无法连接服务器',
+  //       message: '网络异常',
+  //     });
+  //   }
+  //   throw error;
+  // },
+  requestInterceptors: [
+    (url, options) => {
+      return { url, options: { ...options, headers: getAuthHeader() } };
+    },
+  ],
 };
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout

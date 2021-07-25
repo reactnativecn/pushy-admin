@@ -14,6 +14,7 @@ import Footer from '@/components/Footer';
 import { login } from '@/services/pushy/api';
 import { getFakeCaptcha } from '@/services/pushy/login';
 import styles from './index.less';
+import { setToken } from '@/utils/token';
 
 const LoginMessage: React.FC<{
   content: string;
@@ -59,17 +60,16 @@ const Login: React.FC = () => {
 
     try {
       // 登录
-      const msg = await login({ ...values, type });
-
-      if (msg.status === 'ok') {
+      const { token, info } = await login({ ...values, type });
+      if (token) {
+        setToken(token);
         const defaultloginSuccessMessage = '登录成功！';
         message.success(defaultloginSuccessMessage);
-        await fetchUserInfo();
+        // await fetchUserInfo();
         goto();
-        return;
-      } // 如果失败去设置用户错误信息
-
-      setUserLoginState(msg);
+      }
+      // 如果失败去设置用户错误信息
+      // setUserLoginState(msg);
     } catch (error) {
       const defaultloginFailureMessage = '登录失败，请重试！';
       message.error(defaultloginFailureMessage);
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
               <span className={styles.title}>Ant Design</span>
             </Link>
           </div>
-          <div className={styles.desc}>{'Ant Design 是西湖区最具影响力的 Web 设计规范'}</div>
+          <div className={styles.desc}>极速热更新框架 for React Native</div>
         </div>
 
         <div className={styles.main}>
@@ -218,9 +218,6 @@ const Login: React.FC = () => {
                 marginBottom: 24,
               }}
             >
-              <ProFormCheckbox noStyle name="autoLogin">
-                自动登录
-              </ProFormCheckbox>
               <a
                 style={{
                   float: 'right',
@@ -230,12 +227,6 @@ const Login: React.FC = () => {
               </a>
             </div>
           </ProForm>
-          <Space className={styles.other}>
-            其他登录方式 :
-            <AlipayCircleOutlined className={styles.icon} />
-            <TaobaoCircleOutlined className={styles.icon} />
-            <WeiboCircleOutlined className={styles.icon} />
-          </Space>
         </div>
       </div>
       <Footer />
