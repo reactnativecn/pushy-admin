@@ -16,7 +16,11 @@ export default () => (
         <Row justify="end">
           <Menu mode="horizontal" selectable={false}>
             <Menu.SubMenu key="user" title={store.user?.name}>
-              <Menu.Item onClick={logout} icon={<LogoutOutlined />}>
+              <Menu.Item
+                key="logout"
+                onClick={logout}
+                icon={<LogoutOutlined />}
+              >
                 退出登录
               </Menu.Item>
             </Menu.SubMenu>

@@ -1,4 +1,10 @@
-import { AppstoreFilled, UserOutlined } from "@ant-design/icons";
+import {
+  AppstoreOutlined,
+  UserOutlined,
+  CommentOutlined,
+  InfoCircleOutlined,
+  ReadOutlined,
+} from "@ant-design/icons";
 import { Layout, Menu } from "antd";
 import { observer } from "mobx-react";
 import { Link, useLocation } from "react-router-dom";
@@ -24,18 +30,40 @@ export default () => {
   );
 };
 
-const SiderMenu = observer(({ keys }: { keys: string[] }) => {
-  return (
-    <Menu defaultOpenKeys={keys} defaultSelectedKeys={keys} mode="inline">
-      <Menu.Item key="user" icon={<UserOutlined />}>
-        <Link to="/user">账户设置</Link>
-      </Menu.Item>
-      <Menu.Item key="apps" icon={<AppstoreFilled />}>
-        <Link to="/apps">应用管理</Link>
-      </Menu.Item>
-    </Menu>
-  );
-});
+const SiderMenu = observer(({ keys }: { keys: string[] }) => (
+  <Menu defaultOpenKeys={keys} defaultSelectedKeys={keys} mode="inline">
+    <Menu.Item key="user" icon={<UserOutlined />}>
+      <Link to="/user">账户设置</Link>
+    </Menu.Item>
+    <Menu.Item key="apps" icon={<AppstoreOutlined />}>
+      <Link to="/apps">应用管理</Link>
+    </Menu.Item>
+    <Menu.Item key="issues" icon={<CommentOutlined />}>
+      <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
+        讨论
+      </ExtLink>
+    </Menu.Item>
+    <Menu.Item key="about" icon={<InfoCircleOutlined />}>
+      <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>
+    </Menu.Item>
+    <Menu.Item key="document" icon={<ReadOutlined />}>
+      <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
+        文档
+      </ExtLink>
+    </Menu.Item>
+  </Menu>
+));
+
+interface ExtLinkProps {
+  children: React.ReactChild;
+  href: string;
+}
+
+const ExtLink = ({ children, href }: ExtLinkProps) => (
+  <a href={href} target="_blank" onClick={(e) => e.stopPropagation()}>
+    {children}
+  </a>
+);
 
 const style: Style = {
   sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
