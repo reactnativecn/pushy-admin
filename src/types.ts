@@ -4,8 +4,8 @@ export interface User {
   email: string;
   id: number;
   name: string;
-  tier: string;
-  tierExpiresAt: string;
+  tier: "free" | "standard" | "premium" | "pro";
+  tierExpiresAt?: string;
 }
 
 export interface App {
