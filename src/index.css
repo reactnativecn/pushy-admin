@@ -1,0 +1,12 @@
+.ant-layout-content {
+  padding: 16px;
+}
+
+.ant-layout-header .ant-menu-horizontal {
+  border-bottom: 0;
+}
+
+#main,
+#main > .ant-layout {
+  height: 100%;
+}

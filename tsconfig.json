@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "esnext"],
+    "jsx": "react",
+    "reactNamespace": "window",
+    "esModuleInterop": true,
+    "strict": true
+  }
+}
