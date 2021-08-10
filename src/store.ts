@@ -1,16 +1,18 @@
 import { message } from "antd";
 import md5 from "blueimp-md5";
-import { observable, runInAction } from "mobx";
+import { observable, runInAction, IObservableArray } from "mobx";
 import request from "./request";
-import { User } from "./types";
+import { User, App } from "./types";
 
 interface Store {
   token?: string;
   user?: User;
+  apps: IObservableArray<App>;
 }
 
 const store = observable.object<Store>({
   token: localStorage.getItem("token") ?? undefined,
+  apps: observable.array(),
 });
 
 export default store;
@@ -40,7 +42,13 @@ async function fetchUserInfo() {
     message.error("登录已失效，请重新登录");
   } else {
     runInAction(() => (store.user = user));
+    fetchApps();
   }
+}
+
+async function fetchApps() {
+  const { data } = await request("get", "app/list");
+  runInAction(() => (store.apps = data));
 }
 
 export function init() {

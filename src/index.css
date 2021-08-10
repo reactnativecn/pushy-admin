@@ -6,6 +6,10 @@
   border-bottom: 0;
 }
 
+.ant-layout-sider .ant-menu-inline {
+  border-right-color: #fff;
+}
+
 #main,
 #main > .ant-layout {
   height: 100%;

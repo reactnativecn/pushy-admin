@@ -1,52 +1,48 @@
-import { AppstoreOutlined, UserOutlined } from "@ant-design/icons";
+import { AppstoreFilled, UserOutlined } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
-import { CSSProperties } from "react";
+import { observer } from "mobx-react";
 import { Link, useLocation } from "react-router-dom";
+import { defaultRoute } from "./layout";
+import { Style } from "./types";
 
-export const defaultPath = "/user";
-
-const menu = [
-  {
-    icon: () => <UserOutlined />,
-    title: "账户设置",
-    path: "/user",
-  },
-  {
-    icon: () => <AppstoreOutlined />,
-    title: "应用管理",
-    path: "/apps",
-  },
-];
+let keys: string[] | undefined;
 
 export default () => {
   let { pathname } = useLocation();
-  const match = pathname.match(/\/\w+/);
-  if (match) {
-    pathname = match[0];
+  if (keys == null) {
+    if (pathname == "/") {
+      keys = [defaultRoute];
+    } else {
+      keys = pathname.replace(/^\//, "").split("/");
+    }
   }
   return (
-    <Layout.Sider width={200}>
+    <Layout.Sider width={200} theme="light" style={style.sider}>
       <Layout.Header style={style.logo}>Pushy</Layout.Header>
-      <Menu
-        selectedKeys={pathname === "/" ? [defaultPath] : [pathname]}
-        theme="dark"
-      >
-        {menu.map(({ icon, title, path }) => {
-          return (
-            <Menu.Item key={path} icon={icon()}>
-              <Link to={path}>{title}</Link>
-            </Menu.Item>
-          );
-        })}
-      </Menu>
+      <SiderMenu keys={keys} />
     </Layout.Sider>
   );
 };
 
-const style: { [name: string]: CSSProperties } = {
+const SiderMenu = observer(({ keys }: { keys: string[] }) => {
+  return (
+    <Menu defaultOpenKeys={keys} defaultSelectedKeys={keys} mode="inline">
+      <Menu.Item key="user" icon={<UserOutlined />}>
+        <Link to="/user">账户设置</Link>
+      </Menu.Item>
+      <Menu.Item key="apps" icon={<AppstoreFilled />}>
+        <Link to="/apps">应用管理</Link>
+      </Menu.Item>
+    </Menu>
+  );
+});
+
+const style: Style = {
+  sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
   logo: {
-    color: "#fff",
-    fontSize: 24,
+    background: "#fff",
+    color: "#1890ff",
+    fontSize: 22,
     fontWeight: 600,
   },
 };

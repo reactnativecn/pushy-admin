@@ -1,10 +1,12 @@
 import { LogoutOutlined } from "@ant-design/icons";
 import { Layout, Menu, Row } from "antd";
-import { CSSProperties } from "react";
 import { Redirect, Route, Switch } from "react-router-dom";
 import * as pages from "./pages";
-import Sider, { defaultPath } from "./sider";
+import Sider from "./sider";
 import store, { logout } from "./store";
+import { Style } from "./types";
+
+export const defaultRoute = "user";
 
 export default () => (
   <Layout>
@@ -13,7 +15,7 @@ export default () => (
       <Layout.Header style={style.header}>
         <Row justify="end">
           <Menu mode="horizontal" selectable={false}>
-            <Menu.SubMenu title={store.user?.name}>
+            <Menu.SubMenu key="user" title={store.user?.name}>
               <Menu.Item onClick={logout} icon={<LogoutOutlined />}>
                 退出登录
               </Menu.Item>
@@ -32,19 +34,19 @@ export default () => (
           <Route path="/apps">
             <pages.apps />
           </Route>
-          <Redirect from="/" to={defaultPath} />
+          <Redirect from="/" to={`/${defaultRoute}`} />
         </Switch>
       </Layout.Content>
     </Layout>
   </Layout>
 );
 
-const style: { [name: string]: CSSProperties } = {
+const style: Style = {
   header: {
     background: "#fff",
     height: 48,
     lineHeight: "46px",
-    boxShadow: "0 1px 4px rgba(0, 21, 41, 0.08)",
+    boxShadow: "2px 1px 4px rgba(0, 21, 41, 0.08)",
     zIndex: 1,
   },
 };

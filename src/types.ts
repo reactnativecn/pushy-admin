@@ -8,4 +8,10 @@ export interface User {
   tierExpiresAt: string;
 }
 
+export interface App {
+  id: number;
+  name: string;
+  platform: "android" | "ios";
+}
+
 export type Style = { [name: string]: CSSProperties };
