@@ -10,7 +10,7 @@ export default () => {
   const { name, email, tier, tierExpiresAt } = store.user!;
   return (
     <div className="body">
-      <Descriptions title="账户信息" column={1} labelStyle={{ width: 140 }} bordered>
+      <Descriptions title="账户信息" column={1} labelStyle={{ width: 134 }} bordered>
         <Descriptions.Item label="用户名">{name}</Descriptions.Item>
         <Descriptions.Item label="邮箱">{email}</Descriptions.Item>
         <Descriptions.Item label="服务版本">
@@ -50,9 +50,8 @@ export default () => {
 
 const PurchaseButton = observer(() => {
   const { tierExpiresAt, tier } = store.user!;
-  if (!tierExpiresAt) {
-    return <></>;
-  }
+  if (!tierExpiresAt) return <></>;
+
   const { loading } = state;
   return (
     <Button type="link" onClick={() => purchase(tier)} loading={loading}>
