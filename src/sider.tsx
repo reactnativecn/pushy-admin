@@ -1,9 +1,9 @@
 import {
   AppstoreOutlined,
-  UserOutlined,
   CommentOutlined,
   InfoCircleOutlined,
   ReadOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
 import { observer } from "mobx-react";
@@ -39,17 +39,13 @@ const SiderMenu = observer(({ keys }: { keys: string[] }) => (
       <Link to="/apps">应用管理</Link>
     </Menu.Item>
     <Menu.Item key="issues" icon={<CommentOutlined />}>
-      <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
-        讨论
-      </ExtLink>
+      <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">讨论</ExtLink>
+    </Menu.Item>
+    <Menu.Item key="document" icon={<ReadOutlined />}>
+      <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">文档</ExtLink>
     </Menu.Item>
     <Menu.Item key="about" icon={<InfoCircleOutlined />}>
       <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>
-    </Menu.Item>
-    <Menu.Item key="document" icon={<ReadOutlined />}>
-      <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
-        文档
-      </ExtLink>
     </Menu.Item>
   </Menu>
 ));

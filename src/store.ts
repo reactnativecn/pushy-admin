@@ -19,14 +19,14 @@ export default store;
 
 export async function login(email: string, password: string) {
   const params = { email, pwd: md5(password) };
-  const response = await request("post", "user/login", params);
-  if (response.token) {
-    runInAction(() => (store.token = response.token));
-    localStorage.setItem("token", response.token);
+  try {
+    const { token } = await request("post", "user/login", params);
+    runInAction(() => (store.token = token));
+    localStorage.setItem("token", token);
     message.success("登录成功");
     fetchUserInfo();
-  } else {
-    message.error(response.message);
+  } catch (e) {
+    message.error(e.message);
   }
 }
 
@@ -36,13 +36,13 @@ export function logout() {
 }
 
 async function fetchUserInfo() {
-  const user = await request("get", "user/me");
-  if (user.message == "Unauthorized") {
-    logout();
-    message.error("登录已失效，请重新登录");
-  } else {
+  try {
+    const user = await request("get", "user/me");
     runInAction(() => (store.user = user));
     fetchApps();
+  } catch (_) {
+    logout();
+    message.error("登录已失效，请重新登录");
   }
 }
 

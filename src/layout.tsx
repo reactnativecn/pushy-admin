@@ -1,5 +1,5 @@
 import { LogoutOutlined } from "@ant-design/icons";
-import { Layout, Menu, Row } from "antd";
+import { Layout, Menu, Row, message } from "antd";
 import { Redirect, Route, Switch } from "react-router-dom";
 import * as pages from "./pages";
 import Sider from "./sider";
@@ -18,7 +18,10 @@ export default () => (
             <Menu.SubMenu key="user" title={store.user?.name}>
               <Menu.Item
                 key="logout"
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  message.info("您已退出登录");
+                }}
                 icon={<LogoutOutlined />}
               >
                 退出登录
@@ -27,10 +30,7 @@ export default () => (
           </Menu>
         </Row>
       </Layout.Header>
-      <Layout.Content
-        id="main-body"
-        style={{ overflow: "auto", position: "relative" }}
-      >
+      <Layout.Content id="main-body" style={{ overflow: "auto", position: "relative" }}>
         <Switch>
           <Route path="/user">
             <pages.user />

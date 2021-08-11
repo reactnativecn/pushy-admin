@@ -10,13 +10,7 @@ export default () => {
   const { name, email, tier, tierExpiresAt } = store.user!;
   return (
     <div className="body">
-      <Descriptions
-        title="账户信息"
-        column={1}
-        labelStyle={{ alignItems: "center", height: 32, width: 140 }}
-        contentStyle={{ alignItems: "center" }}
-        bordered
-      >
+      <Descriptions title="账户信息" column={1} labelStyle={{ width: 140 }} bordered>
         <Descriptions.Item label="用户名">{name}</Descriptions.Item>
         <Descriptions.Item label="邮箱">{email}</Descriptions.Item>
         <Descriptions.Item label="服务版本">
@@ -41,15 +35,13 @@ export default () => {
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
           <Space>
-            {tierExpiresAt
-              ? new Date(tierExpiresAt).toLocaleDateString()
-              : "无"}
+            {tierExpiresAt ? new Date(tierExpiresAt).toLocaleDateString() : "无"}
             <PurchaseButton />
           </Space>
         </Descriptions.Item>
       </Descriptions>
       <br />
-      <Button type="primary" href="https://pushy.reactnative.cn/pricing.html">
+      <Button type="primary" href="https://pushy.reactnative.cn/pricing.html" target="_blank">
         查看价格表
       </Button>
     </div>

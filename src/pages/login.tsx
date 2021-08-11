@@ -24,11 +24,7 @@ export default observer(() => {
   return (
     <form style={style.form} onSubmit={submit}>
       <Form.Item>
-        <Input
-          placeholder="帐号"
-          onChange={({ target }) => (username = target.value)}
-          required
-        />
+        <Input placeholder="帐号" onChange={({ target }) => (username = target.value)} required />
       </Form.Item>
       <Form.Item>
         <Input
