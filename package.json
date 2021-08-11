@@ -1,5 +1,9 @@
 {
   "private": true,
+  "scripts": {
+    "start": "npx vite",
+    "build": "npx vite build"
+  },
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
     "antd": "^4.16.11",
