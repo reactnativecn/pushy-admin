@@ -4,7 +4,6 @@ import { Redirect, Route, Switch } from "react-router-dom";
 import * as pages from "./pages";
 import Sider from "./sider";
 import store, { logout } from "./store";
-import { Style } from "./types";
 
 export const defaultRoute = "user";
 

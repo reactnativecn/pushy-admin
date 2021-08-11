@@ -1,9 +1,10 @@
-import { Button, Form, Input } from "antd";
+import { Button, Form, Input, Row, Typography } from "antd";
 import { observable, runInAction } from "mobx";
+import { Link } from "react-router-dom";
 import { observer } from "mobx-react";
 import { FormEvent } from "react";
 import { login } from "../store";
-import { Style } from "../types";
+import logo from "../assets/logo.svg";
 
 const state = observable.object({ loading: false });
 
@@ -23,26 +24,44 @@ export default observer(() => {
   const { loading } = state;
   return (
     <form style={style.form} onSubmit={submit}>
-      <Form.Item>
-        <Input placeholder="帐号" onChange={({ target }) => (username = target.value)} required />
-      </Form.Item>
+      <div style={style.logo}>
+        <img src={logo} />
+        <div style={style.slogan}>极速热更新框架 for React Native</div>
+      </div>
       <Form.Item>
         <Input
-          type="password"
-          onChange={({ target }) => (password = target.value)}
-          placeholder="密码"
+          placeholder="帐号"
+          size="large"
+          onChange={({ target }) => (username = target.value)}
           required
         />
       </Form.Item>
       <Form.Item>
-        <Button type="primary" htmlType="submit" loading={loading} block>
+        <Input
+          type="password"
+          placeholder="密码"
+          size="large"
+          onChange={({ target }) => (password = target.value)}
+          required
+        />
+      </Form.Item>
+      <Form.Item>
+        <Button type="primary" htmlType="submit" size="large" loading={loading} block>
           登录
         </Button>
+      </Form.Item>
+      <Form.Item>
+        <Row justify="space-between">
+          <Link to="/register">注册</Link>
+          <Link to="/forget-password">忘记密码？</Link>
+        </Row>
       </Form.Item>
     </form>
   );
 });
 
 const style: Style = {
-  form: { width: 320, margin: "auto", paddingTop: 80 },
+  form: { width: 320, margin: "auto", paddingTop: 16 },
+  logo: { textAlign: "center", margin: "48px 0" },
+  slogan: { marginTop: 16, color: "#00000073", fontSize: 18 },
 };

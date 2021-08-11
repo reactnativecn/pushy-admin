@@ -1,8 +1,7 @@
 import { message } from "antd";
 import md5 from "blueimp-md5";
-import { observable, runInAction, IObservableArray } from "mobx";
+import { IObservableArray, observable, runInAction } from "mobx";
 import request from "./request";
-import { User, App } from "./types";
 
 interface Store {
   token?: string;

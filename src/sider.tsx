@@ -9,7 +9,6 @@ import { Layout, Menu } from "antd";
 import { observer } from "mobx-react";
 import { Link, useLocation } from "react-router-dom";
 import { defaultRoute } from "./layout";
-import { Style } from "./types";
 
 let keys: string[] | undefined;
 

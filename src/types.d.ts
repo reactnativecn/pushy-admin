@@ -1,6 +1,10 @@
-import { CSSProperties } from "react";
+type Style = { [name: string]: import("react").CSSProperties };
 
-export interface User {
+declare module "*.svg";
+declare module "*.png";
+declare module "*.jpg";
+
+interface User {
   email: string;
   id: number;
   name: string;
@@ -8,10 +12,8 @@ export interface User {
   tierExpiresAt?: string;
 }
 
-export interface App {
+interface App {
   id: number;
   name: string;
   platform: "android" | "ios";
 }
-
-export type Style = { [name: string]: CSSProperties };
