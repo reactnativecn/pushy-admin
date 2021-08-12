@@ -50,8 +50,10 @@ async function fetchApps() {
   runInAction(() => (store.apps = data));
 }
 
-export function init() {
+function init() {
   if (store.token) {
     return fetchUserInfo();
   }
 }
+
+init();
