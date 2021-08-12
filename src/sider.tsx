@@ -6,7 +6,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
-import { observer } from "mobx-react";
+import { observer } from "mobx-react-lite";
 import { Link, useLocation } from "react-router-dom";
 import { defaultRoute } from "./layout";
 

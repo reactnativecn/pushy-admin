@@ -1,5 +1,5 @@
 import { Spin } from "antd";
-import { observer } from "mobx-react";
+import { observer } from "mobx-react-lite";
 import Layout from "./layout";
 import Login from "./pages/login";
 import store from "./store";

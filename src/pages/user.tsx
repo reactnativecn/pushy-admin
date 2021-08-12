@@ -1,6 +1,6 @@
 import { Button, Descriptions, Space } from "antd";
 import { observable } from "mobx";
-import { observer } from "mobx-react";
+import { observer } from "mobx-react-lite";
 import request from "../request";
 import store from "../store";
 

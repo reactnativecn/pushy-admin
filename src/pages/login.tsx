@@ -1,10 +1,10 @@
-import { Button, Form, Input, Row, Typography } from "antd";
+import { Button, Form, Input, Row } from "antd";
 import { observable, runInAction } from "mobx";
-import { Link } from "react-router-dom";
-import { observer } from "mobx-react";
+import { observer } from "mobx-react-lite";
 import { FormEvent } from "react";
-import { login } from "../store";
+import { Link } from "react-router-dom";
 import logo from "../assets/logo.svg";
+import { login } from "../store";
 
 const state = observable.object({ loading: false });
 
