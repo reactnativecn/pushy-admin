@@ -1,18 +1,14 @@
 import { message } from "antd";
 import md5 from "md5";
-import { IObservableArray, observable, runInAction } from "mobx";
+import { observable, runInAction } from "mobx";
 import request from "./request";
 
 interface Store {
-  token?: string;
+  token: string | null;
   user?: User;
-  apps: IObservableArray<App>;
 }
 
-const store = observable.object<Store>({
-  token: localStorage.getItem("token") ?? undefined,
-  apps: observable.array(),
-});
+const store = observable.object<Store>({ token: localStorage.getItem("token") });
 
 export default store;
 
@@ -30,7 +26,7 @@ export async function login(email: string, password: string) {
 }
 
 export function logout() {
-  store.token = undefined;
+  store.token = null;
   localStorage.removeItem("token");
 }
 
@@ -38,16 +34,10 @@ async function fetchUserInfo() {
   try {
     const user = await request("get", "user/me");
     runInAction(() => (store.user = user));
-    fetchApps();
-  } catch (_) {
-    logout();
+  } catch ({ message }) {
+    // logout();
     message.error("登录已失效，请重新登录");
   }
-}
-
-async function fetchApps() {
-  const { data } = await request("get", "app/list");
-  runInAction(() => (store.apps = data));
 }
 
 function init() {
