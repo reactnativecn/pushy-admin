@@ -1,5 +1,11 @@
-import { LogoutOutlined } from "@ant-design/icons";
-import { Layout, Menu, Row, message } from "antd";
+import {
+  CommentOutlined,
+  InfoCircleOutlined,
+  LogoutOutlined,
+  ReadOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import { Layout, Menu, message, Row } from "antd";
 import { Redirect, Route, Switch } from "react-router-dom";
 import * as pages from "./pages";
 import Sider from "./sider";
@@ -12,9 +18,20 @@ export default () => (
     <Sider />
     <Layout>
       <Layout.Header style={style.header}>
-        <Row justify="end">
+        <Row style={{ height: "100%" }} justify="end">
           <Menu mode="horizontal" selectable={false}>
-            <Menu.SubMenu key="user" title={store.user?.name}>
+            <Menu.Item key="issues" icon={<CommentOutlined />}>
+              <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
+                讨论
+              </ExtLink>
+            </Menu.Item>
+            <Menu.Item key="document" icon={<ReadOutlined />}>
+              <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">文档</ExtLink>
+            </Menu.Item>
+            <Menu.Item key="about" icon={<InfoCircleOutlined />}>
+              <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>
+            </Menu.Item>
+            <Menu.SubMenu key="user" icon={<UserOutlined />} title={store.user?.name}>
               <Menu.Item
                 key="logout"
                 onClick={() => {
@@ -42,6 +59,17 @@ export default () => (
       </Layout.Content>
     </Layout>
   </Layout>
+);
+
+interface ExtLinkProps {
+  children: React.ReactChild;
+  href: string;
+}
+
+const ExtLink = ({ children, href }: ExtLinkProps) => (
+  <a href={href} target="_blank" onClick={(e) => e.stopPropagation()}>
+    {children}
+  </a>
 );
 
 const style: Style = {
