@@ -1,10 +1,7 @@
 import { Button, Descriptions, Space } from "antd";
-import { observable } from "mobx";
-import { observer } from "mobx-react-lite";
+import { ReactNode, useState } from "react";
 import request from "../request";
 import store from "../store";
-
-const state = observable.object({ loading: false });
 
 export default () => {
   const { name, email, tier, tierExpiresAt } = store.user!;
@@ -16,27 +13,19 @@ export default () => {
         <Descriptions.Item label="服务版本">
           <Space>
             {tiers[tier]}
-            {tier == "free" && (
-              <Button type="link" onClick={() => purchase("standard")}>
-                升级标准版
-              </Button>
-            )}
-            {(tier == "free" || tier == "standard") && (
-              <Button type="link" onClick={() => purchase("permium")}>
-                升级高级版
-              </Button>
-            )}
-            {tier != "pro" && (
-              <Button type="link" onClick={() => purchase("pro")}>
-                升级专业版
-              </Button>
-            )}
+            <span>
+              {tier == "free" && <PurchaseButton tier="standard">升级标准版</PurchaseButton>}
+              {(tier == "free" || tier == "standard") && (
+                <PurchaseButton tier="premium">升级高级版</PurchaseButton>
+              )}
+              {tier != "pro" && <PurchaseButton tier="pro">升级专业版</PurchaseButton>}
+            </span>
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
           <Space>
             {tierExpiresAt ? new Date(tierExpiresAt).toLocaleDateString() : "无"}
-            <PurchaseButton />
+            {tierExpiresAt && <PurchaseButton tier={tier}>续费</PurchaseButton>}
           </Space>
         </Descriptions.Item>
       </Descriptions>
@@ -48,22 +37,25 @@ export default () => {
   );
 };
 
-const PurchaseButton = observer(() => {
-  const { tierExpiresAt, tier } = store.user!;
-  if (!tierExpiresAt) return <></>;
-
-  const { loading } = state;
+const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode }) => {
+  const [loading, setLoading] = useState(false);
   return (
-    <Button type="link" onClick={() => purchase(tier)} loading={loading}>
-      {loading ? "正在跳转到购买页面" : "续费"}
+    <Button
+      type="link"
+      onClick={async () => {
+        setLoading(true);
+        await purchase(tier);
+      }}
+      loading={loading}
+    >
+      {loading ? "跳转至支付页面" : children}
     </Button>
   );
-});
+};
 
 async function purchase(tier?: string) {
   const { payUrl } = await request("post", "orders", { tier });
   location.href = payUrl;
-  state.loading = true;
 }
 
 const tiers = {
