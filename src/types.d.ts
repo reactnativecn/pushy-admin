@@ -17,3 +17,9 @@ interface App {
   name: string;
   platform: "android" | "ios";
 }
+
+interface AppDetail extends App {
+  appKey: string;
+  appSecret: string;
+  downloadUrl: string;
+}

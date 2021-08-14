@@ -5,24 +5,14 @@ import {
   PlusOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
-import {
-  Card,
-  Col,
-  Form,
-  Input,
-  message,
-  Modal,
-  Popconfirm,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Typography,
-} from "antd";
+import { Card, Col, Popconfirm, Row, Spin, Typography } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import request from "../../request";
+import add from "./add";
+import "./index.css";
+import setting from "./setting";
 import state, { fetchApps } from "./state";
 
 export default observer(() => {
@@ -32,38 +22,40 @@ export default observer(() => {
 
   return (
     <Row gutter={16}>
-      <Col style={style.card}>
-        <Card style={style.add} onClick={add}>
-          <PlusOutlined /> 添加应用
+      <Col className="apps-item">
+        <Card style={{ cursor: "pointer" }} onClick={add}>
+          <Row justify="center" align="middle" gutter={8} style={{ height: 120 }}>
+            <PlusOutlined style={{ fontSize: "120%" }} />
+            <Col>添加应用</Col>
+          </Row>
         </Card>
       </Col>
       {apps.map((item) => (
-        <Col style={style.card}>
+        <Col className="apps-item">
           <Card
             bordered={false}
-            onClick={({ target }) => console.log(target)}
             actions={[
-              <SettingOutlined onClick={() => console.log(0)} />,
+              <SettingOutlined onClick={() => setting(item)} />,
               <Popconfirm
                 title="应用删除后将无法恢复"
                 okText="确认删除"
                 onConfirm={() => remove(item)}
               >
-                <DeleteOutlined style={style.remove} />
+                <DeleteOutlined style={{ color: "#ff4d4f" }} />
               </Popconfirm>,
             ]}
           >
             <Link className="ant-typography" to={`/apps/${item.id}`}>
-              <Space style={style.title}>
+              <Row style={style.title} justify="center" align="middle" gutter={8} wrap={false}>
                 {item.platform == "ios" ? (
                   <AppleFilled style={style.ios} />
                 ) : (
                   <AndroidFilled style={style.android} />
                 )}
-                <Typography.Text style={{ width: 176 }} ellipsis>
+                <Typography.Text style={style.name} ellipsis>
                   {item.name}
                 </Typography.Text>
-              </Space>
+              </Row>
             </Link>
           </Card>
         </Col>
@@ -72,55 +64,14 @@ export default observer(() => {
   );
 });
 
-function add() {
-  let name = "";
-  let platform = "android";
-  Modal.confirm({
-    icon: null,
-    content: (
-      <Form initialValues={{ platform }} onFinish={() => console.log(0)}>
-        <Form.Item label="应用名称" name="name">
-          <Input placeholder="请输入应用名称" onChange={({ target }) => (name = target.value)} />
-        </Form.Item>
-        <Form.Item label="选择平台" name="platform">
-          <Select
-            // @ts-ignore
-            onSelect={(value) => (platform = value)}
-          >
-            <Select.Option value="android">
-              <AndroidFilled style={style.android} /> Android
-            </Select.Option>
-            <Select.Option value="ios">
-              <AppleFilled style={style.ios} /> iOS
-            </Select.Option>
-          </Select>
-        </Form.Item>
-      </Form>
-    ),
-    onOk: (_) => {
-      if (!name) {
-        message.warn("请输入应用名称");
-        return false;
-      }
-      return request("post", "app/create", { name, platform })
-        .then(fetchApps)
-        .catch((error) => {
-          message.error(error.message);
-        });
-    },
-  });
-}
-
 async function remove(app: App) {
   await request("delete", `app/${app.id}`);
   fetchApps();
 }
 
-const style: Style = {
-  add: { textAlign: "center", lineHeight: "72px", height: "100%", cursor: "pointer" },
-  card: { width: 240, marginBottom: 16 },
-  remove: { color: "#ff4d4f" },
-  title: { fontSize: 16 },
+export const style: Style = {
+  title: { fontSize: 16, height: 72 },
   ios: { color: "#a6b1b7", fontSize: "120%" },
   android: { color: "#3ddc84", fontSize: "120%" },
+  name: { maxWidth: "calc(100% - 20px)", flex: 1, marginLeft: 8 },
 };
