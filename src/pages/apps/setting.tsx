@@ -1,4 +1,4 @@
-import { Form, Modal, Spin, Typography } from "antd";
+import { Form, message, Modal, Spin, Typography } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import request from "../../request";
@@ -16,10 +16,17 @@ export default function (app: App) {
 
   Modal.confirm({
     icon: null,
+    closable: true,
+    maskClosable: true,
     content: <Content />,
-    onOk() {
-      app.name = state.app!.name;
-      return request("put", `app/${app.id}`, state.app);
+    async onOk() {
+      try {
+        await request("put", `app/${app.id}`, state.app);
+      } catch (error) {
+        message.success(error.message);
+      }
+      runInAction(() => (app.name = state.app!.name));
+      message.success("修改成功");
     },
   });
 }

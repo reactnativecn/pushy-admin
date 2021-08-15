@@ -10,8 +10,11 @@ export default function () {
   let platform = "android";
   Modal.confirm({
     icon: null,
+    closable: true,
+    maskClosable: true,
     content: (
-      <Form initialValues={{ platform }} onFinish={() => console.log(0)}>
+      <Form initialValues={{ platform }}>
+        <br />
         <Form.Item label="应用名称" name="name">
           <Input placeholder="请输入应用名称" onChange={({ target }) => (name = target.value)} />
         </Form.Item>

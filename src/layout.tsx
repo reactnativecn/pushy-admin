@@ -51,6 +51,9 @@ export default () => (
           <Route path="/user">
             <pages.user />
           </Route>
+          <Route path="/apps/:id">
+            <pages.versions />
+          </Route>
           <Route path="/apps">
             <pages.apps />
           </Route>
