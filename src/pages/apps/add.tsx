@@ -2,7 +2,7 @@ import { AndroidFilled, AppleFilled } from "@ant-design/icons";
 import { Form, Input, message, Modal, Select } from "antd";
 import request from "../../request";
 import "./index.css";
-import { fetchApps } from "./state";
+import { init } from "./state";
 import { style } from ".";
 
 export default function () {
@@ -39,7 +39,7 @@ export default function () {
         return false;
       }
       return request("post", "app/create", { name, platform })
-        .then(fetchApps)
+        .then(init)
         .catch((error) => {
           message.error(error.message);
         });

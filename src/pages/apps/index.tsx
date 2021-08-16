@@ -13,10 +13,10 @@ import request from "../../request";
 import add from "./add";
 import "./index.css";
 import setting from "./setting";
-import state, { fetchApps } from "./state";
+import state, { init } from "./state";
 
 export default observer(() => {
-  useEffect(fetchApps, []);
+  useEffect(init, []);
   const { loading, apps } = state;
   if (loading && !apps.length) return <Spin />;
 
@@ -66,7 +66,7 @@ export default observer(() => {
 
 async function remove(app: App) {
   await request("delete", `app/${app.id}`);
-  fetchApps();
+  init();
 }
 
 export const style: Style = {

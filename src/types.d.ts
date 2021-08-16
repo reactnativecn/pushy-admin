@@ -18,6 +18,26 @@ interface App {
   platform: "android" | "ios";
 }
 
+interface PackageBase {
+  id: number;
+  name: string;
+  status: "normal";
+}
+
+interface Package extends PackageBase {
+  buildTime: string;
+  hash: string;
+}
+
+interface Version {
+  description: string;
+  hash: string;
+  id: number;
+  metaInfo: string;
+  name: string;
+  packages: PackageBase[];
+}
+
 interface AppDetail extends App {
   appKey: string;
   appSecret: string;
