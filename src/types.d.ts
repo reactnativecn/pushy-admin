@@ -27,6 +27,7 @@ interface PackageBase {
 interface Package extends PackageBase {
   buildTime: string;
   hash: string;
+  version: Version;
 }
 
 interface Version {

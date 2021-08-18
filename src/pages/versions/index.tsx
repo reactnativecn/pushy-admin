@@ -1,16 +1,18 @@
-import { Breadcrumb, Layout, Tabs, Empty, Spin } from "antd";
+import { Breadcrumb, Layout, Tabs } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import "./index.css";
 import PackageList from "./packages";
-import state, { init } from "./state";
+import state, { fetch } from "./state";
+import VersionTable from "./versions";
 
 export default observer(() => {
   const id = Reflect.get(useParams(), "id");
-  useEffect(() => init(id), []);
-  const { loading, app, packages, unused } = state;
+  useEffect(() => fetch(id), []);
+  const { app, packages, unused } = state;
   return (
-    <Spin spinning={loading}>
+    <>
       <Breadcrumb>
         <Breadcrumb.Item>
           <Link to="/apps">应用列表</Link>
@@ -20,6 +22,9 @@ export default observer(() => {
       <br />
       <Layout>
         <Layout.Sider theme="light" style={style.sider} width={240}>
+          <div className="ant-table-title" style={style.title}>
+            原生包
+          </div>
           <Tabs>
             <Tabs.TabPane tab="全部" key="all">
               <PackageList dataSource={packages} />
@@ -29,14 +34,15 @@ export default observer(() => {
             </Tabs.TabPane>
           </Tabs>
         </Layout.Sider>
-        <Layout.Content className="body">
-          <Empty />
+        <Layout.Content style={{ padding: 0 }}>
+          <VersionTable />
         </Layout.Content>
       </Layout>
-    </Spin>
+    </>
   );
 });
 
 const style: Style = {
-  sider: { marginRight: 16, padding: 16, paddingTop: 0 },
+  sider: { marginRight: 16, padding: 16, paddingTop: 0, height: "100%" },
+  title: { paddingLeft: 0, paddingRight: 0 },
 };
