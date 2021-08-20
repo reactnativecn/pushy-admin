@@ -14,3 +14,15 @@
 .versions tr:hover .ant-typography-edit {
   opacity: 1;
 }
+
+.versions tr {
+  transition: background-color 0.3s;
+}
+
+.versions .can-drop {
+  background-color: #fafafa;
+}
+
+.versions .is-over {
+  background-color: #e6f7ff;
+}

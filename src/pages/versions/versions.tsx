@@ -1,8 +1,9 @@
 import { Input, Modal, Table, Tag, Typography } from "antd";
 import { ColumnType } from "antd/lib/table";
 import { observer } from "mobx-react-lite";
+import { useDrop, useDrag } from "react-dnd";
 import request from "../../request";
-import state, { fetchVersions } from "./state";
+import state, { fetchVersions, fetchPackages } from "./state";
 
 const columns: ColumnType<Version>[] = [
   { title: "版本", dataIndex: "name", render: (_, record) => renderCol(record, "name") },
@@ -20,12 +21,7 @@ const columns: ColumnType<Version>[] = [
     title: "原生包",
     dataIndex: "packages",
     width: "100%",
-    render: (_, { packages }) =>
-      packages.map((i) => (
-        <Tag color="#1890ff" draggable>
-          {i.name}
-        </Tag>
-      )),
+    render: (_, { packages }) => packages.map((i) => <PackageItem item={i} />),
   },
 ];
 
@@ -65,9 +61,41 @@ export default observer(() => {
       rowKey="id"
       title={() => "热更新包"}
       columns={columns}
+      components={{ body: { row: TableRow } }}
       dataSource={versions}
       pagination={pagination}
       loading={tableLoading}
     />
   );
 });
+
+const TableRow = (props: any) => {
+  const { id, packages = [] } = state.versions.find((i) => i.id == props["data-row-key"]) ?? {};
+  const [{ canDrop, isOver }, drop] = useDrop(() => ({
+    accept: "package",
+    async drop(i: PackageBase) {
+      if (packages.find(({ id }) => i.id == id)) return;
+      await request("put", `app/${state.id}/package/${i.id}`, { versionId: id });
+      fetchPackages();
+      fetchVersions(state.pagination.current);
+    },
+    collect: (monitor) => {
+      const i = monitor.getItem<PackageBase>();
+      const includes = i ? packages.find(({ id }) => i.id == id) : false;
+      return { isOver: !includes && monitor.isOver(), canDrop: !includes && monitor.canDrop() };
+    },
+  }));
+  let className = "";
+  if (canDrop) className = "can-drop";
+  if (isOver) className = "is-over";
+  return <tr ref={drop} {...props} className={`ant-table-row ${className}`} />;
+};
+
+const PackageItem = ({ item }: { item: PackageBase }) => {
+  const [_, drag] = useDrag(() => ({ item, type: "package" }));
+  return (
+    <Tag ref={drag} color="#1890ff" draggable>
+      {item.name}
+    </Tag>
+  );
+};

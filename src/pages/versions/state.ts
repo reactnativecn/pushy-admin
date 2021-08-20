@@ -37,17 +37,22 @@ export function fetch(id: string) {
     state.versions.clear();
   });
   getApp(id).then((app) => runInAction(() => (state.app = app)));
+  fetchPackages();
+  fetchVersions();
+}
+
+export function fetchPackages() {
+  const { id } = state;
   request("get", `app/${id}/package/list?limit=1000`).then(({ data }) =>
     runInAction(() => (state.packages = data))
   );
   request("get", `app/${id}/package/list?limit=1000&noVersion=1`).then(({ data }) =>
     runInAction(() => (state.unused = data))
   );
-  fetchVersions();
 }
 
-export function fetchVersions(page = 0) {
-  if (page == 0) {
+export function fetchVersions(page?: number) {
+  if (page == undefined) {
     if (state.versions.length) return;
     else page = 1;
   }
