@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import { Layout, Menu, message, Row } from "antd";
 import { Redirect, Route, Switch } from "react-router-dom";
+import { Footer } from "./components";
 import * as pages from "./pages";
 import Sider from "./sider";
 import store, { logout } from "./store";
@@ -46,19 +47,22 @@ export default () => (
           </Menu>
         </Row>
       </Layout.Header>
-      <Layout.Content id="main-body" style={{ overflow: "auto", position: "relative" }}>
-        <Switch>
-          <Route path="/user">
-            <pages.user />
-          </Route>
-          <Route path="/apps/:id">
-            <pages.versions />
-          </Route>
-          <Route path="/apps">
-            <pages.apps />
-          </Route>
-          <Redirect from="/" to={`/${defaultRoute}`} />
-        </Switch>
+      <Layout.Content id="main-body" style={style.body}>
+        <div style={{ flex: 1 }}>
+          <Switch>
+            <Route path="/user">
+              <pages.user />
+            </Route>
+            <Route path="/apps/:id">
+              <pages.versions />
+            </Route>
+            <Route path="/apps">
+              <pages.apps />
+            </Route>
+            <Redirect from="/" to={`/${defaultRoute}`} />
+          </Switch>
+        </div>
+        <Footer />
       </Layout.Content>
     </Layout>
   </Layout>
@@ -82,5 +86,12 @@ const style: Style = {
     lineHeight: "46px",
     boxShadow: "2px 1px 4px rgba(0, 21, 41, 0.08)",
     zIndex: 1,
+  },
+  body: {
+    overflow: "auto",
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    paddingBottom: 0,
   },
 };
