@@ -27,3 +27,7 @@ a.ant-typography .ant-typography {
 a.ant-typography:hover .ant-typography {
   color: #40a9ff;
 }
+
+[draggable] {
+  cursor: default;
+}

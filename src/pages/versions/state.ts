@@ -1,14 +1,19 @@
-import { observable, runInAction } from "mobx";
+import { Modal } from "antd";
 import { TablePaginationConfig } from "antd/lib/table";
+import { observable, runInAction } from "mobx";
 import request from "../../request";
 import { getApp } from "../apps/state";
 
 const initState = {
+  /**
+   * App ID
+   */
   id: "",
   loading: false,
   packages: observable.array<Package>(),
   versions: observable.array<Version>(),
   unused: observable.array<Package>(),
+  selected: observable.array<number>(),
 };
 
 type State = typeof initState & { app?: App; pagination: TablePaginationConfig };
@@ -69,5 +74,26 @@ export function fetchVersions(page?: number) {
       state.versions = data;
       state.loading = false;
     });
+  });
+}
+
+export function removeSelectedVersions() {
+  const { selected, versions } = state;
+  const map = versions.reduce<{ [key: number]: string }>((map, { id, name }) => {
+    map[id] = name;
+    return map;
+  }, {});
+  Modal.confirm({
+    title: "删除所选热更新包：",
+    content: selected.map((i) => map[i]).join("，"),
+    maskClosable: true,
+    okButtonProps: { danger: true },
+    async onOk() {
+      for (const id of selected) {
+        await request("delete", `app/${state.id}/version/${id}`);
+      }
+      fetchPackages();
+      fetchVersions(1);
+    },
   });
 }

@@ -2,6 +2,10 @@
   padding: 5px;
 }
 
+.popover-package .ant-popover-inner-content {
+  padding: 0;
+}
+
 .versions .ant-table-cell {
   white-space: nowrap;
 }
@@ -20,7 +24,7 @@
 }
 
 .versions .can-drop {
-  background-color: #fafafa;
+  background-color: #fff;
 }
 
 .versions .is-over {

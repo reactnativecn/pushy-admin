@@ -1,9 +1,10 @@
-import { Input, Modal, Table, Tag, Typography } from "antd";
+import { Button, Input, Modal, Table, Tag, Typography } from "antd";
 import { ColumnType } from "antd/lib/table";
+import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useDrop, useDrag } from "react-dnd";
+import { useDrag, useDrop } from "react-dnd";
 import request from "../../request";
-import state, { fetchVersions, fetchPackages } from "./state";
+import state, { fetchPackages, fetchVersions, removeSelectedVersions } from "./state";
 
 const columns: ColumnType<Version>[] = [
   { title: "版本", dataIndex: "name", render: (_, record) => renderCol(record, "name") },
@@ -18,7 +19,7 @@ const columns: ColumnType<Version>[] = [
     render: (_, record) => renderCol(record, "metaInfo"),
   },
   {
-    title: "原生包",
+    title: "绑定原生包",
     dataIndex: "packages",
     width: "100%",
     render: (_, { packages }) => packages.map((i) => <PackageItem item={i} />),
@@ -53,7 +54,7 @@ function renderCol(record: Version, key: string) {
 }
 
 export default observer(() => {
-  const { versions, pagination, loading: tableLoading } = state;
+  const { versions, pagination, loading, selected } = state;
 
   return (
     <Table
@@ -64,7 +65,21 @@ export default observer(() => {
       components={{ body: { row: TableRow } }}
       dataSource={versions}
       pagination={pagination}
-      loading={tableLoading}
+      rowSelection={{
+        selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
+        onChange: (keys) =>
+          runInAction(() => (state.selected = observable.array(keys as number[]))),
+      }}
+      loading={loading}
+      footer={
+        selected.length
+          ? () => (
+              <Button onClick={removeSelectedVersions} danger>
+                删除
+              </Button>
+            )
+          : undefined
+      }
     />
   );
 });
@@ -80,9 +95,9 @@ const TableRow = (props: any) => {
       fetchVersions(state.pagination.current);
     },
     collect: (monitor) => {
-      const i = monitor.getItem<PackageBase>();
-      const includes = i ? packages.find(({ id }) => i.id == id) : false;
-      return { isOver: !includes && monitor.isOver(), canDrop: !includes && monitor.canDrop() };
+      // const i = monitor.getItem<PackageBase>();
+      // const includes = i ? packages.find(({ id }) => i.id == id) : false;
+      return { isOver: monitor.isOver(), canDrop: monitor.canDrop() };
     },
   }));
   let className = "";
