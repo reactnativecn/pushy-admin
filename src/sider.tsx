@@ -25,11 +25,11 @@ export default () => {
 
 const SiderMenu = observer(({ keys }: { keys: string[] }) => (
   <Menu defaultOpenKeys={keys} defaultSelectedKeys={keys} mode="inline">
-    <Menu.Item key="user" icon={<UserOutlined />}>
-      <Link to="/user">账户设置</Link>
-    </Menu.Item>
     <Menu.Item key="apps" icon={<AppstoreOutlined />}>
       <Link to="/apps">应用管理</Link>
+    </Menu.Item>
+    <Menu.Item key="user" icon={<UserOutlined />}>
+      <Link to="/user">账户设置</Link>
     </Menu.Item>
   </Menu>
 ));

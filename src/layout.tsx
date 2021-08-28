@@ -12,7 +12,7 @@ import * as pages from "./pages";
 import Sider from "./sider";
 import store, { logout } from "./store";
 
-export const defaultRoute = "user";
+export const defaultRoute = "apps";
 
 export default () => (
   <Layout>
