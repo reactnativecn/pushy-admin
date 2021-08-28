@@ -1,38 +1,75 @@
-import { AppstoreOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  AndroidFilled,
+  AppleFilled,
+  AppstoreOutlined,
+  PlusOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import { Layout, Menu } from "antd";
+import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Link, useLocation } from "react-router-dom";
 import { defaultRoute } from "./layout";
+import addApp from "./pages/apps/add";
+import store from "./store";
 
-let keys: string[] | undefined;
+const state = observable.object({ selectedKeys: observable.array<string>() });
 
 export default () => {
   let { pathname } = useLocation();
-  if (keys == null) {
-    if (pathname == "/") {
-      keys = [defaultRoute];
-    } else {
-      keys = pathname.replace(/^\//, "").split("/");
-    }
+  if (state.selectedKeys.length == 0) {
+    runInAction(() => {
+      if (pathname == "/") {
+        state.selectedKeys = observable.array([defaultRoute]);
+      } else {
+        state.selectedKeys = observable.array(pathname.replace(/^\//, "").split("/"));
+      }
+    });
   }
   return (
-    <Layout.Sider width={200} theme="light" style={style.sider}>
+    <Layout.Sider width={240} theme="light" style={style.sider}>
       <Layout.Header style={style.logo}>Pushy</Layout.Header>
-      <SiderMenu keys={keys} />
+      <SiderMenu />
     </Layout.Sider>
   );
 };
 
-const SiderMenu = observer(({ keys }: { keys: string[] }) => (
-  <Menu defaultOpenKeys={keys} defaultSelectedKeys={keys} mode="inline">
-    <Menu.Item key="apps" icon={<AppstoreOutlined />}>
-      <Link to="/apps">应用管理</Link>
-    </Menu.Item>
-    <Menu.Item key="user" icon={<UserOutlined />}>
-      <Link to="/user">账户设置</Link>
-    </Menu.Item>
-  </Menu>
-));
+const SiderMenu = observer(() => {
+  return (
+    <Menu
+      defaultOpenKeys={["apps"]}
+      selectedKeys={state.selectedKeys}
+      onSelect={({ key }) => {
+        if (key == "add-app") return;
+        runInAction(() => (state.selectedKeys = observable.array([key])));
+      }}
+      mode="inline"
+    >
+      <Menu.Item key="user" icon={<UserOutlined />}>
+        <Link to="/user">账户设置</Link>
+      </Menu.Item>
+      <Menu.SubMenu key="apps" title="应用管理" icon={<AppstoreOutlined />}>
+        {store.apps.map((i) => (
+          <Menu.Item
+            key={i.id}
+            icon={
+              i.platform == "ios" ? (
+                <AppleFilled style={style.ios} />
+              ) : (
+                <AndroidFilled style={style.android} />
+              )
+            }
+          >
+            <Link to={`/apps/${i.id}`}>{i.name}</Link>
+          </Menu.Item>
+        ))}
+        <Menu.Item key="add-app" icon={<PlusOutlined />} onClick={addApp}>
+          添加应用
+        </Menu.Item>
+      </Menu.SubMenu>
+    </Menu>
+  );
+});
 
 const style: Style = {
   sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
@@ -42,4 +79,6 @@ const style: Style = {
     fontSize: 22,
     fontWeight: 600,
   },
+  ios: { color: "#a6b1b7" },
+  android: { color: "#3ddc84" },
 };

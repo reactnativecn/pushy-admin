@@ -2,13 +2,9 @@ import { Modal } from "antd";
 import { TablePaginationConfig } from "antd/lib/table";
 import { observable, runInAction } from "mobx";
 import request from "../../request";
-import { getApp } from "../apps/state";
+import store from "../../store";
 
 const initState = {
-  /**
-   * App ID
-   */
-  id: "",
   loading: false,
   packages: observable.array<Package>(),
   versions: observable.array<Version>(),
@@ -33,25 +29,24 @@ const state = observable.object<State>({
 
 export default state;
 
-export function fetch(id: string) {
-  if (state.id == id) return;
+export function fetch(id: number) {
+  if (state.app?.id == id) return;
 
   runInAction(() => {
-    state.id = id;
+    state.app = store.apps.find((i) => i.id == id);
     state.packages.clear();
     state.versions.clear();
   });
-  getApp(id).then((app) => runInAction(() => (state.app = app)));
   fetchPackages();
   fetchVersions();
 }
 
 export function fetchPackages() {
-  const { id } = state;
-  request("get", `app/${id}/package/list?limit=1000`).then(({ data }) =>
+  const { app } = state;
+  request("get", `app/${app?.id}/package/list?limit=1000`).then(({ data }) =>
     runInAction(() => (state.packages = data))
   );
-  request("get", `app/${id}/package/list?limit=1000&noVersion=1`).then(({ data }) =>
+  request("get", `app/${app?.id}/package/list?limit=1000&noVersion=1`).then(({ data }) =>
     runInAction(() => (state.unused = data))
   );
 }
@@ -68,7 +63,7 @@ export function fetchVersions(page?: number) {
   });
   const { pageSize } = state.pagination;
   const params = `offset=${(page - 1) * pageSize!}&limit=${pageSize}`;
-  request("get", `app/${state.id}/version/list?${params}`).then(({ data, count }: any) => {
+  request("get", `app/${state.app?.id}/version/list?${params}`).then(({ data, count }: any) => {
     runInAction(() => {
       state.pagination.total = count;
       state.versions = data;
@@ -90,7 +85,7 @@ export function removeSelectedVersions() {
     okButtonProps: { danger: true },
     async onOk() {
       for (const id of selected) {
-        await request("delete", `app/${state.id}/version/${id}`);
+        await request("delete", `app/${state.app?.id}/version/${id}`);
       }
       fetchPackages();
       fetchVersions(1);

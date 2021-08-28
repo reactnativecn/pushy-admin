@@ -21,7 +21,7 @@ const Item = ({ item }: { item: Package }) => {
       maskClosable: true,
       okButtonProps: { danger: true },
       async onOk() {
-        await request("delete", `app/${state.id}/package/${item.id}`);
+        await request("delete", `app/${state.app?.id}/package/${item.id}`);
         fetchPackages();
         fetchVersions(1);
       },

@@ -3,8 +3,10 @@ import { observer } from "mobx-react-lite";
 import Layout from "./layout";
 import Login from "./pages/login";
 import store from "./store";
+import { useHistory } from "react-router-dom";
 
 export default observer(() => {
+  store.history = useHistory();
   if (!store.token) return <Login />;
   if (!store.user) {
     return (

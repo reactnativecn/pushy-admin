@@ -40,7 +40,7 @@ function renderCol(record: Version, key: string) {
           <Input.TextArea defaultValue={value} onChange={({ target }) => (value = target.value)} />
         ),
         async onOk() {
-          await request("put", `app/${state.id}/version/${record.id}`, { [key]: value });
+          await request("put", `app/${state.app?.id}/version/${record.id}`, { [key]: value });
           fetchVersions(state.pagination.current);
         },
       });
@@ -90,7 +90,7 @@ const TableRow = (props: any) => {
     accept: "package",
     async drop(i: PackageBase) {
       if (packages.find(({ id }) => i.id == id)) return;
-      await request("put", `app/${state.id}/package/${i.id}`, { versionId: id });
+      await request("put", `app/${state.app?.id}/package/${i.id}`, { versionId: id });
       fetchPackages();
       fetchVersions(state.pagination.current);
     },

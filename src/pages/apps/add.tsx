@@ -1,9 +1,7 @@
 import { AndroidFilled, AppleFilled } from "@ant-design/icons";
 import { Form, Input, message, Modal, Select } from "antd";
 import request from "../../request";
-import "./index.css";
-import { init } from "./state";
-import { style } from ".";
+import { fetchApps } from "../../store";
 
 export default function () {
   let name = "";
@@ -39,10 +37,15 @@ export default function () {
         return false;
       }
       return request("post", "app/create", { name, platform })
-        .then(init)
+        .then(fetchApps)
         .catch((error) => {
           message.error(error.message);
         });
     },
   });
 }
+
+const style: Style = {
+  ios: { color: "#a6b1b7" },
+  android: { color: "#3ddc84" },
+};
