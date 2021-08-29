@@ -22,7 +22,7 @@ const columns: ColumnType<Version>[] = [
     title: "绑定原生包",
     dataIndex: "packages",
     width: "100%",
-    render: (_, { packages }) => packages.map((i) => <PackageItem item={i} />),
+    render: (_, { packages }) => packages.map((i) => <PackageItem key={i.id} item={i} />),
   },
 ];
 
@@ -85,20 +85,16 @@ export default observer(() => {
 });
 
 const TableRow = (props: any) => {
-  const { id, packages = [] } = state.versions.find((i) => i.id == props["data-row-key"]) ?? {};
   const [{ canDrop, isOver }, drop] = useDrop(() => ({
     accept: "package",
     async drop(i: PackageBase) {
+      const { id, packages = [] } = state.versions.find((i) => i.id == props["data-row-key"]) ?? {};
       if (packages.find(({ id }) => i.id == id)) return;
       await request("put", `app/${state.app?.id}/package/${i.id}`, { versionId: id });
       fetchPackages();
       fetchVersions(state.pagination.current);
     },
-    collect: (monitor) => {
-      // const i = monitor.getItem<PackageBase>();
-      // const includes = i ? packages.find(({ id }) => i.id == id) : false;
-      return { isOver: monitor.isOver(), canDrop: monitor.canDrop() };
-    },
+    collect: (monitor) => ({ isOver: monitor.isOver(), canDrop: monitor.canDrop() }),
   }));
   let className = "";
   if (canDrop) className = "can-drop";
