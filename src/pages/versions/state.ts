@@ -18,6 +18,7 @@ const state = observable.object<State>({
   ...initState,
   pagination: {
     pageSize: 10,
+    showTotal: (total) => `共 ${total} 个 `,
     onChange(page, size) {
       if (size) {
         state.pagination.pageSize = size;
@@ -34,8 +35,8 @@ export function fetch(id: number) {
 
   runInAction(() => {
     state.app = store.apps.find((i) => i.id == id);
-    state.packages.clear();
-    state.versions.clear();
+    state.packages = observable.array();
+    state.versions = observable.array();
   });
   fetchPackages();
   fetchVersions();
