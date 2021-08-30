@@ -92,3 +92,10 @@ export function removeSelectedVersions() {
     },
   });
 }
+
+export async function bindPackage(packageId: number, versionId: number) {
+  runInAction(() => (state.loading = true));
+  await request("put", `app/${state.app?.id}/package/${packageId}`, { versionId });
+  fetchPackages();
+  fetchVersions(state.pagination.current);
+}

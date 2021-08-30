@@ -13,6 +13,9 @@ const globals = {
   md5: "MD5",
 };
 
-export default {
-  build: { rollupOptions: { plugins: [external(globals)] } },
+export default ({ mode }) => {
+  if (mode == "production") {
+    return { build: { rollupOptions: { plugins: [external(globals)] } } };
+  }
+  return {};
 };

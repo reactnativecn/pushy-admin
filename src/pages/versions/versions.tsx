@@ -1,32 +1,63 @@
-import { Button, Input, Modal, Table, Tag, Typography } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Typography } from "antd";
 import { ColumnType } from "antd/lib/table";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useDrag, useDrop } from "react-dnd";
 import request from "../../request";
-import state, { fetchPackages, fetchVersions, removeSelectedVersions } from "./state";
+import state, { bindPackage, fetchVersions, removeSelectedVersions } from "./state";
 
 const columns: ColumnType<Version>[] = [
-  { title: "版本", dataIndex: "name", render: (_, record) => renderCol(record, "name") },
+  { title: "版本", dataIndex: "name", render: (_, record) => renderTextCol(record, "name") },
   {
     title: "描述",
     dataIndex: "description",
-    render: (_, record) => renderCol(record, "description"),
+    render: (_, record) => renderTextCol(record, "description"),
   },
   {
     title: "元信息",
     dataIndex: "metaInfo",
-    render: (_, record) => renderCol(record, "metaInfo"),
+    render: (_, record) => renderTextCol(record, "metaInfo"),
   },
   {
     title: "绑定原生包",
     dataIndex: "packages",
     width: "100%",
-    render: (_, { packages }) => packages.map((i) => <PackageItem key={i.id} item={i} />),
+    render(_, { packages, id }) {
+      const bindedPackages = packages.map((i) => <PackageItem key={i.id} item={i} />);
+      const items = state.packages.filter((i) => !packages.some((j) => i.id == j.id));
+      if (items.length == 0) return bindedPackages;
+
+      const menu = (
+        <Menu>
+          {items.map((i) => (
+            <Menu.Item key={i.id} onClick={() => bindPackage(i.id, id)}>
+              {i.name}
+            </Menu.Item>
+          ))}
+        </Menu>
+      );
+      return (
+        <>
+          {bindedPackages}
+          <Dropdown
+            className="ant-typography-edit"
+            overlay={menu}
+            getPopupContainer={() =>
+              document.querySelector(`[data-row-key="${id}"]`) ?? document.body
+            }
+          >
+            <Button type="link" size="small" icon={<PlusOutlined />}>
+              绑定
+            </Button>
+          </Dropdown>
+        </>
+      );
+    },
   },
 ];
 
-function renderCol(record: Version, key: string) {
+function renderTextCol(record: Version, key: string) {
   let value = Reflect.get(record, key);
   const editable = {
     editing: false,
@@ -87,12 +118,11 @@ export default observer(() => {
 const TableRow = (props: any) => {
   const [{ canDrop, isOver }, drop] = useDrop(() => ({
     accept: "package",
-    async drop(i: PackageBase) {
+    async drop(pack: PackageBase) {
       const { id, packages = [] } = state.versions.find((i) => i.id == props["data-row-key"]) ?? {};
-      if (packages.find(({ id }) => i.id == id)) return;
-      await request("put", `app/${state.app?.id}/package/${i.id}`, { versionId: id });
-      fetchPackages();
-      fetchVersions(state.pagination.current);
+      if (!packages.some(({ id }) => pack.id == id)) {
+        bindPackage(pack.id, id!);
+      }
     },
     collect: (monitor) => ({ isOver: monitor.isOver(), canDrop: monitor.canDrop() }),
   }));

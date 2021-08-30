@@ -17,7 +17,7 @@ const Item = ({ item }: { item: Package }) => {
   const [_, drag] = useDrag(() => ({ item, type: "package" }));
   const remove = () => {
     Modal.confirm({
-      title: `删除后无法恢复，确定删除“${item.name}”？`,
+      title: `删除后无法恢复，确定删除原生包“${item.name}”？`,
       maskClosable: true,
       okButtonProps: { danger: true },
       async onOk() {
