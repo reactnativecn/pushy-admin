@@ -9,13 +9,15 @@ import { Layout, Menu } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Link, useLocation } from "react-router-dom";
-import { defaultRoute } from "./layout";
+import { defaultRoute } from "./main";
 import addApp from "./pages/apps/add";
 import store from "./store";
 
 const state = observable.object({ selectedKeys: observable.array<string>() });
 
 export default () => {
+  if (!store.token) return null;
+
   let { pathname } = useLocation();
   if (state.selectedKeys.length == 0) {
     runInAction(() => {

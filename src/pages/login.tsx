@@ -4,7 +4,6 @@ import { observer } from "mobx-react-lite";
 import { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.svg";
-import { Footer } from "../components";
 import { login } from "../store";
 
 const state = observable.object({ loading: false });
@@ -13,12 +12,12 @@ async function submit(event: FormEvent) {
   event.preventDefault();
   runInAction(async () => {
     state.loading = true;
-    await login(username, password);
+    await login(email, password);
     state.loading = false;
   });
 }
 
-let username: string;
+let email: string;
 let password: string;
 
 export default observer(() => {
@@ -32,9 +31,11 @@ export default observer(() => {
         </div>
         <Form.Item>
           <Input
-            placeholder="帐号"
+            placeholder="邮箱"
             size="large"
-            onChange={({ target }) => (username = target.value)}
+            type="email"
+            autoComplete=""
+            onChange={({ target }) => (email = target.value)}
             required
           />
         </Form.Item>
@@ -43,6 +44,7 @@ export default observer(() => {
             type="password"
             placeholder="密码"
             size="large"
+            autoComplete=""
             onChange={({ target }) => (password = target.value)}
             required
           />
@@ -59,7 +61,6 @@ export default observer(() => {
           </Row>
         </Form.Item>
       </form>
-      <Footer />
     </div>
   );
 });

@@ -1,12 +1,97 @@
-import { Spin } from "antd";
+import {
+  CommentOutlined,
+  InfoCircleOutlined,
+  LogoutOutlined,
+  ReadOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import { Layout, Menu, message, Row, Spin } from "antd";
 import { observer } from "mobx-react-lite";
-import Layout from "./layout";
+import { Redirect, Route, RouteProps, Switch, useHistory } from "react-router-dom";
+import { Footer } from "./components";
+import * as pages from "./pages";
 import Login from "./pages/login";
-import store from "./store";
-import { useHistory } from "react-router-dom";
+import Sider from "./sider";
+import store, { logout } from "./store";
+
+export const defaultRoute = "user";
 
 export default observer(() => {
   store.history = useHistory();
+  return (
+    <Layout>
+      <Sider />
+      <Layout>
+        <Layout.Header style={style.header}>
+          <Row style={{ height: "100%" }} justify="end">
+            <Menu mode="horizontal" selectable={false}>
+              <Menu.Item key="issues" icon={<CommentOutlined />}>
+                <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
+                  讨论
+                </ExtLink>
+              </Menu.Item>
+              <Menu.Item key="document" icon={<ReadOutlined />}>
+                <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
+                  文档
+                </ExtLink>
+              </Menu.Item>
+              <Menu.Item key="about" icon={<InfoCircleOutlined />}>
+                <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>
+              </Menu.Item>
+              {store.token && (
+                <Menu.SubMenu key="user" icon={<UserOutlined />} title={store.user?.name}>
+                  <Menu.Item
+                    key="logout"
+                    onClick={() => {
+                      logout();
+                      message.info("您已退出登录");
+                    }}
+                    icon={<LogoutOutlined />}
+                  >
+                    退出登录
+                  </Menu.Item>
+                </Menu.SubMenu>
+              )}
+            </Menu>
+          </Row>
+        </Layout.Header>
+        <Layout.Content id="main-body" style={style.body}>
+          <div style={{ flex: 1 }}>
+            <Switch>
+              <Route path="/register">
+                <pages.register />
+              </Route>
+              <UserRoute path="/user">
+                <pages.user />
+              </UserRoute>
+              <UserRoute path="/apps/:id">
+                <pages.versions />
+              </UserRoute>
+              <UserRoute path="/apps">
+                <pages.apps />
+              </UserRoute>
+              <Redirect from="/" to={`/${defaultRoute}`} />
+            </Switch>
+          </div>
+          <Footer />
+        </Layout.Content>
+      </Layout>
+    </Layout>
+  );
+});
+
+interface ExtLinkProps {
+  children: React.ReactChild;
+  href: string;
+}
+
+const ExtLink = ({ children, href }: ExtLinkProps) => (
+  <a href={href} target="_blank" onClick={(e) => e.stopPropagation()}>
+    {children}
+  </a>
+);
+
+const UserRoute = observer((props: RouteProps) => {
   if (!store.token) return <Login />;
   if (!store.user) {
     return (
@@ -15,9 +100,23 @@ export default observer(() => {
       </div>
     );
   }
-  return <Layout />;
+  return <Route {...props} />;
 });
 
 const style: Style = {
+  header: {
+    background: "#fff",
+    height: 48,
+    lineHeight: "46px",
+    boxShadow: "2px 1px 4px rgba(0, 21, 41, 0.08)",
+    zIndex: 1,
+  },
+  body: {
+    overflow: "auto",
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    paddingBottom: 0,
+  },
   spin: { lineHeight: "100vh", textAlign: "center" },
 };
