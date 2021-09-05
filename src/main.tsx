@@ -61,6 +61,9 @@ export default observer(() => {
               <Route path="/register">
                 <pages.register />
               </Route>
+              <Route path="/reset-password/:step">
+                <pages.resetPassword />
+              </Route>
               <UserRoute path="/user">
                 <pages.user />
               </UserRoute>

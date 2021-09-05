@@ -1,10 +1,12 @@
-import { Button, Form, Input, message } from "antd";
+import { Button, Form, Input, message, Row } from "antd";
 import md5 from "md5";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
+import { Link } from "react-router-dom";
 import logo from "../assets/logo.svg";
 import request from "../request";
 import store from "../store";
+import { isPasswordValid } from "../utils";
 
 const state = observable.object({ loading: false });
 
@@ -74,14 +76,16 @@ export default observer(() => {
             注册
           </Button>
         </Form.Item>
+        <Form.Item>
+          <Row justify="space-between">
+            <span />
+            <Link to="/login">已有帐号？</Link>
+          </Row>
+        </Form.Item>
       </Form>
     </div>
   );
 });
-
-function isPasswordValid(password: string) {
-  return /(?!^[0-9]+$)(?!^[a-z]+$)(?!^[^A-Z]+$)^.{6,16}$/.test(password);
-}
 
 const style: Style = {
   body: { display: "flex", flexDirection: "column", height: "100%" },

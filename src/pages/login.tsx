@@ -57,7 +57,7 @@ export default observer(() => {
         <Form.Item>
           <Row justify="space-between">
             <Link to="/register">注册</Link>
-            <Link to="/forget-password">忘记密码？</Link>
+            <Link to="/reset-password/0">忘记密码？</Link>
           </Row>
         </Form.Item>
       </form>
