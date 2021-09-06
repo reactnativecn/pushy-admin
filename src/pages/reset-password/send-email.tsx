@@ -1,9 +1,9 @@
 import { Button, Form, Input, message, Result } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
-import request from "../../request";
+import request, { RequestError } from "../../request";
 
-const state = observable.object({ loading: false, sent: true });
+const state = observable.object({ loading: false, sent: false });
 
 export default observer(() => {
   if (state.sent) {
@@ -24,7 +24,7 @@ export default observer(() => {
           await request("post", "user/resetpwd/sendmail", values);
           runInAction(() => (state.sent = true));
         } catch (e) {
-          message.error(e.message ?? "网络错误");
+          message.error((e as RequestError).message ?? "网络错误");
         }
         runInAction(() => (state.loading = false));
       }}

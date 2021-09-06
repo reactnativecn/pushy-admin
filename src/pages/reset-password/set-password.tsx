@@ -2,7 +2,7 @@ import { Button, Form, Input, message } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useLocation } from "react-router-dom";
-import request from "../../request";
+import request, { RequestError } from "../../request";
 import { isPasswordValid } from "../../utils";
 import store from "../../store";
 
@@ -21,7 +21,7 @@ export default observer(() => {
           await request("post", "user/resetpwd/reset", values);
           store.history?.replace("/reset-password/3");
         } catch (e) {
-          message.error(e.message ?? "网络错误");
+          message.error((e as RequestError).message ?? "网络错误");
         }
         runInAction(() => (state.loading = false));
       }}

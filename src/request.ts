@@ -27,6 +27,6 @@ export default async function request(method: string, path: string, params?: any
   throw new RequestError(response.status, json.message);
 }
 
-class RequestError {
+export class RequestError {
   constructor(readonly code: number, readonly message: string) {}
 }
