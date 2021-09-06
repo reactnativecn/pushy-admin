@@ -46,7 +46,7 @@ export default observer(() => {
           rules={[
             () => ({
               async validator(_, value) {
-                if (!isPasswordValid(value)) {
+                if (value && !isPasswordValid(value)) {
                   throw "密码中需要同时包含大、小写字母和数字，且长度不少于6位";
                 }
               },
