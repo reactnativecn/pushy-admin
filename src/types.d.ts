@@ -16,6 +16,7 @@ interface App {
   id: number;
   name: string;
   platform: "android" | "ios";
+  status?: "normal" | "paused";
 }
 
 interface PackageBase {

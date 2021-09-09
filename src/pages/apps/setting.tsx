@@ -1,4 +1,4 @@
-import { Form, message, Modal, Spin, Typography } from "antd";
+import { Form, message, Modal, Spin, Typography, Switch } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import request from "../../request";
@@ -59,6 +59,14 @@ const Content = observer(() => {
         >
           {app.downloadUrl ?? ""}
         </Typography.Paragraph>
+      </Form.Item>
+      <Form.Item>
+        <Switch
+          checkedChildren="启用"
+          unCheckedChildren="暂停"
+          checked={app.status !== "paused"}
+          onChange={(checked) => runInAction(() => (app.status = checked ? "normal" : "paused"))}
+        />
       </Form.Item>
     </Form>
   );

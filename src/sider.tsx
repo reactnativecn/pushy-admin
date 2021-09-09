@@ -62,7 +62,9 @@ const SiderMenu = observer(() => {
               )
             }
           >
-            <Link to={`/apps/${i.id}`}>{i.name}</Link>
+            <Link style={{ opacity: i.status == "paused" ? 0.4 : 1 }} to={`/apps/${i.id}`}>
+              {i.name}
+            </Link>
           </Menu.Item>
         ))}
         <Menu.Item key="add-app" icon={<PlusOutlined />} onClick={addApp}>

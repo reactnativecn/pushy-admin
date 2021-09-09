@@ -1,5 +1,5 @@
 import { DeleteFilled, SettingFilled } from "@ant-design/icons";
-import { Breadcrumb, Button, Col, Layout, Row, Tabs } from "antd";
+import { Breadcrumb, Button, Col, Layout, Row, Tabs, Tag } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -23,7 +23,10 @@ export default observer(() => {
             <Breadcrumb.Item>
               <Link to="/apps">应用列表</Link>
             </Breadcrumb.Item>
-            <Breadcrumb.Item>{app?.name}</Breadcrumb.Item>
+            <Breadcrumb.Item>
+              {app?.name}
+              {app?.status == "paused" && <Tag style={{ marginLeft: 8 }}>暂停</Tag>}
+            </Breadcrumb.Item>
           </Breadcrumb>
         </Col>
         <Button.Group>
