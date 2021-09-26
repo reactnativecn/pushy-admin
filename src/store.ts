@@ -2,7 +2,7 @@ import { message } from "antd";
 import { History } from "history";
 import md5 from "md5";
 import { observable, runInAction } from "mobx";
-import request from "./request";
+import request, { RequestError } from "./request";
 
 const initState = {
   apps: observable.array<App>(),
@@ -24,7 +24,9 @@ export async function login(email: string, password: string) {
     message.success("登录成功");
     fetchUserInfo();
   } catch (e) {
-    message.error(e.message);
+    if (e instanceof RequestError) {
+      message.error(e.message);
+    }
   }
 }
 

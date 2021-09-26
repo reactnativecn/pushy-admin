@@ -22,7 +22,8 @@ interface App {
 interface PackageBase {
   id: number;
   name: string;
-  status: "normal";
+  note: string;
+  status: "normal" | "paused" | "expired";
 }
 
 interface Package extends PackageBase {

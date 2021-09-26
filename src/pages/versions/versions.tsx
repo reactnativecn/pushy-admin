@@ -1,5 +1,5 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Typography } from "antd";
+import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Tooltip, Typography } from "antd";
 import { ColumnType } from "antd/lib/table";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -135,8 +135,10 @@ const TableRow = (props: any) => {
 const PackageItem = ({ item }: { item: PackageBase }) => {
   const [_, drag] = useDrag(() => ({ item, type: "package" }));
   return (
-    <Tag ref={drag} color="#1890ff" draggable>
-      {item.name}
-    </Tag>
+    <Tooltip title={item.note}>
+      <Tag ref={drag} color="#1890ff" draggable>
+        {item.name}
+      </Tag>
+    </Tooltip>
   );
 };

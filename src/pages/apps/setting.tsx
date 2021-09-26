@@ -1,7 +1,7 @@
 import { Form, message, Modal, Spin, Typography, Switch } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
-import request from "../../request";
+import request, { RequestError } from "../../request";
 
 const state = observable.object<{ app?: AppDetail }>({});
 
@@ -23,7 +23,7 @@ export default function (app: App) {
       try {
         await request("put", `app/${app.id}`, state.app);
       } catch (error) {
-        message.success(error.message);
+        message.success((error as RequestError).message);
       }
       runInAction(() => (app.name = state.app!.name));
       message.success("修改成功");
