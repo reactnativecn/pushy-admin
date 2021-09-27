@@ -40,8 +40,8 @@ async function fetchUserInfo() {
     const user = await request("get", "user/me");
     await fetchApps();
     runInAction(() => (store.user = user));
-  } catch (e) {
-    // logout();
+  } catch (_) {
+    logout();
     message.error("登录已失效，请重新登录");
   }
 }

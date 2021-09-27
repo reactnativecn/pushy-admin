@@ -1,5 +1,5 @@
-import { DeleteFilled, EditFilled } from "@ant-design/icons";
-import { Select, Button, Input, Form, List, Modal, Popover, Tag, Typography } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } from "antd";
 import { useDrag } from "react-dnd";
 import request from "../../request";
 import state, { fetchPackages, fetchVersions } from "./state";
@@ -27,6 +27,7 @@ function remove(item: Package) {
 }
 
 function edit(item: Package) {
+  console.log(item.note);
   Modal.confirm({
     icon: null,
     closable: true,
@@ -63,48 +64,38 @@ function edit(item: Package) {
 
 const Item = ({ item }: { item: Package }) => {
   const [_, drag] = useDrag(() => ({ item, type: "package" }));
-  const content = (
-    <>
-      <Button type="link" size="large" icon={<EditFilled />} onClick={() => edit(item)} />
-      <Button
-        type="link"
-        size="large"
-        icon={<DeleteFilled />}
-        onClick={() => remove(item)}
-        danger
-      />
-    </>
-  );
   return (
     <div ref={drag} style={{ margin: "0 -8px", background: "#fff" }}>
-      <Popover overlayClassName="popover-package" content={content}>
-        <List.Item style={{ padding: "8px" }}>
-          <List.Item.Meta
-            title={
-              <>
+      <List.Item style={{ padding: "8px" }}>
+        <List.Item.Meta
+          title={
+            <Row align="middle">
+              <Col flex={1}>
                 {item.name}
                 {item.status && item.status != "normal" && (
                   <Tag style={{ marginLeft: 8 }}>{status[item.status]}</Tag>
                 )}
-              </>
-            }
-            description={
-              <>
-                {item.note && (
-                  <Typography.Paragraph
-                    style={{ marginBottom: 0 }}
-                    type="secondary"
-                    ellipsis={{ tooltip: item.note }}
-                  >
-                    备注：{item.note}ff adf asdf asdf asdf asdf asdf asdfaf ffff
-                  </Typography.Paragraph>
-                )}
-                编译时间：{item.buildTime}
-              </>
-            }
-          />
-        </List.Item>
-      </Popover>
+              </Col>
+              <Button type="link" icon={<EditOutlined />} onClick={() => edit(item)} />
+              <Button type="link" icon={<DeleteOutlined />} onClick={() => remove(item)} danger />
+            </Row>
+          }
+          description={
+            <>
+              {item.note && (
+                <Typography.Paragraph
+                  style={{ marginBottom: 0 }}
+                  type="secondary"
+                  ellipsis={{ tooltip: item.note }}
+                >
+                  备注：{item.note}
+                </Typography.Paragraph>
+              )}
+              编译时间：{item.buildTime}
+            </>
+          }
+        />
+      </List.Item>
     </div>
   );
 };

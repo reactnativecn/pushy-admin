@@ -2,8 +2,13 @@
   padding: 5px;
 }
 
-.popover-package .ant-popover-inner-content {
-  padding: 0;
+.packages .ant-list-item button {
+  transition: opacity 0.3s;
+  opacity: 0;
+}
+
+.packages .ant-list-item:hover button {
+  opacity: 1;
 }
 
 .versions .ant-table-cell {

@@ -1,4 +1,4 @@
-import { PlusOutlined } from "@ant-design/icons";
+import { LinkOutlined } from "@ant-design/icons";
 import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Tooltip, Typography } from "antd";
 import { ColumnType } from "antd/lib/table";
 import { observable, runInAction } from "mobx";
@@ -47,7 +47,7 @@ const columns: ColumnType<Version>[] = [
               document.querySelector(`[data-row-key="${id}"]`) ?? document.body
             }
           >
-            <Button type="link" size="small" icon={<PlusOutlined />}>
+            <Button type="link" size="small" icon={<LinkOutlined />}>
               绑定
             </Button>
           </Dropdown>
