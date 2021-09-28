@@ -7,6 +7,7 @@ import request, { RequestError } from "./request";
 const initState = {
   apps: observable.array<App>(),
   token: localStorage.getItem("token"),
+  email: "",
 };
 
 type Store = typeof initState & { user?: User; history?: History };
@@ -16,6 +17,7 @@ const store = observable.object<Store>(initState);
 export default store;
 
 export async function login(email: string, password: string) {
+  store.email = email;
   const params = { email, pwd: md5(password) };
   try {
     const { token } = await request("post", "user/login", params);
@@ -25,7 +27,11 @@ export async function login(email: string, password: string) {
     fetchUserInfo();
   } catch (e) {
     if (e instanceof RequestError) {
-      message.error(e.message);
+      if (e.code == 423) {
+        store.history?.push("/inactivated");
+      } else {
+        message.error(e.message);
+      }
     }
   }
 }
