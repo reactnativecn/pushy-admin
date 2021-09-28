@@ -1,5 +1,5 @@
 import { LoadingOutlined } from "@ant-design/icons";
-import { Result, Button } from "antd";
+import { Button, Result } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";

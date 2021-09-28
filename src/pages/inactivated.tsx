@@ -1,9 +1,9 @@
-import { useEffect } from "react";
-import { Result, Button, message } from "antd";
-import store from "../store";
-import request from "../request";
+import { Button, message, Result } from "antd";
 import { observable } from "mobx";
 import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
+import request from "../request";
+import store from "../store";
 
 const state = observable.object({ loading: false });
 
