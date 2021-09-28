@@ -14,10 +14,10 @@ async function submit(values: { [key: string]: string }) {
   delete values.pwd2;
   values.pwd = md5(values.pwd);
   runInAction(() => (state.loading = true));
+  store.email = values.email;
   try {
     await request("post", "user/register", values);
-    message.success("注册成功");
-    store.history?.goBack();
+    store.history?.replace("/welcome");
   } catch (_) {
     message.error("该邮箱已被注册");
   }

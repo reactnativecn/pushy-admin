@@ -58,6 +58,9 @@ export default observer(() => {
         <Layout.Content id="main-body" style={style.body}>
           <div style={{ flex: 1 }}>
             <Switch>
+              <Route path="/welcome">
+                <pages.welcome />
+              </Route>
               <Route path="/active">
                 <pages.active />
               </Route>
