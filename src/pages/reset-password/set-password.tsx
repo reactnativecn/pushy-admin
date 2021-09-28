@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import request, { RequestError } from "../../request";
 import { isPasswordValid } from "../../utils";
 import store from "../../store";
+import md5 from "md5";
 
 const state = observable.object({ loading: false });
 
@@ -18,9 +19,11 @@ export default observer(() => {
         try {
           delete values.pwd2;
           values.token = new URLSearchParams(search).get("code");
+          values.newPwd = md5(values.newPwd);
           await request("post", "user/resetpwd/reset", values);
           store.history?.replace("/reset-password/3");
         } catch (e) {
+          console.log(e);
           message.error((e as RequestError).message ?? "网络错误");
         }
         runInAction(() => (state.loading = false));
