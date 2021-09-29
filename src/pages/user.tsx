@@ -1,7 +1,23 @@
-import { Button, Descriptions, Space } from "antd";
+import { Button, Descriptions, Space, Popover } from "antd";
 import { ReactNode, useState } from "react";
 import request from "../request";
 import store from "../store";
+
+const InvoiceHint = (
+  <div>
+    <p>
+      请发送邮件至 <a href="mailto:hi@charmlot.com">hi@charmlot.com</a>
+      ，并写明：
+    </p>
+    <p>
+      <strong>
+        公司名称、税号、注册邮箱、接收发票邮箱（不写则发送到注册邮箱），附带支付截图。
+      </strong>
+    </p>
+    <p>我们默认会回复电子发票到接收邮箱，类目为软件服务。</p>
+    <p>如需要邮寄纸质发票请注明邮寄地址，邮费为到付。</p>
+  </div>
+);
 
 export default () => {
   const { name, email, tier, tierExpiresAt } = store.user!;
@@ -25,7 +41,14 @@ export default () => {
         <Descriptions.Item label="服务有效期至">
           <Space>
             {tierExpiresAt ? new Date(tierExpiresAt).toLocaleDateString() : "无"}
-            {tierExpiresAt && <PurchaseButton tier={tier}>续费</PurchaseButton>}
+            {tierExpiresAt && (
+              <>
+                <PurchaseButton tier={tier}>续费</PurchaseButton>
+                <Popover content={InvoiceHint} trigger="click">
+                  <a>申请发票</a>
+                </Popover>
+              </>
+            )}
           </Space>
         </Descriptions.Item>
       </Descriptions>
