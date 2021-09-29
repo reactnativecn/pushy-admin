@@ -61,8 +61,8 @@ export default observer(() => {
               <Route path="/welcome">
                 <pages.welcome />
               </Route>
-              <Route path="/active">
-                <pages.active />
+              <Route path="/activate">
+                <pages.activate />
               </Route>
               <Route path="/inactivated">
                 <pages.inactivated />

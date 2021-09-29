@@ -1,4 +1,4 @@
-export { default as active } from "./active";
+export { default as activate } from "./activate";
 export { default as apps } from "./apps";
 export { default as inactivated } from "./inactivated";
 export { default as register } from "./register";
