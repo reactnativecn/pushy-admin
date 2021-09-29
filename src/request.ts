@@ -1,10 +1,8 @@
 import store from "./store";
 
-const apiEndpoint = "https://u.reactnative.cn/api";
-
 export default async function request(method: string, path: string, params?: any) {
   method = method.toUpperCase();
-  let url = `${apiEndpoint}/${path}`;
+  let url = `https://update.reactnative.cn/api/${path}`;
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
   if (store.token) {
