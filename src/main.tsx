@@ -7,7 +7,7 @@ import {
 } from "@ant-design/icons";
 import { Layout, Menu, message, Row, Spin } from "antd";
 import { observer } from "mobx-react-lite";
-import { Redirect, Route, RouteProps, Switch, useHistory } from "react-router-dom";
+import { Navigate, Route, RouteProps, Routes, useNavigate } from "react-router-dom";
 import { Footer } from "./components";
 import * as pages from "./pages";
 import Login from "./pages/login";
@@ -17,7 +17,7 @@ import store, { logout } from "./store";
 export const defaultRoute = "user";
 
 export default observer(() => {
-  store.history = useHistory();
+  store.navigate = useNavigate();
   return (
     <Layout>
       <Sider />
@@ -57,7 +57,7 @@ export default observer(() => {
         </Layout.Header>
         <Layout.Content id="main-body" style={style.body}>
           <div style={{ flex: 1 }}>
-            <Switch>
+            <Routes>
               <Route path="/welcome">
                 <pages.welcome />
               </Route>
@@ -82,8 +82,8 @@ export default observer(() => {
               <UserRoute path="/apps">
                 <pages.apps />
               </UserRoute>
-              <Redirect from="/" to={`/${defaultRoute}`} />
-            </Switch>
+              <Route element={<Navigate replace to={`/${defaultRoute}`} />} index />
+            </Routes>
           </div>
           <Footer />
         </Layout.Content>

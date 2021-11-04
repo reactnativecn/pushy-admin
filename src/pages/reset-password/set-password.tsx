@@ -21,7 +21,7 @@ export default observer(() => {
           values.token = new URLSearchParams(search).get("code");
           values.newPwd = md5(values.newPwd);
           await request("post", "user/resetpwd/reset", values);
-          store.history?.replace("/reset-password/3");
+          store.navigate("/reset-password/3", { replace: true });
         } catch (e) {
           console.log(e);
           message.error((e as RequestError).message ?? "网络错误");
