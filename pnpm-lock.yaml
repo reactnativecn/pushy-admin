@@ -3,12 +3,12 @@ lockfileVersion: 5.3
 specifiers:
   '@ant-design/icons': ^4.7.0
   '@types/md5': ^2.3.1
-  '@types/react-dom': ^17.0.10
-  '@types/react-router-dom': ^5.3.1
+  '@types/react-dom': ^17.0.11
+  '@types/react-router-dom': ^5.3.2
   antd: ^4.16.13
   md5: ^2.3.0
-  mobx: ^6.3.5
-  mobx-react-lite: ^3.2.1
+  mobx: ^6.3.6
+  mobx-react-lite: ^3.2.2
   react: ^17.0.2
   react-dnd: ^14.0.4
   react-dnd-html5-backend: ^14.0.2
@@ -21,8 +21,8 @@ dependencies:
   '@ant-design/icons': 4.7.0_react-dom@17.0.2+react@17.0.2
   antd: 4.16.13_react-dom@17.0.2+react@17.0.2
   md5: 2.3.0
-  mobx: 6.3.5
-  mobx-react-lite: 3.2.1_87161ce2d4e424698c31a3882ef432ee
+  mobx: 6.3.6
+  mobx-react-lite: 3.2.2_5cbc179485cce5c6733ddc74a83c553b
   react: 17.0.2
   react-dnd: 14.0.4_react@17.0.2
   react-dnd-html5-backend: 14.0.2
@@ -31,8 +31,8 @@ dependencies:
 
 devDependencies:
   '@types/md5': 2.3.1
-  '@types/react-dom': 17.0.10
-  '@types/react-router-dom': 5.3.1
+  '@types/react-dom': 17.0.11
+  '@types/react-router-dom': 5.3.2
   rollup-plugin-external-globals: 0.6.1
   vite-plugin-external: 1.2.3
 
@@ -128,14 +128,14 @@ packages:
     resolution: {integrity: sha512-rZ5drC/jWjrArrS8BR6SIr4cWpW09RNTYt9AMZo3Jwwif+iacXAqgVjm0B0Bv/S1jhDXKHqRVNCbACkJ89RAnQ==}
     dev: true
 
-  /@types/react-dom/17.0.10:
-    resolution: {integrity: sha512-8oz3NAUId2z/zQdFI09IMhQPNgIbiP8Lslhv39DIDamr846/0spjZK0vnrMak0iB8EKb9QFTTIdg2Wj2zH5a3g==}
+  /@types/react-dom/17.0.11:
+    resolution: {integrity: sha512-f96K3k+24RaLGVu/Y2Ng3e1EbZ8/cVJvypZWd7cy0ofCBaf2lcM46xNhycMZ2xGwbBjRql7hOlZ+e2WlJ5MH3Q==}
     dependencies:
       '@types/react': 17.0.17
     dev: true
 
-  /@types/react-router-dom/5.3.1:
-    resolution: {integrity: sha512-UvyRy73318QI83haXlaMwmklHHzV9hjl3u71MmM6wYNu0hOVk9NLTa0vGukf8zXUqnwz4O06ig876YSPpeK28A==}
+  /@types/react-router-dom/5.3.2:
+    resolution: {integrity: sha512-ELEYRUie2czuJzaZ5+ziIp9Hhw+juEw8b7C11YNA4QdLCVbQ3qLi2l4aq8XnlqM7V31LZX8dxUuFUCrzHm6sqQ==}
     dependencies:
       '@types/history': 4.7.9
       '@types/react': 17.0.17
@@ -374,8 +374,8 @@ packages:
       tiny-warning: 1.0.3
     dev: false
 
-  /mobx-react-lite/3.2.1_87161ce2d4e424698c31a3882ef432ee:
-    resolution: {integrity: sha512-hwURgfmP2apX3HQrB55V9DN47kuN3C6KlQvI5UIfJRibXma72C/JudcNt2r9dWjAdFMrcZoz1ivvtXMCkJ2aQA==}
+  /mobx-react-lite/3.2.2_5cbc179485cce5c6733ddc74a83c553b:
+    resolution: {integrity: sha512-FxJJMqmHcnQYOVVs2DdjNHioGlFsXF5/9VHztS9NAfIT3DYrxNZzVi119Zr/OmlWKkWNkAsssSNzPkqautfL4A==}
     peerDependencies:
       mobx: ^6.1.0
       react: ^16.8.0 || ^17
@@ -387,13 +387,13 @@ packages:
       react-native:
         optional: true
     dependencies:
-      mobx: 6.3.5
+      mobx: 6.3.6
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     dev: false
 
-  /mobx/6.3.5:
-    resolution: {integrity: sha512-MeDfqtiSbhVoJgXqQsrJwvq2klj7Xk9pPdMThCdFiwFt33vgWJe82ATppPwVzQoz0AI3QpSSwQzcp3TBDK4syg==}
+  /mobx/6.3.6:
+    resolution: {integrity: sha512-TeCp8BTco5cmXKY7Zt5VSL5fHBEAHTSA6xs+KWmcxi3cFN1C+Xqs2m3giyGT/e6TSjtdDysVX5+cCZZhEyiJmA==}
     dev: false
 
   /moment/2.29.1:

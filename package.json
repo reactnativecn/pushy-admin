@@ -8,8 +8,8 @@
     "@ant-design/icons": "^4.7.0",
     "antd": "^4.16.13",
     "md5": "^2.3.0",
-    "mobx": "^6.3.5",
-    "mobx-react-lite": "^3.2.1",
+    "mobx": "^6.3.6",
+    "mobx-react-lite": "^3.2.2",
     "react": "^17.0.2",
     "react-dnd": "^14.0.4",
     "react-dnd-html5-backend": "^14.0.2",
@@ -18,8 +18,8 @@
   },
   "devDependencies": {
     "@types/md5": "^2.3.1",
-    "@types/react-dom": "^17.0.10",
-    "@types/react-router-dom": "^5.3.1",
+    "@types/react-dom": "^17.0.11",
+    "@types/react-router-dom": "^5.3.2",
     "rollup-plugin-external-globals": "^0.6.1",
     "vite-plugin-external": "^1.2.3"
   },
