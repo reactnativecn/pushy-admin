@@ -36,7 +36,7 @@ export async function removeApp(app: App) {
     async onOk() {
       await request("delete", `app/${app.id}`);
       fetchApps();
-      store.navigate("/apps", { replace: true });
+      store.history?.replace("/apps");
     },
   });
 }

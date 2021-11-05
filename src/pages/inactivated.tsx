@@ -10,7 +10,7 @@ const state = observable.object({ loading: false });
 export default observer(() => {
   useEffect(() => {
     if (!store.email) {
-      store.navigate("/login", { replace: true });
+      store.history?.replace("/login");
     }
   }, []);
   return (

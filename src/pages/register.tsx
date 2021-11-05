@@ -17,7 +17,7 @@ async function submit(values: { [key: string]: string }) {
   store.email = values.email;
   try {
     await request("post", "user/register", values);
-    store.navigate("/welcome", { replace: true });
+    store.history?.replace("/welcome");
   } catch (_) {
     message.error("该邮箱已被注册");
   }

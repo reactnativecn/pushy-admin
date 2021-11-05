@@ -1,17 +1,16 @@
 import { message } from "antd";
+import { History } from "history";
 import md5 from "md5";
 import { observable, runInAction } from "mobx";
-import { NavigateFunction } from "react-router-dom";
 import request, { RequestError } from "./request";
 
 const initState = {
   apps: observable.array<App>(),
   token: localStorage.getItem("token"),
   email: "",
-  navigate: () => {},
 };
 
-type Store = typeof initState & { user?: User; navigate: NavigateFunction };
+type Store = typeof initState & { user?: User; history?: History };
 
 const store = observable.object<Store>(initState);
 
@@ -29,7 +28,7 @@ export async function login(email: string, password: string) {
   } catch (e) {
     if (e instanceof RequestError) {
       if (e.code == 423) {
-        store.navigate("/inactivated");
+        store.history?.push("/inactivated");
       } else {
         message.error(e.message);
       }

@@ -1,5 +1,5 @@
 import { Card, Steps } from "antd";
-import { useParams } from "react-router-dom";
+import { useRouteMatch } from "react-router-dom";
 import SendEmail from "./send-email";
 import SetPassword from "./set-password";
 import Success from "./success";
@@ -11,7 +11,7 @@ const body = {
 };
 
 export default () => {
-  const { step = "0" } = useParams() as { step?: keyof typeof body };
+  const { step = "0" } = useRouteMatch().params as { step?: keyof typeof body };
   return (
     <Card style={{ width: 760, margin: "auto" }}>
       <Steps style={{ marginBottom: 48 }} current={Number(step)}>
