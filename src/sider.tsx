@@ -5,7 +5,7 @@ import {
   PlusOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu } from "antd";
+import { Layout, Menu, Tag } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Link, useLocation } from "react-router-dom";
@@ -62,8 +62,9 @@ const SiderMenu = observer(() => {
               )
             }
           >
-            <Link style={{ opacity: i.status == "paused" ? 0.4 : 1 }} to={`/apps/${i.id}`}>
+            <Link to={`/apps/${i.id}`}>
               {i.name}
+              {i.status == "paused" && <Tag style={{ marginLeft: 8 }}>暂停</Tag>}
             </Link>
           </Menu.Item>
         ))}
