@@ -4,13 +4,20 @@ import md5 from "md5";
 import { observable, runInAction } from "mobx";
 import request, { RequestError } from "./request";
 
+const noop = () => {};
 const initState = {
   apps: observable.array<App>(),
   token: localStorage.getItem("token"),
   email: "",
+  history: {
+    push: noop,
+    replace: noop,
+    go: noop,
+    goBack: noop,
+  } as any as History,
 };
 
-type Store = typeof initState & { user?: User; history?: History };
+type Store = typeof initState & { user?: User; history: History };
 
 const store = observable.object<Store>(initState);
 
@@ -28,7 +35,7 @@ export async function login(email: string, password: string) {
   } catch (e) {
     if (e instanceof RequestError) {
       if (e.code == 423) {
-        store.history?.push("/inactivated");
+        store.history.push("/inactivated");
       } else {
         message.error(e.message);
       }
