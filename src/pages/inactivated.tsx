@@ -17,11 +17,14 @@ export default observer(() => {
     <Result
       title="您的账号还未激活，请查看您的邮箱"
       subTitle="如未收到激活邮件，请点击"
-      extra={
-        <Button type="primary" onClick={sendEmail} loading={state.loading}>
+      extra={[
+        <Button key="resend" type="primary" onClick={sendEmail} loading={state.loading}>
           再次发送
-        </Button>
-      }
+        </Button>,
+        <Button key="back" href="/user">
+          返回登录
+        </Button>,
+      ]}
     />
   );
 });
