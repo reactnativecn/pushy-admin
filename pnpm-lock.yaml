@@ -251,8 +251,8 @@ packages:
     engines: {node: '>=0.11'}
     dev: false
 
-  /dayjs/1.10.6:
-    resolution: {integrity: sha512-AztC/IOW4L1Q41A86phW5Thhcrco3xuAA+YX/BLpLWWjRcTj5TOt/QImBLmCKlrF7u7k47arTnOyL6GnbG8Hvw==}
+  /dayjs/1.10.7:
+    resolution: {integrity: sha512-P6twpd70BcPK34K26uJ1KT3wlhpuOAPoMwJzpsIWUxHZ7wpmbdZL/hQqBDfz7hGurYSa5PhzdhDHtt319hL3ig==}
     dev: false
 
   /dnd-core/14.0.1:
@@ -660,7 +660,7 @@ packages:
       '@babel/runtime': 7.15.3
       classnames: 2.3.1
       date-fns: 2.23.0
-      dayjs: 1.10.6
+      dayjs: 1.10.7
       moment: 2.29.1
       rc-trigger: 5.2.10_react-dom@17.0.2+react@17.0.2
       rc-util: 5.13.2_react-dom@17.0.2+react@17.0.2

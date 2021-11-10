@@ -55,28 +55,48 @@ const columns: ColumnType<Version>[] = [
       );
     },
   },
+  {
+    title: "上传时间",
+    dataIndex: "createdAt",
+    render: (_, record) => renderTextCol(record, "createdAt", false),
+  },
 ];
 
-function renderTextCol(record: Version, key: string) {
+function renderTextCol(record: Version, key: string, isEditable: boolean = true) {
   let value = Reflect.get(record, key);
-  const editable = {
-    editing: false,
-    onStart() {
-      Modal.confirm({
-        icon: null,
-        title: columns.find((i) => i.dataIndex == key)?.title,
-        closable: true,
-        maskClosable: true,
-        content: (
-          <Input.TextArea defaultValue={value} onChange={({ target }) => (value = target.value)} />
-        ),
-        async onOk() {
-          await request("put", `app/${state.app?.id}/version/${record.id}`, { [key]: value });
-          fetchVersions(state.pagination.current);
-        },
-      });
-    },
-  };
+  if (key === "createdAt") {
+    const t = new Date(value);
+    const y = t.getFullYear();
+    const M = t.getMonth() < 10 ? "0" + t.getMonth() : t.getMonth();
+    const d = t.getDate() < 10 ? "0" + t.getDate() : t.getDate();
+    const h = t.getHours() < 10 ? "0" + t.getHours() : t.getHours();
+    const m = t.getMinutes() < 10 ? "0" + t.getMinutes() : t.getMinutes();
+    value = `${y}-${M}-${d} ${h}:${m}`;
+  }
+  let editable;
+  if (isEditable) {
+    editable = {
+      editing: false,
+      onStart() {
+        Modal.confirm({
+          icon: null,
+          title: columns.find((i) => i.dataIndex == key)?.title,
+          closable: true,
+          maskClosable: true,
+          content: (
+            <Input.TextArea
+              defaultValue={value}
+              onChange={({ target }) => (value = target.value)}
+            />
+          ),
+          async onOk() {
+            await request("put", `app/${state.app?.id}/version/${record.id}`, { [key]: value });
+            fetchVersions(state.pagination.current);
+          },
+        });
+      },
+    };
+  }
   return (
     <Typography.Text style={{ width: 160 }} editable={editable} ellipsis>
       {value}
