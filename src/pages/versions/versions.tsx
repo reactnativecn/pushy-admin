@@ -3,7 +3,7 @@ import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Tooltip, Typography }
 import { ColumnType } from "antd/lib/table";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useDrag, useDrop } from "react-dnd";
+// import { useDrag, useDrop } from "react-dnd";
 import request from "../../request";
 import state, { bindPackage, fetchVersions, removeSelectedVersions } from "./state";
 
@@ -136,29 +136,33 @@ export default observer(() => {
 });
 
 const TableRow = (props: any) => {
-  const [{ canDrop, isOver }, drop] = useDrop(() => ({
-    accept: "package",
-    async drop(pack: PackageBase) {
-      const { id, packages = [] } = state.versions.find((i) => i.id == props["data-row-key"]) ?? {};
-      if (!packages.some(({ id }) => pack.id == id)) {
-        bindPackage(pack.id, id!);
-      }
-    },
-    collect: (monitor) => ({ isOver: monitor.isOver(), canDrop: monitor.canDrop() }),
-  }));
+  // const [{ canDrop, isOver }, drop] = useDrop(() => ({
+  //   accept: "package",
+  //   async drop(pack: PackageBase) {
+  //     const { id, packages = [] } = state.versions.find((i) => i.id == props["data-row-key"]) ?? {};
+  //     if (!packages.some(({ id }) => pack.id == id)) {
+  //       bindPackage(pack.id, id!);
+  //     }
+  //   },
+  //   collect: (monitor) => ({ isOver: monitor.isOver(), canDrop: monitor.canDrop() }),
+  // }));
   let className = "";
-  if (canDrop) className = "can-drop";
-  if (isOver) className = "is-over";
-  return <tr ref={drop} {...props} className={`ant-table-row ${className}`} />;
+  // if (canDrop) className = "can-drop";
+  // if (isOver) className = "is-over";
+  return (
+    <tr
+      // ref={drop}
+      {...props}
+      className={`ant-table-row ${className}`}
+    />
+  );
 };
 
 const PackageItem = ({ item }: { item: PackageBase }) => {
-  const [_, drag] = useDrag(() => ({ item, type: "package" }));
+  // const [_, drag] = useDrag(() => ({ item, type: "package" }));
   return (
     <Tooltip title={item.note}>
-      <Tag ref={drag} color="#1890ff" draggable>
-        {item.name}
-      </Tag>
+      <Tag color="#1890ff">{item.name}</Tag>
     </Tooltip>
   );
 };

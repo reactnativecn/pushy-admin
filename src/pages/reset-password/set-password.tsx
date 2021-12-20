@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import request, { RequestError } from "../../request";
 import { isPasswordValid } from "../../utils";
 import store from "../../store";
-import md5 from "md5";
+import md5 from "blueimp-md5";
 
 const state = observable.object({ loading: false });
 

@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } from "antd";
-import { useDrag } from "react-dnd";
+// import { useDrag } from "react-dnd";
 import request from "../../request";
 import state, { fetchPackages, fetchVersions } from "./state";
 
@@ -63,9 +63,9 @@ function edit(item: Package) {
 }
 
 const Item = ({ item }: { item: Package }) => {
-  const [_, drag] = useDrag(() => ({ item, type: "package" }));
+  // const [_, drag] = useDrag(() => ({ item, type: "package" }));
   return (
-    <div ref={drag} style={{ margin: "0 -8px", background: "#fff" }}>
+    <div style={{ margin: "0 -8px", background: "#fff" }}>
       <List.Item style={{ padding: "8px" }}>
         <List.Item.Meta
           title={

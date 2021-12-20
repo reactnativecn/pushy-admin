@@ -10,7 +10,7 @@ const globals = {
   "mobx-react-lite": "mobxReactLite",
   antd: "antd",
   "@ant-design/icons": "icons",
-  md5: "MD5",
+  md5: "blueimp-md5",
 };
 
 export default ({ mode }) => {

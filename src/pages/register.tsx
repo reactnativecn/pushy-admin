@@ -1,5 +1,5 @@
 import { Button, Form, Input, message, Row } from "antd";
-import md5 from "md5";
+import md5 from "blueimp-md5";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Link } from "react-router-dom";
