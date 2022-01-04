@@ -1,4 +1,4 @@
-import { Button, Form, Input, message, Row } from "antd";
+import { Button, Form, Input, message, Row, Checkbox } from "antd";
 import md5 from "blueimp-md5";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -8,10 +8,11 @@ import request from "../request";
 import store from "../store";
 import { isPasswordValid } from "../utils";
 
-const state = observable.object({ loading: false });
+const state = observable.object({ loading: false, agreed: false });
 
 async function submit(values: { [key: string]: string }) {
   delete values.pwd2;
+  delete values.agreed;
   values.pwd = md5(values.pwd);
   runInAction(() => (state.loading = true));
   store.email = values.email;
@@ -25,7 +26,7 @@ async function submit(values: { [key: string]: string }) {
 }
 
 export default observer(() => {
-  const { loading } = state;
+  const { loading, agreed } = state;
   return (
     <div style={style.body}>
       <Form style={style.form} onFinish={(values) => submit(values)}>
@@ -78,6 +79,27 @@ export default observer(() => {
         </Form.Item>
         <Form.Item>
           <Row justify="space-between">
+            <Form.Item
+              name="agreed"
+              valuePropName="checked"
+              rules={[
+                {
+                  validator: (_, value) =>
+                    value ? Promise.resolve() : Promise.reject(new Error("请阅读并同意后勾选此处")),
+                },
+              ]}
+              hasFeedback
+              noStyle
+            >
+              <Checkbox>
+                <span>
+                  已阅读并同意
+                  <a target="_blank" href="https://pushy.reactnative.cn/agreement/">
+                    用户协议
+                  </a>
+                </span>
+              </Checkbox>
+            </Form.Item>
             <span />
             <Link to="/login">已有帐号？</Link>
           </Row>
