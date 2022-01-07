@@ -67,7 +67,8 @@ function renderTextCol(record: Version, key: string, isEditable: boolean = true)
   if (key === "createdAt") {
     const t = new Date(value);
     const y = t.getFullYear();
-    const M = t.getMonth() < 10 ? "0" + t.getMonth() : t.getMonth();
+    const month = t.getMonth() + 1;
+    const M = month < 10 ? "0" + month : month;
     const d = t.getDate() < 10 ? "0" + t.getDate() : t.getDate();
     const h = t.getHours() < 10 ? "0" + t.getHours() : t.getHours();
     const m = t.getMinutes() < 10 ? "0" + t.getMinutes() : t.getMinutes();
