@@ -1,4 +1,4 @@
-import * as React from "react";
+// import * as React from "react";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/lib/locale/zh_CN";
 import { render } from "react-dom";
@@ -8,7 +8,7 @@ import { HashRouter as Router } from "react-router-dom";
 import "./index.css";
 import Main from "./main";
 
-window.React = React;
+// window.React = React;
 
 render(
   <ConfigProvider locale={zhCN}>
