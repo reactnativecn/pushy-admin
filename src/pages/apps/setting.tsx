@@ -1,10 +1,11 @@
-import { Form, message, Modal, Spin, Typography, Switch } from "antd";
+import { Form, message, Modal, Spin, Typography, Switch, Button } from "antd";
 import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import request, { RequestError } from "../../request";
+import { removeApp } from "../apps/state";
 import store from "../../store";
 import { default as versionPageState } from "../versions/state";
-
+import { DeleteFilled } from "@ant-design/icons";
 const state = observable.object<{ app?: AppDetail }>({});
 
 export default function (app: App) {
@@ -27,16 +28,20 @@ export default function (app: App) {
       try {
         await request("put", `app/${app.id}`, state.app);
       } catch (error) {
-        message.success((error as RequestError).message);
+        message.error((error as RequestError).message);
+        return;
       }
 
       runInAction(() => {
-        app.name = state.app!.name;
-        Object.assign(
-          store.apps.find((i) => i.id == app.id),
-          state.app
-        );
-        versionPageState.app = state.app;
+        if (state.app) {
+          app.name = state.app.name;
+          store.apps.find((i) => {
+            if (i.id == app.id) {
+              Object.assign(i, state.app);
+            }
+          });
+          versionPageState.app = state.app;
+        }
       });
       message.success("修改成功");
     },
@@ -72,13 +77,18 @@ const Content = observer(() => {
           {app.downloadUrl ?? ""}
         </Typography.Paragraph>
       </Form.Item>
-      <Form.Item>
+      <Form.Item label="启用热更新">
         <Switch
           checkedChildren="启用"
           unCheckedChildren="暂停"
           checked={app.status !== "paused"}
           onChange={(checked) => runInAction(() => (app.status = checked ? "normal" : "paused"))}
         />
+      </Form.Item>
+      <Form.Item label="删除应用">
+        <Button type="primary" icon={<DeleteFilled />} onClick={() => removeApp(app)} danger>
+          删除
+        </Button>
       </Form.Item>
     </Form>
   );

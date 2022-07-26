@@ -1,3 +1,4 @@
+import { message } from "antd";
 import store from "./store";
 
 export default async function request(method: string, path: string, params?: any) {
@@ -24,6 +25,7 @@ export default async function request(method: string, path: string, params?: any
   if (response.status == 200) {
     return json;
   }
+  message.error(json.message);
   throw new RequestError(response.status, json.message);
 }
 

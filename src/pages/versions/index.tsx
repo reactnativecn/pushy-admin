@@ -1,4 +1,4 @@
-import { DeleteFilled, SettingFilled } from "@ant-design/icons";
+import { SettingFilled } from "@ant-design/icons";
 import { Breadcrumb, Button, Col, Layout, Row, Tabs, Tag } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
@@ -7,7 +7,6 @@ import "./index.css";
 import PackageList from "./packages";
 import state, { fetch } from "./state";
 import VersionTable from "./versions";
-import { removeApp } from "../apps/state";
 import settingApp from "../apps/setting";
 
 export default observer(() => {
@@ -30,22 +29,8 @@ export default observer(() => {
           </Breadcrumb>
         </Col>
         <Button.Group>
-          <Button
-            size="small"
-            type="primary"
-            icon={<DeleteFilled />}
-            onClick={() => removeApp(app)}
-            danger
-          >
-            删除
-          </Button>
-          <Button
-            size="small"
-            type="primary"
-            icon={<SettingFilled />}
-            onClick={() => settingApp(app)}
-          >
-            设置
+          <Button type="primary" icon={<SettingFilled />} onClick={() => settingApp(app)}>
+            应用设置
           </Button>
         </Button.Group>
       </Row>
