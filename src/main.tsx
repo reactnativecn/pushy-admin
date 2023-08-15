@@ -13,6 +13,7 @@ import * as pages from "./pages";
 import Login from "./pages/login";
 import Sider from "./sider";
 import store, { logout } from "./store";
+import { ReactNode } from "react";
 
 export const defaultRoute = "user";
 
@@ -56,7 +57,7 @@ export default observer(() => {
           </Row>
         </Layout.Header>
         <Layout.Content id="main-body" style={style.body}>
-          <div style={{ flex: 1 }}>
+          <div className="h-full">
             <Switch>
               <Route path="/welcome">
                 <pages.welcome />
@@ -82,7 +83,7 @@ export default observer(() => {
               <UserRoute path="/apps">
                 <pages.apps />
               </UserRoute>
-              <Redirect from="/" to={`/${defaultRoute}`} />
+              <Route path="/" render={() => <Redirect to={`/${defaultRoute}`} />} />
             </Switch>
           </div>
           <Footer />
@@ -93,7 +94,7 @@ export default observer(() => {
 });
 
 interface ExtLinkProps {
-  children: React.ReactChild;
+  children: ReactNode;
   href: string;
 }
 

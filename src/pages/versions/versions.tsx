@@ -81,7 +81,7 @@ function renderTextCol(record: Version, key: string, isEditable: boolean = true)
       onStart() {
         Modal.confirm({
           icon: null,
-          title: columns.find((i) => i.dataIndex == key)?.title,
+          title: columns.find((i) => i.dataIndex == key)?.title as string,
           closable: true,
           maskClosable: true,
           content: (

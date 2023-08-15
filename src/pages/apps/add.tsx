@@ -3,7 +3,7 @@ import { Form, Input, message, Modal, Select } from "antd";
 import request from "../../request";
 import { fetchApps } from "../../store";
 
-export default function () {
+export default function add() {
   let name = "";
   let platform = "android";
   Modal.confirm({
@@ -33,7 +33,7 @@ export default function () {
     ),
     onOk(_) {
       if (!name) {
-        message.warn("请输入应用名称");
+        message.warning("请输入应用名称");
         return false;
       }
       return request("post", "app/create", { name, platform })

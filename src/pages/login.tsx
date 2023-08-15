@@ -12,6 +12,7 @@ async function submit(event: FormEvent) {
   event.preventDefault();
   runInAction(async () => {
     state.loading = true;
+    console.log(1)
     await login(email, password);
     state.loading = false;
   });

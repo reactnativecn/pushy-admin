@@ -8,7 +8,7 @@ import { default as versionPageState } from "../versions/state";
 import { DeleteFilled } from "@ant-design/icons";
 const state = observable.object<{ app?: AppDetail }>({});
 
-export default function (app: App) {
+export default function setting(app: App) {
   if (app.id != state.app?.id) {
     state.app = undefined;
   }

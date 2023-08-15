@@ -14,7 +14,7 @@ const InvoiceHint = (
         公司名称、税号、注册邮箱、接收发票邮箱（不写则发送到注册邮箱），附带支付截图。
       </strong>
     </p>
-    <p>我们默认会回复普通电子发票到接收邮箱，类目为软件服务。</p>
+    <p>我们默认会回复普通电子发票到接收邮箱(请同时留意垃圾邮件)，类目为软件服务。</p>
     <p>如需要邮寄纸质发票请注明邮寄地址，邮费为到付。</p>
   </div>
 );
@@ -45,7 +45,7 @@ export default () => {
               <>
                 <PurchaseButton tier={tier}>续费</PurchaseButton>
                 <Popover content={InvoiceHint} trigger="click">
-                  <a>申请发票</a>
+                  <Button type="link">申请发票</Button>
                 </Popover>
               </>
             )}

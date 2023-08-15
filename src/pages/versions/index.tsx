@@ -36,9 +36,7 @@ export default observer(() => {
       </Row>
       <Layout>
         <Layout.Sider theme="light" style={style.sider} width={240}>
-          <div className="ant-table-title" style={style.title}>
-            原生包
-          </div>
+          <div className="py-4">原生包</div>
           <Tabs>
             <Tabs.TabPane tab="全部" key="all">
               <PackageList dataSource={packages} />
@@ -57,6 +55,5 @@ export default observer(() => {
 });
 
 const style: Style = {
-  sider: { marginRight: 16, padding: 16, paddingTop: 0, height: "100%" },
-  title: { paddingLeft: 0, paddingRight: 0 },
+  sider: { marginRight: 16, padding: 16, paddingTop: 0, height: "100%", borderRadius: 8 },
 };
