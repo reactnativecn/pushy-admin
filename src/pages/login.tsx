@@ -12,7 +12,7 @@ async function submit(event: FormEvent) {
   event.preventDefault();
   runInAction(async () => {
     state.loading = true;
-    console.log(1)
+    console.log(1);
     await login(email, password);
     state.loading = false;
   });
@@ -27,7 +27,7 @@ export default observer(() => {
     <div style={style.body}>
       <form style={style.form} onSubmit={submit}>
         <div style={style.logo}>
-          <img src={logo} />
+          <img src={logo} className="mx-auto" />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
         </div>
         <Form.Item>
@@ -51,7 +51,13 @@ export default observer(() => {
           />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit" size="large" loading={loading} block>
+          <Button
+            type="primary"
+            htmlType="submit"
+            size="large"
+            loading={loading}
+            block
+          >
             登录
           </Button>
         </Form.Item>

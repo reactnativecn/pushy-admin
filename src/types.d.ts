@@ -17,6 +17,7 @@ interface App {
   name: string;
   platform: "android" | "ios";
   status?: "normal" | "paused";
+  ignoreBuildTime?: 'enabled' | 'disabled';
 }
 
 interface PackageBase {
