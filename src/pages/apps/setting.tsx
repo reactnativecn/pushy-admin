@@ -93,7 +93,7 @@ const Content = observer(() => {
           }
         />
       </Form.Item>
-      <Form.Item label="忽略编译时间戳（高级版以上可启用）">
+      {/* <Form.Item label="忽略编译时间戳（高级版以上可启用）">
         <Switch
           disabled={user?.tier !== "premium" && user?.tier !== "pro"}
           checkedChildren="启用"
@@ -105,7 +105,7 @@ const Content = observer(() => {
             )
           }
         />
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item label="删除应用">
         <Button
           type="primary"
