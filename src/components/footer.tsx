@@ -1,14 +1,14 @@
 import { Layout, Typography } from "antd";
 
 export default () => (
-  <Layout.Footer style={style.footer}>
+  <Layout.Footer className="text-center">
     <Typography.Paragraph type="secondary">
       React Native中文网 © {new Date().getFullYear()} 武汉青罗网络科技有限公司
     </Typography.Paragraph>
-    <Typography.Paragraph>
+    <Typography.Paragraph className="flex items-center justify-center">
       <a href="http://beian.miit.gov.cn/">鄂ICP备20002031号-3</a>
       <img
-        style={{ height: 24, margin: "0 4px" }}
+        className="h-6 my-0 mx-1"
         src="https://img.alicdn.com/tfs/TB1..50QpXXXXX7XpXXXXXXXXXX-40-40.png"
         alt="鄂公网安备 42011202001821号"
       />
@@ -18,7 +18,3 @@ export default () => (
     </Typography.Paragraph>
   </Layout.Footer>
 );
-
-const style: Style = {
-  footer: { textAlign: "center", paddingBottom: 0, background: "none" },
-};

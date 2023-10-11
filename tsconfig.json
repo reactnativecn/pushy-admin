@@ -6,5 +6,5 @@
     "reactNamespace": "window",
     "esModuleInterop": true,
     "strict": true
-  }
+  },
 }
