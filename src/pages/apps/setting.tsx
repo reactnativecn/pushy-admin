@@ -1,12 +1,13 @@
-import { Form, message, Modal, Spin, Typography, Switch, Button } from "antd";
-import { observable, runInAction } from "mobx";
-import { observer } from "mobx-react-lite";
-import request, { RequestError } from "../../request";
-import { removeApp } from "../apps/state";
-import store from "../../store";
+import { Form, message, Modal, Spin, Typography, Switch, Button } from 'antd';
+import { observable, runInAction } from 'mobx';
+import { observer } from 'mobx-react-lite';
+import { DeleteFilled } from '@ant-design/icons';
+import request, { RequestError } from '../../request';
+import { removeApp } from './state';
+import store from '../../store';
 
-import { default as versionPageState } from "../versions/state";
-import { DeleteFilled } from "@ant-design/icons";
+import { default as versionPageState } from '../versions/state';
+
 const state = observable.object<{ app?: AppDetail }>({});
 
 export default function setting(app: App) {
@@ -14,7 +15,7 @@ export default function setting(app: App) {
     state.app = undefined;
   }
 
-  request("get", `app/${app.id}`).then((app) => {
+  request('get', `app/${app.id}`).then((app) => {
     runInAction(() => {
       state.app = app;
     });
@@ -27,7 +28,7 @@ export default function setting(app: App) {
     content: <Content />,
     async onOk() {
       try {
-        await request("put", `app/${app.id}`, state.app);
+        await request('put', `app/${app.id}`, state.app);
       } catch (error) {
         message.error((error as RequestError).message);
         return;
@@ -44,7 +45,7 @@ export default function setting(app: App) {
           versionPageState.app = state.app;
         }
       });
-      message.success("修改成功");
+      message.success('修改成功');
     },
   });
 }
@@ -55,10 +56,10 @@ const Content = observer(() => {
 
   const { user } = store;
   return (
-    <Form layout="vertical">
-      <Form.Item label="应用名">
+    <Form layout='vertical'>
+      <Form.Item label='应用名'>
         <Typography.Paragraph
-          type="secondary"
+          type='secondary'
           style={style.item}
           editable={{
             onChange: (value) => runInAction(() => (app.name = value)),
@@ -67,52 +68,43 @@ const Content = observer(() => {
           {app.name}
         </Typography.Paragraph>
       </Form.Item>
-      <Form.Item label="应用 Key">
-        <Typography.Paragraph style={style.item} type="secondary" copyable>
+      <Form.Item label='应用 Key'>
+        <Typography.Paragraph style={style.item} type='secondary' copyable>
           {app.appKey}
         </Typography.Paragraph>
       </Form.Item>
-      <Form.Item label="下载地址">
+      <Form.Item label='下载地址'>
         <Typography.Paragraph
-          type="secondary"
+          type='secondary'
           style={style.item}
           editable={{
             onChange: (value) => runInAction(() => (app.downloadUrl = value)),
           }}
         >
-          {app.downloadUrl ?? ""}
+          {app.downloadUrl ?? ''}
         </Typography.Paragraph>
       </Form.Item>
-      <Form.Item label="启用热更新">
+      <Form.Item label='启用热更新'>
         <Switch
-          checkedChildren="启用"
-          unCheckedChildren="暂停"
-          checked={app.status !== "paused"}
+          checkedChildren='启用'
+          unCheckedChildren='暂停'
+          checked={app.status !== 'paused'}
+          onChange={(checked) => runInAction(() => (app.status = checked ? 'normal' : 'paused'))}
+        />
+      </Form.Item>
+      <Form.Item label='忽略编译时间戳（高级版以上可启用）'>
+        <Switch
+          disabled={user?.tier !== 'premium' && user?.tier !== 'pro'}
+          checkedChildren='启用'
+          unCheckedChildren='不启用'
+          checked={app.ignoreBuildTime === 'enabled'}
           onChange={(checked) =>
-            runInAction(() => (app.status = checked ? "normal" : "paused"))
+            runInAction(() => (app.ignoreBuildTime = checked ? 'enabled' : 'disabled'))
           }
         />
       </Form.Item>
-      {/* <Form.Item label="忽略编译时间戳（高级版以上可启用）">
-        <Switch
-          disabled={user?.tier !== "premium" && user?.tier !== "pro"}
-          checkedChildren="启用"
-          unCheckedChildren="不启用"
-          checked={app.ignoreBuildTime === "enabled"}
-          onChange={(checked) =>
-            runInAction(
-              () => (app.ignoreBuildTime = checked ? "enabled" : "disabled")
-            )
-          }
-        />
-      </Form.Item> */}
-      <Form.Item label="删除应用">
-        <Button
-          type="primary"
-          icon={<DeleteFilled />}
-          onClick={() => removeApp(app)}
-          danger
-        >
+      <Form.Item label='删除应用'>
+        <Button type='primary' icon={<DeleteFilled />} onClick={() => removeApp(app)} danger>
           删除
         </Button>
       </Form.Item>
