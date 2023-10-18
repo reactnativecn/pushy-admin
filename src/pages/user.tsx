@@ -24,7 +24,6 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
   const [loading, setLoading] = useState(false);
   return (
     <Button
-      ghost
       // type='link'
       className='ml-6'
       icon={<AlipayCircleOutlined />}
