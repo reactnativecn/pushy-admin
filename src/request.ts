@@ -4,7 +4,7 @@ import store from './store';
 export default async function request(method: string, path: string, params?: any) {
   method = method.toUpperCase();
   // let url = `http://localhost:8910/${path}`;
-  let url = `https://update.reactnative.cn/api/${path}`;
+  let url = `https://update.react-native.cn/api/${path}`;
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
   if (store.token) {
