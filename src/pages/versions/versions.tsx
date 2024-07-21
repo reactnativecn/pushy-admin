@@ -1,32 +1,32 @@
-import { LinkOutlined } from "@ant-design/icons";
-import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Tooltip, Typography } from "antd";
-import { ColumnType } from "antd/lib/table";
-import { observable, runInAction } from "mobx";
-import { observer } from "mobx-react-lite";
+import { LinkOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Tooltip, Typography } from 'antd';
+import { ColumnType } from 'antd/lib/table';
+import { observable, runInAction } from 'mobx';
+import { observer } from 'mobx-react-lite';
 // import { useDrag, useDrop } from "react-dnd";
-import request from "../../request";
-import state, { bindPackage, fetchVersions, removeSelectedVersions } from "./state";
+import request from '../../request';
+import state, { bindPackage, fetchVersions, removeSelectedVersions } from './state';
 
 const columns: ColumnType<Version>[] = [
-  { title: "版本", dataIndex: "name", render: (_, record) => renderTextCol(record, "name") },
+  { title: '版本', dataIndex: 'name', render: (_, record) => renderTextCol(record, 'name') },
   {
-    title: "描述",
-    dataIndex: "description",
-    render: (_, record) => renderTextCol(record, "description"),
+    title: '描述',
+    dataIndex: 'description',
+    render: (_, record) => renderTextCol(record, 'description'),
   },
   {
-    title: "元信息",
-    dataIndex: "metaInfo",
-    render: (_, record) => renderTextCol(record, "metaInfo"),
+    title: '元信息',
+    dataIndex: 'metaInfo',
+    render: (_, record) => renderTextCol(record, 'metaInfo'),
   },
   {
-    title: "绑定原生包",
-    dataIndex: "packages",
-    width: "100%",
+    title: '绑定原生包',
+    dataIndex: 'packages',
+    width: '100%',
     render(_, { packages, id }) {
       const bindedPackages = packages.map((i) => <PackageItem key={i.id} item={i} />);
       const items = state.packages.filter((i) => !packages.some((j) => i.id == j.id));
-      if (items.length == 0) return bindedPackages;
+      // if (items.length == 0) return bindedPackages;
 
       const menu = (
         <Menu>
@@ -41,13 +41,13 @@ const columns: ColumnType<Version>[] = [
         <>
           {bindedPackages}
           <Dropdown
-            className="ant-typography-edit"
+            className='ant-typography-edit'
             overlay={menu}
             getPopupContainer={() =>
               document.querySelector(`[data-row-key="${id}"]`) ?? document.body
             }
           >
-            <Button type="link" size="small" icon={<LinkOutlined />}>
+            <Button type='link' size='small' icon={<LinkOutlined />}>
               绑定
             </Button>
           </Dropdown>
@@ -56,22 +56,22 @@ const columns: ColumnType<Version>[] = [
     },
   },
   {
-    title: "上传时间",
-    dataIndex: "createdAt",
-    render: (_, record) => renderTextCol(record, "createdAt", false),
+    title: '上传时间',
+    dataIndex: 'createdAt',
+    render: (_, record) => renderTextCol(record, 'createdAt', false),
   },
 ];
 
 function renderTextCol(record: Version, key: string, isEditable: boolean = true) {
   let value = Reflect.get(record, key);
-  if (key === "createdAt") {
+  if (key === 'createdAt') {
     const t = new Date(value);
     const y = t.getFullYear();
     const month = t.getMonth() + 1;
-    const M = month < 10 ? "0" + month : month;
-    const d = t.getDate() < 10 ? "0" + t.getDate() : t.getDate();
-    const h = t.getHours() < 10 ? "0" + t.getHours() : t.getHours();
-    const m = t.getMinutes() < 10 ? "0" + t.getMinutes() : t.getMinutes();
+    const M = month < 10 ? '0' + month : month;
+    const d = t.getDate() < 10 ? '0' + t.getDate() : t.getDate();
+    const h = t.getHours() < 10 ? '0' + t.getHours() : t.getHours();
+    const m = t.getMinutes() < 10 ? '0' + t.getMinutes() : t.getMinutes();
     value = `${y}-${M}-${d} ${h}:${m}`;
   }
   let editable;
@@ -91,7 +91,7 @@ function renderTextCol(record: Version, key: string, isEditable: boolean = true)
             />
           ),
           async onOk() {
-            await request("put", `app/${state.app?.id}/version/${record.id}`, { [key]: value });
+            await request('put', `app/${state.app?.id}/version/${record.id}`, { [key]: value });
             fetchVersions(state.pagination.current);
           },
         });
@@ -110,9 +110,9 @@ export default observer(() => {
 
   return (
     <Table
-      className="versions"
-      rowKey="id"
-      title={() => "热更新包"}
+      className='versions'
+      rowKey='id'
+      title={() => '热更新包'}
       columns={columns}
       components={{ body: { row: TableRow } }}
       dataSource={versions}
@@ -147,7 +147,7 @@ const TableRow = (props: any) => {
   //   },
   //   collect: (monitor) => ({ isOver: monitor.isOver(), canDrop: monitor.canDrop() }),
   // }));
-  let className = "";
+  let className = '';
   // if (canDrop) className = "can-drop";
   // if (isOver) className = "is-over";
   return (
@@ -163,7 +163,7 @@ const PackageItem = ({ item }: { item: PackageBase }) => {
   // const [_, drag] = useDrag(() => ({ item, type: "package" }));
   return (
     <Tooltip title={item.note}>
-      <Tag color="#1890ff">{item.name}</Tag>
+      <Tag color='#1890ff'>{item.name}</Tag>
     </Tooltip>
   );
 };
