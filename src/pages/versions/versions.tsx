@@ -1,23 +1,64 @@
-import { LinkOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input, Menu, Modal, Table, Tag, Tooltip, Typography } from 'antd';
+import { LinkOutlined, QrcodeOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Dropdown,
+  Input,
+  Menu,
+  Modal,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  QRCode,
+  Popover,
+} from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import { observable, runInAction } from 'mobx';
 import { observer, Observer } from 'mobx-react-lite';
 // import { useDrag, useDrop } from "react-dnd";
 import request from '../../request';
 import state, { bindPackage, fetchVersions, removeSelectedVersions } from './state';
+import { ReactNode } from 'react';
 
 const columns: ColumnType<Version>[] = [
-  { title: '版本', dataIndex: 'name', render: (_, record) => renderTextCol(record, 'name') },
+  {
+    title: '版本',
+    dataIndex: 'name',
+    render: (_, record) =>
+      renderTextCol({
+        record,
+        key: 'name',
+        extra: (
+          <Popover
+            className='ant-typography-edit'
+            content={
+              <div>
+                <QRCode
+                  value={JSON.stringify({
+                    type: '__rnPushyVersionHash',
+                    data: record.hash,
+                  })}
+                  bordered={false}
+                />
+                <div style={{ textAlign: 'center', margin: '0 auto' }}>{record.name}</div>
+                <div style={{ textAlign: 'center', margin: '0 auto' }}>{record.hash}</div>
+              </div>
+            }
+          >
+            <Button type='link' icon={<QrcodeOutlined />} onClick={() => {}} />
+          </Popover>
+        ),
+      }),
+  },
   {
     title: '描述',
     dataIndex: 'description',
-    render: (_, record) => renderTextCol(record, 'description'),
+    render: (_, record) => renderTextCol({ record, key: 'description' }),
   },
   {
     title: '元信息',
     dataIndex: 'metaInfo',
-    render: (_, record) => renderTextCol(record, 'metaInfo'),
+    render: (_, record) => renderTextCol({ record, key: 'metaInfo' }),
   },
   {
     title: '绑定原生包',
@@ -62,11 +103,21 @@ const columns: ColumnType<Version>[] = [
   {
     title: '上传时间',
     dataIndex: 'createdAt',
-    render: (_, record) => renderTextCol(record, 'createdAt', false),
+    render: (_, record) => renderTextCol({ record, key: 'createdAt', isEditable: false }),
   },
 ];
 
-function renderTextCol(record: Version, key: string, isEditable: boolean = true) {
+function renderTextCol({
+  record,
+  key,
+  isEditable = true,
+  extra,
+}: {
+  record: Version;
+  key: string;
+  isEditable?: boolean;
+  extra?: ReactNode;
+}) {
   let value = Reflect.get(record, key);
   if (key === 'createdAt') {
     const t = new Date(value);
@@ -103,9 +154,12 @@ function renderTextCol(record: Version, key: string, isEditable: boolean = true)
     };
   }
   return (
-    <Typography.Text style={{ width: 160 }} editable={editable} ellipsis>
-      {value}
-    </Typography.Text>
+    <div>
+      <Typography.Text style={{ width: 160 }} editable={editable} ellipsis>
+        {value}
+      </Typography.Text>
+      {extra}
+    </div>
   );
 }
 
