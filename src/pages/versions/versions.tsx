@@ -11,14 +11,75 @@ import {
   Typography,
   QRCode,
   Popover,
+  Checkbox,
 } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import { observable, runInAction } from 'mobx';
 import { observer, Observer } from 'mobx-react-lite';
 // import { useDrag, useDrop } from "react-dnd";
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import request from '../../request';
 import state, { bindPackage, fetchVersions, removeSelectedVersions } from './state';
+
+const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
+  const [deepLink, setDeepLink] = useState(
+    window.localStorage.getItem(`${state.app?.id}_deeplink`) ?? ''
+  );
+  const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
+
+  const isDeepLinkValid = enableDeepLink && deepLink.endsWith('://');
+
+  useEffect(() => {
+    if (isDeepLinkValid) {
+      window.localStorage.setItem(`${state.app?.id}_deeplink`, deepLink);
+    }
+  }, [deepLink, isDeepLinkValid]);
+
+  const codePayload = {
+    type: '__rnPushyVersionHash',
+    data: hash,
+  };
+  const codeValue = isDeepLinkValid
+    ? `${deepLink}?${new URLSearchParams(codePayload).toString()}`
+    : JSON.stringify(codePayload);
+  return (
+    <Popover
+      className='ant-typography-edit'
+      content={
+        <div>
+          <div style={{ textAlign: 'center', margin: '5px auto' }}>测试二维码</div>
+          <QRCode value={codeValue} bordered={false} style={{ margin: '0 auto' }} />
+          <div style={{ textAlign: 'center', margin: '5px auto' }}>{name}</div>
+          {/* <div style={{ textAlign: 'center', margin: '0 auto' }}>{hash}</div> */}
+          <div>
+            <Input.TextArea readOnly autoSize value={codeValue} style={{ marginBottom: '5px' }} />
+            <div className='flex flex-row items-center'>
+              <Checkbox
+                className='mr-4'
+                checked={enableDeepLink}
+                onChange={({ target }) => {
+                  setEnableDeepLink(target.checked);
+                }}
+              >
+                使用 Deep Link：
+              </Checkbox>
+              <Input
+                placeholder='例如 pushy://'
+                className='flex-1'
+                value={deepLink}
+                onChange={({ target }) => {
+                  setDeepLink(target.value);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <Button type='link' icon={<QrcodeOutlined />} onClick={() => {}} />
+    </Popover>
+  );
+};
 
 const columns: ColumnType<Version>[] = [
   {
@@ -28,26 +89,7 @@ const columns: ColumnType<Version>[] = [
       renderTextCol({
         record,
         key: 'name',
-        extra: (
-          <Popover
-            className='ant-typography-edit'
-            content={
-              <div>
-                <QRCode
-                  value={JSON.stringify({
-                    type: '__rnPushyVersionHash',
-                    data: record.hash,
-                  })}
-                  bordered={false}
-                />
-                <div style={{ textAlign: 'center', margin: '0 auto' }}>{record.name}</div>
-                <div style={{ textAlign: 'center', margin: '0 auto' }}>{record.hash}</div>
-              </div>
-            }
-          >
-            <Button type='link' icon={<QrcodeOutlined />} onClick={() => {}} />
-          </Popover>
-        ),
+        extra: <TestQrCode name={record.name} hash={record.hash} />,
       }),
   },
   {
