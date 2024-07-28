@@ -45,22 +45,16 @@ export default observer(() => {
           name='pwd'
           validateTrigger='onBlur'
           rules={[
-            () => ({
-              async validator(_, value) {
+            {
+              validator(_, value) {
                 if (value && !isPasswordValid(value)) {
-                  throw '密码中需要同时包含大、小写字母和数字，且长度不少于6位';
+                  throw new Error('密码中需要同时包含大、小写字母和数字，且长度不少于6位');
                 }
               },
-            }),
+            },
           ]}
         >
-          <Input
-            type='password'
-            placeholder='密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item
           hasFeedback
@@ -68,30 +62,18 @@ export default observer(() => {
           validateTrigger='onBlur'
           rules={[
             ({ getFieldValue }) => ({
-              async validator(_, value) {
-                if (getFieldValue('pwd') != value) {
-                  throw '两次输入的密码不一致';
+              validator(_, value) {
+                if (getFieldValue('pwd') !== value) {
+                  throw new Error('两次输入的密码不一致');
                 }
               },
             }),
           ]}
         >
-          <Input
-            type='password'
-            placeholder='再次输入密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='再次输入密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item>
-          <Button
-            type='primary'
-            htmlType='submit'
-            size='large'
-            loading={loading}
-            block
-          >
+          <Button type='primary' htmlType='submit' size='large' loading={loading} block>
             注册
           </Button>
         </Form.Item>
@@ -103,9 +85,7 @@ export default observer(() => {
               rules={[
                 {
                   validator: (_, value) =>
-                    value
-                      ? Promise.resolve()
-                      : Promise.reject(new Error('请阅读并同意后勾选此处')),
+                    value ? Promise.resolve() : Promise.reject(new Error('请阅读并同意后勾选此处')),
                 },
               ]}
               hasFeedback

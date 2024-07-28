@@ -16,9 +16,9 @@ import { ColumnType } from 'antd/lib/table';
 import { observable, runInAction } from 'mobx';
 import { observer, Observer } from 'mobx-react-lite';
 // import { useDrag, useDrop } from "react-dnd";
+import { ReactNode } from 'react';
 import request from '../../request';
 import state, { bindPackage, fetchVersions, removeSelectedVersions } from './state';
-import { ReactNode } from 'react';
 
 const columns: ColumnType<Version>[] = [
   {
@@ -68,8 +68,8 @@ const columns: ColumnType<Version>[] = [
       <Observer>
         {() => {
           const bindedPackages = packages.map((i) => <PackageItem key={i.id} item={i} />);
-          const items = state.packages.filter((i) => !packages.some((j) => i.id == j.id));
-          if (items.length == 0) return bindedPackages;
+          const items = state.packages.filter((i) => !packages.some((j) => i.id === j.id));
+          if (items.length === 0) return bindedPackages;
 
           const menu = (
             <Menu>
@@ -123,10 +123,10 @@ function renderTextCol({
     const t = new Date(value);
     const y = t.getFullYear();
     const month = t.getMonth() + 1;
-    const M = month < 10 ? '0' + month : month;
-    const d = t.getDate() < 10 ? '0' + t.getDate() : t.getDate();
-    const h = t.getHours() < 10 ? '0' + t.getHours() : t.getHours();
-    const m = t.getMinutes() < 10 ? '0' + t.getMinutes() : t.getMinutes();
+    const M = month < 10 ? `0${month}` : month;
+    const d = t.getDate() < 10 ? `0${t.getDate()}` : t.getDate();
+    const h = t.getHours() < 10 ? `0${t.getHours()}` : t.getHours();
+    const m = t.getMinutes() < 10 ? `0${t.getMinutes()}` : t.getMinutes();
     value = `${y}-${M}-${d} ${h}:${m}`;
   }
   let editable;
@@ -136,7 +136,7 @@ function renderTextCol({
       onStart() {
         Modal.confirm({
           icon: null,
-          title: columns.find((i) => i.dataIndex == key)?.title as string,
+          title: columns.find((i) => i.dataIndex === key)?.title as string,
           closable: true,
           maskClosable: true,
           content: (
@@ -205,7 +205,7 @@ const TableRow = (props: any) => {
   //   },
   //   collect: (monitor) => ({ isOver: monitor.isOver(), canDrop: monitor.canDrop() }),
   // }));
-  let className = '';
+  const className = '';
   // if (canDrop) className = "can-drop";
   // if (isOver) className = "is-over";
   return (
@@ -217,11 +217,9 @@ const TableRow = (props: any) => {
   );
 };
 
-const PackageItem = ({ item }: { item: PackageBase }) => {
+const PackageItem = ({ item }: { item: PackageBase }) => (
   // const [_, drag] = useDrag(() => ({ item, type: "package" }));
-  return (
-    <Tooltip title={item.note}>
-      <Tag color='#1890ff'>{item.name}</Tag>
-    </Tooltip>
-  );
-};
+  <Tooltip title={item.note}>
+    <Tag color='#1890ff'>{item.name}</Tag>
+  </Tooltip>
+);

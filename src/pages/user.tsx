@@ -90,7 +90,7 @@ export default function UserPanel() {
 
 async function purchase(tier?: string) {
   const { payUrl } = await request('post', 'orders', { tier });
-  location.href = payUrl;
+  window.location.href = payUrl;
 }
 
 const tiers = {

@@ -5,13 +5,18 @@ import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import './index.css';
 import PackageList from './packages';
-import state, { fetch } from './state';
+import state, { fetchData } from './state';
 import VersionTable from './versions';
 import settingApp from '../apps/setting';
 
 export default observer(() => {
-  const id = Reflect.get(useParams(), 'id');
-  useEffect(() => fetch(id));
+  const params = useParams<{ id?: string }>();
+  useEffect(() => {
+    const { id } = params;
+    if (id) {
+      fetchData(+id);
+    }
+  }, [params]);
   const { app, packages, unused } = state;
   if (app == null) return null;
   return (
@@ -24,18 +29,12 @@ export default observer(() => {
             </Breadcrumb.Item>
             <Breadcrumb.Item>
               {app?.name}
-              {app?.status == 'paused' && (
-                <Tag style={{ marginLeft: 8 }}>暂停</Tag>
-              )}
+              {app?.status === 'paused' && <Tag style={{ marginLeft: 8 }}>暂停</Tag>}
             </Breadcrumb.Item>
           </Breadcrumb>
         </Col>
         <Button.Group>
-          <Button
-            type='primary'
-            icon={<SettingFilled />}
-            onClick={() => settingApp(app)}
-          >
+          <Button type='primary' icon={<SettingFilled />} onClick={() => settingApp(app)}>
             应用设置
           </Button>
         </Button.Group>

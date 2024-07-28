@@ -4,14 +4,14 @@ import store from './store';
 export default async function request(method: string, path: string, params?: any) {
   method = method.toUpperCase();
   // let url = `http://localhost:8910/${path}`;
-  let url = `https://update.react-native.cn/api/${path}`;
+  let url = `https://p.reactnative.cn/api/${path}`;
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
   if (store.token) {
     headers['x-accesstoken'] = store.token;
   }
   if (params) {
-    if (method == 'GET') {
+    if (method === 'GET') {
       params = Object.keys(params)
         .filter((key) => params[key] !== undefined)
         .map((key) => `${key}=${encodeURIComponent(params[key])}`);
@@ -23,7 +23,7 @@ export default async function request(method: string, path: string, params?: any
   }
   const response = await fetch(url, options);
   const json = await response.json();
-  if (response.status == 200) {
+  if (response.status === 200) {
     return json;
   }
   message.error(json.message);
@@ -31,5 +31,8 @@ export default async function request(method: string, path: string, params?: any
 }
 
 export class RequestError {
-  constructor(readonly code: number, readonly message: string) {}
+  constructor(
+    readonly code: number,
+    readonly message: string
+  ) {}
 }

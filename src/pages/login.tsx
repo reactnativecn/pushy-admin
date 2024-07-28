@@ -8,7 +8,7 @@ import { login } from '../store';
 
 const state = observable.object({ loading: false });
 
-async function submit(event: FormEvent) {
+function submit(event: FormEvent) {
   event.preventDefault();
   runInAction(async () => {
     state.loading = true;
@@ -26,7 +26,7 @@ export default observer(() => {
     <div style={style.body}>
       <form style={style.form} onSubmit={submit}>
         <div style={style.logo}>
-          <img src={logo} className='mx-auto' />
+          <img src={logo} className='mx-auto' alt='' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
         </div>
         <Form.Item>

@@ -7,13 +7,7 @@ import {
 } from '@ant-design/icons';
 import { Layout, Menu, message, Row, Spin } from 'antd';
 import { observer } from 'mobx-react-lite';
-import {
-  Redirect,
-  Route,
-  RouteProps,
-  Switch,
-  useHistory,
-} from 'react-router-dom';
+import { Redirect, Route, RouteProps, Switch, useHistory } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { Footer } from './components';
 import * as pages from './pages';
@@ -43,16 +37,10 @@ export default observer(() => {
                 </ExtLink>
               </Menu.Item>
               <Menu.Item key='about' icon={<InfoCircleOutlined />}>
-                <ExtLink href='https://reactnative.cn/about.html'>
-                  关于我们
-                </ExtLink>
+                <ExtLink href='https://reactnative.cn/about.html'>关于我们</ExtLink>
               </Menu.Item>
               {store.token && (
-                <Menu.SubMenu
-                  key='user'
-                  icon={<UserOutlined />}
-                  title={store.user?.name}
-                >
+                <Menu.SubMenu key='user' icon={<UserOutlined />} title={store.user?.name}>
                   <Menu.Item
                     key='logout'
                     onClick={() => {
@@ -95,10 +83,7 @@ export default observer(() => {
               <UserRoute path='/apps'>
                 <pages.apps />
               </UserRoute>
-              <Route
-                path='/'
-                render={() => <Redirect to={`/${defaultRoute}`} />}
-              />
+              <Route path='/' render={() => <Redirect to={`/${defaultRoute}`} />} />
             </Switch>
           </div>
           <Footer />
@@ -114,12 +99,7 @@ interface ExtLinkProps {
 }
 
 const ExtLink = ({ children, href }: ExtLinkProps) => (
-  <a
-    href={href}
-    target='_blank'
-    onClick={(e) => e.stopPropagation()}
-    rel='noreferrer'
-  >
+  <a href={href} target='_blank' onClick={(e) => e.stopPropagation()} rel='noreferrer'>
     {children}
   </a>
 );

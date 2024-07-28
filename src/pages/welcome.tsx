@@ -1,16 +1,16 @@
-import { Button, message, Result } from "antd";
-import { observable } from "mobx";
-import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
-import request from "../request";
-import store from "../store";
+import { Button, message, Result } from 'antd';
+import { observable } from 'mobx';
+import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
+import request from '../request';
+import store from '../store';
 
 const state = observable.object({ loading: false });
 
 export default observer(() => {
   useEffect(() => {
     if (!store.email) {
-      store.history.replace("/login");
+      store.history.replace('/login');
     }
   }, []);
   return (
@@ -25,9 +25,9 @@ export default observer(() => {
           <div style={{ height: 24 }} />
         </>
       }
-      subTitle="如未收到激活邮件，请点击"
+      subTitle='如未收到激活邮件，请点击'
       extra={
-        <Button type="primary" onClick={sendEmail} loading={state.loading}>
+        <Button type='primary' onClick={sendEmail} loading={state.loading}>
           重新发送
         </Button>
       }
@@ -39,10 +39,10 @@ async function sendEmail() {
   const { email } = store;
   state.loading = true;
   try {
-    await request("post", "user/active/sendmail", { email });
-    message.info("邮件发送成功，请注意查收");
+    await request('post', 'user/active/sendmail', { email });
+    message.info('邮件发送成功，请注意查收');
   } catch (_) {
-    message.error("邮件发送失败");
+    message.error('邮件发送失败');
   }
   state.loading = false;
 }

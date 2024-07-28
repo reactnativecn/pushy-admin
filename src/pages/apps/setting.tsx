@@ -6,18 +6,18 @@ import request, { RequestError } from '../../request';
 import { removeApp } from './state';
 import store from '../../store';
 
-import { default as versionPageState } from '../versions/state';
+import versionPageState from '../versions/state';
 
 const state = observable.object<{ app?: AppDetail }>({});
 
 export default function setting(app: App) {
-  if (app.id != state.app?.id) {
+  if (app.id !== state.app?.id) {
     state.app = undefined;
   }
 
-  request('get', `app/${app.id}`).then((app) => {
+  request('get', `app/${app.id}`).then((appData) => {
     runInAction(() => {
-      state.app = app;
+      state.app = appData;
     });
   });
 
@@ -38,9 +38,11 @@ export default function setting(app: App) {
         if (state.app) {
           app.name = state.app.name;
           store.apps.find((i) => {
-            if (i.id == app.id) {
+            if (i.id === app.id) {
               Object.assign(i, state.app);
+              return true;
             }
+            return false;
           });
           versionPageState.app = state.app;
         }

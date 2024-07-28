@@ -34,7 +34,7 @@ export async function login(email: string, password: string) {
     fetchUserInfo();
   } catch (e) {
     if (e instanceof RequestError) {
-      if (e.code == 423) {
+      if (e.code === 423) {
         store.history.push('/inactivated');
       } else {
         message.error(e.message);
