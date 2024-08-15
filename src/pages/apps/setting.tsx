@@ -28,7 +28,13 @@ export default function setting(app: App) {
     content: <Content />,
     async onOk() {
       try {
-        await request('put', `app/${app.id}`, state.app);
+        const payload = state.app;
+        await request('put', `app/${app.id}`, {
+          name: payload.name,
+          downloadUrl: payload.downloadUrl,
+          status: payload.status,
+          ignoreBuildTime: payload.ignoreBuildTime,
+        });
       } catch (error) {
         message.error((error as RequestError).message);
         return;
