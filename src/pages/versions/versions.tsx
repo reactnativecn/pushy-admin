@@ -47,7 +47,17 @@ const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
       className='ant-typography-edit'
       content={
         <div>
-          <div style={{ textAlign: 'center', margin: '5px auto' }}>测试二维码</div>
+          <div style={{ textAlign: 'center', margin: '5px auto' }}>
+            测试二维码 <br />
+            <a
+              target='_blank'
+              className='ml-1 text-xs'
+              href='https://pushy.reactnative.cn/docs/bestpractice#%E6%B5%8B%E8%AF%95%E5%8F%91%E5%B8%83%E4%B8%8E%E5%9B%9E%E6%BB%9A'
+              rel='noreferrer'
+            >
+              如何使用？
+            </a>
+          </div>
           <QRCode value={codeValue} bordered={false} style={{ margin: '0 auto' }} />
           <div style={{ textAlign: 'center', margin: '5px auto' }}>{name}</div>
           {/* <div style={{ textAlign: 'center', margin: '0 auto' }}>{hash}</div> */}
