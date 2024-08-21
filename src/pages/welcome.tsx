@@ -2,9 +2,8 @@ import { Button, message, Result } from 'antd';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import request from '../request';
 import store from '../store';
-import { API } from '../api';
+import { API, request } from '../utils';
 
 const state = observable.object({ loading: false });
 

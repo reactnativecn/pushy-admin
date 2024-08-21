@@ -1,8 +1,7 @@
 import { Modal } from 'antd';
 import { observable, runInAction } from 'mobx';
-import request from '../../request';
 import store, { fetchApps } from '../../store';
-import { API } from '../../api';
+import { request, API } from '../../utils';
 
 const state = observable.object({
   apps: observable.array<App>(),

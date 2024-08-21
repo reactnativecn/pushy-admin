@@ -2,8 +2,7 @@ import { message } from 'antd';
 import { History } from 'history';
 import md5 from 'blueimp-md5';
 import { observable, runInAction } from 'mobx';
-import request, { RequestError } from './request';
-import { API } from './api';
+import { request, API, RequestError } from './utils';
 
 const noop = () => {};
 const initState = {

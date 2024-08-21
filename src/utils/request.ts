@@ -1,5 +1,5 @@
 import { message } from 'antd';
-import store from './store';
+import store from '../store';
 
 export default async function request(method: string, path: string, params?: any) {
   method = method.toUpperCase();

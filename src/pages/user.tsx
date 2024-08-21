@@ -1,9 +1,8 @@
 import { Button, Descriptions, Space, Popover } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
-import request from '../request';
 import store from '../store';
-import { API } from '../api';
+import { API, request } from '../utils';
 
 const InvoiceHint = (
   <div>

@@ -1,8 +1,7 @@
 import { AndroidFilled, AppleFilled } from '@ant-design/icons';
 import { Form, Input, message, Modal, Select } from 'antd';
-import request from '../../request';
 import { fetchApps } from '../../store';
-import { API } from '../../api';
+import { API, request } from '../../utils';
 
 export default function add() {
   let name = '';

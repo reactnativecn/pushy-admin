@@ -4,10 +4,8 @@ import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
-import request from '../request';
 import store from '../store';
-import { API } from '../api';
-import { isPasswordValid } from '../utils';
+import { API, request, isPasswordValid } from '../utils';
 
 const state = observable.object({ loading: false, agreed: false });
 

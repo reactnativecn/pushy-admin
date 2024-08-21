@@ -4,8 +4,7 @@ import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import request, { RequestError } from '../request';
-import { API } from '../api';
+import { API, request, RequestError } from '../utils';
 
 const state = observable.object({ loading: true, error: '' });
 

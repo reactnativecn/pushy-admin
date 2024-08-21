@@ -1,8 +1,7 @@
 import { Button, Form, Input, message, Result } from 'antd';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
-import request, { RequestError } from '../../request';
-import { API } from '../../api';
+import { request, RequestError, API } from '../../utils';
 
 const state = observable.object({ loading: false, sent: false });
 

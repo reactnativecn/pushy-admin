@@ -11,9 +11,6 @@ const globals = {
   antd: 'antd',
   '@ant-design/icons': 'icons',
   md5: 'blueimp-md5',
-  '@reduxjs/toolkit': 'toolkit',
-  'react-redux': 'ReactRedux',
-  'react-query': 'ReactQuery',
 };
 
 export default ({ mode }) => {

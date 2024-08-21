@@ -2,7 +2,7 @@ import { Form, message, Modal, Spin, Typography, Switch, Button } from 'antd';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { DeleteFilled } from '@ant-design/icons';
-import request, { RequestError } from '../../request';
+import { request, RequestError } from '../../utils';
 import { removeApp } from './state';
 import store from '../../store';
 

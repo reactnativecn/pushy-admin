@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { HashRouter as Router } from 'react-router-dom';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { QueryClientProvider } from 'react-query';
-import { queryClient } from './queryClient';
+import { queryClient } from './utils';
 // import { DndProvider } from "react-dnd";
 // import { HTML5Backend } from "react-dnd-html5-backend";
 import './index.css';

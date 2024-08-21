@@ -2,11 +2,9 @@ import { Button, Form, Input, message } from 'antd';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
-import request, { RequestError } from '../../request';
-import { isPasswordValid } from '../../utils';
 import store from '../../store';
 import md5 from 'blueimp-md5';
-import { API } from '../../api';
+import { request, RequestError, API, isPasswordValid } from '../../utils';
 
 const state = observable.object({ loading: false });
 
