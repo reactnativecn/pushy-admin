@@ -3,6 +3,7 @@ import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
 import request from '../request';
 import store from '../store';
+import { API } from '../api';
 
 const InvoiceHint = (
   <div>
@@ -89,7 +90,7 @@ export default function UserPanel() {
 }
 
 async function purchase(tier?: string) {
-  const { payUrl } = await request('post', 'orders', { tier });
+  const { payUrl } = await request('post', API.ordersUrl, { tier });
   window.location.href = payUrl;
 }
 

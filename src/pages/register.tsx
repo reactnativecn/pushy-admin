@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
 import request from '../request';
 import store from '../store';
+import { API } from '../api';
 import { isPasswordValid } from '../utils';
 
 const state = observable.object({ loading: false, agreed: false });
@@ -17,7 +18,7 @@ async function submit(values: { [key: string]: string }) {
   runInAction(() => (state.loading = true));
   store.email = values.email;
   try {
-    await request('post', 'user/register', values);
+    await request('post', API.registerUrl, values);
     store.history.replace('/welcome');
   } catch (_) {
     message.error('该邮箱已被注册');
@@ -54,13 +55,7 @@ export default observer(() => {
             }),
           ]}
         >
-          <Input
-            type='password'
-            placeholder='密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item
           hasFeedback
@@ -76,22 +71,10 @@ export default observer(() => {
             }),
           ]}
         >
-          <Input
-            type='password'
-            placeholder='再次输入密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='再次输入密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item>
-          <Button
-            type='primary'
-            htmlType='submit'
-            size='large'
-            loading={loading}
-            block
-          >
+          <Button type='primary' htmlType='submit' size='large' loading={loading} block>
             注册
           </Button>
         </Form.Item>
@@ -103,9 +86,7 @@ export default observer(() => {
               rules={[
                 {
                   validator: (_, value) =>
-                    value
-                      ? Promise.resolve()
-                      : Promise.reject(new Error('请阅读并同意后勾选此处')),
+                    value ? Promise.resolve() : Promise.reject(new Error('请阅读并同意后勾选此处')),
                 },
               ]}
               hasFeedback

@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import request from '../request';
 import store from '../store';
+import { API } from '../api';
 
 const state = observable.object({ loading: false });
 
@@ -39,7 +40,7 @@ async function sendEmail() {
   const { email } = store;
   state.loading = true;
   try {
-    await request('post', 'user/active/sendmail', { email });
+    await request('post', API.sendmailUrl, { email });
     message.info('邮件发送成功，请注意查收');
   } catch (_) {
     message.error('邮件发送失败');
