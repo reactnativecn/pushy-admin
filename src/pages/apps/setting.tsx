@@ -102,7 +102,10 @@ const Content = observer(() => {
       </Form.Item>
       <Form.Item label='忽略编译时间戳（高级版以上可启用）'>
         <Switch
-          disabled={user?.tier !== 'premium' && user?.tier !== 'pro'}
+          disabled={
+            (user?.tier === 'free' || user?.tier === 'standard') &&
+            app.ignoreBuildTime !== 'enabled'
+          }
           checkedChildren='启用'
           unCheckedChildren='不启用'
           checked={app.ignoreBuildTime === 'enabled'}
