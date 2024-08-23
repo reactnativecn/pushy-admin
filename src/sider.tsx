@@ -61,7 +61,7 @@ const SiderMenu = observer(() => {
           <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
             {quota?.title}
           </a>
-          : {quota?.pv?.toLocaleString()}次/每日
+          : {quota?.pv?.toLocaleString()} 次/每日
         </div>
       </Card>
       <Menu
