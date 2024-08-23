@@ -3,6 +3,7 @@ import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
 import request from '../request';
 import store from '../store';
+import { PRICING_LINK } from '../constants/links';
 
 const InvoiceHint = (
   <div>
@@ -72,7 +73,7 @@ export default function UserPanel() {
         </Descriptions.Item>
       </Descriptions>
       <br />
-      <Button href='https://pushy.reactnative.cn/pricing.html' target='_blank'>
+      <Button href={PRICING_LINK} target='_blank'>
         查看价格表
       </Button>
 

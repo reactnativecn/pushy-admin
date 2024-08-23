@@ -5,6 +5,7 @@
     "jsx": "react",
     "reactNamespace": "window",
     "esModuleInterop": true,
-    "strict": true
-  },
+    "strict": true,
+    "resolveJsonModule": true
+  }
 }

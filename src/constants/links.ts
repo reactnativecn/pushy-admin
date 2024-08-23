@@ -1,0 +1,1 @@
+export const PRICING_LINK = 'https://pushy.reactnative.cn/pricing.html';

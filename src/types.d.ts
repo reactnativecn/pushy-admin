@@ -10,6 +10,7 @@ interface User {
   name: string;
   tier: 'free' | 'standard' | 'premium' | 'pro';
   tierExpiresAt?: string;
+  checkQuota?: number;
 }
 
 interface App {
@@ -18,6 +19,7 @@ interface App {
   platform: 'android' | 'ios';
   status?: 'normal' | 'paused';
   ignoreBuildTime?: 'enabled' | 'disabled';
+  checkCount?: number;
 }
 
 interface PackageBase {
