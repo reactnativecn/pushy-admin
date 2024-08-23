@@ -51,10 +51,11 @@ const SiderMenu = observer(() => {
         className='mr-2 mb-4'
       >
         <Progress
+          status={percent > 40 ? 'normal' : 'exception'}
           size={['100%', 30]}
           percent={percent}
           percentPosition={{ type: 'inner', align: 'center' }}
-          format={() => `${store.user?.checkQuota?.toLocaleString()} 次`}
+          format={() => `${user?.checkQuota?.toLocaleString()} 次`}
         />
         <div className='text-xs mt-2 text-center'>
           <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
@@ -76,7 +77,7 @@ const SiderMenu = observer(() => {
           <Link to='/user'>账户设置</Link>
         </Menu.Item>
         <Menu.SubMenu key='apps' title='应用管理' icon={<AppstoreOutlined />}>
-          {store.apps.map((i) => (
+          {apps.map((i) => (
             <Menu.Item key={i.id} className='!h-16'>
               <div className='flex flex-row items-center gap-4'>
                 <div className='flex flex-col justify-center'>
