@@ -42,7 +42,8 @@ const SiderMenu = observer(() => {
   const { apps, user } = store;
   const quota = quotas[user?.tier];
   const pvQuota = quota?.pv;
-  const percent = pvQuota && user?.checkQuota ? (user?.checkQuota / pvQuota) * 100 : undefined;
+  const consumedQuota = user?.checkQuota;
+  const percent = pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
   return (
     <div>
       <Card
@@ -55,13 +56,13 @@ const SiderMenu = observer(() => {
           size={['100%', 30]}
           percent={percent}
           percentPosition={{ type: 'inner', align: 'center' }}
-          format={() => `${user?.checkQuota?.toLocaleString()} 次`}
+          format={() => (consumedQuota ? `${consumedQuota.toLocaleString()} 次` : '')}
         />
         <div className='text-xs mt-2 text-center'>
           <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
             {quota?.title}
           </a>
-          : {quota?.pv?.toLocaleString()} 次/每日
+          : {pvQuota?.toLocaleString()} 次/每日
         </div>
       </Card>
       <Menu
