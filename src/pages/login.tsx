@@ -1,27 +1,65 @@
-import { Button, Form, Input, Row } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
-import { FormEvent } from 'react';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable import/no-extraneous-dependencies */
+import { FormEvent, useEffect, useState } from 'react';
+import { Button, Form, Input, Row, message } from 'antd';
+import md5 from 'blueimp-md5';
 import { Link } from 'react-router-dom';
+import { history } from '../index';
 import logo from '../assets/logo.svg';
-import { login } from '../store';
+import store from '../store';
+import { request, API, RequestError } from '../utils';
+import useUserInfo from '../hooks/useUserInfo';
 
-const state = observable.object({ loading: false });
-
-function submit(event: FormEvent) {
-  event.preventDefault();
-  runInAction(async () => {
-    state.loading = true;
-    await login(email, password);
-    state.loading = false;
-  });
-}
+// const state = observable.object({ loading: false });
 
 let email: string;
 let password: string;
 
-export default observer(() => {
-  const { loading } = state;
+export default function Login() {
+  // const { loading } = state;
+  const [loading, setLoading] = useState(false);
+  const { fetchUserInfo } = useUserInfo();
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  function init() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      return fetchUserInfo();
+    }
+  }
+
+  async function submit(event: FormEvent) {
+    event?.preventDefault();
+    // state.loading = true;
+    setLoading(true);
+    await login(email, password);
+    // state.loading = false;
+    setLoading(false);
+  }
+
+  async function login(email: string, password: string) {
+    const params = { email, pwd: md5(password) };
+    try {
+      const { token } = await request('post', API.loginUrl, params);
+      localStorage.setItem('token', token);
+      message.success('登录成功');
+      fetchUserInfo();
+      history.push('/user'); // TODO 此处有bug  登录成功后没有跳页面 需要刷新一下才会去到user页面
+    } catch (e) {
+      if (e instanceof RequestError) {
+        if (e.code === 423) {
+          history.push('/inactivated');
+        } else {
+          message.error(e.message);
+        }
+      }
+    }
+  }
+
   return (
     <div style={style.body}>
       <form style={style.form} onSubmit={submit}>
@@ -63,7 +101,7 @@ export default observer(() => {
       </form>
     </div>
   );
-});
+}
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },

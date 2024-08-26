@@ -28,7 +28,7 @@ export async function login(email: string, password: string) {
   const params = { email, pwd: md5(password) };
   try {
     const { token } = await request('post', API.loginUrl, params);
-    runInAction(() => (store.token = token));
+    // runInAction(() => (store.token = token));
     localStorage.setItem('token', token);
     message.success('登录成功');
     fetchUserInfo();
@@ -65,7 +65,8 @@ export async function fetchApps() {
 }
 
 function init() {
-  if (store.token) {
+  const token = localStorage.getItem('token');
+  if (token) {
     return fetchUserInfo();
   }
 }

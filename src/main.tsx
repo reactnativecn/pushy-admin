@@ -6,7 +6,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, message, Row, Spin } from 'antd';
-import { observer } from 'mobx-react-lite';
+// import { observer } from 'mobx-react-lite';
 import { Redirect, Route, RouteProps, Switch, useHistory } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { Footer } from './components';
@@ -14,11 +14,13 @@ import * as pages from './pages';
 import Login from './pages/login';
 import Sider from './sider';
 import store, { logout } from './store';
+import useUserInfo from './hooks/useUserInfo';
 
 export const defaultRoute = 'user';
 
-export default observer(() => {
-  store.history = useHistory();
+export default function MainPage() {
+  const { userInfo } = useUserInfo();
+  const token = localStorage.getItem('token');
   return (
     <Layout>
       <Sider />
@@ -39,12 +41,13 @@ export default observer(() => {
               <Menu.Item key='about' icon={<InfoCircleOutlined />}>
                 <ExtLink href='https://reactnative.cn/about.html'>关于我们</ExtLink>
               </Menu.Item>
-              {store.token && (
-                <Menu.SubMenu key='user' icon={<UserOutlined />} title={store.user?.name}>
+              {token && (
+                <Menu.SubMenu key='user' icon={<UserOutlined />} title={userInfo?.name}>
                   <Menu.Item
                     key='logout'
                     onClick={() => {
-                      logout();
+                      // logout();
+                      localStorage.removeItem('token');
                       message.info('您已退出登录');
                     }}
                     icon={<LogoutOutlined />}
@@ -91,7 +94,7 @@ export default observer(() => {
       </Layout>
     </Layout>
   );
-});
+}
 
 interface ExtLinkProps {
   children: ReactNode;
@@ -104,9 +107,11 @@ const ExtLink = ({ children, href }: ExtLinkProps) => (
   </a>
 );
 
-const UserRoute = observer((props: RouteProps) => {
-  if (!store.token) return <Login />;
-  if (!store.user) {
+const UserRoute = (props: RouteProps) => {
+  const { userInfo } = useUserInfo();
+  const token = localStorage.getItem('token');
+  if (!token) return <Login />;
+  if (!userInfo) {
     return (
       <div style={style.spin}>
         <Spin size='large' />
@@ -114,7 +119,7 @@ const UserRoute = observer((props: RouteProps) => {
     );
   }
   return <Route {...props} />;
-});
+};
 
 const style: Style = {
   header: {

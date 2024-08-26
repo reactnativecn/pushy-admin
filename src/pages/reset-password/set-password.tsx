@@ -1,31 +1,36 @@
+import { useState } from 'react';
 import { Button, Form, Input, message } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
+// import { observable, runInAction } from 'mobx';
+// import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
-import store from '../../store';
+// import store from '../../store';
 import md5 from 'blueimp-md5';
+import { history } from '../../index';
 import { request, RequestError, API, isPasswordValid } from '../../utils';
 
-const state = observable.object({ loading: false });
+// const state = observable.object({ loading: false });
 
-export default observer(() => {
+export default function SetPassword() {
+  const [loading, setLoding] = useState<boolean>(false);
   const { search } = useLocation();
   return (
     <Form
       style={{ width: 320, margin: 'auto' }}
       onFinish={async (values) => {
-        runInAction(() => (state.loading = true));
+        setLoding(true);
+        // runInAction(() => (state.loading = true));
         try {
           delete values.pwd2;
           values.token = new URLSearchParams(search).get('code');
           values.newPwd = md5(values.newPwd);
           await request('post', API.resetPwdUrl, values);
-          store.history.replace('/reset-password/3');
+          history.replace('/reset-password/3');
         } catch (e) {
           console.log(e);
           message.error((e as RequestError).message ?? '网络错误');
         }
-        runInAction(() => (state.loading = false));
+        setLoding(false);
+        // runInAction(() => (state.loading = false));
       }}
     >
       <Form.Item
@@ -61,10 +66,10 @@ export default observer(() => {
         <Input type='password' placeholder='再次输入密码' autoComplete='' required />
       </Form.Item>
       <Form.Item>
-        <Button type='primary' htmlType='submit' loading={state.loading} block>
+        <Button type='primary' htmlType='submit' loading={loading} block>
           确认修改
         </Button>
       </Form.Item>
     </Form>
   );
-});
+}

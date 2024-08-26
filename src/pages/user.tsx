@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Button, Descriptions, Space, Popover } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
-import store from '../store';
 import { API, request } from '../utils';
 import { PRICING_LINK } from '../constants/links';
+import useUserInfo from '../hooks/useUserInfo';
 
 const InvoiceHint = (
   <div>
@@ -40,7 +41,9 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
 };
 
 export default function UserPanel() {
-  const { name, email, tier, tierExpiresAt } = store.user!;
+  const { userInfo } = useUserInfo();
+  const { name, email, tier, tierExpiresAt } = userInfo ?? {};
+
   return (
     <div className='body'>
       <Descriptions title='账户信息' column={1} labelStyle={{ width: 134 }} bordered>
