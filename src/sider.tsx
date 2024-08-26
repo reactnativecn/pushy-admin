@@ -47,7 +47,7 @@ const SiderMenu = observer(() => {
   return (
     <div>
       <Card
-        title={<div className='text-center'>今日剩余总热更次数</div>}
+        title={<div className='text-center'>今日剩余总查询热更次数</div>}
         size='small'
         className='mr-2 mb-4'
       >
@@ -95,7 +95,7 @@ const SiderMenu = observer(() => {
                   </div>
                   {i.checkCount && (
                     <div className='text-xs text-gray-500 mb-2'>
-                      <Tooltip mouseEnterDelay={1} title='今日此应用检查热更的次数'>
+                      <Tooltip mouseEnterDelay={1} title='今日此应用查询热更的次数'>
                         <a>{i.checkCount.toLocaleString()} 次</a>
                       </Tooltip>
                     </div>
