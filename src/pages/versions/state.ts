@@ -33,10 +33,10 @@ export default state;
 
 export function fetchData(id: number) {
   if (state.app?.id === id) return;
-  const { appList } = useAppList();
+  // const { appList } = useAppList();
 
   runInAction(() => {
-    state.app = appList?.find((i) => i.id === id);
+    state.app = store.apps?.find((i) => i.id === id);
     state.packages = observable.array();
     state.versions = observable.array();
   });
