@@ -13,7 +13,7 @@ import { Footer } from './components';
 import * as pages from './pages';
 import Login from './pages/login';
 import Sider from './sider';
-import store, { logout } from './store';
+import { logout } from './store';
 import useUserInfo from './hooks/useUserInfo';
 
 export const defaultRoute = 'user';

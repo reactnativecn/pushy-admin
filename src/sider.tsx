@@ -27,10 +27,11 @@ import useAppList from './hooks/useApplist';
 export default function Sider() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const { pathname } = useLocation();
+
   const token = localStorage.getItem('token');
   if (!token) return null;
 
-  if (selectedKeys.length === 0) {
+  if (selectedKeys?.length === 0) {
     if (pathname === '/') {
       setSelectedKeys([defaultRoute]);
       // state.selectedKeys = observable.array([defaultRoute]);

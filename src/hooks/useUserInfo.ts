@@ -2,15 +2,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { message } from 'antd';
 import { request, API } from '../utils';
-import useAppList from './useApplist';
 
 const useUserInfo = () => {
-  const { fetchApps } = useAppList();
-
   const fetchUserInfo = async () => {
     try {
       const userInfo: User = await request('get', API.meUrl);
-      await fetchApps();
       return userInfo;
     } catch (err) {
       // logout();
