@@ -1,32 +1,38 @@
+import { useState } from 'react';
 import { Button, Form, Input, message, Row, Checkbox } from 'antd';
 import md5 from 'blueimp-md5';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
-import request from '../request';
-import store from '../store';
-import { isPasswordValid } from '../utils';
+// import store from '../store';
+import { history } from '../index';
+import { API, request, isPasswordValid } from '../utils';
 
-const state = observable.object({ loading: false, agreed: false });
+// const state = observable.object({ loading: false, agreed: false });
 
-async function submit(values: { [key: string]: string }) {
-  delete values.pwd2;
-  delete values.agreed;
-  values.pwd = md5(values.pwd);
-  runInAction(() => (state.loading = true));
-  store.email = values.email;
-  try {
-    await request('post', 'user/register', values);
-    store.history.replace('/welcome');
-  } catch (_) {
-    message.error('该邮箱已被注册');
+export default function Register() {
+  // const { loading, agreed } = state;
+  const [loading, setLoading] = useState<boolean>(false);
+  // const [agreed, setAgreed] = useState<boolean>(false);
+
+  async function submit(values: { [key: string]: string }) {
+    delete values.pwd2;
+    delete values.agreed;
+    values.pwd = md5(values.pwd);
+    setLoading(true);
+    // runInAction(() => (state.loading = true));
+    // store.email = values.email; // TODO 这里就不用存了吧？
+    try {
+      await request('post', API.registerUrl, values);
+      history.replace('/welcome');
+    } catch (_) {
+      message.error('该邮箱已被注册');
+    }
+    setLoading(false);
+    // runInAction(() => (state.loading = false));
   }
-  runInAction(() => (state.loading = false));
-}
 
-export default observer(() => {
-  const { loading, agreed } = state;
   return (
     <div style={style.body}>
       <Form style={style.form} onFinish={(values) => submit(values)}>
@@ -54,13 +60,7 @@ export default observer(() => {
             }),
           ]}
         >
-          <Input
-            type='password'
-            placeholder='密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item
           hasFeedback
@@ -76,22 +76,10 @@ export default observer(() => {
             }),
           ]}
         >
-          <Input
-            type='password'
-            placeholder='再次输入密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='再次输入密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item>
-          <Button
-            type='primary'
-            htmlType='submit'
-            size='large'
-            loading={loading}
-            block
-          >
+          <Button type='primary' htmlType='submit' size='large' loading={loading} block>
             注册
           </Button>
         </Form.Item>
@@ -103,9 +91,7 @@ export default observer(() => {
               rules={[
                 {
                   validator: (_, value) =>
-                    value
-                      ? Promise.resolve()
-                      : Promise.reject(new Error('请阅读并同意后勾选此处')),
+                    value ? Promise.resolve() : Promise.reject(new Error('请阅读并同意后勾选此处')),
                 },
               ]}
               hasFeedback
@@ -131,7 +117,7 @@ export default observer(() => {
       </Form>
     </div>
   );
-});
+}
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },

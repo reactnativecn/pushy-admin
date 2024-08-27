@@ -18,7 +18,7 @@ import { observable, runInAction } from 'mobx';
 import { observer, Observer } from 'mobx-react-lite';
 // import { useDrag, useDrop } from "react-dnd";
 import { ReactNode, useEffect, useState } from 'react';
-import request from '../../request';
+import { request } from '../../utils';
 import state, { bindPackage, fetchVersions, removeSelectedVersions } from './state';
 
 const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {

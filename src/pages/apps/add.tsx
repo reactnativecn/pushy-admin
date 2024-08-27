@@ -1,7 +1,7 @@
 import { AndroidFilled, AppleFilled } from '@ant-design/icons';
 import { Form, Input, message, Modal, Select } from 'antd';
-import request from '../../request';
 import { fetchApps } from '../../store';
+import { API, request } from '../../utils';
 
 export default function add() {
   let name = '';
@@ -36,7 +36,7 @@ export default function add() {
         message.warning('请输入应用名称');
         return false;
       }
-      return request('post', 'app/create', { name, platform })
+      return request('post', API.createUrl, { name, platform })
         .then(fetchApps)
         .catch((error) => {
           message.error(error.message);

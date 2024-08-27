@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import { observable, runInAction } from 'mobx';
-import request from '../../request';
 import store, { fetchApps } from '../../store';
+import { request, API } from '../../utils';
 
 const state = observable.object({
   apps: observable.array<App>(),
@@ -12,7 +12,7 @@ export default state;
 
 export function fetch() {
   runInAction(() => (state.loading = true));
-  request('get', 'app/list').then(({ data }) =>
+  request('get', API.listUrl).then(({ data }) =>
     runInAction(() => {
       state.apps = data;
       state.loading = false;
@@ -22,7 +22,7 @@ export function fetch() {
 
 export async function getApp(id: number | string) {
   if (!state.apps.length) {
-    const { data } = await request('get', 'app/list');
+    const { data } = await request('get', API.listUrl);
     runInAction(() => (state.apps = data));
   }
   return state.apps.find((i) => i.id === id);
@@ -36,7 +36,7 @@ export function removeApp(app: App) {
     async onOk() {
       await request('delete', `app/${app.id}`);
       fetchApps();
-      store.history.replace('/apps');
+      store.history.replace(API.appsUrl);
     },
   });
 }

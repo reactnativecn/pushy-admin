@@ -2,7 +2,7 @@ import { message } from 'antd';
 import { History } from 'history';
 import md5 from 'blueimp-md5';
 import { observable, runInAction } from 'mobx';
-import request, { RequestError } from './request';
+import { request, API, RequestError } from './utils';
 
 const noop = () => {};
 const initState = {
@@ -27,8 +27,8 @@ export async function login(email: string, password: string) {
   store.email = email;
   const params = { email, pwd: md5(password) };
   try {
-    const { token } = await request('post', 'user/login', params);
-    runInAction(() => (store.token = token));
+    const { token } = await request('post', API.loginUrl, params);
+    // runInAction(() => (store.token = token));
     localStorage.setItem('token', token);
     message.success('登录成功');
     fetchUserInfo();
@@ -50,7 +50,7 @@ export function logout() {
 
 async function fetchUserInfo() {
   try {
-    const user = await request('get', 'user/me');
+    const user = await request('get', API.meUrl);
     await fetchApps();
     runInAction(() => (store.user = user));
   } catch (_) {
@@ -60,12 +60,13 @@ async function fetchUserInfo() {
 }
 
 export async function fetchApps() {
-  const { data } = await request('get', 'app/list');
+  const { data } = await request('get', API.listUrl);
   runInAction(() => (store.apps = data));
 }
 
 function init() {
-  if (store.token) {
+  const token = localStorage.getItem('token');
+  if (token) {
     return fetchUserInfo();
   }
 }

@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { useState } from 'react';
 import {
   AndroidFilled,
   AppleFilled,
@@ -6,44 +11,54 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { Card, Layout, Menu, Progress, Tag, Tooltip } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
+// import { observable, runInAction } from 'mobx';
+// import { observer } from 'mobx-react-lite';
 import { Link, useLocation } from 'react-router-dom';
 import { defaultRoute } from './main';
 import addApp from './pages/apps/add';
-import store from './store';
+// import store from './store';
 import quotas from './constants/quotas.json';
 import { PRICING_LINK } from './constants/links';
+import useUserInfo from './hooks/useUserInfo';
+import useAppList from './hooks/useApplist';
 
-const state = observable.object({ selectedKeys: observable.array<string>() });
+// const state = observable.object({ selectedKeys: observable.array<string>() });
 
 export default function Sider() {
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const { pathname } = useLocation();
-  if (!store.token) return null;
 
-  if (state.selectedKeys.length === 0) {
-    runInAction(() => {
-      if (pathname === '/') {
-        state.selectedKeys = observable.array([defaultRoute]);
-      } else {
-        state.selectedKeys = observable.array(pathname.replace(/^\//, '').split('/'));
-      }
-    });
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
+  if (selectedKeys?.length === 0) {
+    if (pathname === '/') {
+      setSelectedKeys([defaultRoute]);
+      // state.selectedKeys = observable.array([defaultRoute]);
+    } else {
+      setSelectedKeys(pathname?.replace(/^\//, '')?.split('/'));
+      // state.selectedKeys = observable.array(pathname.replace(/^\//, '').split('/'));
+    }
+    // runInAction(() => {
+    // });
   }
   return (
     <Layout.Sider width={240} theme='light' style={style.sider}>
       <Layout.Header style={style.logo}>Pushy</Layout.Header>
-      <SiderMenu />
+      <SiderMenu selectedKeys={selectedKeys} setSelectedKeys={setSelectedKeys} />
     </Layout.Sider>
   );
 }
 
-const SiderMenu = observer(() => {
-  const { apps, user } = store;
-  const quota = quotas[user?.tier];
+const SiderMenu = ({ selectedKeys, setSelectedKeys }) => {
+  const { userInfo } = useUserInfo();
+  const { appList } = useAppList();
+
+  const quota = quotas[userInfo?.tier];
   const pvQuota = quota?.pv;
-  const consumedQuota = user?.checkQuota;
+  const consumedQuota = userInfo?.checkQuota;
   const percent = pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
+
   return (
     <div>
       <Card
@@ -67,10 +82,11 @@ const SiderMenu = observer(() => {
       </Card>
       <Menu
         defaultOpenKeys={['apps']}
-        selectedKeys={state.selectedKeys}
+        selectedKeys={selectedKeys}
         onSelect={({ key }) => {
           if (key === 'add-app') return;
-          runInAction(() => (state.selectedKeys = observable.array([key])));
+          setSelectedKeys([key]);
+          // runInAction(() => (state.selectedKeys = observable.array([key])));
         }}
         mode='inline'
       >
@@ -78,7 +94,7 @@ const SiderMenu = observer(() => {
           <Link to='/user'>账户设置</Link>
         </Menu.Item>
         <Menu.SubMenu key='apps' title='应用管理' icon={<AppstoreOutlined />}>
-          {apps.map((i) => (
+          {appList?.map((i) => (
             <Menu.Item key={i.id} className='!h-16'>
               <div className='flex flex-row items-center gap-4'>
                 <div className='flex flex-col justify-center'>
@@ -111,7 +127,7 @@ const SiderMenu = observer(() => {
       </Menu>
     </div>
   );
-});
+};
 
 const style: Style = {
   sider: { boxShadow: '2px 0 8px 0 rgb(29 35 41 / 5%)', zIndex: 2 },
