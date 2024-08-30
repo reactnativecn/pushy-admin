@@ -4,6 +4,7 @@ import { AlipayCircleOutlined } from '@ant-design/icons';
 import request from '../request';
 import store from '../store';
 import { PRICING_LINK } from '../constants/links';
+import { quotas } from '../constants/quotas';
 
 const InvoiceHint = (
   <div>
@@ -41,6 +42,7 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
 
 export default function UserPanel() {
   const { name, email, tier, tierExpiresAt } = store.user!;
+  const currentQuota = quotas[tier as keyof typeof quotas];
   return (
     <div className='body'>
       <Descriptions title='账户信息' column={1} labelStyle={{ width: 134 }} bordered>
@@ -48,13 +50,26 @@ export default function UserPanel() {
         <Descriptions.Item label='邮箱'>{email}</Descriptions.Item>
         <Descriptions.Item label='服务版本'>
           <Space>
-            {tiers[tier]}
+            {currentQuota.title}
             <span>
-              {tier === 'free' && <PurchaseButton tier='standard'>升级标准版</PurchaseButton>}
-              {(tier === 'free' || tier === 'standard') && (
+              {currentQuota.pv < quotas.standard.pv && (
+                <PurchaseButton tier='standard'>升级标准版</PurchaseButton>
+              )}
+              {currentQuota.pv < quotas.premium.pv && (
                 <PurchaseButton tier='premium'>升级高级版</PurchaseButton>
               )}
-              {tier !== 'pro' && <PurchaseButton tier='pro'>升级专业版</PurchaseButton>}
+              {currentQuota.pv < quotas.pro.pv && (
+                <PurchaseButton tier='pro'>升级专业版</PurchaseButton>
+              )}
+              {currentQuota.pv < quotas.vip1.pv && (
+                <PurchaseButton tier='enterprise'>升级大客户VIP1版</PurchaseButton>
+              )}
+              {currentQuota.pv < quotas.vip2.pv && (
+                <PurchaseButton tier='vip2'>升级大客户VIP2版</PurchaseButton>
+              )}
+              {currentQuota.pv < quotas.vip3.pv && (
+                <PurchaseButton tier='vip3'>升级大客户VIP3版</PurchaseButton>
+              )}
             </span>
           </Space>
         </Descriptions.Item>
@@ -93,10 +108,3 @@ async function purchase(tier?: string) {
   const { payUrl } = await request('post', 'orders', { tier });
   window.location.href = payUrl;
 }
-
-const tiers = {
-  free: '免费版',
-  standard: '标准版',
-  premium: '高级版',
-  pro: '专业版',
-};

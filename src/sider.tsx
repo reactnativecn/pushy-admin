@@ -12,7 +12,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { defaultRoute } from './main';
 import addApp from './pages/apps/add';
 import store from './store';
-import quotas from './constants/quotas.json';
+import { quotas } from './constants/quotas';
 import { PRICING_LINK } from './constants/links';
 
 const state = observable.object({ selectedKeys: observable.array<string>() });
@@ -40,7 +40,7 @@ export default function Sider() {
 
 const SiderMenu = observer(() => {
   const { apps, user } = store;
-  const quota = quotas[user?.tier];
+  const quota = quotas[user?.tier as keyof typeof quotas];
   const pvQuota = quota?.pv;
   const consumedQuota = user?.checkQuota;
   const percent = pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
@@ -52,7 +52,7 @@ const SiderMenu = observer(() => {
         className='mr-2 mb-4'
       >
         <Progress
-          status={percent > 40 ? 'normal' : 'exception'}
+          status={percent && percent > 40 ? 'normal' : 'exception'}
           size={['100%', 30]}
           percent={percent}
           percentPosition={{ type: 'inner', align: 'center' }}
