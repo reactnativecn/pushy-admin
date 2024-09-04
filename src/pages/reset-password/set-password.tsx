@@ -3,9 +3,9 @@ import { observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useLocation } from "react-router-dom";
 import request, { RequestError } from "../../request";
-import { isPasswordValid } from "../../utils";
 import store from "../../store";
 import md5 from "blueimp-md5";
+import { isPasswordValid } from "../../utils/helper";
 
 const state = observable.object({ loading: false });
 

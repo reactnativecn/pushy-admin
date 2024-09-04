@@ -9,7 +9,7 @@ import state, { fetchData } from './state';
 import VersionTable from './versions';
 import settingApp from '../apps/setting';
 
-export default observer(() => {
+export const Component = observer(() => {
   const params = useParams<{ id?: string }>();
   useEffect(() => {
     const { id } = params;

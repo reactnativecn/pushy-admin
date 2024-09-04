@@ -7,7 +7,7 @@ import store from '../store';
 
 const state = observable.object({ loading: false });
 
-export default observer(() => {
+export const Component = observer(() => {
   useEffect(() => {
     if (!store.email) {
       store.history.replace('/login');
@@ -41,7 +41,7 @@ async function sendEmail() {
   try {
     await request('post', 'user/active/sendmail', { email });
     message.info('邮件发送成功，请注意查收');
-  } catch (_) {
+  } catch {
     message.error('邮件发送失败');
   }
   state.loading = false;

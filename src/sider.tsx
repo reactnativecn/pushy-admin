@@ -9,7 +9,7 @@ import { Card, Layout, Menu, Progress, Tag, Tooltip } from 'antd';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Link, useLocation } from 'react-router-dom';
-import { defaultRoute } from './main';
+
 import addApp from './pages/apps/add';
 import store from './store';
 import { quotas } from './constants/quotas';
@@ -24,7 +24,7 @@ export default function Sider() {
   if (state.selectedKeys.length === 0) {
     runInAction(() => {
       if (pathname === '/') {
-        state.selectedKeys = observable.array([defaultRoute]);
+        state.selectedKeys = observable.array(['/user']);
       } else {
         state.selectedKeys = observable.array(pathname.replace(/^\//, '').split('/'));
       }

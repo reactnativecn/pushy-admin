@@ -40,7 +40,7 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
   );
 };
 
-export default function UserPanel() {
+function UserPanel() {
   const { name, email, tier, tierExpiresAt } = store.user!;
   const currentQuota = quotas[tier as keyof typeof quotas];
   return (
@@ -108,3 +108,5 @@ async function purchase(tier?: string) {
   const { payUrl } = await request('post', 'orders', { tier });
   window.location.href = payUrl;
 }
+
+export const Component = UserPanel;

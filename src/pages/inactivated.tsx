@@ -7,7 +7,7 @@ import store from '../store';
 
 const state = observable.object({ loading: false });
 
-export default observer(() => {
+export const Component = observer(() => {
   useEffect(() => {
     if (!store.email) {
       store.history.replace('/login');

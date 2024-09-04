@@ -215,7 +215,7 @@ function renderTextCol({
   );
 }
 
-export default observer(() => {
+export const Component = observer(() => {
   const { versions, pagination, loading, selected } = state;
 
   return (
