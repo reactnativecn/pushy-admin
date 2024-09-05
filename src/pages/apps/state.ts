@@ -2,6 +2,7 @@ import { Modal } from 'antd';
 import { observable, runInAction } from 'mobx';
 import request from '../../request';
 import store, { fetchApps } from '../../store';
+import { rootRouterPath, router } from '../../router';
 
 const state = observable.object({
   apps: observable.array<App>(),
@@ -36,7 +37,7 @@ export function removeApp(app: App) {
     async onOk() {
       await request('delete', `app/${app.id}`);
       fetchApps();
-      store.history.replace('/apps');
+      router.navigate(rootRouterPath.apps);
     },
   });
 }

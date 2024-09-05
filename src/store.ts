@@ -3,6 +3,7 @@ import { History } from 'history';
 import md5 from 'blueimp-md5';
 import { observable, runInAction } from 'mobx';
 import request, { RequestError } from './request';
+import { rootRouterPath, router } from './router';
 
 const noop = () => {};
 const initState = {
@@ -35,7 +36,7 @@ export async function login(email: string, password: string) {
   } catch (e) {
     if (e instanceof RequestError) {
       if (e.code === 423) {
-        store.history.push('/inactivated');
+        router.navigate(rootRouterPath.inactivated);
       } else {
         message.error(e.message);
       }

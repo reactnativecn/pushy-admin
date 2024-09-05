@@ -12,7 +12,7 @@ const PackageList = ({ dataSource }: { dataSource: Package[] }) => (
     renderItem={(item) => <Item item={item} />}
   />
 );
-export const Component = PackageList;
+export default PackageList;
 
 function remove(item: Package) {
   Modal.confirm({

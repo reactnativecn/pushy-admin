@@ -18,6 +18,7 @@ export const rootRouterPath = {
   apps: '/apps',
   versions: (id: string) => `/apps/${id}`,
   resetPassword: (step: string) => `/reset-password/${step}`,
+  inactivated: '/inactivated',
 };
 
 export const router = createHashRouter([
@@ -48,6 +49,10 @@ export const router = createHashRouter([
       {
         path: 'register',
         lazy: () => import('./pages/register'),
+      },
+      {
+        path: 'apps',
+        lazy: () => import('./pages/apps'),
       },
       {
         path: 'apps/:id',
