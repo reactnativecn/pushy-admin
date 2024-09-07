@@ -45,6 +45,7 @@ export function fetchData(id: number) {
 
 export function fetchPackages() {
   const { app } = state;
+  if (!app) return;
   request('get', `app/${app?.id}/package/list?limit=1000`).then(({ data }) =>
     runInAction(() => {
       state.packages = data;
@@ -54,6 +55,7 @@ export function fetchPackages() {
 }
 
 export function fetchVersions(page?: number) {
+  if (!state.app) return;
   if (page === undefined) {
     if (state.versions.length) return;
     page = 1;

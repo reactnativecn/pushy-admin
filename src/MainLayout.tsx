@@ -86,5 +86,4 @@ const style: Style = {
     flexDirection: 'column',
     paddingBottom: 0,
   },
-  spin: { lineHeight: '100vh', textAlign: 'center' },
 };

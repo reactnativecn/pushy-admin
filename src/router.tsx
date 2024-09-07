@@ -1,17 +1,6 @@
-import { createHashRouter, Navigate } from 'react-router-dom';
+import { createHashRouter, Navigate, redirect } from 'react-router-dom';
 import MainLayout from './MainLayout';
-
-// const UserRoute = observer((props: RouteProps) => {
-//   if (!store.token) return <Login />;
-//   if (!store.user) {
-//     return (
-//       <div style={style.spin}>
-//         <Spin size='large' />
-//       </div>
-//     );
-//   }
-//   return <Route {...props} />;
-// });
+import store from './store';
 
 export const rootRouterPath = {
   user: '/user',
@@ -19,15 +8,31 @@ export const rootRouterPath = {
   versions: (id: string) => `/apps/${id}`,
   resetPassword: (step: string) => `/reset-password/${step}`,
   inactivated: '/inactivated',
+  login: '/login',
+};
+
+export const needAuthLoader = ({ request }: { request: Request }) => {
+  if (!store.token) {
+    const { pathname, search } = new URL(request.url);
+    if (pathname === rootRouterPath.login) {
+      return null;
+    }
+    if (pathname === '/') {
+      return redirect(rootRouterPath.login);
+    }
+    return redirect(`${rootRouterPath.login}?loginFrom=${encodeURIComponent(pathname + search)}`);
+  }
+  return null;
 };
 
 export const router = createHashRouter([
   {
     path: '/',
     element: <MainLayout />,
+    loader: needAuthLoader,
     children: [
       {
-        path: 'index',
+        path: '',
         element: <Navigate to={rootRouterPath.user} />,
       },
       {
@@ -57,6 +62,14 @@ export const router = createHashRouter([
       {
         path: 'apps/:id',
         lazy: () => import('./pages/versions'),
+      },
+      {
+        path: 'user',
+        lazy: () => import('./pages/user'),
+      },
+      {
+        path: 'login',
+        lazy: () => import('./pages/login'),
       },
     ],
   },

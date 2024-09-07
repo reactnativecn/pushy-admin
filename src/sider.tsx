@@ -14,6 +14,7 @@ import addApp from './pages/apps/add';
 import store from './store';
 import { quotas } from './constants/quotas';
 import { PRICING_LINK } from './constants/links';
+import { rootRouterPath } from './router';
 
 const state = observable.object({ selectedKeys: observable.array<string>() });
 
@@ -46,25 +47,27 @@ const SiderMenu = observer(() => {
   const percent = pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
   return (
     <div>
-      <Card
-        title={<div className='text-center'>今日剩余总查询热更次数</div>}
-        size='small'
-        className='mr-2 mb-4'
-      >
-        <Progress
-          status={percent && percent > 40 ? 'normal' : 'exception'}
-          size={['100%', 30]}
-          percent={percent}
-          percentPosition={{ type: 'inner', align: 'center' }}
-          format={() => (consumedQuota ? `${consumedQuota.toLocaleString()} 次` : '')}
-        />
-        <div className='text-xs mt-2 text-center'>
-          <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
-            {quota?.title}
-          </a>
-          : {pvQuota?.toLocaleString()} 次/每日
-        </div>
-      </Card>
+      {percent && (
+        <Card
+          title={<div className='text-center'>今日剩余总查询热更次数</div>}
+          size='small'
+          className='mr-2 mb-4'
+        >
+          <Progress
+            status={percent && percent > 40 ? 'normal' : 'exception'}
+            size={['100%', 30]}
+            percent={percent}
+            percentPosition={{ type: 'inner', align: 'center' }}
+            format={() => (consumedQuota ? `${consumedQuota.toLocaleString()} 次` : '')}
+          />
+          <div className='text-xs mt-2 text-center'>
+            <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
+              {quota?.title}
+            </a>
+            : {pvQuota?.toLocaleString()} 次/每日
+          </div>
+        </Card>
+      )}
       <Menu
         defaultOpenKeys={['apps']}
         selectedKeys={state.selectedKeys}
@@ -75,7 +78,7 @@ const SiderMenu = observer(() => {
         mode='inline'
       >
         <Menu.Item key='user' icon={<UserOutlined />}>
-          <Link to='/user'>账户设置</Link>
+          <Link to={rootRouterPath.user}>账户设置</Link>
         </Menu.Item>
         <Menu.SubMenu key='apps' title='应用管理' icon={<AppstoreOutlined />}>
           {apps.map((i) => (

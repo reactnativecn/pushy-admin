@@ -33,6 +33,8 @@ export async function login(email: string, password: string) {
     localStorage.setItem('token', token);
     message.success('登录成功');
     fetchUserInfo();
+    const loginFrom = new URLSearchParams(window.location.search).get('loginFrom');
+    router.navigate(loginFrom || rootRouterPath.user);
   } catch (e) {
     if (e instanceof RequestError) {
       if (e.code === 423) {
@@ -46,6 +48,8 @@ export async function login(email: string, password: string) {
 
 export function logout() {
   store.token = null;
+  store.user = undefined;
+  router.navigate(rootRouterPath.login);
   localStorage.removeItem('token');
 }
 

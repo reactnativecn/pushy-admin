@@ -1,6 +1,7 @@
-import { Button, Descriptions, Space, Popover } from 'antd';
+import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
+import { observer } from 'mobx-react-lite';
 import request from '../request';
 import store from '../store';
 import { PRICING_LINK } from '../constants/links';
@@ -41,7 +42,14 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
 };
 
 function UserPanel() {
-  const { name, email, tier, tierExpiresAt } = store.user!;
+  if (!store.user) {
+    return (
+      <div style={{ lineHeight: '100vh', textAlign: 'center' }}>
+        <Spin size='large' />
+      </div>
+    );
+  }
+  const { name, email, tier, tierExpiresAt } = store.user;
   const currentQuota = quotas[tier as keyof typeof quotas];
   return (
     <div className='body'>
@@ -109,4 +117,4 @@ async function purchase(tier?: string) {
   window.location.href = payUrl;
 }
 
-export const Component = UserPanel;
+export const Component = observer(UserPanel);

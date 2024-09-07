@@ -1,5 +1,4 @@
 import { message } from 'antd';
-import store from './store';
 
 export default async function request(method: string, path: string, params?: any) {
   method = method.toUpperCase();
@@ -8,6 +7,7 @@ export default async function request(method: string, path: string, params?: any
   // let url = `https://update.react-native.cn/api/${path}`;
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
+  const store = (await import('./store')).default;
   if (store.token) {
     headers['x-accesstoken'] = store.token;
   }
