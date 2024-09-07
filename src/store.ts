@@ -5,20 +5,13 @@ import { observable, runInAction } from 'mobx';
 import request, { RequestError } from './request';
 import { rootRouterPath, router } from './router';
 
-const noop = () => {};
 const initState = {
   apps: observable.array<App>(),
   token: localStorage.getItem('token'),
   email: '',
-  history: {
-    push: noop,
-    replace: noop,
-    go: noop,
-    goBack: noop,
-  } as any as History,
 };
 
-type Store = typeof initState & { user?: User; history: History };
+type Store = typeof initState & { user?: User };
 
 const store = observable.object<Store>(initState);
 

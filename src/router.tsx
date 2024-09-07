@@ -9,6 +9,7 @@ export const rootRouterPath = {
   resetPassword: (step: string) => `/reset-password/${step}`,
   inactivated: '/inactivated',
   login: '/login',
+  welcome: '/welcome',
 };
 
 export const needAuthLoader = ({ request }: { request: Request }) => {
@@ -29,7 +30,6 @@ export const router = createHashRouter([
   {
     path: '/',
     element: <MainLayout />,
-    loader: needAuthLoader,
     children: [
       {
         path: '',
@@ -56,20 +56,23 @@ export const router = createHashRouter([
         lazy: () => import('./pages/register'),
       },
       {
+        path: 'login',
+        lazy: () => import('./pages/login'),
+      },
+      {
         path: 'apps',
+        loader: needAuthLoader,
         lazy: () => import('./pages/apps'),
       },
       {
         path: 'apps/:id',
+        loader: needAuthLoader,
         lazy: () => import('./pages/versions'),
       },
       {
         path: 'user',
+        loader: needAuthLoader,
         lazy: () => import('./pages/user'),
-      },
-      {
-        path: 'login',
-        lazy: () => import('./pages/login'),
       },
     ],
   },

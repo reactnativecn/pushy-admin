@@ -7,6 +7,7 @@ import logo from '../assets/logo.svg';
 import request from '../request';
 import store from '../store';
 import { isPasswordValid } from '../utils/helper';
+import { router, rootRouterPath } from '../router';
 
 const state = observable.object({ loading: false, agreed: false });
 
@@ -18,7 +19,7 @@ async function submit(values: { [key: string]: string }) {
   store.email = values.email;
   try {
     await request('post', 'user/register', values);
-    store.history.replace('/welcome');
+    router.navigate(rootRouterPath.welcome);
   } catch (_) {
     message.error('该邮箱已被注册');
   }

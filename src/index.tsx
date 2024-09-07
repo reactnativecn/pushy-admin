@@ -7,7 +7,6 @@ import { RouterProvider } from 'react-router-dom';
 import './index.css';
 import { router } from './router';
 
-// window.React = React;
 const root = document.getElementById('main');
 if (root) {
   createRoot(root).render(
