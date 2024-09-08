@@ -1,13 +1,12 @@
 import { message } from 'antd';
-import { History } from 'history';
 import md5 from 'blueimp-md5';
 import { observable, runInAction } from 'mobx';
-import request, { RequestError } from './request';
 import { rootRouterPath, router } from './router';
+import { api } from './services/api';
+import request, { setToken, getToken } from './services/request';
 
 const initState = {
   apps: observable.array<App>(),
-  token: localStorage.getItem('token'),
   email: '',
 };
 
@@ -21,26 +20,23 @@ export async function login(email: string, password: string) {
   store.email = email;
   const params = { email, pwd: md5(password) };
   try {
-    const { token } = await request('post', 'user/login', params);
-    runInAction(() => (store.token = token));
-    localStorage.setItem('token', token);
+    const { token } = await api.login(params);
+    setToken(token);
     message.success('登录成功');
     fetchUserInfo();
     const loginFrom = new URLSearchParams(window.location.search).get('loginFrom');
     router.navigate(loginFrom || rootRouterPath.user);
-  } catch (e) {
-    if (e instanceof RequestError) {
-      if (e.code === 423) {
-        router.navigate(rootRouterPath.inactivated);
-      } else {
-        message.error(e.message);
-      }
+  } catch (err) {
+    const e = err as Error;
+    if (e.message.startsWith('423:')) {
+      router.navigate(rootRouterPath.inactivated);
+    } else {
+      message.error(e.message);
     }
   }
 }
 
 export function logout() {
-  store.token = null;
   store.user = undefined;
   router.navigate(rootRouterPath.login);
   localStorage.removeItem('token');
@@ -63,7 +59,7 @@ export async function fetchApps() {
 }
 
 function init() {
-  if (store.token) {
+  if (getToken()) {
     return fetchUserInfo();
   }
 }

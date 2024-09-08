@@ -31,8 +31,8 @@ const MainLayout = observer(() => (
             <Menu.Item key='about' icon={<InfoCircleOutlined />}>
               <ExtLink href='https://reactnative.cn/about.html'>关于我们</ExtLink>
             </Menu.Item>
-            {store.token && (
-              <Menu.SubMenu key='user' icon={<UserOutlined />} title={store.user?.name}>
+            {store.user && (
+              <Menu.SubMenu key='user' icon={<UserOutlined />} title={store.user.name}>
                 <Menu.Item
                   key='logout'
                   onClick={() => {

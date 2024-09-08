@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import { TablePaginationConfig } from 'antd/lib/table';
 import { observable, runInAction } from 'mobx';
-import request from '../../request';
+import request from '@/services/request';
 import store from '../../store';
 
 const initState = {

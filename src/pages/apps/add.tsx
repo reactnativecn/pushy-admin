@@ -1,7 +1,7 @@
 import { AndroidFilled, AppleFilled } from '@ant-design/icons';
 import { Form, Input, message, Modal, Select } from 'antd';
-import request from '../../request';
 import { fetchApps } from '../../store';
+import request from '../../services/request';
 
 export default function add() {
   let name = '';
@@ -17,10 +17,7 @@ export default function add() {
           <Input placeholder='请输入应用名称' onChange={({ target }) => (name = target.value)} />
         </Form.Item>
         <Form.Item label='选择平台' name='platform'>
-          <Select
-            // @ts-ignore
-            onSelect={(value) => (platform = value)}
-          >
+          <Select onSelect={(value) => (platform = value)}>
             <Select.Option value='android'>
               <AndroidFilled style={style.android} /> Android
             </Select.Option>

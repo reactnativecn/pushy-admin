@@ -1,6 +1,6 @@
 import { Modal } from 'antd';
 import { observable, runInAction } from 'mobx';
-import request from '../../request';
+import request from '../../services/request';
 import store, { fetchApps } from '../../store';
 import { rootRouterPath, router } from '../../router';
 

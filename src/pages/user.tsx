@@ -2,7 +2,7 @@ import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
-import request from '../request';
+import request from '../services/request';
 import store from '../store';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';

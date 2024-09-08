@@ -1,6 +1,6 @@
 import { createHashRouter, Navigate, redirect } from 'react-router-dom';
 import MainLayout from './MainLayout';
-import store from './store';
+import { getToken } from './services/request';
 
 export const rootRouterPath = {
   user: '/user',
@@ -13,7 +13,7 @@ export const rootRouterPath = {
 };
 
 export const needAuthLoader = ({ request }: { request: Request }) => {
-  if (!store.token) {
+  if (!getToken()) {
     const { pathname, search } = new URL(request.url);
     if (pathname === rootRouterPath.login) {
       return null;

@@ -2,7 +2,7 @@ import { Button, message, Result } from 'antd';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import request from '../request';
+import request from '../services/request';
 import store from '../store';
 import { router, rootRouterPath } from '../router';
 

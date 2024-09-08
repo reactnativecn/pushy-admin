@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } from 'antd';
 // import { useDrag } from "react-dnd";
-import request from '../../request';
+import request from '@/services/request';
 import state, { fetchPackages, fetchVersions } from './state';
 
 const PackageList = ({ dataSource }: { dataSource: Package[] }) => (

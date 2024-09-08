@@ -4,7 +4,7 @@ import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
-import request from '../request';
+import request from '../services/request';
 import store from '../store';
 import { isPasswordValid } from '../utils/helper';
 import { router, rootRouterPath } from '../router';

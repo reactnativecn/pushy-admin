@@ -20,7 +20,7 @@ const state = observable.object({ selectedKeys: observable.array<string>() });
 
 export default function Sider() {
   const { pathname } = useLocation();
-  if (!store.token) return null;
+  if (!store.user) return null;
 
   if (state.selectedKeys.length === 0) {
     runInAction(() => {

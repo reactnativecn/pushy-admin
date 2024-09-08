@@ -3,10 +3,9 @@ import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
 import md5 from 'blueimp-md5';
-import request, { RequestError } from '../../request';
-import store from '../../store';
 import { isPasswordValid } from '../../utils/helper';
 import { router, rootRouterPath } from '../../router';
+import request from '../../services/request';
 
 const state = observable.object({ loading: false });
 
@@ -25,7 +24,7 @@ export default observer(() => {
           router.navigate(rootRouterPath.resetPassword('3'));
         } catch (e) {
           console.log(e);
-          message.error((e as RequestError).message ?? '网络错误');
+          message.error((e as Error).message ?? '网络错误');
         }
         runInAction(() => (state.loading = false));
       }}
