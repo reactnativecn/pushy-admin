@@ -11,7 +11,7 @@ export const Component = observer(() => {
   const { search } = useLocation();
   const token = new URLSearchParams(search).get('code');
   useEffect(() => {
-    request('post', 'user/active', { token })
+    request('post', '/user/active', { token })
       .then(() => runInAction(() => (state.loading = false)))
       .catch((e: unknown) => runInAction(() => (state.error = (e as Error).message ?? '激活失败')));
   }, []);

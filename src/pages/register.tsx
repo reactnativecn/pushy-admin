@@ -18,7 +18,7 @@ async function submit(values: { [key: string]: string }) {
   runInAction(() => (state.loading = true));
   store.email = values.email;
   try {
-    await request('post', 'user/register', values);
+    await request('post', '/user/register', values);
     router.navigate(rootRouterPath.welcome);
   } catch (_) {
     message.error('该邮箱已被注册');

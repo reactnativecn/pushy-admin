@@ -21,7 +21,7 @@ export default observer(() => {
       onFinish={async (values) => {
         runInAction(() => (state.loading = true));
         try {
-          await request('post', 'user/resetpwd/sendmail', values);
+          await request('post', '/user/resetpwd/sendmail', values);
           runInAction(() => (state.sent = true));
         } catch (e) {
           message.error((e as Error).message ?? '网络错误');

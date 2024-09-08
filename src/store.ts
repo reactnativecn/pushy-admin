@@ -44,7 +44,7 @@ export function logout() {
 
 async function fetchUserInfo() {
   try {
-    const user = await request('get', 'user/me');
+    const user = await request('get', '/user/me');
     await fetchApps();
     runInAction(() => (store.user = user));
   } catch (_) {
@@ -54,7 +54,7 @@ async function fetchUserInfo() {
 }
 
 export async function fetchApps() {
-  const { data } = await request('get', 'app/list');
+  const { data } = await request('get', '/app/list');
   runInAction(() => (store.apps = data));
 }
 

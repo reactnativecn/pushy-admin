@@ -33,7 +33,7 @@ export default function add() {
         message.warning('请输入应用名称');
         return false;
       }
-      return request('post', 'app/create', { name, platform })
+      return request('post', '/app/create', { name, platform })
         .then(fetchApps)
         .catch((error) => {
           message.error(error.message);

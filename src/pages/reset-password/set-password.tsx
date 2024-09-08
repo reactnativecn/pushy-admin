@@ -20,7 +20,7 @@ export default observer(() => {
           delete values.pwd2;
           values.token = new URLSearchParams(search).get('code');
           values.newPwd = md5(values.newPwd);
-          await request('post', 'user/resetpwd/reset', values);
+          await request('post', '/user/resetpwd/reset', values);
           router.navigate(rootRouterPath.resetPassword('3'));
         } catch (e) {
           console.log(e);

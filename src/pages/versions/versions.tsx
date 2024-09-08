@@ -198,7 +198,7 @@ function renderTextCol({
             />
           ),
           async onOk() {
-            await request('put', `app/${state.app?.id}/version/${record.id}`, { [key]: value });
+            await request('put', `/app/${state.app?.id}/version/${record.id}`, { [key]: value });
             fetchVersions(state.pagination.current);
           },
         });

@@ -15,7 +15,7 @@ export default function setting(app: App) {
     state.app = undefined;
   }
 
-  request('get', `app/${app.id}`).then((appData) => {
+  request('get', `/app/${app.id}`).then((appData) => {
     runInAction(() => {
       state.app = appData;
     });
@@ -29,7 +29,7 @@ export default function setting(app: App) {
     async onOk() {
       try {
         const payload = state.app;
-        await request('put', `app/${app.id}`, {
+        await request('put', `/app/${app.id}`, {
           name: payload.name,
           downloadUrl: payload.downloadUrl,
           status: payload.status,

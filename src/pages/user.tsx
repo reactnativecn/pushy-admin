@@ -2,6 +2,7 @@ import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
+import dayjs from 'dayjs';
 import request from '../services/request';
 import store from '../store';
 import { PRICING_LINK } from '../constants/links';
@@ -83,7 +84,15 @@ function UserPanel() {
         </Descriptions.Item>
         <Descriptions.Item label='服务有效期至'>
           <Space>
-            {tierExpiresAt ? new Date(tierExpiresAt).toLocaleDateString() : '无'}
+            {tierExpiresAt ? (
+              <div className='flex flex-col'>
+                {dayjs(tierExpiresAt).format('YYYY年MM月DD日')}
+                <br />
+                <div>(剩余 {dayjs(tierExpiresAt).diff(dayjs(), 'day')} 天)</div>
+              </div>
+            ) : (
+              '无'
+            )}
             {tierExpiresAt && (
               <>
                 <PurchaseButton tier={tier}>续费</PurchaseButton>
@@ -113,7 +122,7 @@ function UserPanel() {
 }
 
 async function purchase(tier?: string) {
-  const { payUrl } = await request('post', 'orders', { tier });
+  const { payUrl } = await request('post', '/orders', { tier });
   window.location.href = payUrl;
 }
 

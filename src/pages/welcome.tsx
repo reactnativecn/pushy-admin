@@ -40,7 +40,7 @@ async function sendEmail() {
   const { email } = store;
   state.loading = true;
   try {
-    await request('post', 'user/active/sendmail', { email });
+    await request('post', '/user/active/sendmail', { email });
     message.info('邮件发送成功，请注意查收');
   } catch {
     message.error('邮件发送失败');
