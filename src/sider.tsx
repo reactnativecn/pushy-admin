@@ -61,10 +61,13 @@ const SiderMenu = observer(() => {
             format={() => (consumedQuota ? `${consumedQuota.toLocaleString()} 次` : '')}
           />
           <div className='text-xs mt-2 text-center'>
+            7日平均剩余次数：{user?.last7dAvg?.toLocaleString()} 次
+          </div>
+          <div className='text-xs mt-2 text-center'>
             <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
               {quota?.title}
             </a>
-            : {pvQuota?.toLocaleString()} 次/每日
+            可用: {pvQuota?.toLocaleString()} 次/每日
           </div>
         </Card>
       )}
