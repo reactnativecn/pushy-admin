@@ -1,8 +1,8 @@
 import { Modal } from 'antd';
 import { observable, runInAction } from 'mobx';
 import request from '../../services/request';
-import store, { fetchApps } from '../../store';
 import { rootRouterPath, router } from '../../router';
+import { resetAppList } from '@/utils/hooks';
 
 const state = observable.object({
   apps: observable.array<App>(),
@@ -10,16 +10,6 @@ const state = observable.object({
 });
 
 export default state;
-
-export function fetch() {
-  runInAction(() => (state.loading = true));
-  request('get', '/app/list').then(({ data }) =>
-    runInAction(() => {
-      state.apps = data;
-      state.loading = false;
-    })
-  );
-}
 
 export async function getApp(id: number | string) {
   if (!state.apps.length) {
@@ -36,7 +26,8 @@ export function removeApp(app: App) {
     okButtonProps: { danger: true },
     async onOk() {
       await request('delete', `/app/${app.id}`);
-      fetchApps();
+
+      resetAppList();
       router.navigate(rootRouterPath.apps);
     },
   });

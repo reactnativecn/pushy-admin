@@ -1,20 +1,14 @@
-import { Form, message, Modal, Spin, Typography, Switch, Button } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
+import { Form, message, Modal, Typography, Switch, Button } from 'antd';
+
 import { DeleteFilled } from '@ant-design/icons';
 import { removeApp } from './state';
 import store from '../../store';
 
 import versionPageState from '../versions/state';
 import request from '../../services/request';
+import { useUserInfo } from '@/utils/hooks';
 
-const state = observable.object<{ app?: AppDetail }>({});
-
-export default function setting(app: App) {
-  if (app.id !== state.app?.id) {
-    state.app = undefined;
-  }
-
+export default function Setting(app: App) {
   request('get', `/app/${app.id}`).then((appData) => {
     runInAction(() => {
       state.app = appData;
@@ -25,7 +19,7 @@ export default function setting(app: App) {
     icon: null,
     closable: true,
     maskClosable: true,
-    content: <Content />,
+    content: <Content app={app} />,
     async onOk() {
       try {
         const payload = state.app;
@@ -58,11 +52,8 @@ export default function setting(app: App) {
   });
 }
 
-const Content = observer(() => {
-  const { app } = state;
-  if (!app) return <Spin />;
-
-  const { user } = store;
+const Content = ({ app }: { app: App }) => {
+  const { user } = useUserInfo();
   return (
     <Form layout='vertical'>
       <Form.Item label='应用名'>
@@ -121,6 +112,6 @@ const Content = observer(() => {
       </Form.Item>
     </Form>
   );
-});
+};
 
 const style: Style = { item: { marginBottom: 0 } };

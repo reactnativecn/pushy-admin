@@ -7,20 +7,20 @@ import {
 } from '@ant-design/icons';
 import { Card, Layout, Menu, Progress, Tag, Tooltip } from 'antd';
 import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
 import { Link, useLocation } from 'react-router-dom';
 
 import addApp from './pages/apps/add';
-import store from './store';
 import { quotas } from './constants/quotas';
 import { PRICING_LINK } from './constants/links';
 import { rootRouterPath } from './router';
+import { useAppList, useUserInfo } from './utils/hooks';
 
 const state = observable.object({ selectedKeys: observable.array<string>() });
 
 export default function Sider() {
   const { pathname } = useLocation();
-  if (!store.user) return null;
+  const { user } = useUserInfo();
+  if (!user) return null;
 
   if (state.selectedKeys.length === 0) {
     runInAction(() => {
@@ -39,8 +39,9 @@ export default function Sider() {
   );
 }
 
-const SiderMenu = observer(() => {
-  const { apps, user } = store;
+const SiderMenu = () => {
+  const { user } = useUserInfo();
+  const { apps } = useAppList();
   const quota = quotas[user?.tier as keyof typeof quotas];
   const pvQuota = quota?.pv;
   const consumedQuota = user?.checkQuota;
@@ -84,7 +85,7 @@ const SiderMenu = observer(() => {
           <Link to={rootRouterPath.user}>账户设置</Link>
         </Menu.Item>
         <Menu.SubMenu key='apps' title='应用管理' icon={<AppstoreOutlined />}>
-          {apps.map((i) => (
+          {apps?.map((i) => (
             <Menu.Item key={i.id} className='!h-16'>
               <div className='flex flex-row items-center gap-4'>
                 <div className='flex flex-col justify-center'>
@@ -117,7 +118,7 @@ const SiderMenu = observer(() => {
       </Menu>
     </div>
   );
-});
+};
 
 const style: Style = {
   sider: { boxShadow: '2px 0 8px 0 rgb(29 35 41 / 5%)', zIndex: 2 },

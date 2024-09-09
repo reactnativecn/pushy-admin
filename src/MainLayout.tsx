@@ -6,57 +6,62 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, message, Row } from 'antd';
-import { observer } from 'mobx-react-lite';
 import { Outlet } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { Footer } from './components';
 import Sider from './sider';
-import store, { logout } from './store';
+import { logout } from './store';
+import { useUserInfo } from './utils/hooks';
 
-const MainLayout = observer(() => (
-  <Layout>
-    <Sider />
+const MainLayout = () => {
+  const { user } = useUserInfo();
+  return (
     <Layout>
-      <Layout.Header style={style.header}>
-        <Row style={{ height: '100%' }} justify='end'>
-          <Menu mode='horizontal' selectable={false}>
-            <Menu.Item key='issues' icon={<CommentOutlined />}>
-              <ExtLink href='https://github.com/reactnativecn/react-native-pushy/issues'>
-                讨论
-              </ExtLink>
-            </Menu.Item>
-            <Menu.Item key='document' icon={<ReadOutlined />}>
-              <ExtLink href='https://pushy.reactnative.cn/docs/getting-started.html'>文档</ExtLink>
-            </Menu.Item>
-            <Menu.Item key='about' icon={<InfoCircleOutlined />}>
-              <ExtLink href='https://reactnative.cn/about.html'>关于我们</ExtLink>
-            </Menu.Item>
-            {store.user && (
-              <Menu.SubMenu key='user' icon={<UserOutlined />} title={store.user.name}>
-                <Menu.Item
-                  key='logout'
-                  onClick={() => {
-                    logout();
-                    message.info('您已退出登录');
-                  }}
-                  icon={<LogoutOutlined />}
-                >
-                  退出登录
-                </Menu.Item>
-              </Menu.SubMenu>
-            )}
-          </Menu>
-        </Row>
-      </Layout.Header>
-      <Layout.Content id='main-body' style={style.body}>
-        <div className='h-full'>
-          <Outlet />
-        </div>
-        <Footer />
-      </Layout.Content>
+      <Sider />
+      <Layout>
+        <Layout.Header style={style.header}>
+          <Row style={{ height: '100%' }} justify='end'>
+            <Menu mode='horizontal' selectable={false}>
+              <Menu.Item key='issues' icon={<CommentOutlined />}>
+                <ExtLink href='https://github.com/reactnativecn/react-native-pushy/issues'>
+                  讨论
+                </ExtLink>
+              </Menu.Item>
+              <Menu.Item key='document' icon={<ReadOutlined />}>
+                <ExtLink href='https://pushy.reactnative.cn/docs/getting-started.html'>
+                  文档
+                </ExtLink>
+              </Menu.Item>
+              <Menu.Item key='about' icon={<InfoCircleOutlined />}>
+                <ExtLink href='https://reactnative.cn/about.html'>关于我们</ExtLink>
+              </Menu.Item>
+              {user && (
+                <Menu.SubMenu key='user' icon={<UserOutlined />} title={user.name}>
+                  <Menu.Item
+                    key='logout'
+                    onClick={() => {
+                      logout();
+                      message.info('您已退出登录');
+                    }}
+                    icon={<LogoutOutlined />}
+                  >
+                    退出登录
+                  </Menu.Item>
+                </Menu.SubMenu>
+              )}
+            </Menu>
+          </Row>
+        </Layout.Header>
+        <Layout.Content id='main-body' style={style.body}>
+          <div className='h-full'>
+            <Outlet />
+          </div>
+          <Footer />
+        </Layout.Content>
+      </Layout>
     </Layout>
-  </Layout>
-));
+  );
+};
 
 export default MainLayout;
 
