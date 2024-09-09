@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "dev": "rsbuild dev",
-    "build": "rsbuild build",
+    "build": "NODE_ENV=production rsbuild build",
     "preview": "rsbuild preview",
     "lint": "tsc --noEmit & eslint \"src/**/*.@(ts|tsx|js|jsx)\""
   },
