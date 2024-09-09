@@ -11,6 +11,7 @@ interface User {
   tier: 'free' | 'standard' | 'premium' | 'pro';
   tierExpiresAt?: string;
   checkQuota?: number;
+  last7dAvg?: number;
 }
 
 interface App {

@@ -1,21 +1,17 @@
-// import * as React from "react";
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { createRoot } from 'react-dom/client';
-import { HashRouter as Router } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 // import { DndProvider } from "react-dnd";
 // import { HTML5Backend } from "react-dnd-html5-backend";
 import './index.css';
-import Main from './main';
+import { router } from './router';
 
-// window.React = React;
 const root = document.getElementById('main');
 if (root) {
   createRoot(root).render(
     <ConfigProvider locale={zhCN}>
-      <Router>
-        <Main />
-      </Router>
+      <RouterProvider router={router} />
     </ConfigProvider>
   );
 }

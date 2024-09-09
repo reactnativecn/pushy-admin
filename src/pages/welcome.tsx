@@ -2,15 +2,16 @@ import { Button, message, Result } from 'antd';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import request from '../request';
+import request from '../services/request';
 import store from '../store';
+import { router, rootRouterPath } from '../router';
 
 const state = observable.object({ loading: false });
 
-export default observer(() => {
+export const Component = observer(() => {
   useEffect(() => {
     if (!store.email) {
-      store.history.replace('/login');
+      router.navigate(rootRouterPath.login);
     }
   }, []);
   return (
@@ -39,9 +40,9 @@ async function sendEmail() {
   const { email } = store;
   state.loading = true;
   try {
-    await request('post', 'user/active/sendmail', { email });
+    await request('post', '/user/active/sendmail', { email });
     message.info('邮件发送成功，请注意查收');
-  } catch (_) {
+  } catch {
     message.error('邮件发送失败');
   }
   state.loading = false;

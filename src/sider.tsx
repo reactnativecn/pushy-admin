@@ -9,22 +9,23 @@ import { Card, Layout, Menu, Progress, Tag, Tooltip } from 'antd';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Link, useLocation } from 'react-router-dom';
-import { defaultRoute } from './main';
+
 import addApp from './pages/apps/add';
 import store from './store';
 import { quotas } from './constants/quotas';
 import { PRICING_LINK } from './constants/links';
+import { rootRouterPath } from './router';
 
 const state = observable.object({ selectedKeys: observable.array<string>() });
 
 export default function Sider() {
   const { pathname } = useLocation();
-  if (!store.token) return null;
+  if (!store.user) return null;
 
   if (state.selectedKeys.length === 0) {
     runInAction(() => {
       if (pathname === '/') {
-        state.selectedKeys = observable.array([defaultRoute]);
+        state.selectedKeys = observable.array(['/user']);
       } else {
         state.selectedKeys = observable.array(pathname.replace(/^\//, '').split('/'));
       }
@@ -46,25 +47,30 @@ const SiderMenu = observer(() => {
   const percent = pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
   return (
     <div>
-      <Card
-        title={<div className='text-center'>今日剩余总查询热更次数</div>}
-        size='small'
-        className='mr-2 mb-4'
-      >
-        <Progress
-          status={percent && percent > 40 ? 'normal' : 'exception'}
-          size={['100%', 30]}
-          percent={percent}
-          percentPosition={{ type: 'inner', align: 'center' }}
-          format={() => (consumedQuota ? `${consumedQuota.toLocaleString()} 次` : '')}
-        />
-        <div className='text-xs mt-2 text-center'>
-          <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
-            {quota?.title}
-          </a>
-          : {pvQuota?.toLocaleString()} 次/每日
-        </div>
-      </Card>
+      {percent && (
+        <Card
+          title={<div className='text-center'>今日剩余总查询热更次数</div>}
+          size='small'
+          className='mr-2 mb-4'
+        >
+          <Progress
+            status={percent && percent > 40 ? 'normal' : 'exception'}
+            size={['100%', 30]}
+            percent={percent}
+            percentPosition={{ type: 'inner', align: 'center' }}
+            format={() => (consumedQuota ? `${consumedQuota.toLocaleString()} 次` : '')}
+          />
+          <div className='text-xs mt-2 text-center'>
+            7日平均剩余次数：{user?.last7dAvg?.toLocaleString()} 次
+          </div>
+          <div className='text-xs mt-2 text-center'>
+            <a target='_blank' href={PRICING_LINK} rel='noreferrer'>
+              {quota?.title}
+            </a>
+            可用: {pvQuota?.toLocaleString()} 次/每日
+          </div>
+        </Card>
+      )}
       <Menu
         defaultOpenKeys={['apps']}
         selectedKeys={state.selectedKeys}
@@ -75,7 +81,7 @@ const SiderMenu = observer(() => {
         mode='inline'
       >
         <Menu.Item key='user' icon={<UserOutlined />}>
-          <Link to='/user'>账户设置</Link>
+          <Link to={rootRouterPath.user}>账户设置</Link>
         </Menu.Item>
         <Menu.SubMenu key='apps' title='应用管理' icon={<AppstoreOutlined />}>
           {apps.map((i) => (

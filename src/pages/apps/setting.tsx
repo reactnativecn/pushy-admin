@@ -2,11 +2,11 @@ import { Form, message, Modal, Spin, Typography, Switch, Button } from 'antd';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { DeleteFilled } from '@ant-design/icons';
-import request, { RequestError } from '../../request';
 import { removeApp } from './state';
 import store from '../../store';
 
 import versionPageState from '../versions/state';
+import request from '../../services/request';
 
 const state = observable.object<{ app?: AppDetail }>({});
 
@@ -15,7 +15,7 @@ export default function setting(app: App) {
     state.app = undefined;
   }
 
-  request('get', `app/${app.id}`).then((appData) => {
+  request('get', `/app/${app.id}`).then((appData) => {
     runInAction(() => {
       state.app = appData;
     });
@@ -29,14 +29,14 @@ export default function setting(app: App) {
     async onOk() {
       try {
         const payload = state.app;
-        await request('put', `app/${app.id}`, {
+        await request('put', `/app/${app.id}`, {
           name: payload.name,
           downloadUrl: payload.downloadUrl,
           status: payload.status,
           ignoreBuildTime: payload.ignoreBuildTime,
         });
-      } catch (error) {
-        message.error((error as RequestError).message);
+      } catch (e) {
+        message.error((e as Error).message);
         return;
       }
 

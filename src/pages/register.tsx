@@ -4,9 +4,10 @@ import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
-import request from '../request';
+import request from '../services/request';
 import store from '../store';
-import { isPasswordValid } from '../utils';
+import { isPasswordValid } from '../utils/helper';
+import { router, rootRouterPath } from '../router';
 
 const state = observable.object({ loading: false, agreed: false });
 
@@ -17,15 +18,15 @@ async function submit(values: { [key: string]: string }) {
   runInAction(() => (state.loading = true));
   store.email = values.email;
   try {
-    await request('post', 'user/register', values);
-    store.history.replace('/welcome');
+    await request('post', '/user/register', values);
+    router.navigate(rootRouterPath.welcome);
   } catch (_) {
     message.error('该邮箱已被注册');
   }
   runInAction(() => (state.loading = false));
 }
 
-export default observer(() => {
+export const Component = observer(() => {
   const { loading, agreed } = state;
   return (
     <div style={style.body}>
@@ -54,13 +55,7 @@ export default observer(() => {
             }),
           ]}
         >
-          <Input
-            type='password'
-            placeholder='密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item
           hasFeedback
@@ -76,22 +71,10 @@ export default observer(() => {
             }),
           ]}
         >
-          <Input
-            type='password'
-            placeholder='再次输入密码'
-            size='large'
-            autoComplete=''
-            required
-          />
+          <Input type='password' placeholder='再次输入密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item>
-          <Button
-            type='primary'
-            htmlType='submit'
-            size='large'
-            loading={loading}
-            block
-          >
+          <Button type='primary' htmlType='submit' size='large' loading={loading} block>
             注册
           </Button>
         </Form.Item>
@@ -103,9 +86,7 @@ export default observer(() => {
               rules={[
                 {
                   validator: (_, value) =>
-                    value
-                      ? Promise.resolve()
-                      : Promise.reject(new Error('请阅读并同意后勾选此处')),
+                    value ? Promise.resolve() : Promise.reject(new Error('请阅读并同意后勾选此处')),
                 },
               ]}
               hasFeedback

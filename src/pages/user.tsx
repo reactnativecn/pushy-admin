@@ -1,7 +1,9 @@
-import { Button, Descriptions, Space, Popover } from 'antd';
+import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
-import request from '../request';
+import { observer } from 'mobx-react-lite';
+import dayjs from 'dayjs';
+import request from '../services/request';
 import store from '../store';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
@@ -40,8 +42,15 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
   );
 };
 
-export default function UserPanel() {
-  const { name, email, tier, tierExpiresAt } = store.user!;
+function UserPanel() {
+  if (!store.user) {
+    return (
+      <div style={{ lineHeight: '100vh', textAlign: 'center' }}>
+        <Spin size='large' />
+      </div>
+    );
+  }
+  const { name, email, tier, tierExpiresAt } = store.user;
   const currentQuota = quotas[tier as keyof typeof quotas];
   return (
     <div className='body'>
@@ -75,7 +84,15 @@ export default function UserPanel() {
         </Descriptions.Item>
         <Descriptions.Item label='服务有效期至'>
           <Space>
-            {tierExpiresAt ? new Date(tierExpiresAt).toLocaleDateString() : '无'}
+            {tierExpiresAt ? (
+              <div className='flex flex-col'>
+                {dayjs(tierExpiresAt).format('YYYY年MM月DD日')}
+                <br />
+                <div>(剩余 {dayjs(tierExpiresAt).diff(dayjs(), 'day')} 天)</div>
+              </div>
+            ) : (
+              '无'
+            )}
             {tierExpiresAt && (
               <>
                 <PurchaseButton tier={tier}>续费</PurchaseButton>
@@ -105,6 +122,8 @@ export default function UserPanel() {
 }
 
 async function purchase(tier?: string) {
-  const { payUrl } = await request('post', 'orders', { tier });
+  const { payUrl } = await request('post', '/orders', { tier });
   window.location.href = payUrl;
 }
+
+export const Component = observer(UserPanel);

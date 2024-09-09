@@ -20,7 +20,7 @@ function submit(event: FormEvent) {
 let email: string;
 let password: string;
 
-export default observer(() => {
+export const Component = observer(() => {
   const { loading } = state;
   return (
     <div style={style.body}>
