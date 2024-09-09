@@ -1,25 +1,21 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Result } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
-import { useEffect } from 'react';
-import request from '../services/request';
+import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
+import { api } from '@/services/api';
 
-const state = observable.object({ loading: true, error: '' });
-
-export const Component = observer(() => {
+export const Component = () => {
   const { search } = useLocation();
-  const token = new URLSearchParams(search).get('code');
-  useEffect(() => {
-    request('post', '/user/active', { token })
-      .then(() => runInAction(() => (state.loading = false)))
-      .catch((e: unknown) => runInAction(() => (state.error = (e as Error).message ?? '激活失败')));
-  }, []);
-  if (state.error) {
-    return <Result status='error' title={state.error} />;
+  const token = new URLSearchParams(search).get('code') || '';
+  const { isLoading, error } = useQuery({
+    queryKey: ['activate', token],
+    queryFn: () => api.activate({ token }),
+    enabled: !!token,
+  });
+  if (error) {
+    return <Result status='error' title={(error as Error).message} />;
   }
-  if (state.loading) {
+  if (isLoading) {
     return <Result icon={<LoadingOutlined />} title='激活中，请稍等' />;
   }
   return (
@@ -28,11 +24,9 @@ export const Component = observer(() => {
       title='激活成功'
       extra={
         <Link to='/login' replace>
-          <Button type='primary' loading={state.loading}>
-            请登录
-          </Button>
+          <Button type='primary'>请登录</Button>
         </Link>
       }
     />
   );
-});
+};

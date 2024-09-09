@@ -1,7 +1,8 @@
 import { AndroidFilled, AppleFilled } from '@ant-design/icons';
 import { Form, Input, message, Modal, Select } from 'antd';
-import { fetchApps } from '../../store';
+
 import request from '../../services/request';
+import { resetAppList } from '@/utils/hooks';
 
 export default function add() {
   let name = '';
@@ -34,7 +35,9 @@ export default function add() {
         return false;
       }
       return request('post', '/app/create', { name, platform })
-        .then(fetchApps)
+        .then(() => {
+          resetAppList();
+        })
         .catch((error) => {
           message.error(error.message);
         });
