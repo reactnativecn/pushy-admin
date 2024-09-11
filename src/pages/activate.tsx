@@ -3,6 +3,7 @@ import { Button, Result } from 'antd';
 import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
+import request from '../services/request';
 import { Link, useLocation } from 'react-router-dom';
 
 const state = observable.object({ loading: true, error: '' });
