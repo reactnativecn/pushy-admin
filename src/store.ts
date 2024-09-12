@@ -4,6 +4,7 @@ import { observable } from 'mobx';
 import { rootRouterPath, router } from './router';
 import { api } from './services/api';
 import { setToken } from './services/request';
+import { resetAllQueries } from '@/utils/queryClient';
 
 const initState = {
   email: '',
@@ -35,6 +36,7 @@ export async function login(email: string, password: string) {
 }
 
 export function logout() {
+  setToken('');
   router.navigate(rootRouterPath.login);
-  localStorage.removeItem('token');
+  resetAllQueries();
 }

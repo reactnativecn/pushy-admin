@@ -20,7 +20,7 @@ const MainLayout = () => {
       <Sider />
       <Layout>
         <Layout.Header style={style.header}>
-          <Row style={{ height: '100%' }} justify='end'>
+          <Row className='h-full' justify='end'>
             <Menu mode='horizontal' selectable={false}>
               <Menu.Item key='issues' icon={<CommentOutlined />}>
                 <ExtLink href='https://github.com/reactnativecn/react-native-pushy/issues'>

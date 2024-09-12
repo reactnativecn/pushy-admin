@@ -7,3 +7,11 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+export const resetAppList = () => {
+  queryClient.invalidateQueries({ queryKey: ['appList'] });
+};
+
+export const resetAllQueries = () => {
+  queryClient.invalidateQueries();
+};
