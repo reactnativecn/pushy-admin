@@ -7,4 +7,6 @@ export const api = {
   me: () => request<User>('get', '/user/me'),
   appList: () => request<{ data: App[] }>('get', '/app/list'),
   sendEmail: (params: { email: string }) => request('post', '/user/active/sendmail', params),
+  resetpwdSendMail: (params: { email: string }) =>
+    request('post', '/user/resetpwd/sendmail', params),
 };

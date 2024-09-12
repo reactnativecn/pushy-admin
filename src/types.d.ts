@@ -50,3 +50,8 @@ interface AppDetail extends App {
   appSecret: string;
   downloadUrl: string;
 }
+
+interface SiderMenuProps {
+  sSelectedKeys?: string[];
+  setSSelectedKeys?: (arg: string[]) => void;
+}

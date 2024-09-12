@@ -1,6 +1,5 @@
 import { AndroidFilled, AppleFilled } from '@ant-design/icons';
 import { Form, Input, message, Modal, Select } from 'antd';
-
 import request from '../../services/request';
 import { resetAppList } from '@/utils/queryClient';
 

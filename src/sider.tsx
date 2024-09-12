@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   AndroidFilled,
   AppleFilled,
@@ -15,31 +16,29 @@ import { PRICING_LINK } from './constants/links';
 import { rootRouterPath } from './router';
 import { useAppList, useUserInfo } from './utils/hooks';
 
-const state = observable.object({ selectedKeys: observable.array<string>() });
-
 export default function Sider() {
+  const [selectedKeys, setSelectedKeys] = useState<string[]>();
   const { pathname } = useLocation();
   const { user } = useUserInfo();
   if (!user) return null;
 
-  if (state.selectedKeys.length === 0) {
-    runInAction(() => {
-      if (pathname === '/') {
-        state.selectedKeys = observable.array(['/user']);
-      } else {
-        state.selectedKeys = observable.array(pathname.replace(/^\//, '').split('/'));
-      }
-    });
+  if (selectedKeys?.length === 0) {
+    if (pathname === '/') {
+      setSelectedKeys(['/user']);
+    } else {
+      setSelectedKeys(pathname?.replace(/^\//, '')?.split('/'));
+    }
   }
   return (
     <Layout.Sider width={240} theme='light' style={style.sider}>
       <Layout.Header style={style.logo}>Pushy</Layout.Header>
-      <SiderMenu />
+      <SiderMenu sSelectedKeys={selectedKeys} setSSelectedKeys={setSelectedKeys} />
     </Layout.Sider>
   );
 }
 
-const SiderMenu = () => {
+const SiderMenu = (props: SiderMenuProps) => {
+  const { sSelectedKeys, setSSelectedKeys } = props;
   const { user } = useUserInfo();
   const { apps } = useAppList();
   const quota = quotas[user?.tier as keyof typeof quotas];
@@ -74,10 +73,11 @@ const SiderMenu = () => {
       )}
       <Menu
         defaultOpenKeys={['apps']}
-        selectedKeys={state.selectedKeys}
+        selectedKeys={sSelectedKeys}
         onSelect={({ key }) => {
           if (key === 'add-app') return;
-          runInAction(() => (state.selectedKeys = observable.array([key])));
+          // @ts-ignore
+          setSSelectedKeys([key]);
         }}
         mode='inline'
       >
