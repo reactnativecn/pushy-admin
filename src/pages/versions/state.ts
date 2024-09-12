@@ -2,7 +2,6 @@ import { Modal } from 'antd';
 import { TablePaginationConfig } from 'antd/lib/table';
 import { observable, runInAction } from 'mobx';
 import request from '@/services/request';
-import store from '../../store';
 
 const initState = {
   loading: false,
@@ -34,7 +33,7 @@ export function fetchData(id: number) {
   if (state.app?.id === id) return;
 
   runInAction(() => {
-    state.app = store.apps.find((i) => i.id === id);
+    // state.app = store.apps.find((i) => i.id === id);
     state.packages = observable.array();
     state.versions = observable.array();
   });

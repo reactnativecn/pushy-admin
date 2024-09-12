@@ -5,9 +5,9 @@ import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
 import request from '../services/request';
-import store from '../store';
 import { isPasswordValid } from '../utils/helper';
 import { router, rootRouterPath } from '../router';
+import { setUserEmail } from '@/services/auth';
 
 const state = observable.object({ loading: false, agreed: false });
 
@@ -16,7 +16,7 @@ async function submit(values: { [key: string]: string }) {
   delete values.agreed;
   values.pwd = md5(values.pwd);
   runInAction(() => (state.loading = true));
-  store.email = values.email;
+  setUserEmail(values.email);
   try {
     await request('post', '/user/register', values);
     router.navigate(rootRouterPath.welcome);

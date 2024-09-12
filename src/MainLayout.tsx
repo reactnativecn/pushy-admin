@@ -10,7 +10,7 @@ import { Outlet } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { Footer } from './components';
 import Sider from './sider';
-import { logout } from './store';
+import { logout } from '@/services/auth';
 import { useUserInfo } from './utils/hooks';
 
 const MainLayout = () => {
