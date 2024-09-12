@@ -6,4 +6,5 @@ export const api = {
   activate: (params: { token: string }) => request('post', '/user/activate', params),
   me: () => request<User>('get', '/user/me'),
   appList: () => request<{ data: App[] }>('get', '/app/list'),
+  sendEmail: (params: { email: string }) => request('post', '/user/active/sendmail', params),
 };

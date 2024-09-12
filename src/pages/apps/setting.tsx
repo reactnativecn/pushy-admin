@@ -2,7 +2,6 @@ import { Form, message, Modal, Typography, Switch, Button } from 'antd';
 
 import { DeleteFilled } from '@ant-design/icons';
 import { removeApp } from './state';
-import store from '../../store';
 
 import versionPageState from '../versions/state';
 import request from '../../services/request';
@@ -37,13 +36,6 @@ export default function Setting(app: App) {
       runInAction(() => {
         if (state.app) {
           app.name = state.app.name;
-          store.apps.find((i) => {
-            if (i.id === app.id) {
-              Object.assign(i, state.app);
-              return true;
-            }
-            return false;
-          });
           versionPageState.app = state.app;
         }
       });

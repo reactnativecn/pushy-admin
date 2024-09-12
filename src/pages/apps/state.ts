@@ -2,7 +2,7 @@ import { Modal } from 'antd';
 import { observable, runInAction } from 'mobx';
 import request from '../../services/request';
 import { rootRouterPath, router } from '../../router';
-import { resetAppList } from '@/utils/hooks';
+import { resetAppList } from '@/utils/queryClient';
 
 const state = observable.object({
   apps: observable.array<App>(),

@@ -1,22 +1,19 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { message } from 'antd';
 import md5 from 'blueimp-md5';
-import { observable } from 'mobx';
-import { rootRouterPath, router } from './router';
-import { api } from './services/api';
-import { setToken } from './services/request';
+import { rootRouterPath, router } from '@/router';
+import { api } from '@/services/api';
+import { setToken } from '@/services/request';
 
-const initState = {
-  email: '',
+let _email = '';
+export const setUserEmail = (email: string) => {
+  _email = email;
 };
 
-type Store = typeof initState;
-
-const store = observable.object<Store>(initState);
-
-export default store;
+export const getUserEmail = () => _email;
 
 export async function login(email: string, password: string) {
-  store.email = email;
+  _email = email;
   const params = { email, pwd: md5(password) };
   try {
     const { token } = await api.login(params);
@@ -35,6 +32,7 @@ export async function login(email: string, password: string) {
 }
 
 export function logout() {
+  setToken('');
   router.navigate(rootRouterPath.login);
-  localStorage.removeItem('token');
+  window.location.reload();
 }

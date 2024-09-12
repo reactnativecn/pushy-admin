@@ -8,9 +8,9 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.4.0",
-    "@rsbuild/core": "^1.0.1-rc.5",
-    "@rsbuild/plugin-react": "^1.0.1-rc.5",
-    "@tanstack/react-query": "^5.55.4",
+    "@rsbuild/core": "^1.0.2",
+    "@rsbuild/plugin-react": "^1.0.1",
+    "@tanstack/react-query": "^5.56.0",
     "antd": "^5.20.6",
     "blueimp-md5": "^2.19.0",
     "dayjs": "^1.11.13",
@@ -19,7 +19,7 @@
     "mobx-react-lite": "^4.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.1"
+    "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
     "@types/blueimp-md5": "^2.18.2",
@@ -30,8 +30,8 @@
     "eslint": "^8.51.0",
     "eslint-config-wesbos": "4.0.1",
     "prettier": "^3.3.3",
-    "tailwindcss": "^3.4.10",
-    "typescript": "^5.5.4"
+    "tailwindcss": "^3.4.11",
+    "typescript": "^5.6.2"
   },
   "trustedDependencies": [
     "core-js"
