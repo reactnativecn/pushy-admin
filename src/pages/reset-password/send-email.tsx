@@ -1,20 +1,20 @@
 import { useState } from 'react';
-import { Button, Form, Input, Result } from 'antd';
-import { useQuery } from '@tanstack/react-query';
+import { Button, Form, Input, message, Result } from 'antd';
+import { useMutation } from '@tanstack/react-query';
 import { api } from '@/services/api';
+import { getUserEmail, setUserEmail } from '@/services/auth';
 
 export default function Component() {
   const [sent, setSent] = useState<boolean>(false);
-  const [formValues, setFormValues] = useState({ email: '' });
-  const { isLoading, error } = useQuery({
-    queryKey: ['sendEmail', formValues],
-    queryFn: () => api.resetpwdSendMail(formValues),
-    enabled: !!formValues?.email,
+  const { mutate: sendEmail, isPending } = useMutation({
+    mutationFn: () => api.resetpwdSendMail({ email: getUserEmail() }),
+    onSuccess: () => {
+      message.info('邮件发送成功，请注意查收');
+    },
+    onError: () => {
+      message.error('邮件发送失败');
+    },
   });
-
-  if (error) {
-    return <Result status='error' title={error?.message || '网络错误'} />;
-  }
 
   if (sent) {
     return (
@@ -29,8 +29,8 @@ export default function Component() {
     <Form
       style={{ width: 320, margin: 'auto' }}
       onFinish={(values: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        setFormValues(values);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setUserEmail(values?.email);
         setSent(true);
       }}
     >
@@ -38,7 +38,13 @@ export default function Component() {
         <Input placeholder='输入绑定邮箱' type='email' required />
       </Form.Item>
       <Form.Item>
-        <Button type='primary' htmlType='submit' loading={isLoading} block>
+        <Button
+          type='primary'
+          htmlType='submit'
+          onClick={() => sendEmail()}
+          loading={isPending}
+          block
+        >
           发送邮件
         </Button>
       </Form.Item>

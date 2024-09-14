@@ -5,7 +5,7 @@ import { rootRouterPath, router } from '../router';
 import { api } from '@/services/api';
 import { getUserEmail } from '@/services/auth';
 
-export const Component = () => {
+export const Inactivated = () => {
   useEffect(() => {
     if (!getUserEmail()) {
       router.navigate(rootRouterPath.login);
@@ -35,3 +35,5 @@ export const Component = () => {
     />
   );
 };
+
+export const Component = Inactivated;

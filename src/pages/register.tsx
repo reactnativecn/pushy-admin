@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button, Form, Input, message, Row, Checkbox, Result } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import md5 from 'blueimp-md5';
@@ -10,34 +10,27 @@ import { router, rootRouterPath } from '../router';
 import { setUserEmail } from '@/services/auth';
 import { api } from '@/services/api';
 
-export const Component = () => {
-  let formValues: { [key: string]: string } = {
-    email: '',
-    pwd: '',
-  };
-  const { isLoading, error } = useQuery({
-    queryKey: ['register', formValues],
-    queryFn: () => api.register(formValues),
-    enabled: !!formValues?.email && !!formValues?.pwd,
-  });
+export const Register = () => {
+  const [loading, setLoading] = useState<boolean>(false);
 
-  if (error) {
-    return <Result status='error' title={error?.message || '该邮箱已被注册'} />;
+  async function submit(values: { [key: string]: string }) {
+    delete values.pwd2;
+    delete values.agreed;
+    values.pwd = md5(values.pwd);
+    setLoading(true);
+    try {
+      await api.register(values);
+      setUserEmail(values.email);
+      router.navigate(rootRouterPath.welcome);
+    } catch (_) {
+      message.error('该邮箱已被注册');
+    }
+    setLoading(false);
   }
 
   return (
     <div style={style.body}>
-      <Form
-        style={style.form}
-        onFinish={(values) => {
-          delete values.pwd2;
-          delete values.agreed;
-          values.pwd = md5(values.pwd);
-          formValues = values;
-          setUserEmail(values.email);
-          router.navigate(rootRouterPath.welcome);
-        }}
-      >
+      <Form style={style.form} onFinish={(values) => submit(values)}>
         <div style={style.logo}>
           <img src={logo} className='mx-auto' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
@@ -81,7 +74,7 @@ export const Component = () => {
           <Input type='password' placeholder='再次输入密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item>
-          <Button type='primary' htmlType='submit' size='large' loading={isLoading} block>
+          <Button type='primary' htmlType='submit' size='large' loading={loading}>
             注册
           </Button>
         </Form.Item>
@@ -120,6 +113,8 @@ export const Component = () => {
     </div>
   );
 };
+
+export const Component = Register;
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },
