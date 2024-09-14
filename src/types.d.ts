@@ -21,6 +21,8 @@ interface App {
   status?: 'normal' | 'paused';
   ignoreBuildTime?: 'enabled' | 'disabled';
   checkCount?: number;
+  downloadUrl?: string;
+  appKey?: string;
 }
 
 interface PackageBase {
@@ -52,6 +54,9 @@ interface AppDetail extends App {
 }
 
 interface SiderMenuProps {
-  sSelectedKeys?: string[];
-  setSSelectedKeys?: (arg: string[]) => void;
+  selectedKeys?: string[];
+}
+
+interface CotentProps {
+  app: App;
 }

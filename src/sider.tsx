@@ -7,7 +7,6 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { Card, Layout, Menu, Progress, Tag, Tooltip } from 'antd';
-import { observable, runInAction } from 'mobx';
 import { Link, useLocation } from 'react-router-dom';
 
 import addApp from './pages/apps/add';
@@ -17,28 +16,28 @@ import { rootRouterPath } from './router';
 import { useAppList, useUserInfo } from './utils/hooks';
 
 export default function Sider() {
-  const [selectedKeys, setSelectedKeys] = useState<string[]>();
   const { pathname } = useLocation();
+  const initPath = pathname?.replace(/^\//, '')?.split('/');
+  let selectedKeys = initPath;
   const { user } = useUserInfo();
   if (!user) return null;
 
   if (selectedKeys?.length === 0) {
     if (pathname === '/') {
-      setSelectedKeys(['/user']);
+      selectedKeys = ['/user'];
     } else {
-      setSelectedKeys(pathname?.replace(/^\//, '')?.split('/'));
+      selectedKeys = initPath;
     }
   }
   return (
     <Layout.Sider width={240} theme='light' style={style.sider}>
       <Layout.Header style={style.logo}>Pushy</Layout.Header>
-      <SiderMenu sSelectedKeys={selectedKeys} setSSelectedKeys={setSelectedKeys} />
+      <SiderMenu selectedKeys={selectedKeys} />
     </Layout.Sider>
   );
 }
 
-const SiderMenu = (props: SiderMenuProps) => {
-  const { sSelectedKeys, setSSelectedKeys } = props;
+const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
   const { user } = useUserInfo();
   const { apps } = useAppList();
   const quota = quotas[user?.tier as keyof typeof quotas];
@@ -73,11 +72,10 @@ const SiderMenu = (props: SiderMenuProps) => {
       )}
       <Menu
         defaultOpenKeys={['apps']}
-        selectedKeys={sSelectedKeys}
+        selectedKeys={selectedKeys}
         onSelect={({ key }) => {
           if (key === 'add-app') return;
-          // @ts-ignore
-          setSSelectedKeys([key]);
+          selectedKeys = [key];
         }}
         mode='inline'
       >

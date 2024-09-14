@@ -1,10 +1,6 @@
 import { useState } from 'react';
-import { Button, Form, Input, message, Result } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Button, Form, Input, Result } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-// import { observable, runInAction } from 'mobx';
-// import { observer } from 'mobx-react-lite';
-// import request from '../../services/request';
 import { api } from '@/services/api';
 
 export default function Component() {
@@ -18,9 +14,6 @@ export default function Component() {
 
   if (error) {
     return <Result status='error' title={error?.message || '网络错误'} />;
-  }
-  if (isLoading) {
-    return <Result icon={<LoadingOutlined />} title='发送中，请稍等' />;
   }
 
   if (sent) {

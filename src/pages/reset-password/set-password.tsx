@@ -1,21 +1,19 @@
+import { useState } from 'react';
 import { Button, Form, Input, message } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
 import md5 from 'blueimp-md5';
 import { isPasswordValid } from '../../utils/helper';
 import { router, rootRouterPath } from '../../router';
 import request from '../../services/request';
 
-const state = observable.object({ loading: false });
-
-export default observer(() => {
+export default function Component() {
   const { search } = useLocation();
+  const [loading, setLoading] = useState<boolean>(false);
   return (
     <Form
       style={{ width: 320, margin: 'auto' }}
       onFinish={async (values) => {
-        runInAction(() => (state.loading = true));
+        setLoading(true);
         try {
           delete values.pwd2;
           values.token = new URLSearchParams(search).get('code');
@@ -26,7 +24,7 @@ export default observer(() => {
           console.log(e);
           message.error((e as Error).message ?? '网络错误');
         }
-        runInAction(() => (state.loading = false));
+        setLoading(false);
       }}
     >
       <Form.Item
@@ -62,10 +60,10 @@ export default observer(() => {
         <Input type='password' placeholder='再次输入密码' autoComplete='' required />
       </Form.Item>
       <Form.Item>
-        <Button type='primary' htmlType='submit' loading={state.loading} block>
+        <Button type='primary' htmlType='submit' loading={loading} block>
           确认修改
         </Button>
       </Form.Item>
     </Form>
   );
-});
+}

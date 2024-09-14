@@ -1,36 +1,43 @@
-import { Button, Form, Input, message, Row, Checkbox } from 'antd';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Button, Form, Input, message, Row, Checkbox, Result } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import md5 from 'blueimp-md5';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
-import request from '../services/request';
 import { isPasswordValid } from '../utils/helper';
 import { router, rootRouterPath } from '../router';
 import { setUserEmail } from '@/services/auth';
+import { api } from '@/services/api';
 
-const state = observable.object({ loading: false, agreed: false });
+export const Component = () => {
+  let formValues: { [key: string]: string } = {
+    email: '',
+    pwd: '',
+  };
+  const { isLoading, error } = useQuery({
+    queryKey: ['register', formValues],
+    queryFn: () => api.register(formValues),
+    enabled: !!formValues?.email && !!formValues?.pwd,
+  });
 
-async function submit(values: { [key: string]: string }) {
-  delete values.pwd2;
-  delete values.agreed;
-  values.pwd = md5(values.pwd);
-  runInAction(() => (state.loading = true));
-  setUserEmail(values.email);
-  try {
-    await request('post', '/user/register', values);
-    router.navigate(rootRouterPath.welcome);
-  } catch (_) {
-    message.error('该邮箱已被注册');
+  if (error) {
+    return <Result status='error' title={error?.message || '该邮箱已被注册'} />;
   }
-  runInAction(() => (state.loading = false));
-}
 
-export const Component = observer(() => {
-  const { loading, agreed } = state;
   return (
     <div style={style.body}>
-      <Form style={style.form} onFinish={(values) => submit(values)}>
+      <Form
+        style={style.form}
+        onFinish={(values) => {
+          delete values.pwd2;
+          delete values.agreed;
+          values.pwd = md5(values.pwd);
+          formValues = values;
+          setUserEmail(values.email);
+          router.navigate(rootRouterPath.welcome);
+        }}
+      >
         <div style={style.logo}>
           <img src={logo} className='mx-auto' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
@@ -74,7 +81,7 @@ export const Component = observer(() => {
           <Input type='password' placeholder='再次输入密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item>
-          <Button type='primary' htmlType='submit' size='large' loading={loading} block>
+          <Button type='primary' htmlType='submit' size='large' loading={isLoading} block>
             注册
           </Button>
         </Form.Item>
@@ -112,7 +119,7 @@ export const Component = observer(() => {
       </Form>
     </div>
   );
-});
+};
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },
