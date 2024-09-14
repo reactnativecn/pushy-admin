@@ -18,8 +18,10 @@ import { observable, runInAction } from 'mobx';
 import { observer, Observer } from 'mobx-react-lite';
 // import { useDrag, useDrop } from "react-dnd";
 import { ReactNode, useEffect, useState } from 'react';
+import { TextContent } from 'vanilla-jsoneditor';
 import request from '@/services/request';
 import state, { bindPackage, fetchVersions, removeSelectedVersions } from './state';
+import MetaInfoEditor from './metainfo-editor';
 
 const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
   const [deepLink, setDeepLink] = useState(
@@ -170,7 +172,7 @@ function renderTextCol({
   isEditable?: boolean;
   extra?: ReactNode;
 }) {
-  let value = Reflect.get(record, key);
+  let value = Reflect.get(record, key) as string;
   if (key === 'createdAt') {
     const t = new Date(value);
     const y = t.getFullYear();
@@ -188,15 +190,25 @@ function renderTextCol({
       onStart() {
         Modal.confirm({
           icon: null,
+          width: key === 'metaInfo' ? 640 : undefined,
           title: columns.find((i) => i.dataIndex === key)?.title as string,
           closable: true,
           maskClosable: true,
-          content: (
-            <Input.TextArea
-              defaultValue={value}
-              onChange={({ target }) => (value = target.value)}
-            />
-          ),
+          content:
+            key === 'metaInfo' ? (
+              <MetaInfoEditor
+                className='h-96'
+                content={{ text: value }}
+                onChange={(content) => {
+                  value = (content as TextContent).text;
+                }}
+              />
+            ) : (
+              <Input.TextArea
+                defaultValue={value}
+                onChange={({ target }) => (value = target.value)}
+              />
+            ),
           async onOk() {
             await request('put', `/app/${state.app?.id}/version/${record.id}`, { [key]: value });
             fetchVersions(state.pagination.current);
