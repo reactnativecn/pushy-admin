@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { getUserEmail, setUserEmail } from '@/services/auth';
 
-export default function Component() {
+export default function SendEmail() {
   const [sent, setSent] = useState<boolean>(false);
   const { mutate: sendEmail, isPending } = useMutation({
     mutationFn: () => api.resetpwdSendMail({ email: getUserEmail() }),
@@ -51,3 +51,5 @@ export default function Component() {
     </Form>
   );
 }
+
+export const Component = SendEmail;

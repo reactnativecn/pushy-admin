@@ -10,7 +10,7 @@ const body = {
   '3': <Success />,
 };
 
-export const Component = () => {
+export const ResetPassword = () => {
   const { step = '0' } = useParams() as { step?: keyof typeof body };
   return (
     <Card style={{ width: 760, margin: 'auto' }}>
@@ -23,3 +23,5 @@ export const Component = () => {
     </Card>
   );
 };
+
+export const Component = ResetPassword;

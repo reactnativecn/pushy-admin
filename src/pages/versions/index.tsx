@@ -12,7 +12,7 @@ import SettingModal from './settingModal';
 import request from '@/services/request';
 import { resetAppList } from '@/utils/queryClient';
 
-export const Component = observer(() => {
+export const Versions = () => {
   const [modal, contextHolder] = Modal.useModal();
   const params = useParams<{ id?: string }>();
   useEffect(() => {
@@ -97,7 +97,8 @@ export const Component = observer(() => {
       </Layout>
     </>
   );
-});
+};
+export const Component = observer(Versions);
 
 const style: Style = {
   sider: {

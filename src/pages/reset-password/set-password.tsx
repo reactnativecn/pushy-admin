@@ -6,7 +6,7 @@ import { isPasswordValid } from '../../utils/helper';
 import { router, rootRouterPath } from '../../router';
 import request from '../../services/request';
 
-export default function Component() {
+export default function SetPassword() {
   const { search } = useLocation();
   const [loading, setLoading] = useState<boolean>(false);
   return (
@@ -67,3 +67,5 @@ export default function Component() {
     </Form>
   );
 }
+
+export const Component = SetPassword;
