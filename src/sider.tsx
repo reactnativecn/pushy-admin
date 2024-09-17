@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   AndroidFilled,
   AppleFilled,
@@ -6,7 +7,6 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { Card, Layout, Menu, Progress, Tag, Tooltip } from 'antd';
-import { observable, runInAction } from 'mobx';
 import { Link, useLocation } from 'react-router-dom';
 
 import addApp from './pages/apps/add';
@@ -15,32 +15,29 @@ import { PRICING_LINK } from './constants/links';
 import { rootRouterPath } from './router';
 import { useAppList, useUserInfo } from './utils/hooks';
 
-const state = observable.object({ selectedKeys: observable.array<string>() });
-
 export default function Sider() {
   const { pathname } = useLocation();
+  const initPath = pathname?.replace(/^\//, '')?.split('/');
+  let selectedKeys = initPath;
   const { user } = useUserInfo();
-
   if (!user) return null;
 
-  if (state.selectedKeys.length === 0) {
-    runInAction(() => {
-      if (pathname === '/') {
-        state.selectedKeys = observable.array(['/user']);
-      } else {
-        state.selectedKeys = observable.array(pathname.replace(/^\//, '').split('/'));
-      }
-    });
+  if (selectedKeys?.length === 0) {
+    if (pathname === '/') {
+      selectedKeys = ['/user'];
+    } else {
+      selectedKeys = initPath;
+    }
   }
   return (
     <Layout.Sider width={240} theme='light' style={style.sider}>
       <Layout.Header style={style.logo}>Pushy</Layout.Header>
-      <SiderMenu />
+      <SiderMenu selectedKeys={selectedKeys} />
     </Layout.Sider>
   );
 }
 
-const SiderMenu = () => {
+const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
   const { user } = useUserInfo();
   const { apps } = useAppList();
   const quota = quotas[user?.tier as keyof typeof quotas];
@@ -75,10 +72,10 @@ const SiderMenu = () => {
       )}
       <Menu
         defaultOpenKeys={['apps']}
-        selectedKeys={state.selectedKeys}
+        selectedKeys={selectedKeys}
         onSelect={({ key }) => {
           if (key === 'add-app') return;
-          runInAction(() => (state.selectedKeys = observable.array([key])));
+          selectedKeys = [key];
         }}
         mode='inline'
       >

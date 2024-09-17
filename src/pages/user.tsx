@@ -1,7 +1,6 @@
 import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
-import { observer } from 'mobx-react-lite';
 import dayjs from 'dayjs';
 import request from '../services/request';
 import { PRICING_LINK } from '../constants/links';
@@ -127,4 +126,4 @@ async function purchase(tier?: string) {
   window.location.href = payUrl;
 }
 
-export const Component = observer(UserPanel);
+export const Component = UserPanel;

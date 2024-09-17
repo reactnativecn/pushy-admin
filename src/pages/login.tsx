@@ -7,7 +7,7 @@ import { login } from '@/services/auth';
 let email: string;
 let password: string;
 
-export const Component = () => {
+export const Login = () => {
   const [loading, setLoading] = useState(false);
   return (
     <div style={style.body}>
@@ -59,6 +59,8 @@ export const Component = () => {
     </div>
   );
 };
+
+export const Component = Login;
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },

@@ -1,51 +1,26 @@
 import { Form, message, Modal, Typography, Switch, Button } from 'antd';
-
 import { DeleteFilled } from '@ant-design/icons';
-import { removeApp } from './state';
-
-import versionPageState from '../versions/state';
-import request from '../../services/request';
 import { useUserInfo } from '@/utils/hooks';
+import request from '@/services/request';
+import { rootRouterPath, router } from '@/router';
+import { resetAppList } from '@/utils/queryClient';
 
-export default function Setting(app: App) {
-  request('get', `/app/${app.id}`).then((appData) => {
-    runInAction(() => {
-      state.app = appData;
-    });
-  });
-
-  Modal.confirm({
-    icon: null,
-    closable: true,
-    maskClosable: true,
-    content: <Content app={app} />,
-    async onOk() {
-      try {
-        const payload = state.app;
-        await request('put', `/app/${app.id}`, {
-          name: payload.name,
-          downloadUrl: payload.downloadUrl,
-          status: payload.status,
-          ignoreBuildTime: payload.ignoreBuildTime,
-        });
-      } catch (e) {
-        message.error((e as Error).message);
-        return;
-      }
-
-      runInAction(() => {
-        if (state.app) {
-          app.name = state.app.name;
-          versionPageState.app = state.app;
-        }
-      });
-      message.success('修改成功');
-    },
-  });
-}
-
-const Content = ({ app }: { app: App }) => {
+const SettingModal = ({ app }: { app: App }) => {
   const { user } = useUserInfo();
+
+  function removeApp() {
+    Modal.confirm({
+      title: '应用删除后无法恢复',
+      okText: '确认删除',
+      okButtonProps: { danger: true },
+      async onOk() {
+        await request('delete', `/app/${app.id}`);
+        resetAppList();
+        router.navigate(rootRouterPath.apps);
+      },
+    });
+  }
+
   return (
     <Form layout='vertical'>
       <Form.Item label='应用名'>
@@ -53,7 +28,7 @@ const Content = ({ app }: { app: App }) => {
           type='secondary'
           style={style.item}
           editable={{
-            onChange: (value) => runInAction(() => (app.name = value)),
+            onChange: (value) => (app.name = value),
           }}
         >
           {app.name}
@@ -69,7 +44,7 @@ const Content = ({ app }: { app: App }) => {
           type='secondary'
           style={style.item}
           editable={{
-            onChange: (value) => runInAction(() => (app.downloadUrl = value)),
+            onChange: (value) => (app.downloadUrl = value),
           }}
         >
           {app.downloadUrl ?? ''}
@@ -80,7 +55,7 @@ const Content = ({ app }: { app: App }) => {
           checkedChildren='启用'
           unCheckedChildren='暂停'
           checked={app.status !== 'paused'}
-          onChange={(checked) => runInAction(() => (app.status = checked ? 'normal' : 'paused'))}
+          onChange={(checked) => (app.status = checked ? 'normal' : 'paused')}
         />
       </Form.Item>
       <Form.Item label='忽略编译时间戳（高级版以上可启用）'>
@@ -92,18 +67,18 @@ const Content = ({ app }: { app: App }) => {
           checkedChildren='启用'
           unCheckedChildren='不启用'
           checked={app.ignoreBuildTime === 'enabled'}
-          onChange={(checked) =>
-            runInAction(() => (app.ignoreBuildTime = checked ? 'enabled' : 'disabled'))
-          }
+          onChange={(checked) => (app.ignoreBuildTime = checked ? 'enabled' : 'disabled')}
         />
       </Form.Item>
       <Form.Item label='删除应用'>
-        <Button type='primary' icon={<DeleteFilled />} onClick={() => removeApp(app)} danger>
+        <Button type='primary' icon={<DeleteFilled />} onClick={() => removeApp()} danger>
           删除
         </Button>
       </Form.Item>
     </Form>
   );
 };
+
+export default SettingModal;
 
 const style: Style = { item: { marginBottom: 0 } };

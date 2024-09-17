@@ -26,8 +26,9 @@ export function removeApp(app: App) {
     okButtonProps: { danger: true },
     async onOk() {
       await request('delete', `/app/${app.id}`);
-
+      Modal.destroyAll();
       resetAppList();
+      // fetchApps();
       router.navigate(rootRouterPath.apps);
     },
   });

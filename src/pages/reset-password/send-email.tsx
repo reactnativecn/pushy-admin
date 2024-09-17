@@ -1,12 +1,22 @@
+import { useState } from 'react';
 import { Button, Form, Input, message, Result } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
-import request from '../../services/request';
+import { useMutation } from '@tanstack/react-query';
+import { api } from '@/services/api';
+import { getUserEmail, setUserEmail } from '@/services/auth';
 
-const state = observable.object({ loading: false, sent: false });
+export default function SendEmail() {
+  const [sent, setSent] = useState<boolean>(false);
+  const { mutate: sendEmail, isPending } = useMutation({
+    mutationFn: () => api.resetpwdSendMail({ email: getUserEmail() }),
+    onSuccess: () => {
+      message.info('邮件发送成功，请注意查收');
+    },
+    onError: () => {
+      message.error('邮件发送失败');
+    },
+  });
 
-export default observer(() => {
-  if (state.sent) {
+  if (sent) {
     return (
       <Result
         status='success'
@@ -18,25 +28,28 @@ export default observer(() => {
   return (
     <Form
       style={{ width: 320, margin: 'auto' }}
-      onFinish={async (values) => {
-        runInAction(() => (state.loading = true));
-        try {
-          await request('post', '/user/resetpwd/sendmail', values);
-          runInAction(() => (state.sent = true));
-        } catch (e) {
-          message.error((e as Error).message ?? '网络错误');
-        }
-        runInAction(() => (state.loading = false));
+      onFinish={(values: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setUserEmail(values?.email);
+        setSent(true);
       }}
     >
       <Form.Item name='email'>
         <Input placeholder='输入绑定邮箱' type='email' required />
       </Form.Item>
       <Form.Item>
-        <Button type='primary' htmlType='submit' loading={state.loading} block>
+        <Button
+          type='primary'
+          htmlType='submit'
+          onClick={() => sendEmail()}
+          loading={isPending}
+          block
+        >
           发送邮件
         </Button>
       </Form.Item>
     </Form>
   );
-});
+}
+
+export const Component = SendEmail;

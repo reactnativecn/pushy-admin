@@ -1,15 +1,19 @@
 import { SettingFilled } from '@ant-design/icons';
-import { Breadcrumb, Button, Col, Layout, Row, Tabs, Tag } from 'antd';
+import { Breadcrumb, Button, Col, Layout, Row, Tabs, Tag, Modal, message } from 'antd';
 import { observer } from 'mobx-react-lite';
+import { runInAction } from 'mobx';
 import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import './index.css';
 import PackageList from './packages';
 import state, { fetchData } from './state';
 import VersionTable from './versions';
-import settingApp from '../apps/setting';
+import SettingModal from './settingModal';
+import request from '@/services/request';
+import { resetAppList } from '@/utils/queryClient';
 
-export const Component = observer(() => {
+export const Versions = () => {
+  const [modal, contextHolder] = Modal.useModal();
   const params = useParams<{ id?: string }>();
   useEffect(() => {
     const { id } = params;
@@ -19,8 +23,10 @@ export const Component = observer(() => {
   }, [params]);
   const { app, packages, unused } = state;
   if (app == null) return null;
+
   return (
     <>
+      {contextHolder}
       <Row style={{ marginBottom: 16 }}>
         <Col flex={1}>
           <Breadcrumb>
@@ -34,7 +40,41 @@ export const Component = observer(() => {
           </Breadcrumb>
         </Col>
         <Button.Group>
-          <Button type='primary' icon={<SettingFilled />} onClick={() => settingApp(app)}>
+          <Button
+            type='primary'
+            icon={<SettingFilled />}
+            onClick={() => {
+              modal.confirm({
+                icon: null,
+                closable: true,
+                maskClosable: true,
+                content: <SettingModal app={app} />,
+                async onOk() {
+                  try {
+                    const payload = state.app;
+                    await request('put', `/app/${app.id}`, {
+                      name: payload?.name,
+                      downloadUrl: payload?.downloadUrl,
+                      status: payload?.status,
+                      ignoreBuildTime: payload?.ignoreBuildTime,
+                    });
+                  } catch (e) {
+                    message.error((e as Error).message);
+                    return;
+                  }
+                  resetAppList();
+
+                  runInAction(() => {
+                    if (state.app) {
+                      app.name = state.app.name;
+                      // versionPageState.app = state.app;
+                    }
+                  });
+                  message.success('修改成功');
+                },
+              });
+            }}
+          >
             应用设置
           </Button>
         </Button.Group>
@@ -57,7 +97,8 @@ export const Component = observer(() => {
       </Layout>
     </>
   );
-});
+};
+export const Component = observer(Versions);
 
 const style: Style = {
   sider: {

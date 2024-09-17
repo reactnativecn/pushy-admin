@@ -37,9 +37,13 @@ export function fetchData(id: number) {
     state.packages = observable.array();
     state.versions = observable.array();
   });
-  request('get', `/app/${id}`).then((app) => runInAction(() => (state.app = app)));
-  fetchPackages();
-  fetchVersions();
+  request('get', `/app/${id}`).then((app) =>
+    runInAction(() => {
+      state.app = app as App;
+      fetchPackages();
+      fetchVersions();
+    })
+  );
 }
 
 export function fetchPackages() {

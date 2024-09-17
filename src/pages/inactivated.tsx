@@ -1,12 +1,11 @@
 import { Button, message, Result } from 'antd';
-import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { rootRouterPath, router } from '../router';
 import { api } from '@/services/api';
 import { getUserEmail } from '@/services/auth';
 
-export const Component = observer(() => {
+export const Inactivated = () => {
   useEffect(() => {
     if (!getUserEmail()) {
       router.navigate(rootRouterPath.login);
@@ -35,4 +34,6 @@ export const Component = observer(() => {
       ]}
     />
   );
-});
+};
+
+export const Component = Inactivated;

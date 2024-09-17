@@ -11,8 +11,8 @@ export const setToken = (token: string) => {
 export const getToken = () => _token;
 
 // const baseUrl = `http://localhost:9000;
-// const baseUrl = `https://update.react-native.cn/api`;
-const baseUrl = `https://p.reactnative.cn/api`;
+const baseUrl = `https://update.react-native.cn/api`;
+// const baseUrl = `https://p.reactnative.cn/api`;
 // const baseUrl = `http://k.reactnative.cn/api`;
 
 interface PushyResponse {
