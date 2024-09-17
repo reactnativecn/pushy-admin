@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   AndroidFilled,
   AppleFilled,
@@ -6,22 +5,81 @@ import {
   PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Card, Layout, Menu, Progress, Tag, Tooltip } from 'antd';
+import {
+  Card,
+  Layout,
+  Menu,
+  Progress,
+  Tag,
+  Tooltip,
+  Modal,
+  Form,
+  Input,
+  Select,
+  message,
+} from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 
-import addApp from './pages/apps/add';
 import { quotas } from './constants/quotas';
 import { PRICING_LINK } from './constants/links';
 import { rootRouterPath } from './router';
 import { useAppList, useUserInfo } from './utils/hooks';
+import { api } from './services/api';
+import { resetAppList } from './utils/queryClient';
+
+function addApp() {
+  let name = '';
+  let platform = 'android';
+  Modal.confirm({
+    icon: null,
+    closable: true,
+    maskClosable: true,
+    content: (
+      <Form initialValues={{ platform }}>
+        <br />
+        <Form.Item label='应用名称' name='name'>
+          <Input placeholder='请输入应用名称' onChange={({ target }) => (name = target.value)} />
+        </Form.Item>
+        <Form.Item label='选择平台' name='platform'>
+          <Select
+            onSelect={(value: string) => {
+              platform = value;
+            }}
+          >
+            <Select.Option value='android'>
+              <AndroidFilled style={{ color: '#3ddc84' }} /> Android
+            </Select.Option>
+            <Select.Option value='ios'>
+              <AppleFilled style={{ color: '#a6b1b7' }} /> iOS
+            </Select.Option>
+          </Select>
+        </Form.Item>
+      </Form>
+    ),
+    onOk() {
+      if (!name) {
+        message.warning('请输入应用名称');
+        return false;
+      }
+      return api
+        .createApp({ name, platform })
+        .then(() => {
+          resetAppList();
+        })
+        .catch((error) => {
+          message.error((error as Error).message);
+        });
+    },
+  });
+}
 
 export default function Sider() {
   const { pathname } = useLocation();
-  const initPath = pathname?.replace(/^\//, '')?.split('/');
-  let selectedKeys = initPath;
   const { user } = useUserInfo();
   if (!user) return null;
 
+  const initPath = pathname?.replace(/^\//, '')?.split('/');
+  let selectedKeys = initPath;
   if (selectedKeys?.length === 0) {
     if (pathname === '/') {
       selectedKeys = ['/user'];
@@ -70,15 +128,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
           </div>
         </Card>
       )}
-      <Menu
-        defaultOpenKeys={['apps']}
-        selectedKeys={selectedKeys}
-        onSelect={({ key }) => {
-          if (key === 'add-app') return;
-          selectedKeys = [key];
-        }}
-        mode='inline'
-      >
+      <Menu defaultOpenKeys={['apps']} selectedKeys={selectedKeys} mode='inline'>
         <Menu.Item key='user' icon={<UserOutlined />}>
           <Link to={rootRouterPath.user}>账户设置</Link>
         </Menu.Item>

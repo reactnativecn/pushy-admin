@@ -20,3 +20,21 @@ export const useAppList = () => {
   });
   return { apps: data?.data };
 };
+
+export const useApp = (id: number) => {
+  const { data } = useQuery({
+    queryKey: ['app', id],
+    queryFn: () => api.getAppData(id),
+    enabled: () => !!getToken(),
+  });
+  return { app: data?.data };
+};
+
+export const usePackages = (id: number) => {
+  const { data } = useQuery({
+    queryKey: ['packages', id],
+    queryFn: () => api.getPackages(id),
+    enabled: () => !!getToken(),
+  });
+  return { packages: data?.data, unused: data?.data?.filter((i) => i.version === null) };
+};

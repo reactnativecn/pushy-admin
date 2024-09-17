@@ -11,7 +11,7 @@ export default function SetPassword() {
   const [loading, setLoading] = useState<boolean>(false);
   return (
     <Form
-      style={{ width: 320, margin: 'auto' }}
+      className='m-auto w-80'
       onFinish={async (values) => {
         setLoading(true);
         try {
@@ -33,9 +33,9 @@ export default function SetPassword() {
         validateTrigger='onBlur'
         rules={[
           () => ({
-            async validator(_, value) {
+            validator(_, value: string) {
               if (value && !isPasswordValid(value)) {
-                throw '密码中需要同时包含大、小写字母和数字，且长度不少于6位';
+                throw new Error('密码中需要同时包含大、小写字母和数字，且长度不少于6位');
               }
             },
           }),
@@ -49,9 +49,9 @@ export default function SetPassword() {
         validateTrigger='onBlur'
         rules={[
           ({ getFieldValue }) => ({
-            async validator(_, value) {
-              if (getFieldValue('newPwd') != value) {
-                throw '两次输入的密码不一致';
+            validator(_, value: string) {
+              if (getFieldValue('newPwd') !== value) {
+                throw new Error('两次输入的密码不一致');
               }
             },
           }),

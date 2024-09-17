@@ -4,7 +4,7 @@ import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } f
 import request from '@/services/request';
 import state, { fetchPackages, fetchVersions } from './state';
 
-const PackageList = ({ dataSource }: { dataSource: Package[] }) => (
+const PackageList = ({ dataSource }: { dataSource?: Package[] }) => (
   <List
     className='packages'
     size='small'

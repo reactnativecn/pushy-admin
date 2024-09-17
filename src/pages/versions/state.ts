@@ -1,17 +1,9 @@
 import { Modal } from 'antd';
 import { TablePaginationConfig } from 'antd/lib/table';
-import { observable, runInAction } from 'mobx';
 import request from '@/services/request';
 
-const initState = {
-  loading: false,
-  packages: observable.array<Package>(),
-  versions: observable.array<Version>(),
-  unused: observable.array<Package>(),
-  selected: observable.array<number>(),
-};
 
-type State = typeof initState & { app?: App; pagination: TablePaginationConfig };
+type State = { app?: App; pagination: TablePaginationConfig };
 
 const state = observable.object<State>({
   ...initState,
@@ -28,34 +20,6 @@ const state = observable.object<State>({
 });
 
 export default state;
-
-export function fetchData(id: number) {
-  if (state.app?.id === id) return;
-
-  runInAction(() => {
-    // state.app = store.apps.find((i) => i.id === id);
-    state.packages = observable.array();
-    state.versions = observable.array();
-  });
-  request('get', `/app/${id}`).then((app) =>
-    runInAction(() => {
-      state.app = app as App;
-      fetchPackages();
-      fetchVersions();
-    })
-  );
-}
-
-export function fetchPackages() {
-  const { app } = state;
-  if (!app) return;
-  request('get', `/app/${app?.id}/package/list?limit=1000`).then(({ data }) =>
-    runInAction(() => {
-      state.packages = data;
-      state.unused = data.filter((i) => i.version === null);
-    })
-  );
-}
 
 export function fetchVersions(page?: number) {
   if (!state.app) return;
