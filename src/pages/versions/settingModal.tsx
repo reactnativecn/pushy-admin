@@ -22,24 +22,27 @@ const SettingModal = () => {
       <Form.Item label='下载地址' name='downloadUrl'>
         <Input />
       </Form.Item>
-      <Form.Item label='启用热更新' name='status'>
-        <Switch
-          checkedChildren='启用'
-          unCheckedChildren='暂停'
-          checked={app.status !== 'paused'}
-          onChange={(checked) => (app.status = checked ? 'normal' : 'paused')}
-        />
+      <Form.Item
+        label='启用热更新'
+        name='status'
+        normalize={(value) => (value === 'normal' ? 'normal' : 'paused')}
+        getValueProps={(value) => ({ checked: value === 'normal' })}
+      >
+        <Switch checkedChildren='启用' unCheckedChildren='暂停' />
       </Form.Item>
-      <Form.Item label='忽略编译时间戳（高级版以上可启用）' name='ignoreBuildTime'>
+      <Form.Item
+        label='忽略编译时间戳（高级版以上可启用）'
+        name='ignoreBuildTime'
+        normalize={(value) => (value === 'enabled' ? 'enabled' : 'disabled')}
+        getValueProps={(value) => ({ checked: value === 'enabled' })}
+      >
         <Switch
           disabled={
             (user?.tier === 'free' || user?.tier === 'standard') &&
-            app.ignoreBuildTime !== 'enabled'
+            form.getFieldValue('ignoreBuildTime') !== 'enabled'
           }
           checkedChildren='启用'
           unCheckedChildren='不启用'
-          checked={app.ignoreBuildTime === 'enabled'}
-          onChange={(checked) => (app.ignoreBuildTime = checked ? 'enabled' : 'disabled')}
         />
       </Form.Item>
       <Form.Item label='删除应用'>
@@ -52,7 +55,7 @@ const SettingModal = () => {
               okText: '确认删除',
               okButtonProps: { danger: true },
               async onOk() {
-                await api.deleteApp(form.getFieldValue('id'));
+                await api.deleteApp(Number(form.getFieldValue('id')));
                 Modal.destroyAll();
                 resetAppList();
                 router.navigate(rootRouterPath.apps);

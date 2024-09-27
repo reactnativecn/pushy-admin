@@ -15,7 +15,7 @@ export const Versions = () => {
   const id = Number(params.id!);
   const { app } = useApp(id);
   const { packages, unused } = usePackages(id);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<App>();
   if (app == null) return null;
 
   return (
@@ -46,12 +46,11 @@ export const Versions = () => {
                   content: <SettingModal />,
                   async onOk() {
                     try {
-                      const payload = state.app;
                       await request('put', `/app/${app.id}`, {
-                        name: payload?.name,
-                        downloadUrl: payload?.downloadUrl,
-                        status: payload?.status,
-                        ignoreBuildTime: payload?.ignoreBuildTime,
+                        name: form.getFieldValue('name') as string,
+                        downloadUrl: form.getFieldValue('downloadUrl') as string,
+                        status: form.getFieldValue('status') as string,
+                        ignoreBuildTime: form.getFieldValue('ignoreBuildTime') as string,
                       });
                     } catch (e) {
                       message.error((e as Error).message);
@@ -81,10 +80,10 @@ export const Versions = () => {
           <div className='py-4'>原生包</div>
           <Tabs>
             <Tabs.TabPane tab='全部' key='all'>
-              <PackageList dataSource={packages} />
+              <PackageList appId={id} dataSource={packages} />
             </Tabs.TabPane>
             <Tabs.TabPane tab='未使用' key='unused'>
-              <PackageList dataSource={unused} />
+              <PackageList appId={id} dataSource={unused} />
             </Tabs.TabPane>
           </Tabs>
         </Layout.Sider>

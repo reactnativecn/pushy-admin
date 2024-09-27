@@ -14,8 +14,6 @@ import {
   Checkbox,
 } from 'antd';
 import { ColumnType } from 'antd/lib/table';
-import { observable, runInAction } from 'mobx';
-import { observer, Observer } from 'mobx-react-lite';
 // import { useDrag, useDrop } from "react-dnd";
 import { ReactNode, useEffect, useState } from 'react';
 import { TextContent } from 'vanilla-jsoneditor';
@@ -118,41 +116,37 @@ const columns: ColumnType<Version>[] = [
     title: '绑定原生包',
     dataIndex: 'packages',
     width: '100%',
-    render: (_, { packages, id }) => (
-      <Observer>
-        {() => {
-          const bindedPackages = packages.map((i) => <PackageItem key={i.id} item={i} />);
-          const items = state.packages.filter((i) => !packages.some((j) => i.id === j.id));
-          if (items.length === 0) return bindedPackages;
+    render: (_, { packages, id }) => {
+      const bindedPackages = packages.map((i) => <PackageItem key={i.id} item={i} />);
+      const items = state.packages.filter((i) => !packages.some((j) => i.id === j.id));
+      if (items.length === 0) return bindedPackages;
 
-          const menu = (
-            <Menu>
-              {items.map((i) => (
-                <Menu.Item key={i.id} onClick={() => bindPackage(i.id, id)}>
-                  {i.name}
-                </Menu.Item>
-              ))}
-            </Menu>
-          );
-          return (
-            <>
-              {bindedPackages}
-              <Dropdown
-                className='ant-typography-edit'
-                overlay={menu}
-                getPopupContainer={() =>
-                  document.querySelector(`[data-row-key="${id}"]`) ?? document.body
-                }
-              >
-                <Button type='link' size='small' icon={<LinkOutlined />}>
-                  绑定
-                </Button>
-              </Dropdown>
-            </>
-          );
-        }}
-      </Observer>
-    ),
+      const menu = (
+        <Menu>
+          {items.map((i) => (
+            <Menu.Item key={i.id} onClick={() => bindPackage(i.id, id)}>
+              {i.name}
+            </Menu.Item>
+          ))}
+        </Menu>
+      );
+      return (
+        <>
+          {bindedPackages}
+          <Dropdown
+            className='ant-typography-edit'
+            overlay={menu}
+            getPopupContainer={() =>
+              document.querySelector(`[data-row-key="${id}"]`) ?? document.body
+            }
+          >
+            <Button type='link' size='small' icon={<LinkOutlined />}>
+              绑定
+            </Button>
+          </Dropdown>
+        </>
+      );
+    },
   },
   {
     title: '上传时间',
@@ -227,7 +221,7 @@ function renderTextCol({
   );
 }
 
-export default observer(() => {
+export default function Versions() {
   const { versions, pagination, loading, selected } = state;
 
   return (
@@ -256,7 +250,7 @@ export default observer(() => {
       }
     />
   );
-});
+}
 
 const TableRow = (props: any) => {
   // const [{ canDrop, isOver }, drop] = useDrop(() => ({

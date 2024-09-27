@@ -2,32 +2,33 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } from 'antd';
 // import { useDrag } from "react-dnd";
 import request from '@/services/request';
-import state, { fetchPackages, fetchVersions } from './state';
+import { resetPackages } from '@/utils/queryClient';
 
-const PackageList = ({ dataSource }: { dataSource?: Package[] }) => (
+const PackageList = ({ dataSource, appId }: { dataSource?: Package[]; appId: number }) => (
   <List
     className='packages'
     size='small'
     dataSource={dataSource}
-    renderItem={(item) => <Item item={item} />}
+    renderItem={(item) => <Item item={item} appId={appId} />}
   />
 );
 export default PackageList;
 
-function remove(item: Package) {
+function remove(item: Package, appId: number) {
   Modal.confirm({
     title: `删除后无法恢复，确定删除原生包“${item.name}”？`,
     maskClosable: true,
     okButtonProps: { danger: true },
     async onOk() {
-      await request('delete', `/app/${state.app?.id}/package/${item.id}`);
-      fetchPackages();
-      fetchVersions(1);
+      await request('delete', `/app/${appId}/package/${item.id}`);
+      resetPackages(appId);
+      // fetchVersions(1);
     },
   });
 }
 
-function edit(item: Package) {
+function edit(item: Package, appId: number) {
+  let { note, status } = item;
   Modal.confirm({
     icon: null,
     closable: true,
@@ -35,16 +36,12 @@ function edit(item: Package) {
     content: (
       <Form layout='vertical' initialValues={item}>
         <Form.Item name='note' label='备注'>
-          <Input
-            placeholder='添加原生包备注'
-            onChange={({ target }) => (item.note = target.value)}
-          />
+          <Input placeholder='添加原生包备注' onChange={({ target }) => (note = target.value)} />
         </Form.Item>
         <Form.Item name='status' label='状态'>
           <Select
-            onSelect={(value) => {
-              // @ts-ignore
-              item.status = value;
+            onSelect={(value: Package['status']) => {
+              status = value;
             }}
           >
             <Select.Option value='normal'>正常</Select.Option>
@@ -55,17 +52,16 @@ function edit(item: Package) {
       </Form>
     ),
     async onOk() {
-      const { note, status } = item;
-      await request('put', `/app/${state.app?.id}/package/${item.id}`, { note, status });
-      fetchPackages();
+      await request('put', `/app/${appId}/package/${item.id}`, { note, status });
+      resetPackages(appId);
     },
   });
 }
 
-const Item = ({ item }: { item: Package }) => (
+const Item = ({ item, appId }: { item: Package; appId: number }) => (
   // const [_, drag] = useDrag(() => ({ item, type: "package" }));
-  <div style={{ margin: '0 -8px', background: '#fff' }}>
-    <List.Item style={{ padding: '8px' }}>
+  <div className='bg-white my-0 -mx-2'>
+    <List.Item className='p-2'>
       <List.Item.Meta
         title={
           <Row align='middle'>
@@ -75,15 +71,20 @@ const Item = ({ item }: { item: Package }) => (
                 <Tag style={{ marginLeft: 8 }}>{status[item.status]}</Tag>
               )}
             </Col>
-            <Button type='link' icon={<EditOutlined />} onClick={() => edit(item)} />
-            <Button type='link' icon={<DeleteOutlined />} onClick={() => remove(item)} danger />
+            <Button type='link' icon={<EditOutlined />} onClick={() => edit(item, appId)} />
+            <Button
+              type='link'
+              icon={<DeleteOutlined />}
+              onClick={() => remove(item, appId)}
+              danger
+            />
           </Row>
         }
         description={
           <>
             {item.note && (
               <Typography.Paragraph
-                style={{ marginBottom: 0 }}
+                className='mb-0'
                 type='secondary'
                 ellipsis={{ tooltip: item.note }}
               >

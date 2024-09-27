@@ -2,11 +2,9 @@ import { Modal } from 'antd';
 import { TablePaginationConfig } from 'antd/lib/table';
 import request from '@/services/request';
 
-
 type State = { app?: App; pagination: TablePaginationConfig };
 
-const state = observable.object<State>({
-  ...initState,
+const state = {
   pagination: {
     pageSize: 10,
     showTotal: (total) => `共 ${total} 个 `,
@@ -17,7 +15,7 @@ const state = observable.object<State>({
       fetchVersions(page);
     },
   },
-});
+};
 
 export default state;
 
