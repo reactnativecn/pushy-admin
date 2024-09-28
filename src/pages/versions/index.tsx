@@ -6,7 +6,7 @@ import './index.css';
 import PackageList from './packages';
 import VersionTable from './versions';
 import SettingModal from './settingModal';
-import request from '@/services/request';
+import { api } from '@/services/api';
 import { useApp, usePackages } from '@/utils/hooks';
 
 export const Versions = () => {
@@ -46,25 +46,18 @@ export const Versions = () => {
                   content: <SettingModal />,
                   async onOk() {
                     try {
-                      await request('put', `/app/${app.id}`, {
+                      await api.updateApp(app.id, {
                         name: form.getFieldValue('name') as string,
                         downloadUrl: form.getFieldValue('downloadUrl') as string,
-                        status: form.getFieldValue('status') as string,
-                        ignoreBuildTime: form.getFieldValue('ignoreBuildTime') as string,
+                        status: form.getFieldValue('status') as 'normal' | 'paused',
+                        ignoreBuildTime: form.getFieldValue('ignoreBuildTime') as
+                          | 'enabled'
+                          | 'disabled',
                       });
                     } catch (e) {
                       message.error((e as Error).message);
                       return;
                     }
-                    // resetAppList();
-                    // queryClient.setQueryData(['app', app.id], {...app, });
-
-                    // runInAction(() => {
-                    //   if (state.app) {
-                    //     app.name = state.app.name;
-                    //     // versionPageState.app = state.app;
-                    //   }
-                    // });
                     message.success('修改成功');
                   },
                 });

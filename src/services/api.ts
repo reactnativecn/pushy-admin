@@ -21,7 +21,7 @@ export const api = {
     request('post', '/app/create', params).finally(() => {
       resetAppList();
     }),
-  updateApp: (appId: number, params: { [key: string]: string }) =>
+  updateApp: (appId: number, params: Omit<App, 'appKey' | 'checkCount' | 'id' | 'platform'>) =>
     request('put', `/app/${appId}`, params).finally(() => {
       resetApp(appId);
     }),
@@ -74,4 +74,7 @@ export const api = {
     request('delete', `/app/${appId}/version/${versionId}`).finally(() => {
       resetVersions(appId);
     }),
+  // order
+  createOrder: (params: { tier?: string }) =>
+    request<{ payUrl: string }>('post', '/orders', params),
 };

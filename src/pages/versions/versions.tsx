@@ -12,28 +12,27 @@ import {
   QRCode,
   Popover,
   Checkbox,
+  TablePaginationConfig,
 } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 // import { useDrag, useDrop } from "react-dnd";
 import { ReactNode, useEffect, useState } from 'react';
 import { TextContent } from 'vanilla-jsoneditor';
-import request from '@/services/request';
-import state, { bindPackage, fetchVersions, removeSelectedVersions } from './state';
 import MetaInfoEditor from './metainfo-editor';
+import { api } from '@/services/api';
+import { useVersions } from '@/utils/hooks';
 
-const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
-  const [deepLink, setDeepLink] = useState(
-    window.localStorage.getItem(`${state.app?.id}_deeplink`) ?? ''
-  );
+const TestQrCode = ({ name, hash, appId }: { name: string; hash: string; appId: number }) => {
+  const [deepLink, setDeepLink] = useState(window.localStorage.getItem(`${appId}_deeplink`) ?? '');
   const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
 
   const isDeepLinkValid = enableDeepLink && deepLink.endsWith('://');
 
   useEffect(() => {
     if (isDeepLinkValid) {
-      window.localStorage.setItem(`${state.app?.id}_deeplink`, deepLink);
+      window.localStorage.setItem(`${appId}_deeplink`, deepLink);
     }
-  }, [deepLink, isDeepLinkValid]);
+  }, [appId, deepLink, isDeepLinkValid]);
 
   const codePayload = {
     type: '__rnPushyVersionHash',
@@ -90,6 +89,32 @@ const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
     </Popover>
   );
 };
+
+function removeSelectedVersions({
+  selected,
+  versions,
+  appId,
+}: {
+  selected: number[];
+  versions: Version[];
+  appId: number;
+}) {
+  const versionNames: string[] = [];
+  versions.forEach((v) => {
+    if (selected.includes(v.id)) {
+      versionNames.push(v.name);
+    }
+  });
+  Modal.confirm({
+    title: '删除所选热更新包：',
+    content: versionNames.join('，'),
+    maskClosable: true,
+    okButtonProps: { danger: true },
+    async onOk() {
+      await Promise.all(selected.map((id) => api.deleteVersion({ appId, versionId: id })));
+    },
+  });
+}
 
 const columns: ColumnType<Version>[] = [
   {
@@ -204,8 +229,7 @@ function renderTextCol({
               />
             ),
           async onOk() {
-            await request('put', `/app/${state.app?.id}/version/${record.id}`, { [key]: value });
-            fetchVersions(state.pagination.current);
+            await api.updateVersion(record.id, { [key]: value });
           },
         });
       },
@@ -213,16 +237,25 @@ function renderTextCol({
   }
   return (
     <div>
-      <Typography.Text style={{ width: 160 }} editable={editable} ellipsis>
+      <Typography.Text className='w-40' editable={editable} ellipsis>
         {value}
       </Typography.Text>
       {extra}
     </div>
   );
 }
-
 export default function Versions() {
-  const { versions, pagination, loading, selected } = state;
+  const [pagination, setPagination] = useState<TablePaginationConfig>({
+    pageSize: 10,
+    showTotal: (total) => `共 ${total} 个 `,
+    onChange(page, size) {
+      if (size) {
+        setPagination({ ...pagination, pageSize: size });
+      }
+      fetchVersions(page);
+    },
+  });
+  const { versions, count } = useVersions(pagination.pageSize);
 
   return (
     <Table

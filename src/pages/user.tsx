@@ -6,6 +6,7 @@ import request from '../services/request';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
 import { useUserInfo } from '@/utils/hooks';
+import { api } from '@/services/api';
 
 const InvoiceHint = (
   <div>
@@ -122,7 +123,7 @@ function UserPanel() {
 }
 
 async function purchase(tier?: string) {
-  const { payUrl } = await request('post', '/orders', { tier });
+  const { payUrl } = await api.createOrder({ tier });
   window.location.href = payUrl;
 }
 
