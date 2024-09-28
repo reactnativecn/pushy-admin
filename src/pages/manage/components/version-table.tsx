@@ -21,9 +21,11 @@ import { TextContent } from 'vanilla-jsoneditor';
 import MetaInfoEditor from './metainfo-editor';
 import { api } from '@/services/api';
 import { useVersions } from '@/utils/hooks';
+import { useManageContext } from '../hooks/useManageContext';
+import { TEST_QR_CODE_DOC } from '@/constants/links';
 
-const TestQrCode = ({ name, hash, appId }: { name: string; hash: string; appId: number }) => {
-  const [deepLink, setDeepLink] = useState(window.localStorage.getItem(`${appId}_deeplink`) ?? '');
+const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
+  const { appId, deepLink, setDeepLink } = useManageContext();
   const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
 
   const isDeepLinkValid = enableDeepLink && deepLink.endsWith('://');
@@ -48,12 +50,7 @@ const TestQrCode = ({ name, hash, appId }: { name: string; hash: string; appId: 
         <div>
           <div style={{ textAlign: 'center', margin: '5px auto' }}>
             测试二维码 <br />
-            <a
-              target='_blank'
-              className='ml-1 text-xs'
-              href='https://pushy.reactnative.cn/docs/bestpractice#%E6%B5%8B%E8%AF%95%E5%8F%91%E5%B8%83%E4%B8%8E%E5%9B%9E%E6%BB%9A'
-              rel='noreferrer'
-            >
+            <a target='_blank' className='ml-1 text-xs' href={TEST_QR_CODE_DOC} rel='noreferrer'>
               如何使用？
             </a>
           </div>
@@ -244,18 +241,21 @@ function renderTextCol({
     </div>
   );
 }
-export default function Versions() {
+export default function VersionTable() {
+  const { appId } = useManageContext();
+  const [selected, setSelected] = useState<number[]>([]);
   const [pagination, setPagination] = useState<TablePaginationConfig>({
+    current: 0,
     pageSize: 10,
     showTotal: (total) => `共 ${total} 个 `,
     onChange(page, size) {
       if (size) {
-        setPagination({ ...pagination, pageSize: size });
+        setPagination({ ...pagination, current: page * size });
       }
-      fetchVersions(page);
+      // fetchVersions(page);
     },
   });
-  const { versions, count } = useVersions(pagination.pageSize);
+  const { versions, count } = useVersions({ appId, offset: pagination.current! });
 
   return (
     <Table

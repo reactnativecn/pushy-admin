@@ -10,6 +10,8 @@ export const api = {
   resetpwdSendMail: (params: { email: string }) =>
     request('post', '/user/resetpwd/sendmail', params),
   register: (params: { [key: string]: string }) => request('post', '/user/register', params),
+  resetPwd: (params: { token: string; newPwd: string }) =>
+    request('post', '/user/resetpwd/reset', params),
   // app
   appList: () => request<{ data: App[] }>('get', '/app/list'),
   getApp: (appId: number) => request<{ data: App }>('get', `/app/${appId}`),

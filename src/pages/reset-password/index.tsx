@@ -1,8 +1,8 @@
 import { Card, Steps } from 'antd';
 import { useParams } from 'react-router-dom';
-import SendEmail from './send-email';
-import SetPassword from './set-password';
-import Success from './success';
+import SendEmail from './components/send-email';
+import SetPassword from './components/set-password';
+import Success from './components/success';
 
 const body = {
   '0': <SendEmail />,

@@ -20,12 +20,11 @@ import {
 } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 
-import { quotas } from './constants/quotas';
-import { PRICING_LINK } from './constants/links';
-import { rootRouterPath } from './router';
-import { useAppList, useUserInfo } from './utils/hooks';
-import { api } from './services/api';
-import { resetAppList } from './utils/queryClient';
+import { quotas } from '@/constants/quotas';
+import { PRICING_LINK } from '@/constants/links';
+import { rootRouterPath } from '@/router';
+import { useAppList, useUserInfo } from '@/utils/hooks';
+import { api } from '@/services/api';
 
 function addApp() {
   let name = '';

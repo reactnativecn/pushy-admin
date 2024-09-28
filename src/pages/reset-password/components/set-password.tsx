@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Button, Form, Input, message } from 'antd';
 import { useLocation } from 'react-router-dom';
 import md5 from 'blueimp-md5';
-import { isPasswordValid } from '../../utils/helper';
-import { router, rootRouterPath } from '../../router';
-import request from '../../services/request';
+import { isPasswordValid } from '../../../utils/helper';
+import { router, rootRouterPath } from '../../../router';
+import { api } from '@/services/api';
 
 export default function SetPassword() {
   const { search } = useLocation();
@@ -12,13 +12,13 @@ export default function SetPassword() {
   return (
     <Form
       className='m-auto w-80'
-      onFinish={async (values) => {
+      onFinish={async (values: { newPwd: string; pwd2: string }) => {
         setLoading(true);
         try {
-          delete values.pwd2;
-          values.token = new URLSearchParams(search).get('code');
-          values.newPwd = md5(values.newPwd);
-          await request('post', '/user/resetpwd/reset', values);
+          await api.resetPwd({
+            token: new URLSearchParams(search).get('code') ?? '',
+            newPwd: md5(values.newPwd),
+          });
           router.navigate(rootRouterPath.resetPassword('3'));
         } catch (e) {
           console.log(e);

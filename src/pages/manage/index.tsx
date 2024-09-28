@@ -3,13 +3,15 @@ import { Breadcrumb, Button, Col, Layout, Row, Tabs, Tag, Modal, message, Form }
 
 import { Link, useParams } from 'react-router-dom';
 import './index.css';
-import PackageList from './packages';
-import VersionTable from './versions';
-import SettingModal from './settingModal';
+
 import { api } from '@/services/api';
 import { useApp, usePackages } from '@/utils/hooks';
+import PackageList from './components/package-list';
+import SettingModal from './components/setting-modal';
+import VersionTable from './components/version-table';
+import { ManageProvider } from './hooks/useManageContext';
 
-export const Versions = () => {
+export const Manage = () => {
   const [modal, contextHolder] = Modal.useModal();
   const params = useParams<{ id?: string }>();
   const id = Number(params.id!);
@@ -68,23 +70,25 @@ export const Versions = () => {
           </Button.Group>
         </Form>
       </Row>
-      <Layout>
-        <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg' width={240}>
-          <div className='py-4'>原生包</div>
-          <Tabs>
-            <Tabs.TabPane tab='全部' key='all'>
-              <PackageList appId={id} dataSource={packages} />
-            </Tabs.TabPane>
-            <Tabs.TabPane tab='未使用' key='unused'>
-              <PackageList appId={id} dataSource={unused} />
-            </Tabs.TabPane>
-          </Tabs>
-        </Layout.Sider>
-        <Layout.Content className='p-0'>
-          <VersionTable />
-        </Layout.Content>
-      </Layout>
+      <ManageProvider appId={id}>
+        <Layout>
+          <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg' width={240}>
+            <div className='py-4'>原生包</div>
+            <Tabs>
+              <Tabs.TabPane tab='全部' key='all'>
+                <PackageList dataSource={packages} />
+              </Tabs.TabPane>
+              <Tabs.TabPane tab='未使用' key='unused'>
+                <PackageList dataSource={unused} />
+              </Tabs.TabPane>
+            </Tabs>
+          </Layout.Sider>
+          <Layout.Content className='p-0'>
+            <VersionTable />
+          </Layout.Content>
+        </Layout>
+      </ManageProvider>
     </>
   );
 };
-export const Component = Versions;
+export const Component = Manage;

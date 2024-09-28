@@ -2,13 +2,14 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } from 'antd';
 // import { useDrag } from "react-dnd";
 import { api } from '@/services/api';
+import { useManageContext } from '../hooks/useManageContext';
 
-const PackageList = ({ dataSource, appId }: { dataSource?: Package[]; appId: number }) => (
+const PackageList = ({ dataSource }: { dataSource?: Package[] }) => (
   <List
     className='packages'
     size='small'
     dataSource={dataSource}
-    renderItem={(item) => <Item item={item} appId={appId} />}
+    renderItem={(item) => <Item item={item} />}
   />
 );
 export default PackageList;
@@ -54,46 +55,49 @@ function edit(item: Package, appId: number) {
   });
 }
 
-const Item = ({ item, appId }: { item: Package; appId: number }) => (
-  // const [_, drag] = useDrag(() => ({ item, type: "package" }));
-  <div className='bg-white my-0 -mx-2'>
-    <List.Item className='p-2'>
-      <List.Item.Meta
-        title={
-          <Row align='middle'>
-            <Col flex={1}>
-              {item.name}
-              {item.status && item.status !== 'normal' && (
-                <Tag style={{ marginLeft: 8 }}>{status[item.status]}</Tag>
+const Item = ({ item }: { item: Package }) => {
+  const { appId } = useManageContext();
+  return (
+    // const [_, drag] = useDrag(() => ({ item, type: "package" }));
+    <div className='bg-white my-0 -mx-2'>
+      <List.Item className='p-2'>
+        <List.Item.Meta
+          title={
+            <Row align='middle'>
+              <Col flex={1}>
+                {item.name}
+                {item.status && item.status !== 'normal' && (
+                  <Tag style={{ marginLeft: 8 }}>{status[item.status]}</Tag>
+                )}
+              </Col>
+              <Button type='link' icon={<EditOutlined />} onClick={() => edit(item, appId)} />
+              <Button
+                type='link'
+                icon={<DeleteOutlined />}
+                onClick={() => remove(item, appId)}
+                danger
+              />
+            </Row>
+          }
+          description={
+            <>
+              {item.note && (
+                <Typography.Paragraph
+                  className='mb-0'
+                  type='secondary'
+                  ellipsis={{ tooltip: item.note }}
+                >
+                  备注：{item.note}
+                </Typography.Paragraph>
               )}
-            </Col>
-            <Button type='link' icon={<EditOutlined />} onClick={() => edit(item, appId)} />
-            <Button
-              type='link'
-              icon={<DeleteOutlined />}
-              onClick={() => remove(item, appId)}
-              danger
-            />
-          </Row>
-        }
-        description={
-          <>
-            {item.note && (
-              <Typography.Paragraph
-                className='mb-0'
-                type='secondary'
-                ellipsis={{ tooltip: item.note }}
-              >
-                备注：{item.note}
-              </Typography.Paragraph>
-            )}
-            编译时间：{item.buildTime}
-          </>
-        }
-      />
-    </List.Item>
-  </div>
-);
+              编译时间：{item.buildTime}
+            </>
+          }
+        />
+      </List.Item>
+    </div>
+  );
+};
 const status = {
   paused: '暂停',
   expired: '过期',

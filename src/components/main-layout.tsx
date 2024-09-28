@@ -8,10 +8,10 @@ import {
 import { Layout, Menu, message, Row } from 'antd';
 import { Outlet } from 'react-router-dom';
 import { ReactNode } from 'react';
-import { Footer } from './components';
+import Footer from './footer';
 import Sider from './sider';
 import { logout } from '@/services/auth';
-import { useUserInfo } from './utils/hooks';
+import { useUserInfo } from '@/utils/hooks';
 
 const MainLayout = () => {
   const { user } = useUserInfo();
