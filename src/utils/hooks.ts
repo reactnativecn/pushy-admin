@@ -24,7 +24,7 @@ export const useAppList = () => {
 export const useApp = (appId: number) => {
   const { data } = useQuery({
     queryKey: ['app', appId],
-    queryFn: () => api.getAppData(appId),
+    queryFn: () => api.getApp(appId),
     enabled: () => !!getToken(),
   });
   return { app: data?.data };
@@ -37,4 +37,22 @@ export const usePackages = (appId: number) => {
     enabled: () => !!getToken(),
   });
   return { packages: data?.data, unused: data?.data?.filter((i) => i.version === null) };
+};
+
+export const useVersions = ({
+  appId,
+  offset,
+  limit,
+}: {
+  appId: number;
+  offset?: number;
+  limit?: number;
+}) => {
+  const { data } = useQuery({
+    queryKey: ['versions', appId, offset, limit],
+    staleTime: 0,
+    queryFn: () => api.getVersions({ appId, offset, limit }),
+    enabled: () => !!getToken(),
+  });
+  return { versions: data?.data, count: data?.count };
 };

@@ -1,8 +1,7 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } from 'antd';
 // import { useDrag } from "react-dnd";
-import request from '@/services/request';
-import { resetPackages } from '@/utils/queryClient';
+import { api } from '@/services/api';
 
 const PackageList = ({ dataSource, appId }: { dataSource?: Package[]; appId: number }) => (
   <List
@@ -20,9 +19,7 @@ function remove(item: Package, appId: number) {
     maskClosable: true,
     okButtonProps: { danger: true },
     async onOk() {
-      await request('delete', `/app/${appId}/package/${item.id}`);
-      resetPackages(appId);
-      // fetchVersions(1);
+      await api.deletePackage({ appId, packageId: item.id });
     },
   });
 }
@@ -52,8 +49,7 @@ function edit(item: Package, appId: number) {
       </Form>
     ),
     async onOk() {
-      await request('put', `/app/${appId}/package/${item.id}`, { note, status });
-      resetPackages(appId);
+      await api.updatePackage({ appId, packageId: item.id, params: { note, status } });
     },
   });
 }

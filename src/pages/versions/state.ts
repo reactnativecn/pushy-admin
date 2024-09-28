@@ -19,28 +19,6 @@ const state = {
 
 export default state;
 
-export function fetchVersions(page?: number) {
-  if (!state.app) return;
-  if (page === undefined) {
-    if (state.versions.length) return;
-    page = 1;
-  }
-
-  runInAction(() => {
-    state.loading = true;
-    state.pagination.current = page;
-  });
-  const { pageSize } = state.pagination;
-  const params = `offset=${(page - 1) * pageSize!}&limit=${pageSize}`;
-  request('get', `/app/${state.app?.id}/version/list?${params}`).then(({ data, count }: any) => {
-    runInAction(() => {
-      state.pagination.total = count;
-      state.versions = data;
-      state.loading = false;
-    });
-  });
-}
-
 export function removeSelectedVersions() {
   const { selected, versions } = state;
   const map = versions.reduce<{ [key: number]: string }>((m, { id, name }) => {
@@ -60,11 +38,4 @@ export function removeSelectedVersions() {
       fetchVersions(1);
     },
   });
-}
-
-export async function bindPackage(packageId: number, versionId: number) {
-  runInAction(() => (state.loading = true));
-  await request('put', `/app/${state.app?.id}/package/${packageId}`, { versionId });
-  fetchPackages();
-  fetchVersions(state.pagination.current);
 }

@@ -3,7 +3,6 @@ import { DeleteFilled } from '@ant-design/icons';
 import { useUserInfo } from '@/utils/hooks';
 import { api } from '@/services/api';
 import { rootRouterPath, router } from '@/router';
-import { resetAppList } from '@/utils/queryClient';
 
 const SettingModal = () => {
   const { user } = useUserInfo();
@@ -57,7 +56,6 @@ const SettingModal = () => {
               async onOk() {
                 await api.deleteApp(Number(form.getFieldValue('id')));
                 Modal.destroyAll();
-                resetAppList();
                 router.navigate(rootRouterPath.apps);
               },
             });

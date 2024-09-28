@@ -61,14 +61,9 @@ function addApp() {
         message.warning('请输入应用名称');
         return false;
       }
-      return api
-        .createApp({ name, platform })
-        .then(() => {
-          resetAppList();
-        })
-        .catch((error) => {
-          message.error((error as Error).message);
-        });
+      return api.createApp({ name, platform }).catch((error) => {
+        message.error((error as Error).message);
+      });
     },
   });
 }

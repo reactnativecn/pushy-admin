@@ -15,3 +15,11 @@ export const resetAppList = () => {
 export const resetPackages = (appId: number) => {
   queryClient.invalidateQueries({ queryKey: ['packages', appId] });
 };
+
+export const resetVersions = (appId: number) => {
+  queryClient.invalidateQueries({ queryKey: ['versions', appId] });
+};
+
+export const resetApp = (appId: number) => {
+  queryClient.invalidateQueries({ queryKey: ['app', appId] });
+};

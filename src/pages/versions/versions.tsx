@@ -108,7 +108,7 @@ const columns: ColumnType<Version>[] = [
     render: (_, record) => renderTextCol({ record, key: 'description' }),
   },
   {
-    title: '元信息',
+    title: '自定义元信息',
     dataIndex: 'metaInfo',
     render: (_, record) => renderTextCol({ record, key: 'metaInfo' }),
   },
