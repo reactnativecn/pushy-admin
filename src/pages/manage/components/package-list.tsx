@@ -59,7 +59,7 @@ const Item = ({ item }: { item: Package }) => {
   const { appId } = useManageContext();
   return (
     // const [_, drag] = useDrag(() => ({ item, type: "package" }));
-    <div className='bg-white my-0 -mx-2'>
+    <div className='bg-white my-0 [&_li]:!px-0'>
       <List.Item className='p-2'>
         <List.Item.Meta
           title={

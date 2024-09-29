@@ -9,7 +9,7 @@ const SettingModal = () => {
   const [form] = Form.useForm();
 
   return (
-    <>
+    <Form layout='vertical' form={form}>
       <Form.Item label='应用名' name='name'>
         <Input />
       </Form.Item>
@@ -65,7 +65,7 @@ const SettingModal = () => {
           删除
         </Button>
       </Form.Item>
-    </>
+    </Form>
   );
 };
 

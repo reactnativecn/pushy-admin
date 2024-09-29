@@ -15,7 +15,7 @@ const ManageDashBoard = () => {
   const { packages, unusedPackages } = useManageContext();
   return (
     <Layout>
-      <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg w-60'>
+      <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg' width={240}>
         <div className='py-4'>原生包</div>
         <Tabs>
           <Tabs.TabPane tab='全部' key='all'>
@@ -26,7 +26,7 @@ const ManageDashBoard = () => {
           </Tabs.TabPane>
         </Tabs>
       </Layout.Sider>
-      <Layout.Content className='p-0'>
+      <Layout.Content className='!p-0'>
         <VersionTable />
       </Layout.Content>
     </Layout>
@@ -44,19 +44,19 @@ export const Manage = () => {
   return (
     <>
       <Row className='mb-4'>
-        <Form layout='vertical' form={form} initialValues={app}>
+        <Col flex={1}>
+          <Breadcrumb>
+            <Breadcrumb.Item>
+              <Link to='/apps'>应用列表</Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>
+              {app?.name}
+              {app?.status === 'paused' && <Tag className='ml-2'>暂停</Tag>}
+            </Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+        <Form form={form} initialValues={app}>
           {contextHolder}
-          <Col flex={1}>
-            <Breadcrumb>
-              <Breadcrumb.Item>
-                <Link to='/apps'>应用列表</Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Item>
-                {app?.name}
-                {app?.status === 'paused' && <Tag className='ml-2'>暂停</Tag>}
-              </Breadcrumb.Item>
-            </Breadcrumb>
-          </Col>
           <Button.Group>
             <Button
               type='primary'
