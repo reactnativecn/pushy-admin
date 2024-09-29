@@ -32,7 +32,7 @@ export const Manage = () => {
               </Breadcrumb.Item>
               <Breadcrumb.Item>
                 {app?.name}
-                {app?.status === 'paused' && <Tag style={{ marginLeft: 8 }}>暂停</Tag>}
+                {app?.status === 'paused' && <Tag className='ml-2'>暂停</Tag>}
               </Breadcrumb.Item>
             </Breadcrumb>
           </Col>

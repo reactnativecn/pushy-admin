@@ -30,7 +30,7 @@ export const Welcome = () => {
           我们已经往您的邮箱发送了一封激活邮件
           <br />
           请点击邮件内的激活链接激活您的帐号
-          <div style={{ height: 24 }} />
+          <div className='h-6' />
         </>
       }
       subTitle='如未收到激活邮件，请点击'

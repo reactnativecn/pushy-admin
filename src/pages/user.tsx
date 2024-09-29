@@ -46,7 +46,7 @@ function UserPanel() {
   const { user } = useUserInfo();
   if (!user) {
     return (
-      <div style={{ lineHeight: '100vh', textAlign: 'center' }}>
+      <div className='h-screen flex items-center justify-center'>
         <Spin size='large' />
       </div>
     );

@@ -27,7 +27,7 @@ export default function SendEmail() {
   }
   return (
     <Form
-      style={{ width: 320, margin: 'auto' }}
+      className='w-80 mx-auto'
       onFinish={(values: any) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         setUserEmail(values?.email);

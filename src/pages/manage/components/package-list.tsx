@@ -67,7 +67,7 @@ const Item = ({ item }: { item: Package }) => {
               <Col flex={1}>
                 {item.name}
                 {item.status && item.status !== 'normal' && (
-                  <Tag style={{ marginLeft: 8 }}>{status[item.status]}</Tag>
+                  <Tag className='ml-2'>{status[item.status]}</Tag>
                 )}
               </Col>
               <Button type='link' icon={<EditOutlined />} onClick={() => edit(item, appId)} />

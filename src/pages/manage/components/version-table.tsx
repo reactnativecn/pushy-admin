@@ -48,17 +48,17 @@ const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
       className='ant-typography-edit'
       content={
         <div>
-          <div style={{ textAlign: 'center', margin: '5px auto' }}>
+          <div className='text-center my-1 mx-auto'>
             测试二维码 <br />
             <a target='_blank' className='ml-1 text-xs' href={TEST_QR_CODE_DOC} rel='noreferrer'>
               如何使用？
             </a>
           </div>
-          <QRCode value={codeValue} bordered={false} style={{ margin: '0 auto' }} />
-          <div style={{ textAlign: 'center', margin: '5px auto' }}>{name}</div>
+          <QRCode value={codeValue} bordered={false} className='my-0 mx-auto' />
+          <div className='text-center my-0 mx-auto'>{name}</div>
           {/* <div style={{ textAlign: 'center', margin: '0 auto' }}>{hash}</div> */}
           <div>
-            <Input.TextArea readOnly autoSize value={codeValue} style={{ marginBottom: '5px' }} />
+            <Input.TextArea readOnly autoSize value={codeValue} className='mb-1' />
             <div className='flex flex-row items-center'>
               <Checkbox
                 className='mr-4'

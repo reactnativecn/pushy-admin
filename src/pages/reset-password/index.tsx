@@ -13,8 +13,8 @@ const body = {
 export const ResetPassword = () => {
   const { step = '0' } = useParams() as { step?: keyof typeof body };
   return (
-    <Card style={{ width: 760, margin: 'auto' }}>
-      <Steps style={{ marginBottom: 48 }} current={Number(step)}>
+    <Card className='w-80 mx-auto'>
+      <Steps className='mb-12' current={Number(step)}>
         <Steps.Step title='输入绑定邮箱' />
         <Steps.Step title='设置新密码' />
         <Steps.Step title='设置成功' />
