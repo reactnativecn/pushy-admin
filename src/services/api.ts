@@ -25,6 +25,7 @@ export const api = {
     }),
   updateApp: (appId: number, params: Omit<App, 'appKey' | 'checkCount' | 'id' | 'platform'>) =>
     request('put', `/app/${appId}`, params).finally(() => {
+      resetAppList();
       resetApp(appId);
     }),
   // package

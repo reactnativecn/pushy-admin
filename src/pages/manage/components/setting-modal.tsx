@@ -13,13 +13,18 @@ const SettingModal = () => {
 
   return (
     <>
-      <Form.Item label='应用名' name='name' layout='vertical'>
-        <Input />
+      <Form.Item label='AppId' layout='vertical'>
+        <Typography.Paragraph className='!mb-0' type='secondary' copyable>
+          {appId}
+        </Typography.Paragraph>
       </Form.Item>
-      <Form.Item label='应用 Key' name='appKey' layout='vertical'>
+      <Form.Item label='AppKey' name='appKey' layout='vertical'>
         <Typography.Paragraph className='!mb-0' type='secondary' copyable>
           {appKey}
         </Typography.Paragraph>
+      </Form.Item>
+      <Form.Item label='应用名' name='name' layout='vertical'>
+        <Input />
       </Form.Item>
       <Form.Item label='下载地址' name='downloadUrl' layout='vertical'>
         <Input />

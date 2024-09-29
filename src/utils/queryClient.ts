@@ -9,17 +9,17 @@ export const queryClient = new QueryClient({
 });
 
 export const resetAppList = () => {
-  queryClient.invalidateQueries({ queryKey: ['appList'] });
+  queryClient.resetQueries({ queryKey: ['appList'] });
 };
 
 export const resetPackages = (appId: number) => {
-  queryClient.invalidateQueries({ queryKey: ['packages', appId] });
+  queryClient.resetQueries({ queryKey: ['packages', appId] });
 };
 
 export const resetVersions = (appId: number) => {
-  queryClient.invalidateQueries({ queryKey: ['versions', appId] });
+  queryClient.resetQueries({ queryKey: ['versions', appId] });
 };
 
 export const resetApp = (appId: number) => {
-  queryClient.invalidateQueries({ queryKey: ['app', appId] });
+  queryClient.resetQueries({ queryKey: ['app', appId] });
 };

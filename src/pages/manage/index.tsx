@@ -2,8 +2,9 @@ import { SettingFilled } from '@ant-design/icons';
 import { Breadcrumb, Button, Col, Layout, Row, Tabs, Tag, Modal, message, Form } from 'antd';
 
 import { Link, useParams } from 'react-router-dom';
-import './index.css';
+import './index.scss';
 
+import { useEffect } from 'react';
 import { api } from '@/services/api';
 import { useApp } from '@/utils/hooks';
 import PackageList from './components/package-list';
@@ -39,7 +40,11 @@ export const Manage = () => {
   const id = Number(params.id!);
   const { app } = useApp(id);
   const [form] = Form.useForm<App>();
-  if (app == null) return null;
+  useEffect(() => {
+    if (app) {
+      form.setFieldsValue(app);
+    }
+  }, [app, form]);
 
   return (
     <Form layout='vertical' form={form} initialValues={app}>
