@@ -222,7 +222,7 @@ export default function VersionTable() {
       pagination={{
         showSizeChanger: true,
         total: count,
-        current: offset / pageSize,
+        current: offset / pageSize + 1,
         pageSize,
         showTotal: (total) => `共 ${total} 个 `,
         onChange(page, size) {

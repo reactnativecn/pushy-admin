@@ -72,7 +72,7 @@ export const Manage = () => {
                 content: <SettingModal />,
                 async onOk() {
                   try {
-                    await api.updateApp(app.id, {
+                    await api.updateApp(id, {
                       name: form.getFieldValue('name') as string,
                       downloadUrl: form.getFieldValue('downloadUrl') as string,
                       status: form.getFieldValue('status') as 'normal' | 'paused',

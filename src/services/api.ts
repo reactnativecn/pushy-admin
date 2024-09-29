@@ -42,6 +42,7 @@ export const api = {
   }) =>
     request('put', `/app/${appId}/package/${packageId}`, params).finally(() => {
       resetPackages(appId);
+      resetVersions(appId);
     }),
   deletePackage: ({ appId, packageId }: { appId: number; packageId: number }) =>
     request('delete', `/app/${appId}/package/${packageId}`).finally(() => {
@@ -70,7 +71,7 @@ export const api = {
     appId: number;
     params: Omit<Version, 'id' | 'packages'>;
   }) =>
-    request('put', `/app/${appId}/version/${versionId}`, { params }).finally(() => {
+    request('put', `/app/${appId}/version/${versionId}`, params).finally(() => {
       resetVersions(appId);
     }),
   deleteVersion: ({ appId, versionId }: { appId: number; versionId: number }) =>

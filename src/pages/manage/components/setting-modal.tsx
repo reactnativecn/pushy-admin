@@ -33,8 +33,8 @@ const SettingModal = () => {
         layout='vertical'
         label='启用热更新'
         name='status'
-        normalize={(value) => (value === 'normal' ? 'normal' : 'paused')}
-        getValueProps={(value) => ({ checked: value === 'normal' })}
+        normalize={(value) => (value ? 'normal' : 'paused')}
+        getValueProps={(value) => ({ value: value === 'normal' })}
       >
         <Switch checkedChildren='启用' unCheckedChildren='暂停' />
       </Form.Item>
@@ -42,8 +42,8 @@ const SettingModal = () => {
         layout='vertical'
         label='忽略编译时间戳（高级版以上可启用）'
         name='ignoreBuildTime'
-        normalize={(value) => (value === 'enabled' ? 'enabled' : 'disabled')}
-        getValueProps={(value) => ({ checked: value === 'enabled' })}
+        normalize={(value) => (value ? 'enabled' : 'disabled')}
+        getValueProps={(value) => ({ value: value === 'enabled' })}
       >
         <Switch
           disabled={
