@@ -11,6 +11,7 @@ export const Welcome = () => {
       router.navigate(rootRouterPath.login);
     }
   }, []);
+
   const { mutate: sendEmail, isPending } = useMutation({
     mutationFn: () => api.sendEmail({ email: getUserEmail() }),
     onSuccess: () => {

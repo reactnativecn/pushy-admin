@@ -1,15 +1,5 @@
 import { QrcodeOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Input,
-  Modal,
-  Table,
-  Typography,
-  QRCode,
-  Popover,
-  Checkbox,
-  TablePaginationConfig,
-} from 'antd';
+import { Button, Input, Modal, Table, Typography, QRCode, Popover, Checkbox } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 // import { useDrag, useDrop } from "react-dnd";
 import { ReactNode, useEffect, useState } from 'react';
@@ -158,7 +148,7 @@ const TextColumn = ({
 }) => {
   const key = recordKey;
   const { appId } = useManageContext();
-  let value = Reflect.get(record, key) as string;
+  let value = record[key as keyof Version] as string;
   if (key === 'createdAt') {
     const t = new Date(value);
     const y = t.getFullYear();
@@ -218,21 +208,9 @@ const TextColumn = ({
 export default function VersionTable() {
   const { appId } = useManageContext();
   const [selected, setSelected] = useState<number[]>([]);
-  const [pagination, setPagination] = useState<TablePaginationConfig>({
-    current: 0,
-    pageSize: 10,
-    showTotal: (total) => `共 ${total} 个 `,
-    onChange(page, size) {
-      if (size) {
-        setPagination({ ...pagination, current: page * size });
-      }
-      // fetchVersions(page);
-    },
-  });
-  const { versions, count, isLoading } = useVersions({ appId, offset: pagination.current! });
-  if (pagination.total !== count) {
-    setPagination({ ...pagination, total: count });
-  }
+  const [offset, setOffset] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const { versions, count, isLoading } = useVersions({ appId, offset, limit: pageSize });
 
   return (
     <Table
@@ -240,9 +218,20 @@ export default function VersionTable() {
       rowKey='id'
       title={() => '热更新包'}
       columns={columns}
-      components={{ body: { row: TableRow } }}
       dataSource={versions}
-      pagination={pagination}
+      pagination={{
+        showSizeChanger: true,
+        total: count,
+        current: offset / pageSize,
+        pageSize,
+        showTotal: (total) => `共 ${total} 个 `,
+        onChange(page, size) {
+          if (size) {
+            setOffset((page - 1) * size);
+            setPageSize(size);
+          }
+        },
+      }}
       rowSelection={{
         selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
         onChange: (keys) => setSelected(keys as number[]),
@@ -261,26 +250,3 @@ export default function VersionTable() {
     />
   );
 }
-
-const TableRow = (props: any) => {
-  // const [{ canDrop, isOver }, drop] = useDrop(() => ({
-  //   accept: "package",
-  //   async drop(pack: PackageBase) {
-  //     const { id, packages = [] } = state.versions.find((i) => i.id == props["data-row-key"]) ?? {};
-  //     if (!packages.some(({ id }) => pack.id == id)) {
-  //       bindPackage(pack.id, id!);
-  //     }
-  //   },
-  //   collect: (monitor) => ({ isOver: monitor.isOver(), canDrop: monitor.canDrop() }),
-  // }));
-  const className = '';
-  // if (canDrop) className = "can-drop";
-  // if (isOver) className = "is-over";
-  return (
-    <tr
-      // ref={drop}
-      {...props}
-      className={`ant-table-row ${className}`}
-    />
-  );
-};

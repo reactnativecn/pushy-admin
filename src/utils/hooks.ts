@@ -28,11 +28,15 @@ export const useApp = (appId: number) => {
 };
 
 export const usePackages = (appId: number) => {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['packages', appId],
     queryFn: () => api.getPackages(appId),
   });
-  return { packages: data?.data, unusedPackages: data?.data?.filter((i) => i.version === null) };
+  return {
+    packages: data?.data,
+    unusedPackages: data?.data?.filter((i) => i.version === null),
+    isLoading,
+  };
 };
 
 export const useVersions = ({

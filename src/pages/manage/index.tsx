@@ -12,17 +12,17 @@ import VersionTable from './components/version-table';
 import { ManageProvider, useManageContext } from './hooks/useManageContext';
 
 const ManageDashBoard = () => {
-  const { packages, unusedPackages } = useManageContext();
+  const { packages, unusedPackages, packagesLoading } = useManageContext();
   return (
     <Layout>
       <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg' width={240}>
         <div className='py-4'>原生包</div>
         <Tabs>
           <Tabs.TabPane tab='全部' key='all'>
-            <PackageList dataSource={packages} />
+            <PackageList dataSource={packages} loading={packagesLoading} />
           </Tabs.TabPane>
           <Tabs.TabPane tab='未使用' key='unused'>
-            <PackageList dataSource={unusedPackages} />
+            <PackageList dataSource={unusedPackages} loading={packagesLoading} />
           </Tabs.TabPane>
         </Tabs>
       </Layout.Sider>
@@ -42,7 +42,7 @@ export const Manage = () => {
   if (app == null) return null;
 
   return (
-    <>
+    <Form layout='vertical' form={form} initialValues={app}>
       <Row className='mb-4'>
         <Col flex={1}>
           <Breadcrumb>
@@ -55,46 +55,44 @@ export const Manage = () => {
             </Breadcrumb.Item>
           </Breadcrumb>
         </Col>
-        <Form form={form} initialValues={app}>
-          {contextHolder}
-          <Button.Group>
-            <Button
-              type='primary'
-              icon={<SettingFilled />}
-              onClick={() => {
-                modal.confirm({
-                  icon: null,
-                  closable: true,
-                  maskClosable: true,
-                  content: <SettingModal />,
-                  async onOk() {
-                    try {
-                      await api.updateApp(app.id, {
-                        name: form.getFieldValue('name') as string,
-                        downloadUrl: form.getFieldValue('downloadUrl') as string,
-                        status: form.getFieldValue('status') as 'normal' | 'paused',
-                        ignoreBuildTime: form.getFieldValue('ignoreBuildTime') as
-                          | 'enabled'
-                          | 'disabled',
-                      });
-                    } catch (e) {
-                      message.error((e as Error).message);
-                      return;
-                    }
-                    message.success('修改成功');
-                  },
-                });
-              }}
-            >
-              应用设置
-            </Button>
-          </Button.Group>
-        </Form>
+        <Button.Group>
+          <Button
+            type='primary'
+            icon={<SettingFilled />}
+            onClick={() => {
+              modal.confirm({
+                icon: null,
+                closable: true,
+                maskClosable: true,
+                content: <SettingModal />,
+                async onOk() {
+                  try {
+                    await api.updateApp(app.id, {
+                      name: form.getFieldValue('name') as string,
+                      downloadUrl: form.getFieldValue('downloadUrl') as string,
+                      status: form.getFieldValue('status') as 'normal' | 'paused',
+                      ignoreBuildTime: form.getFieldValue('ignoreBuildTime') as
+                        | 'enabled'
+                        | 'disabled',
+                    });
+                  } catch (e) {
+                    message.error((e as Error).message);
+                    return;
+                  }
+                  message.success('修改成功');
+                },
+              });
+            }}
+          >
+            应用设置
+          </Button>
+        </Button.Group>
       </Row>
       <ManageProvider appId={id}>
+        {contextHolder}
         <ManageDashBoard />
       </ManageProvider>
-    </>
+    </Form>
   );
 };
 export const Component = Manage;

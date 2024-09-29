@@ -18,16 +18,17 @@ export const ManageContext = createContext<{
   setDeepLink: (deepLink: string) => void;
   packages: Package[];
   unusedPackages: Package[];
+  packagesLoading?: boolean;
 }>(defaultManageContext);
 
 export const useManageContext = () => useContext(ManageContext);
 
 export const ManageProvider = ({ children, appId }: { children: ReactNode; appId: number }) => {
   const [deepLink, setDeepLink] = useState(window.localStorage.getItem(`${appId}_deeplink`) ?? '');
-  const { packages = [], unusedPackages = [] } = usePackages(appId);
+  const { packages = [], unusedPackages = [], isLoading: packagesLoading } = usePackages(appId);
   const contextValue = useMemo(
-    () => ({ appId, deepLink, setDeepLink, packages, unusedPackages }),
-    [appId, deepLink, packages, unusedPackages]
+    () => ({ appId, deepLink, setDeepLink, packages, unusedPackages, packagesLoading }),
+    [appId, deepLink, packages, unusedPackages, packagesLoading]
   );
   return <ManageContext.Provider value={contextValue}>{children}</ManageContext.Provider>;
 };

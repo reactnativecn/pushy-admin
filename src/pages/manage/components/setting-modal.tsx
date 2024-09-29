@@ -3,25 +3,29 @@ import { DeleteFilled } from '@ant-design/icons';
 import { useUserInfo } from '@/utils/hooks';
 import { api } from '@/services/api';
 import { rootRouterPath, router } from '@/router';
+import { useManageContext } from '../hooks/useManageContext';
 
 const SettingModal = () => {
   const { user } = useUserInfo();
-  const [form] = Form.useForm();
+  const { appId } = useManageContext();
+  const appKey = Form.useWatch('appKey') as string;
+  const ignoreBuildTime = Form.useWatch('ignoreBuildTime') as string;
 
   return (
-    <Form layout='vertical' form={form}>
-      <Form.Item label='应用名' name='name'>
+    <>
+      <Form.Item label='应用名' name='name' layout='vertical'>
         <Input />
       </Form.Item>
-      <Form.Item label='应用 Key' name='appKey'>
-        <Typography.Paragraph style={style.item} type='secondary' copyable>
-          {form.getFieldValue('appKey')}
+      <Form.Item label='应用 Key' name='appKey' layout='vertical'>
+        <Typography.Paragraph className='!mb-0' type='secondary' copyable>
+          {appKey}
         </Typography.Paragraph>
       </Form.Item>
-      <Form.Item label='下载地址' name='downloadUrl'>
+      <Form.Item label='下载地址' name='downloadUrl' layout='vertical'>
         <Input />
       </Form.Item>
       <Form.Item
+        layout='vertical'
         label='启用热更新'
         name='status'
         normalize={(value) => (value === 'normal' ? 'normal' : 'paused')}
@@ -30,6 +34,7 @@ const SettingModal = () => {
         <Switch checkedChildren='启用' unCheckedChildren='暂停' />
       </Form.Item>
       <Form.Item
+        layout='vertical'
         label='忽略编译时间戳（高级版以上可启用）'
         name='ignoreBuildTime'
         normalize={(value) => (value === 'enabled' ? 'enabled' : 'disabled')}
@@ -37,14 +42,13 @@ const SettingModal = () => {
       >
         <Switch
           disabled={
-            (user?.tier === 'free' || user?.tier === 'standard') &&
-            form.getFieldValue('ignoreBuildTime') !== 'enabled'
+            (user?.tier === 'free' || user?.tier === 'standard') && ignoreBuildTime !== 'enabled'
           }
           checkedChildren='启用'
           unCheckedChildren='不启用'
         />
       </Form.Item>
-      <Form.Item label='删除应用'>
+      <Form.Item label='删除应用' layout='vertical'>
         <Button
           type='primary'
           icon={<DeleteFilled />}
@@ -54,7 +58,7 @@ const SettingModal = () => {
               okText: '确认删除',
               okButtonProps: { danger: true },
               async onOk() {
-                await api.deleteApp(Number(form.getFieldValue('id')));
+                await api.deleteApp(appId);
                 Modal.destroyAll();
                 router.navigate(rootRouterPath.apps);
               },
@@ -65,10 +69,8 @@ const SettingModal = () => {
           删除
         </Button>
       </Form.Item>
-    </Form>
+    </>
   );
 };
 
 export default SettingModal;
-
-const style: Style = { item: { marginBottom: 0 } };

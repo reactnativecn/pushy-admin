@@ -4,8 +4,9 @@ import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } f
 import { api } from '@/services/api';
 import { useManageContext } from '../hooks/useManageContext';
 
-const PackageList = ({ dataSource }: { dataSource?: Package[] }) => (
+const PackageList = ({ dataSource, loading }: { dataSource?: Package[]; loading?: boolean }) => (
   <List
+    loading={loading}
     className='packages'
     size='small'
     dataSource={dataSource}
