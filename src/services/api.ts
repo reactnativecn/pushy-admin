@@ -14,7 +14,7 @@ export const api = {
     request('post', '/user/resetpwd/reset', params),
   // app
   appList: () => request<{ data: App[] }>('get', '/app/list'),
-  getApp: (appId: number) => request<{ data: App }>('get', `/app/${appId}`),
+  getApp: (appId: number) => request<App>('get', `/app/${appId}`),
   deleteApp: (appId: number) =>
     request('delete', `/app/${appId}`).finally(() => {
       resetAppList();

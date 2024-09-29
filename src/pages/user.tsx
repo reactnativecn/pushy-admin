@@ -2,7 +2,6 @@ import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import request from '../services/request';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
 import { useUserInfo } from '@/utils/hooks';

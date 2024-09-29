@@ -5,18 +5,39 @@ import { Link, useParams } from 'react-router-dom';
 import './index.css';
 
 import { api } from '@/services/api';
-import { useApp, usePackages } from '@/utils/hooks';
+import { useApp } from '@/utils/hooks';
 import PackageList from './components/package-list';
 import SettingModal from './components/setting-modal';
 import VersionTable from './components/version-table';
-import { ManageProvider } from './hooks/useManageContext';
+import { ManageProvider, useManageContext } from './hooks/useManageContext';
+
+const ManageDashBoard = () => {
+  const { packages, unusedPackages } = useManageContext();
+  return (
+    <Layout>
+      <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg w-60'>
+        <div className='py-4'>原生包</div>
+        <Tabs>
+          <Tabs.TabPane tab='全部' key='all'>
+            <PackageList dataSource={packages} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab='未使用' key='unused'>
+            <PackageList dataSource={unusedPackages} />
+          </Tabs.TabPane>
+        </Tabs>
+      </Layout.Sider>
+      <Layout.Content className='p-0'>
+        <VersionTable />
+      </Layout.Content>
+    </Layout>
+  );
+};
 
 export const Manage = () => {
   const [modal, contextHolder] = Modal.useModal();
   const params = useParams<{ id?: string }>();
   const id = Number(params.id!);
   const { app } = useApp(id);
-  const { packages, unused } = usePackages(id);
   const [form] = Form.useForm<App>();
   if (app == null) return null;
 
@@ -71,22 +92,7 @@ export const Manage = () => {
         </Form>
       </Row>
       <ManageProvider appId={id}>
-        <Layout>
-          <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg' width={240}>
-            <div className='py-4'>原生包</div>
-            <Tabs>
-              <Tabs.TabPane tab='全部' key='all'>
-                <PackageList dataSource={packages} />
-              </Tabs.TabPane>
-              <Tabs.TabPane tab='未使用' key='unused'>
-                <PackageList dataSource={unused} />
-              </Tabs.TabPane>
-            </Tabs>
-          </Layout.Sider>
-          <Layout.Content className='p-0'>
-            <VersionTable />
-          </Layout.Content>
-        </Layout>
+        <ManageDashBoard />
       </ManageProvider>
     </>
   );

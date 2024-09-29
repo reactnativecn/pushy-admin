@@ -1,13 +1,9 @@
-import { LinkOutlined, QrcodeOutlined } from '@ant-design/icons';
+import { QrcodeOutlined } from '@ant-design/icons';
 import {
   Button,
-  Dropdown,
   Input,
-  Menu,
   Modal,
   Table,
-  Tag,
-  Tooltip,
   Typography,
   QRCode,
   Popover,
@@ -23,6 +19,7 @@ import { api } from '@/services/api';
 import { useVersions } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
 import { TEST_QR_CODE_DOC } from '@/constants/links';
+import BindPackage from './bind-package';
 
 const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
   const { appId, deepLink, setDeepLink } = useManageContext();
@@ -117,77 +114,50 @@ const columns: ColumnType<Version>[] = [
   {
     title: '版本',
     dataIndex: 'name',
-    render: (_, record) =>
-      renderTextCol({
-        record,
-        key: 'name',
-        extra: <TestQrCode name={record.name} hash={record.hash} />,
-      }),
+    render: (_, record) => (
+      <TextColumn
+        record={record}
+        recordKey='name'
+        extra={<TestQrCode name={record.name} hash={record.hash} />}
+      />
+    ),
   },
   {
     title: '描述',
     dataIndex: 'description',
-    render: (_, record) => renderTextCol({ record, key: 'description' }),
+    render: (_, record) => <TextColumn record={record} recordKey='description' />,
   },
   {
     title: '自定义元信息',
     dataIndex: 'metaInfo',
-    render: (_, record) => renderTextCol({ record, key: 'metaInfo' }),
+    render: (_, record) => <TextColumn record={record} recordKey='metaInfo' />,
   },
   {
     title: '绑定原生包',
     dataIndex: 'packages',
     width: '100%',
-    render: (_, { packages, id }) => {
-      const bindedPackages = packages.map((i) => <PackageItem key={i.id} item={i} />);
-      const items = state.packages.filter((i) => !packages.some((j) => i.id === j.id));
-      if (items.length === 0) return bindedPackages;
-
-      const menu = (
-        <Menu>
-          {items.map((i) => (
-            <Menu.Item key={i.id} onClick={() => bindPackage(i.id, id)}>
-              {i.name}
-            </Menu.Item>
-          ))}
-        </Menu>
-      );
-      return (
-        <>
-          {bindedPackages}
-          <Dropdown
-            className='ant-typography-edit'
-            overlay={menu}
-            getPopupContainer={() =>
-              document.querySelector(`[data-row-key="${id}"]`) ?? document.body
-            }
-          >
-            <Button type='link' size='small' icon={<LinkOutlined />}>
-              绑定
-            </Button>
-          </Dropdown>
-        </>
-      );
-    },
+    render: (_, { packages, id }) => <BindPackage packages={packages} versionId={id} />,
   },
   {
     title: '上传时间',
     dataIndex: 'createdAt',
-    render: (_, record) => renderTextCol({ record, key: 'createdAt', isEditable: false }),
+    render: (_, record) => <TextColumn record={record} recordKey='createdAt' isEditable={false} />,
   },
 ];
 
-function renderTextCol({
+const TextColumn = ({
   record,
-  key,
+  recordKey,
   isEditable = true,
   extra,
 }: {
   record: Version;
-  key: string;
+  recordKey: string;
   isEditable?: boolean;
   extra?: ReactNode;
-}) {
+}) => {
+  const key = recordKey;
+  const { appId } = useManageContext();
   let value = Reflect.get(record, key) as string;
   if (key === 'createdAt') {
     const t = new Date(value);
@@ -226,7 +196,11 @@ function renderTextCol({
               />
             ),
           async onOk() {
-            await api.updateVersion(record.id, { [key]: value });
+            await api.updateVersion({
+              appId,
+              versionId: record.id,
+              params: { [key]: value } as Omit<Version, 'id' | 'packages'>,
+            });
           },
         });
       },
@@ -240,7 +214,7 @@ function renderTextCol({
       {extra}
     </div>
   );
-}
+};
 export default function VersionTable() {
   const { appId } = useManageContext();
   const [selected, setSelected] = useState<number[]>([]);
@@ -255,7 +229,10 @@ export default function VersionTable() {
       // fetchVersions(page);
     },
   });
-  const { versions, count } = useVersions({ appId, offset: pagination.current! });
+  const { versions, count, isLoading } = useVersions({ appId, offset: pagination.current! });
+  if (pagination.total !== count) {
+    setPagination({ ...pagination, total: count });
+  }
 
   return (
     <Table
@@ -268,14 +245,14 @@ export default function VersionTable() {
       pagination={pagination}
       rowSelection={{
         selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
-        onChange: (keys) =>
-          runInAction(() => (state.selected = observable.array(keys as number[]))),
+        onChange: (keys) => setSelected(keys as number[]),
       }}
-      loading={loading}
+      loading={isLoading}
       footer={
         selected.length
-          ? () => (
-              <Button onClick={removeSelectedVersions} danger>
+          ? // eslint-disable-next-line react/no-unstable-nested-components
+            () => (
+              <Button onClick={() => removeSelectedVersions({ selected, versions, appId })} danger>
                 删除
               </Button>
             )
@@ -307,10 +284,3 @@ const TableRow = (props: any) => {
     />
   );
 };
-
-const PackageItem = ({ item }: { item: PackageBase }) => (
-  // const [_, drag] = useDrag(() => ({ item, type: "package" }));
-  <Tooltip title={item.note}>
-    <Tag color='#1890ff'>{item.name}</Tag>
-  </Tooltip>
-);
