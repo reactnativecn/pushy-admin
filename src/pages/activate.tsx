@@ -13,7 +13,7 @@ export const Activate = () => {
     enabled: !!token,
   });
   if (error) {
-    return <Result status='error' title={(error as Error).message} />;
+    return <Result status='error' title={error.message} />;
   }
   if (isLoading) {
     return <Result icon={<LoadingOutlined />} title='激活中，请稍等' />;

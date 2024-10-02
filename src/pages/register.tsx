@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Button, Form, Input, message, Row, Checkbox, Result } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Button, Form, Input, message, Row, Checkbox } from 'antd';
 import md5 from 'blueimp-md5';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
@@ -32,7 +30,7 @@ export const Register = () => {
     <div style={style.body}>
       <Form style={style.form} onFinish={(values) => submit(values)}>
         <div style={style.logo}>
-          <img src={logo} className='mx-auto' />
+          <img src={logo} className='mx-auto' alt='' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
         </div>
         <Form.Item name='name' hasFeedback>
@@ -47,7 +45,7 @@ export const Register = () => {
           validateTrigger='onBlur'
           rules={[
             () => ({
-              async validator(_, value) {
+              async validator(_, value: string) {
                 if (value && !isPasswordValid(value)) {
                   throw '密码中需要同时包含大、小写字母和数字，且长度不少于6位';
                 }
@@ -63,8 +61,8 @@ export const Register = () => {
           validateTrigger='onBlur'
           rules={[
             ({ getFieldValue }) => ({
-              async validator(_, value) {
-                if (getFieldValue('pwd') != value) {
+              async validator(_, value: string) {
+                if (getFieldValue('pwd') !== value) {
                   throw '两次输入的密码不一致';
                 }
               },
