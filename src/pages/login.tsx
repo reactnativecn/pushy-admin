@@ -1,30 +1,25 @@
 import { Button, Form, Input, Row } from 'antd';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
-import { FormEvent } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
-import { login } from '../store';
-
-const state = observable.object({ loading: false });
-
-function submit(event: FormEvent) {
-  event.preventDefault();
-  runInAction(async () => {
-    state.loading = true;
-    await login(email, password);
-    state.loading = false;
-  });
-}
+import { login } from '@/services/auth';
 
 let email: string;
 let password: string;
 
-export const Component = observer(() => {
-  const { loading } = state;
+export const Login = () => {
+  const [loading, setLoading] = useState(false);
   return (
     <div style={style.body}>
-      <form style={style.form} onSubmit={submit}>
+      <form
+        style={style.form}
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setLoading(true);
+          await login(email, password);
+          setLoading(false);
+        }}
+      >
         <div style={style.logo}>
           <img src={logo} className='mx-auto' alt='' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
@@ -63,7 +58,9 @@ export const Component = observer(() => {
       </form>
     </div>
   );
-});
+};
+
+export const Component = Login;
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },

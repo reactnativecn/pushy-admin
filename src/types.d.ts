@@ -1,8 +1,17 @@
 type Style = { [name: string]: import('react').CSSProperties };
 
-declare module '*.svg';
-declare module '*.png';
-declare module '*.jpg';
+declare module '*.svg' {
+  const content: string;
+  export default content;
+}
+declare module '*.png' {
+  const content: string;
+  export default content;
+}
+declare module '*.jpg' {
+  const content: string;
+  export default content;
+}
 
 interface User {
   email: string;
@@ -21,6 +30,8 @@ interface App {
   status?: 'normal' | 'paused';
   ignoreBuildTime?: 'enabled' | 'disabled';
   checkCount?: number;
+  downloadUrl?: string;
+  appKey?: string;
 }
 
 interface PackageBase {
@@ -49,4 +60,12 @@ interface AppDetail extends App {
   appKey: string;
   appSecret: string;
   downloadUrl: string;
+}
+
+interface SiderMenuProps {
+  selectedKeys?: string[];
+}
+
+interface CotentProps {
+  app: App;
 }

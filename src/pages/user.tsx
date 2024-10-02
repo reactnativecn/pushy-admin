@@ -1,12 +1,11 @@
 import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
-import { observer } from 'mobx-react-lite';
 import dayjs from 'dayjs';
-import request from '../services/request';
-import store from '../store';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
+import { useUserInfo } from '@/utils/hooks';
+import { api } from '@/services/api';
 
 const InvoiceHint = (
   <div>
@@ -43,14 +42,15 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
 };
 
 function UserPanel() {
-  if (!store.user) {
+  const { user } = useUserInfo();
+  if (!user) {
     return (
-      <div style={{ lineHeight: '100vh', textAlign: 'center' }}>
+      <div className='h-screen flex items-center justify-center'>
         <Spin size='large' />
       </div>
     );
   }
-  const { name, email, tier, tierExpiresAt } = store.user;
+  const { name, email, tier, tierExpiresAt } = user;
   const currentQuota = quotas[tier as keyof typeof quotas];
   return (
     <div className='body'>
@@ -122,8 +122,8 @@ function UserPanel() {
 }
 
 async function purchase(tier?: string) {
-  const { payUrl } = await request('post', '/orders', { tier });
+  const { payUrl } = await api.createOrder({ tier });
   window.location.href = payUrl;
 }
 
-export const Component = observer(UserPanel);
+export const Component = UserPanel;

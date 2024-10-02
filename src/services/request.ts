@@ -39,6 +39,7 @@ export default async function request<T extends Record<any, any>>(
     }
   }
   const response = await fetch(url, options);
+  // TODO token 过期
   const json = (await response.json()) as PushyResponse;
   if (response.status === 200) {
     return json as T & PushyResponse;

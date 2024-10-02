@@ -1,5 +1,6 @@
 import { createHashRouter, Navigate, redirect } from 'react-router-dom';
-import MainLayout from './MainLayout';
+import { Alert } from 'antd';
+import MainLayout from './components/main-layout';
 import { getToken } from './services/request';
 
 export const rootRouterPath = {
@@ -62,12 +63,12 @@ export const router = createHashRouter([
       {
         path: 'apps',
         loader: needAuthLoader,
-        lazy: () => import('./pages/apps'),
+        element: <Alert message='请选择应用' showIcon />,
       },
       {
         path: 'apps/:id',
         loader: needAuthLoader,
-        lazy: () => import('./pages/versions'),
+        lazy: () => import('./pages/manage'),
       },
       {
         path: 'user',

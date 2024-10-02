@@ -1,38 +1,36 @@
+import { useState } from 'react';
 import { Button, Form, Input, message, Row, Checkbox } from 'antd';
 import md5 from 'blueimp-md5';
-import { observable, runInAction } from 'mobx';
-import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
-import request from '../services/request';
-import store from '../store';
 import { isPasswordValid } from '../utils/helper';
 import { router, rootRouterPath } from '../router';
+import { setUserEmail } from '@/services/auth';
+import { api } from '@/services/api';
 
-const state = observable.object({ loading: false, agreed: false });
+export const Register = () => {
+  const [loading, setLoading] = useState<boolean>(false);
 
-async function submit(values: { [key: string]: string }) {
-  delete values.pwd2;
-  delete values.agreed;
-  values.pwd = md5(values.pwd);
-  runInAction(() => (state.loading = true));
-  store.email = values.email;
-  try {
-    await request('post', '/user/register', values);
-    router.navigate(rootRouterPath.welcome);
-  } catch (_) {
-    message.error('该邮箱已被注册');
+  async function submit(values: { [key: string]: string }) {
+    delete values.pwd2;
+    delete values.agreed;
+    values.pwd = md5(values.pwd);
+    setLoading(true);
+    try {
+      await api.register(values);
+      setUserEmail(values.email);
+      router.navigate(rootRouterPath.welcome);
+    } catch (_) {
+      message.error('该邮箱已被注册');
+    }
+    setLoading(false);
   }
-  runInAction(() => (state.loading = false));
-}
 
-export const Component = observer(() => {
-  const { loading, agreed } = state;
   return (
     <div style={style.body}>
       <Form style={style.form} onFinish={(values) => submit(values)}>
         <div style={style.logo}>
-          <img src={logo} className='mx-auto' />
+          <img src={logo} className='mx-auto' alt='' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
         </div>
         <Form.Item name='name' hasFeedback>
@@ -47,7 +45,7 @@ export const Component = observer(() => {
           validateTrigger='onBlur'
           rules={[
             () => ({
-              async validator(_, value) {
+              async validator(_, value: string) {
                 if (value && !isPasswordValid(value)) {
                   throw '密码中需要同时包含大、小写字母和数字，且长度不少于6位';
                 }
@@ -63,8 +61,8 @@ export const Component = observer(() => {
           validateTrigger='onBlur'
           rules={[
             ({ getFieldValue }) => ({
-              async validator(_, value) {
-                if (getFieldValue('pwd') != value) {
+              async validator(_, value: string) {
+                if (getFieldValue('pwd') !== value) {
                   throw '两次输入的密码不一致';
                 }
               },
@@ -74,7 +72,7 @@ export const Component = observer(() => {
           <Input type='password' placeholder='再次输入密码' size='large' autoComplete='' required />
         </Form.Item>
         <Form.Item>
-          <Button type='primary' htmlType='submit' size='large' loading={loading} block>
+          <Button type='primary' htmlType='submit' size='large' loading={loading}>
             注册
           </Button>
         </Form.Item>
@@ -112,7 +110,9 @@ export const Component = observer(() => {
       </Form>
     </div>
   );
-});
+};
+
+export const Component = Register;
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },

@@ -1,25 +1,31 @@
 import { Button, message, Result } from 'antd';
-import { observable } from 'mobx';
-import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import store from '../store';
+import { useMutation } from '@tanstack/react-query';
 import { rootRouterPath, router } from '../router';
-import request from '../services/request';
+import { api } from '@/services/api';
+import { getUserEmail } from '@/services/auth';
 
-const state = observable.object({ loading: false });
-
-export const Component = observer(() => {
+export const Inactivated = () => {
   useEffect(() => {
-    if (!store.email) {
+    if (!getUserEmail()) {
       router.navigate(rootRouterPath.login);
     }
   }, []);
+  const { mutate: sendEmail, isPending } = useMutation({
+    mutationFn: () => api.sendEmail({ email: getUserEmail() }),
+    onSuccess: () => {
+      message.info('邮件发送成功，请注意查收');
+    },
+    onError: () => {
+      message.error('邮件发送失败');
+    },
+  });
   return (
     <Result
       title='您的账号还未激活，请查看您的邮箱'
       subTitle='如未收到激活邮件，请点击'
       extra={[
-        <Button key='resend' type='primary' onClick={sendEmail} loading={state.loading}>
+        <Button key='resend' type='primary' onClick={() => sendEmail()} loading={isPending}>
           再次发送
         </Button>,
         <Button key='back' href='/user'>
@@ -28,16 +34,6 @@ export const Component = observer(() => {
       ]}
     />
   );
-});
+};
 
-async function sendEmail() {
-  const { email } = store;
-  state.loading = true;
-  try {
-    await request('post', '/user/active/sendmail', { email });
-    message.info('邮件发送成功，请注意查收');
-  } catch {
-    message.error('邮件发送失败');
-  }
-  state.loading = false;
-}
+export const Component = Inactivated;
