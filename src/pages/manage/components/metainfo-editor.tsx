@@ -1,4 +1,4 @@
-import { JSONEditor, JSONEditorPropsOptional, Mode } from 'vanilla-jsoneditor';
+import { createJSONEditor, JSONEditorPropsOptional, Mode } from 'vanilla-jsoneditor';
 import { useEffect, useRef } from 'react';
 
 export default function MetaInfoEditor({
@@ -6,12 +6,12 @@ export default function MetaInfoEditor({
   ...props
 }: JSONEditorPropsOptional & { className?: string }) {
   const refContainer = useRef<HTMLDivElement>(null);
-  const refEditor = useRef<JSONEditor | null>(null);
+  const refEditor = useRef<ReturnType<typeof createJSONEditor>>();
 
   useEffect(() => {
     // create editor
-    refEditor.current = new JSONEditor({
-      target: refContainer.current as Element,
+    refEditor.current = createJSONEditor({
+      target: refContainer.current!,
       props: {
         ...props,
         mode: Mode.text,
@@ -21,7 +21,7 @@ export default function MetaInfoEditor({
     return () => {
       if (refEditor.current) {
         refEditor.current.destroy();
-        refEditor.current = null;
+        refEditor.current = undefined;
       }
     };
   }, [props]);
