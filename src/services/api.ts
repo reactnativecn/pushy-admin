@@ -1,4 +1,4 @@
-import { resetPackages, resetAppList, resetVersions, resetApp } from '@/utils/queryClient';
+import { queryClient } from '@/utils/queryClient';
 import request from './request';
 
 export const api = {
@@ -16,17 +16,23 @@ export const api = {
   appList: () => request<{ data: App[] }>('get', '/app/list'),
   getApp: (appId: number) => request<App>('get', `/app/${appId}`),
   deleteApp: (appId: number) =>
-    request('delete', `/app/${appId}`).finally(() => {
-      resetAppList();
+    request('delete', `/app/${appId}`).then(() => {
+      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
+        data: data?.filter((i) => i.id !== appId),
+      }));
     }),
   createApp: (params: { name: string; platform: string }) =>
-    request('post', '/app/create', params).finally(() => {
-      resetAppList();
+    request<{ id: number }>('post', '/app/create', params).then(({ id }) => {
+      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
+        data: [...(data || []), { ...params, id }],
+      }));
     }),
   updateApp: (appId: number, params: Omit<App, 'appKey' | 'checkCount' | 'id' | 'platform'>) =>
-    request('put', `/app/${appId}`, params).finally(() => {
-      resetAppList();
-      resetApp(appId);
+    request('put', `/app/${appId}`, params).then(() => {
+      queryClient.setQueryData(['app', appId], (old: App | undefined) => ({ ...old, ...params }));
+      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
+        data: data?.map((i) => (i.id === appId ? { ...i, ...params } : i)),
+      }));
     }),
   // package
   getPackages: (appId: number) =>
@@ -40,13 +46,19 @@ export const api = {
     packageId: number;
     params: { note?: string; status?: Package['status']; versionId?: number };
   }) =>
-    request('put', `/app/${appId}/package/${packageId}`, params).finally(() => {
-      resetPackages(appId);
-      resetVersions(appId);
+    request('put', `/app/${appId}/package/${packageId}`, params).then(() => {
+      queryClient.setQueryData(['packages', appId], ({ data }: { data: Package[] }) => ({
+        data: data?.map((i) => (i.id === packageId ? { ...i, ...params } : i)),
+      }));
+      if (params.versionId) {
+        queryClient.invalidateQueries({ queryKey: ['versions', appId] });
+      }
     }),
   deletePackage: ({ appId, packageId }: { appId: number; packageId: number }) =>
-    request('delete', `/app/${appId}/package/${packageId}`).finally(() => {
-      resetPackages(appId);
+    request('delete', `/app/${appId}/package/${packageId}`).then(() => {
+      queryClient.setQueryData(['packages', appId], ({ data }: { data: Package[] }) => ({
+        data: data?.filter((i) => i.id !== packageId),
+      }));
     }),
   // version
   getVersions: ({
@@ -71,12 +83,26 @@ export const api = {
     appId: number;
     params: Omit<Version, 'id' | 'packages'>;
   }) =>
-    request('put', `/app/${appId}/version/${versionId}`, params).finally(() => {
-      resetVersions(appId);
+    request('put', `/app/${appId}/version/${versionId}`, params).then(() => {
+      queryClient.setQueriesData({ queryKey: ['versions', appId] }, (old?: { data: Version[] }) =>
+        old
+          ? {
+              ...old,
+              data: old.data?.map((i) => (i.id === versionId ? { ...i, ...params } : i)),
+            }
+          : undefined
+      );
     }),
   deleteVersion: ({ appId, versionId }: { appId: number; versionId: number }) =>
-    request('delete', `/app/${appId}/version/${versionId}`).finally(() => {
-      resetVersions(appId);
+    request('delete', `/app/${appId}/version/${versionId}`).then(() => {
+      queryClient.setQueriesData({ queryKey: ['versions', appId] }, (old?: { data: Version[] }) =>
+        old
+          ? {
+              ...old,
+              data: old.data?.filter((i) => i.id !== versionId),
+            }
+          : undefined
+      );
     }),
   // order
   createOrder: (params: { tier?: string }) =>
