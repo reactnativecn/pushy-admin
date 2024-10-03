@@ -81,7 +81,7 @@ export const api = {
   }: {
     versionId: number;
     appId: number;
-    params: Omit<Version, 'id' | 'packages'>;
+    params: Partial<Omit<Version, 'id' | 'packages'>>;
   }) =>
     request('put', `/app/${appId}/version/${versionId}`, params).then(() => {
       queryClient.setQueriesData({ queryKey: ['versions', appId] }, (old?: { data: Version[] }) =>
