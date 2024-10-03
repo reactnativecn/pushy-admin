@@ -56,7 +56,7 @@ interface Version {
   packages: PackageBase[];
   config?: {
     rollout?: {
-      [packageVersion: string]: number;
+      [packageVersion: string]: number | null;
     };
   };
 }

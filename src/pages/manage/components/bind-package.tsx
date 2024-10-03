@@ -40,6 +40,12 @@ const BindPackage = ({
               {
                 key: 'full',
                 label: '全量',
+                onClick: () =>
+                  api.updateVersion({
+                    appId,
+                    versionId,
+                    params: { config: { rollout: { [p.name]: null } } },
+                  }),
               },
               {
                 key: 'gray',
