@@ -54,6 +54,11 @@ interface Version {
   metaInfo: string;
   name: string;
   packages: PackageBase[];
+  config?: {
+    rollout?: {
+      [packageVersion: string]: number;
+    };
+  };
 }
 
 interface AppDetail extends App {
