@@ -36,32 +36,32 @@ const BindPackage = ({
             key: p.id,
             label: p.name,
             onClick: () => api.updatePackage({ appId, packageId: p.id, params: { versionId } }),
-            children: [
-              {
-                key: 'full',
-                label: '全量',
-                onClick: () =>
-                  api.updateVersion({
-                    appId,
-                    versionId,
-                    params: { config: { rollout: { [p.name]: null } } },
-                  }),
-              },
-              {
-                key: 'gray',
-                label: '灰度',
-                children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
-                  key: `${percentage}`,
-                  label: `${percentage}%`,
-                  onClick: () =>
-                    api.updateVersion({
-                      appId,
-                      versionId,
-                      params: { config: { rollout: { [p.name]: percentage } } },
-                    }),
-                })),
-              },
-            ],
+            // children: [
+            //   {
+            //     key: 'full',
+            //     label: '全量',
+            //     onClick: () =>
+            //       api.updateVersion({
+            //         appId,
+            //         versionId,
+            //         params: { config: { rollout: { [p.name]: null } } },
+            //       }),
+            //   },
+            //   {
+            //     key: 'gray',
+            //     label: '灰度',
+            //     children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
+            //       key: `${percentage}`,
+            //       label: `${percentage}%`,
+            //       onClick: () =>
+            //         api.updateVersion({
+            //           appId,
+            //           versionId,
+            //           params: { config: { rollout: { [p.name]: percentage } } },
+            //         }),
+            //     })),
+            //   },
+            // ],
           })),
         }}
         className='ant-typography-edit'
