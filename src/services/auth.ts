@@ -32,7 +32,9 @@ export async function login(email: string, password: string) {
 }
 
 export function logout() {
-  setToken('');
-  router.navigate(rootRouterPath.login);
-  window.location.reload();
+  if (router.state.location.pathname !== rootRouterPath.login) {
+    setToken('');
+    router.navigate(rootRouterPath.login);
+    window.location.reload();
+  }
 }

@@ -126,7 +126,7 @@ const columns: ColumnType<Version>[] = [
     title: '绑定原生包',
     dataIndex: 'packages',
     width: '100%',
-    render: (_, { packages, id }) => <BindPackage packages={packages} versionId={id} />,
+    render: (_, { packages, id, config }) => <BindPackage config={config} packages={packages} versionId={id} />,
   },
   {
     title: '上传时间',
@@ -189,7 +189,7 @@ const TextColumn = ({
             await api.updateVersion({
               appId,
               versionId: record.id,
-              params: { [key]: value } as Omit<Version, 'id' | 'packages'>,
+              params: { [key]: value } as unknown as Omit<Version, 'id' | 'packages'>,
             });
           },
         });
