@@ -6,7 +6,7 @@ import { pluginSvgr } from '@rsbuild/plugin-svgr';
 export default defineConfig({
   html: {
     template: './index.html',
-    favicon: './src/assets/logo.svg',
+    favicon: './src/assets/favicon.svg',
   },
   source: {
     entry: {
