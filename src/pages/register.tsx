@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Form, Input, message, Row, Checkbox } from 'antd';
 import md5 from 'blueimp-md5';
 import { Link } from 'react-router-dom';
-import logo from '../assets/logo.svg';
+import { ReactComponent as Logo } from '../assets/logo.svg';
 import { isPasswordValid } from '../utils/helper';
 import { router, rootRouterPath } from '../router';
 import { setUserEmail } from '@/services/auth';
@@ -30,7 +30,7 @@ export const Register = () => {
     <div style={style.body}>
       <Form style={style.form} onFinish={(values) => submit(values)}>
         <div style={style.logo}>
-          <img src={logo} className='mx-auto' alt='' />
+          <Logo className='mx-auto' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
         </div>
         <Form.Item name='name' hasFeedback>

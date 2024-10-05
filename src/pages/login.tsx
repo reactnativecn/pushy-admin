@@ -1,7 +1,7 @@
 import { Button, Form, Input, Row } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../assets/logo.svg';
+import { ReactComponent as Logo } from '../assets/logo.svg';
 import { login } from '@/services/auth';
 
 let email: string;
@@ -21,7 +21,7 @@ export const Login = () => {
         }}
       >
         <div style={style.logo}>
-          <img src={logo} className='mx-auto' alt='' />
+          <Logo className='mx-auto' />
           <div style={style.slogan}>极速热更新框架 for React Native</div>
         </div>
         <Form.Item>
