@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import dayjs from 'dayjs';
 import { api } from '@/services/api';
 import { getToken } from '@/services/request';
 
@@ -8,7 +9,17 @@ export const useUserInfo = () => {
     queryKey: ['userInfo'],
     queryFn: api.me,
   });
-  return { user: getToken() ? data : null };
+  const expireDay = dayjs(data?.tierExpiresAt);
+  const displayExpireDay = expireDay.format('YYYY年MM月DD日');
+  const remainingDays = expireDay.diff(dayjs(), 'day');
+  const isExpiringSoon = remainingDays <= 90;
+  const displayRemainingDays = isExpiringSoon ? `(剩余 ${remainingDays} 天)` : '';
+  return {
+    user: getToken() ? data : null,
+    displayExpireDay,
+    displayRemainingDays,
+    isExpiringSoon,
+  };
 };
 
 export const useAppList = () => {

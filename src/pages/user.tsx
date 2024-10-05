@@ -1,7 +1,6 @@
 import { Button, Descriptions, Space, Popover, Spin } from 'antd';
 import { ReactNode, useState } from 'react';
 import { AlipayCircleOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
 import { useUserInfo } from '@/utils/hooks';
@@ -42,7 +41,7 @@ const PurchaseButton = ({ tier, children }: { tier: string; children: ReactNode 
 };
 
 function UserPanel() {
-  const { user } = useUserInfo();
+  const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
   if (!user) {
     return (
       <div className='h-screen flex items-center justify-center'>
@@ -50,7 +49,7 @@ function UserPanel() {
       </div>
     );
   }
-  const { name, email, tier, tierExpiresAt } = user;
+  const { name, email, tier } = user;
   const currentQuota = quotas[tier as keyof typeof quotas];
   return (
     <div className='body'>
@@ -84,16 +83,20 @@ function UserPanel() {
         </Descriptions.Item>
         <Descriptions.Item label='服务有效期至'>
           <Space>
-            {tierExpiresAt ? (
+            {displayExpireDay ? (
               <div className='flex flex-col'>
-                {dayjs(tierExpiresAt).format('YYYY年MM月DD日')}
-                <br />
-                <div>(剩余 {dayjs(tierExpiresAt).diff(dayjs(), 'day')} 天)</div>
+                {displayExpireDay}
+                {displayRemainingDays && (
+                  <>
+                    <br />
+                    <div>{displayRemainingDays}</div>
+                  </>
+                )}
               </div>
             ) : (
               '无'
             )}
-            {tierExpiresAt && (
+            {tier !== 'free' && (
               <>
                 <PurchaseButton tier={tier}>续费</PurchaseButton>
                 <Popover content={InvoiceHint} trigger='click'>
@@ -122,8 +125,10 @@ function UserPanel() {
 }
 
 async function purchase(tier?: string) {
-  const { payUrl } = await api.createOrder({ tier });
-  window.location.href = payUrl;
+  const orderResponse = await api.createOrder({ tier });
+  if (orderResponse?.payUrl) {
+    window.location.href = orderResponse.payUrl;
+  }
 }
 
 export const Component = UserPanel;

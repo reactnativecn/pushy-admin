@@ -20,6 +20,7 @@ import {
 } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 
+import dayjs from 'dayjs';
 import { quotas } from '@/constants/quotas';
 import { PRICING_LINK } from '@/constants/links';
 import { rootRouterPath } from '@/router';
@@ -90,7 +91,7 @@ export default function Sider() {
 }
 
 const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
-  const { user } = useUserInfo();
+  const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
   const { apps } = useAppList();
   const quota = quotas[user?.tier as keyof typeof quotas];
   const pvQuota = quota?.pv;
@@ -100,7 +101,13 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
     <div>
       {percent && (
         <Card
-          title={<div className='text-center'>今日剩余总查询热更次数</div>}
+          title={
+            <div className='text-center py-1'>
+              <span className=''>{user?.email}</span>
+              <br />
+              <span className='font-normal'>今日剩余总查询热更次数</span>
+            </div>
+          }
           size='small'
           className='mr-2 mb-4'
         >
@@ -119,7 +126,18 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
               {quota?.title}
             </a>
             可用: {pvQuota?.toLocaleString()} 次/每日
-          </div>
+          </div>{' '}
+          {user?.tier !== 'free' && (
+            <div className='text-xs mt-2 text-center'>
+              有效期至：{displayExpireDay}
+              {displayRemainingDays && (
+                <>
+                  <br />
+                  <div>{displayRemainingDays}</div>
+                </>
+              )}
+            </div>
+          )}
         </Card>
       )}
       <Menu defaultOpenKeys={['apps']} selectedKeys={selectedKeys} mode='inline'>
