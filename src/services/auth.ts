@@ -16,11 +16,13 @@ export async function login(email: string, password: string) {
   _email = email;
   const params = { email, pwd: md5(password) };
   try {
-    const { token } = await api.login(params);
-    setToken(token);
-    message.success('登录成功');
-    const loginFrom = new URLSearchParams(window.location.search).get('loginFrom');
-    router.navigate(loginFrom || rootRouterPath.user);
+    const res = await api.login(params);
+    if (res?.token) {
+      setToken(res.token);
+      message.success('登录成功');
+      const loginFrom = new URLSearchParams(window.location.search).get('loginFrom');
+      router.navigate(loginFrom || rootRouterPath.user);
+    }
   } catch (err) {
     const e = err as Error;
     if (e.message.startsWith('423:')) {
@@ -32,7 +34,8 @@ export async function login(email: string, password: string) {
 }
 
 export function logout() {
-  if (router.state.location.pathname !== rootRouterPath.login) {
+  const currentPath = router.state.location.pathname;
+  if (currentPath !== rootRouterPath.login) {
     setToken('');
     router.navigate(rootRouterPath.login);
     window.location.reload();

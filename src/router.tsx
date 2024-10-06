@@ -8,9 +8,11 @@ export const rootRouterPath = {
   apps: '/apps',
   versions: (id: string) => `/apps/${id}`,
   resetPassword: (step: string) => `/reset-password/${step}`,
+  activate: '/activate',
   inactivated: '/inactivated',
   login: '/login',
   welcome: '/welcome',
+  register: '/register',
 };
 
 export const needAuthLoader = ({ request }: { request: Request }) => {

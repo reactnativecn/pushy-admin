@@ -8,6 +8,7 @@ export const useUserInfo = () => {
   const { data } = useQuery({
     queryKey: ['userInfo'],
     queryFn: api.me,
+    enabled: () => !!getToken(),
   });
   const expireDay = dayjs(data?.tierExpiresAt);
   const displayExpireDay = expireDay.format('YYYY年MM月DD日');
