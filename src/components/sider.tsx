@@ -19,8 +19,7 @@ import {
   message,
 } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
-
-import dayjs from 'dayjs';
+import { ReactComponent as LogoH } from '../assets/logo-h.svg';
 import { quotas } from '@/constants/quotas';
 import { PRICING_LINK } from '@/constants/links';
 import { rootRouterPath } from '@/router';
@@ -84,7 +83,9 @@ export default function Sider() {
   }
   return (
     <Layout.Sider width={240} theme='light' style={style.sider}>
-      <Layout.Header style={style.logo}>Pushy</Layout.Header>
+      <Layout.Header className='flex justify-center items-center bg-transparent px-0'>
+        <LogoH alt='' />
+      </Layout.Header>
       <SiderMenu selectedKeys={selectedKeys} />
     </Layout.Sider>
   );
@@ -182,12 +183,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
 
 const style: Style = {
   sider: { boxShadow: '2px 0 8px 0 rgb(29 35 41 / 5%)', zIndex: 2 },
-  logo: {
-    background: '#fff',
-    color: '#1890ff',
-    fontSize: 22,
-    fontWeight: 600,
-  },
+
   ios: { color: '#a6b1b7' },
   android: { color: '#3ddc84' },
 };

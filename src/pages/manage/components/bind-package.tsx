@@ -1,5 +1,5 @@
 import { LinkOutlined } from '@ant-design/icons';
-import { Tooltip, Tag, Dropdown, Button } from 'antd';
+import { Dropdown, Button, MenuProps } from 'antd';
 import { useManageContext } from '../hooks/useManageContext';
 import { api } from '@/services/api';
 
@@ -13,64 +13,108 @@ const BindPackage = ({
   config: Version['config'];
 }) => {
   const { packages: allPackages, appId } = useManageContext();
-  const bindedPackages = packages.map((i) => {
-    const rolloutConfig = config?.rollout?.[i.name];
-    const isFull = rolloutConfig === 100 || rolloutConfig === undefined;
-    return (
-      <Tooltip key={i.id} title={i.note}>
-        <Tag color='blue' bordered={isFull}>
-          {i.name} {isFull ? '' : `(${rolloutConfig}%)`}
-        </Tag>
-      </Tooltip>
+  const availablePackages = allPackages.filter((i) => !packages.some((j) => i.id === j.id));
+
+  const bindedPackages = packages.map((p) => {
+    const rolloutConfig = config?.rollout?.[p.name];
+    const isFull = rolloutConfig === 100 || rolloutConfig === undefined || rolloutConfig === null;
+    const rolloutConfigNumber = Number(rolloutConfig);
+    const menu: MenuProps = {
+      onClick: () => api.updatePackage({ appId, packageId: p.id, params: { versionId } }),
+      items: [
+        {
+          key: 'full',
+          label: '全量',
+          onClick: () =>
+            api.updateVersion({
+              appId,
+              versionId,
+              params: { config: { rollout: { [p.name]: null } } },
+            }),
+        },
+      ],
+    };
+
+    if (rolloutConfigNumber < 50) {
+      menu.items?.push({
+        key: 'gray',
+        label: '灰度',
+        children: [1, 2, 5, 10, 20, 50]
+          .filter((percentage) => percentage > rolloutConfigNumber)
+          .map((percentage) => ({
+            key: `${percentage}`,
+            label: `${percentage}%`,
+            onClick: () =>
+              api.updateVersion({
+                appId,
+                versionId,
+                params: { config: { rollout: { [p.name]: percentage } } },
+              }),
+          })),
+      });
+    }
+    const button = (
+      <Button size='small' color='primary' variant={isFull ? 'filled' : 'dashed'}>
+        <span className='font-bold'>{p.name}</span>
+        <span className='text-xs'>{isFull ? '' : `(${rolloutConfig}%)`}</span>
+      </Button>
+    );
+    return isFull ? (
+      <div key={p.id} className='mr-2 inline-block'>
+        {button}
+      </div>
+    ) : (
+      <Dropdown key={p.id} menu={menu} className='mr-2'>
+        {button}
+      </Dropdown>
     );
   });
-  const availablePackages = allPackages.filter((i) => !packages.some((j) => i.id === j.id));
-  if (availablePackages.length === 0) return bindedPackages;
 
   return (
     <>
       {bindedPackages}
-      <Dropdown
-        menu={{
-          items: availablePackages.map((p) => ({
-            key: p.id,
-            label: p.name,
-            onClick: () => api.updatePackage({ appId, packageId: p.id, params: { versionId } }),
-            // children: [
-            //   {
-            //     key: 'full',
-            //     label: '全量',
-            //     onClick: () =>
-            //       api.updateVersion({
-            //         appId,
-            //         versionId,
-            //         params: { config: { rollout: { [p.name]: null } } },
-            //       }),
-            //   },
-            //   {
-            //     key: 'gray',
-            //     label: '灰度',
-            //     children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
-            //       key: `${percentage}`,
-            //       label: `${percentage}%`,
-            //       onClick: () =>
-            //         api.updateVersion({
-            //           appId,
-            //           versionId,
-            //           params: { config: { rollout: { [p.name]: percentage } } },
-            //         }),
-            //     })),
-            //   },
-            // ],
-          })),
-        }}
-        className='ant-typography-edit'
-        // getPopupContainer={() => document.querySelector(`[data-row-key="${id}"]`) ?? document.body}
-      >
-        <Button type='link' size='small' icon={<LinkOutlined />}>
-          绑定
-        </Button>
-      </Dropdown>
+      {availablePackages.length !== 0 && (
+        <Dropdown
+          menu={{
+            items: availablePackages.map((p) => ({
+              key: p.id,
+              label: p.name,
+              onClick: () => api.updatePackage({ appId, packageId: p.id, params: { versionId } }),
+              children: [
+                {
+                  key: 'full',
+                  label: '全量',
+                  onClick: () =>
+                    api.updateVersion({
+                      appId,
+                      versionId,
+                      params: { config: { rollout: { [p.name]: null } } },
+                    }),
+                },
+                {
+                  key: 'gray',
+                  label: '灰度',
+                  children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
+                    key: `${percentage}`,
+                    label: `${percentage}%`,
+                    onClick: () =>
+                      api.updateVersion({
+                        appId,
+                        versionId,
+                        params: { config: { rollout: { [p.name]: percentage } } },
+                      }),
+                  })),
+                },
+              ],
+            })),
+          }}
+          className='ant-typography-edit'
+        >
+          <Button type='link' size='small' icon={<LinkOutlined />}>
+            绑定
+          </Button>
+        </Dropdown>
+      )}
     </>
   );
 };

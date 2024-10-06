@@ -1,4 +1,5 @@
-import { QrcodeOutlined } from '@ant-design/icons';
+/* eslint-disable react/no-unstable-nested-components */
+import { InfoCircleOutlined, QrcodeOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Table, Typography, QRCode, Popover, Checkbox } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 // import { useDrag, useDrop } from "react-dnd";
@@ -123,10 +124,24 @@ const columns: ColumnType<Version>[] = [
     render: (_, record) => <TextColumn record={record} recordKey='metaInfo' />,
   },
   {
-    title: '绑定原生包',
+    title: (
+      <Popover
+        content={
+          <>
+            灰度发布测试中，需要 pushy 版本 v10.15.0 +。
+            <br />
+            低于此版本的只能全量发布。
+          </>
+        }
+      >
+        绑定原生包 <InfoCircleOutlined />
+      </Popover>
+    ),
     dataIndex: 'packages',
     width: '100%',
-    render: (_, { packages, id, config }) => <BindPackage config={config} packages={packages} versionId={id} />,
+    render: (_, { packages, id, config }) => (
+      <BindPackage config={config} packages={packages} versionId={id} />
+    ),
   },
   {
     title: '上传时间',
