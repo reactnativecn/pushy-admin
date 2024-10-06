@@ -11,9 +11,9 @@ export const useUserInfo = () => {
     enabled: () => !!getToken(),
   });
   const expireDay = dayjs(data?.tierExpiresAt);
-  const displayExpireDay = expireDay.format('YYYY年MM月DD日');
-  const remainingDays = expireDay.diff(dayjs(), 'day');
-  const isExpiringSoon = remainingDays <= 90;
+  const displayExpireDay = data?.tierExpiresAt ? expireDay.format('YYYY年MM月DD日') : '无';
+  const remainingDays = data?.tierExpiresAt ? expireDay.diff(dayjs(), 'day') : null;
+  const isExpiringSoon = remainingDays !== null && remainingDays <= 90;
   const displayRemainingDays = isExpiringSoon ? `(剩余 ${remainingDays} 天)` : '';
   return {
     user: getToken() ? data : null,
