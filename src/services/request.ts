@@ -41,17 +41,18 @@ export default async function request<T extends Record<any, any>>(
   }
   try {
     const response = await fetch(url, options);
+    if (response.status === 401) {
+      logout();
+      return;
+    }
     // TODO token 过期
     const json = (await response.json()) as PushyResponse;
     if (response.status === 200) {
       return json as T & PushyResponse;
     }
-    if (response.status === 401) {
-      logout();
-    } else {
-      message.error(json.message);
-      throw new Error(`${response.status}: ${json.message}`);
-    }
+
+    message.error(json.message);
+    throw new Error(`${response.status}: ${json.message}`);
   } catch (err) {
     if ((err as Error).message.includes('Unauthorized')) {
       logout();
