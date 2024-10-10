@@ -6,7 +6,7 @@ export const api = {
     request<{ token: string }>('post', '/user/login', params),
   activate: (params: { token: string }) => request('post', '/user/activate', params),
   me: () => request<User>('get', '/user/me'),
-  sendEmail: (params: { email: string }) => request('post', '/user/active/sendmail', params),
+  sendEmail: (params: { email: string }) => request('post', '/user/activate/sendmail', params),
   resetpwdSendMail: (params: { email: string }) =>
     request('post', '/user/resetpwd/sendmail', params),
   register: (params: { [key: string]: string }) => request('post', '/user/register', params),
