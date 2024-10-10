@@ -60,18 +60,16 @@ const BindPackage = ({
       </Button>
     );
     return isFull ? (
-      <div key={p.id} className='mr-2 inline-block'>
-        {button}
-      </div>
+      <div key={p.id}>{button}</div>
     ) : (
-      <Dropdown key={p.id} menu={menu} className='mr-2'>
+      <Dropdown key={p.id} menu={menu}>
         {button}
       </Dropdown>
     );
   });
 
   return (
-    <>
+    <div className='flex flex-wrap gap-1'>
       {bindedPackages}
       {availablePackages.length !== 0 && (
         <Dropdown
@@ -115,7 +113,7 @@ const BindPackage = ({
           </Button>
         </Dropdown>
       )}
-    </>
+    </div>
   );
 };
 
