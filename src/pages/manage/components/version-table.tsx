@@ -213,7 +213,7 @@ const TextColumn = ({
   }
   return (
     <div>
-      <Typography.Text className='w-40' editable={editable} ellipsis>
+      <Typography.Text className='w-40' editable={editable} ellipsis={{ expanded: true }}>
         {value}
       </Typography.Text>
       {extra}
