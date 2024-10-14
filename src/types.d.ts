@@ -23,7 +23,7 @@ interface App {
   id: number;
   name: string;
   platform: 'android' | 'ios';
-  status?: 'normal' | 'paused';
+  status?: 'normal' | 'paused' | null;
   ignoreBuildTime?: 'enabled' | 'disabled';
   checkCount?: number;
   downloadUrl?: string;
@@ -34,7 +34,7 @@ interface PackageBase {
   id: number;
   name: string;
   note: string;
-  status: 'normal' | 'paused' | 'expired';
+  status: 'normal' | 'paused' | 'expired' | null;
 }
 
 interface Package extends PackageBase {

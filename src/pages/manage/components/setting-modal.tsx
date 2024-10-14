@@ -34,9 +34,9 @@ const SettingModal = () => {
         label='启用热更新'
         name='status'
         normalize={(value) => (value ? 'normal' : 'paused')}
-        getValueProps={(value) => ({ value: value === 'normal' })}
+        getValueProps={(value) => ({ value: value === 'normal' || value === null })}
       >
-        <Switch checkedChildren='启用' unCheckedChildren='暂停' />
+        <Switch checkedChildren='已启用' unCheckedChildren='已暂停' />
       </Form.Item>
       <Form.Item
         layout='vertical'
