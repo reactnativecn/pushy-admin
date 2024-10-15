@@ -44,13 +44,13 @@ export const api = {
   }: {
     appId: number;
     packageId: number;
-    params: { note?: string; status?: Package['status']; versionId?: number };
+    params: { note?: string; status?: Package['status']; versionId?: number | null };
   }) =>
     request('put', `/app/${appId}/package/${packageId}`, params).then(() => {
       queryClient.setQueryData(['packages', appId], ({ data }: { data: Package[] }) => ({
         data: data?.map((i) => (i.id === packageId ? { ...i, ...params } : i)),
       }));
-      if (params.versionId) {
+      if (params.versionId !== undefined) {
         queryClient.invalidateQueries({ queryKey: ['versions', appId] });
       }
     }),

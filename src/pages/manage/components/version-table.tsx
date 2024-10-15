@@ -131,6 +131,8 @@ const columns: ColumnType<Version>[] = [
             灰度发布测试中，需要 pushy 版本 v10.15.0 +。
             <br />
             低于此版本的只能全量发布。
+            <br />
+            取消绑定不会导致已更新的用户回滚。
           </>
         }
       >
