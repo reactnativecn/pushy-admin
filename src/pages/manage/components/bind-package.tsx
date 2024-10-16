@@ -64,22 +64,22 @@ const BindPackage = ({
           })),
       });
     }
-    menu.items!.push(
-      { type: 'divider' },
-      {
-        key: 'unpublish',
-        label: '取消绑定',
-        icon: <RestOutlined />,
-        onClick: () => {
-          api.updateVersion({
-            appId,
-            versionId,
-            params: { config: { rollout: { [p.name]: null } } },
-          });
-          api.updatePackage({ appId, packageId: p.id, params: { versionId: null } });
-        },
-      }
-    );
+    if (menu.items!.length > 0) {
+      menu.items!.push({ type: 'divider' });
+    }
+    menu.items!.push({
+      key: 'unpublish',
+      label: '取消绑定',
+      icon: <RestOutlined />,
+      onClick: () => {
+        api.updateVersion({
+          appId,
+          versionId,
+          params: { config: { rollout: { [p.name]: null } } },
+        });
+        api.updatePackage({ appId, packageId: p.id, params: { versionId: null } });
+      },
+    });
     const button = (
       <Button size='small' color='primary' variant={isFull ? 'filled' : 'dashed'}>
         <span className='font-bold'>{p.name}</span>
