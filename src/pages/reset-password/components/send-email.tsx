@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { Button, Form, Input, message, Result } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/services/api';
-import { getUserEmail, setUserEmail } from '@/services/auth';
 
 export default function SendEmail() {
   const [sent, setSent] = useState<boolean>(false);
-  const { mutate: sendEmail, isPending } = useMutation({
-    mutationFn: () => api.resetpwdSendMail({ email: getUserEmail() }),
+  const { mutateAsync: sendEmail, isPending } = useMutation({
+    mutationFn: (email: string) => api.resetpwdSendMail({ email }),
     onSuccess: () => {
       message.info('邮件发送成功，请注意查收');
     },
@@ -28,23 +27,17 @@ export default function SendEmail() {
   return (
     <Form
       className='w-80 mx-auto'
-      onFinish={(values: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-        setUserEmail(values?.email);
+      onFinish={async (values: { email: string }) => {
+        const email = values?.email;
+        await sendEmail(email);
         setSent(true);
       }}
     >
-      <Form.Item name='email'>
+      <Form.Item name='email' rules={[{ type: 'email', message: '请输入正确的邮箱' }]}>
         <Input placeholder='输入绑定邮箱' type='email' required />
       </Form.Item>
       <Form.Item>
-        <Button
-          type='primary'
-          htmlType='submit'
-          onClick={() => sendEmail()}
-          loading={isPending}
-          block
-        >
+        <Button type='primary' htmlType='submit' loading={isPending} block>
           发送邮件
         </Button>
       </Form.Item>
