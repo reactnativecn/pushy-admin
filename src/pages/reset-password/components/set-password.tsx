@@ -30,13 +30,16 @@ export default function SetPassword() {
       <Form.Item
         hasFeedback
         name='newPwd'
-        validateTrigger='onBlur'
+        // validateTrigger='onBlur'
         rules={[
           () => ({
             validator(_, value: string) {
               if (value && !isPasswordValid(value)) {
-                throw new Error('密码中需要同时包含大、小写字母和数字，且长度不少于6位');
+                return Promise.reject(
+                  new Error('密码中需要同时包含大、小写字母和数字，且长度不少于6位')
+                );
               }
+              return Promise.resolve();
             },
           }),
         ]}
@@ -46,13 +49,14 @@ export default function SetPassword() {
       <Form.Item
         hasFeedback
         name='pwd2'
-        validateTrigger='onBlur'
+        // validateTrigger='onBlur'
         rules={[
           ({ getFieldValue }) => ({
             validator(_, value: string) {
               if (getFieldValue('newPwd') !== value) {
-                throw new Error('两次输入的密码不一致');
+                return Promise.reject(new Error('两次输入的密码不一致'));
               }
+              return Promise.resolve();
             },
           }),
         ]}
