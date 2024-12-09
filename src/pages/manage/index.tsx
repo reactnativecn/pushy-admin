@@ -1,33 +1,51 @@
-import { SettingFilled } from '@ant-design/icons';
-import { Breadcrumb, Button, Col, Layout, Row, Tabs, Tag, Modal, message, Form } from 'antd';
+import { SettingFilled } from "@ant-design/icons";
+import {
+  Breadcrumb,
+  Button,
+  Col,
+  Form,
+  Layout,
+  Modal,
+  Row,
+  Tabs,
+  Tag,
+  message,
+} from "antd";
 
-import { Link, useParams } from 'react-router-dom';
-import './index.scss';
+import { Link, useParams } from "react-router-dom";
+import "./index.scss";
 
-import { useEffect } from 'react';
-import { api } from '@/services/api';
-import { useApp } from '@/utils/hooks';
-import PackageList from './components/package-list';
-import SettingModal from './components/setting-modal';
-import VersionTable from './components/version-table';
-import { ManageProvider, useManageContext } from './hooks/useManageContext';
+import { api } from "@/services/api";
+import { useApp } from "@/utils/hooks";
+import { useEffect } from "react";
+import PackageList from "./components/package-list";
+import SettingModal from "./components/setting-modal";
+import VersionTable from "./components/version-table";
+import { ManageProvider, useManageContext } from "./hooks/useManageContext";
 
 const ManageDashBoard = () => {
   const { packages, unusedPackages, packagesLoading } = useManageContext();
   return (
     <Layout>
-      <Layout.Sider theme='light' className='p-4 pt-0 mr-4 h-full rounded-lg' width={240}>
-        <div className='py-4'>原生包</div>
+      <Layout.Sider
+        theme="light"
+        className="p-4 pt-0 mr-4 h-full rounded-lg"
+        width={240}
+      >
+        <div className="py-4">原生包</div>
         <Tabs>
-          <Tabs.TabPane tab='全部' key='all'>
+          <Tabs.TabPane tab="全部" key="all">
             <PackageList dataSource={packages} loading={packagesLoading} />
           </Tabs.TabPane>
-          <Tabs.TabPane tab='未使用' key='unused'>
-            <PackageList dataSource={unusedPackages} loading={packagesLoading} />
+          <Tabs.TabPane tab="未使用" key="unused">
+            <PackageList
+              dataSource={unusedPackages}
+              loading={packagesLoading}
+            />
           </Tabs.TabPane>
         </Tabs>
       </Layout.Sider>
-      <Layout.Content className='!p-0'>
+      <Layout.Content className="!p-0">
         <VersionTable />
       </Layout.Content>
     </Layout>
@@ -47,22 +65,22 @@ export const Manage = () => {
   }, [app, form]);
 
   return (
-    <Form layout='vertical' form={form} initialValues={app}>
-      <Row className='mb-4'>
+    <Form layout="vertical" form={form} initialValues={app}>
+      <Row className="mb-4">
         <Col flex={1}>
           <Breadcrumb>
             <Breadcrumb.Item>
-              <Link to='/apps'>应用列表</Link>
+              <Link to="/apps">应用列表</Link>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
               {app?.name}
-              {app?.status === 'paused' && <Tag className='ml-2'>暂停</Tag>}
+              {app?.status === "paused" && <Tag className="ml-2">暂停</Tag>}
             </Breadcrumb.Item>
           </Breadcrumb>
         </Col>
         <Button.Group>
           <Button
-            type='primary'
+            type="primary"
             icon={<SettingFilled />}
             onClick={() => {
               modal.confirm({
@@ -73,18 +91,20 @@ export const Manage = () => {
                 async onOk() {
                   try {
                     await api.updateApp(id, {
-                      name: form.getFieldValue('name') as string,
-                      downloadUrl: form.getFieldValue('downloadUrl') as string,
-                      status: form.getFieldValue('status') as 'normal' | 'paused',
-                      ignoreBuildTime: form.getFieldValue('ignoreBuildTime') as
-                        | 'enabled'
-                        | 'disabled',
+                      name: form.getFieldValue("name") as string,
+                      downloadUrl: form.getFieldValue("downloadUrl") as string,
+                      status: form.getFieldValue("status") as
+                        | "normal"
+                        | "paused",
+                      ignoreBuildTime: form.getFieldValue("ignoreBuildTime") as
+                        | "enabled"
+                        | "disabled",
                     });
                   } catch (e) {
                     message.error((e as Error).message);
                     return;
                   }
-                  message.success('修改成功');
+                  message.success("修改成功");
                 },
               });
             }}

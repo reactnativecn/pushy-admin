@@ -11,7 +11,6 @@
     "skipLibCheck": true,
     "paths": {
       "@/*": ["*"]
-    },
-    "skipLibCheck": true
+    }
   }
 }

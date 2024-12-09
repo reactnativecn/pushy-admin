@@ -1,5 +1,9 @@
-import { createJSONEditor, JSONEditorPropsOptional, Mode } from 'vanilla-jsoneditor';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
+import {
+  type JSONEditorPropsOptional,
+  Mode,
+  createJSONEditor,
+} from "vanilla-jsoneditor";
 
 export default function MetaInfoEditor({
   className,

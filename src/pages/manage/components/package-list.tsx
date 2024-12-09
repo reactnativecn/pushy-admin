@@ -1,14 +1,28 @@
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { Button, Col, Form, Input, List, Modal, Row, Select, Tag, Typography } from 'antd';
 // import { useDrag } from "react-dnd";
-import { api } from '@/services/api';
-import { useManageContext } from '../hooks/useManageContext';
+import { api } from "@/services/api";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Col,
+  Form,
+  Input,
+  List,
+  Modal,
+  Row,
+  Select,
+  Tag,
+  Typography,
+} from "antd";
+import { useManageContext } from "../hooks/useManageContext";
 
-const PackageList = ({ dataSource, loading }: { dataSource?: Package[]; loading?: boolean }) => (
+const PackageList = ({
+  dataSource,
+  loading,
+}: { dataSource?: Package[]; loading?: boolean }) => (
   <List
     loading={loading}
-    className='packages'
-    size='small'
+    className="packages"
+    size="small"
     dataSource={dataSource}
     renderItem={(item) => <Item item={item} />}
   />
@@ -33,25 +47,32 @@ function edit(item: Package, appId: number) {
     closable: true,
     maskClosable: true,
     content: (
-      <Form layout='vertical' initialValues={item}>
-        <Form.Item name='note' label='备注'>
-          <Input placeholder='添加原生包备注' onChange={({ target }) => (note = target.value)} />
+      <Form layout="vertical" initialValues={item}>
+        <Form.Item name="note" label="备注">
+          <Input
+            placeholder="添加原生包备注"
+            onChange={({ target }) => (note = target.value)}
+          />
         </Form.Item>
-        <Form.Item name='status' label='状态'>
+        <Form.Item name="status" label="状态">
           <Select
-            onSelect={(value: Package['status']) => {
+            onSelect={(value: Package["status"]) => {
               status = value;
             }}
           >
-            <Select.Option value='normal'>正常</Select.Option>
-            <Select.Option value='paused'>暂停</Select.Option>
-            <Select.Option value='expired'>过期</Select.Option>
+            <Select.Option value="normal">正常</Select.Option>
+            <Select.Option value="paused">暂停</Select.Option>
+            <Select.Option value="expired">过期</Select.Option>
           </Select>
         </Form.Item>
       </Form>
     ),
     async onOk() {
-      await api.updatePackage({ appId, packageId: item.id, params: { note, status } });
+      await api.updatePackage({
+        appId,
+        packageId: item.id,
+        params: { note, status },
+      });
     },
   });
 }
@@ -60,20 +81,24 @@ const Item = ({ item }: { item: Package }) => {
   const { appId } = useManageContext();
   return (
     // const [_, drag] = useDrag(() => ({ item, type: "package" }));
-    <div className='bg-white my-0 [&_li]:!px-0'>
-      <List.Item className='p-2'>
+    <div className="bg-white my-0 [&_li]:!px-0">
+      <List.Item className="p-2">
         <List.Item.Meta
           title={
-            <Row align='middle'>
+            <Row align="middle">
               <Col flex={1}>
                 {item.name}
-                {item.status && item.status !== 'normal' && (
-                  <Tag className='ml-2'>{status[item.status]}</Tag>
+                {item.status && item.status !== "normal" && (
+                  <Tag className="ml-2">{status[item.status]}</Tag>
                 )}
               </Col>
-              <Button type='link' icon={<EditOutlined />} onClick={() => edit(item, appId)} />
               <Button
-                type='link'
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => edit(item, appId)}
+              />
+              <Button
+                type="link"
                 icon={<DeleteOutlined />}
                 onClick={() => remove(item, appId)}
                 danger
@@ -84,8 +109,8 @@ const Item = ({ item }: { item: Package }) => {
             <>
               {item.note && (
                 <Typography.Paragraph
-                  className='mb-0'
-                  type='secondary'
+                  className="mb-0"
+                  type="secondary"
                   ellipsis={{ tooltip: item.note }}
                 >
                   备注：{item.note}
@@ -100,6 +125,6 @@ const Item = ({ item }: { item: Package }) => {
   );
 };
 const status = {
-  paused: '暂停',
-  expired: '过期',
+  paused: "暂停",
+  expired: "过期",
 };
