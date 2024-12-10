@@ -1,8 +1,10 @@
 type Style = { [name: string]: import("react").CSSProperties };
 
 declare module "*.svg" {
-  const content: ReactComponent;
-  export default content;
+  import React = require("react");
+  export const ReactComponent: React.FC<React.SVGProps<SVGSVGElement>>;
+  const src: string;
+  export default src;
 }
 
 declare module "*.png" {

@@ -206,6 +206,7 @@ const TextColumn = ({
     editable = {
       editing: false,
       onStart() {
+        let originValue = value;
         Modal.confirm({
           icon: null,
           width: key === "metaInfo" ? 640 : undefined,
@@ -230,6 +231,7 @@ const TextColumn = ({
               />
             ),
           async onOk() {
+            originValue = value;
             await api.updateVersion({
               appId,
               versionId: record.id,
@@ -238,6 +240,9 @@ const TextColumn = ({
                 "id" | "packages"
               >,
             });
+          },
+          async onCancel() {
+            value = originValue;
           },
         });
       },

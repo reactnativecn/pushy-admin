@@ -12,6 +12,7 @@ export default function MetaInfoEditor({
   const refContainer = useRef<HTMLDivElement>(null);
   const refEditor = useRef<ReturnType<typeof createJSONEditor>>();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     // create editor
     refEditor.current = createJSONEditor({
@@ -28,10 +29,11 @@ export default function MetaInfoEditor({
         refEditor.current = undefined;
       }
     };
-  }, [props]);
+  }, []);
 
   useEffect(() => {
     refEditor.current?.updateProps(props);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   }, [props]);
 
   return <div className={className} ref={refContainer} />;
