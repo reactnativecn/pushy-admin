@@ -27,7 +27,10 @@ const InvoiceHint = (
 const PurchaseButton = ({
   tier,
   children,
-}: { tier: string; children: ReactNode }) => {
+}: {
+  tier: string;
+  children: ReactNode;
+}) => {
   const [loading, setLoading] = useState(false);
   return (
     <Button
@@ -80,9 +83,7 @@ function UserPanel() {
                 <PurchaseButton tier="pro">升级专业版</PurchaseButton>
               )}
               {currentQuota.pv < quotas.vip1.pv && (
-                <PurchaseButton tier="enterprise">
-                  升级大客户VIP1版
-                </PurchaseButton>
+                <PurchaseButton tier="vip1">升级大客户VIP1版</PurchaseButton>
               )}
               {currentQuota.pv < quotas.vip2.pv && (
                 <PurchaseButton tier="vip2">升级大客户VIP2版</PurchaseButton>
