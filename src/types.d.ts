@@ -28,7 +28,7 @@ interface User {
 interface App {
   id: number;
   name: string;
-  platform: "android" | "ios";
+  platform: "android" | "ios" | "harmony";
   status?: "normal" | "paused" | null;
   ignoreBuildTime?: "enabled" | "disabled";
   checkCount?: number;
