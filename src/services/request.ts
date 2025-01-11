@@ -23,7 +23,7 @@ interface PushyResponse {
 export default async function request<T extends Record<any, any>>(
   method: "get" | "post" | "put" | "delete",
   path: string,
-  params?: Record<any, any>,
+  params?: Record<any, any>
 ) {
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
