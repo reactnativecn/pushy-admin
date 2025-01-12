@@ -7,6 +7,7 @@ import {
   AndroidFilled,
   AppleFilled,
   AppstoreOutlined,
+  HarmonyOSOutlined,
   PlusOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -25,6 +26,7 @@ import {
 } from "antd";
 import { Link, useLocation } from "react-router-dom";
 import { ReactComponent as LogoH } from "../assets/logo-h.svg";
+import PlatformIcon from "./platform-icon";
 
 function addApp() {
   let name = "";
@@ -47,14 +49,34 @@ function addApp() {
             onSelect={(value: string) => {
               platform = value;
             }}
-          >
-            <Select.Option value="android">
-              <AndroidFilled style={{ color: "#3ddc84" }} /> Android
-            </Select.Option>
-            <Select.Option value="ios">
-              <AppleFilled style={{ color: "#a6b1b7" }} /> iOS
-            </Select.Option>
-          </Select>
+            options={[
+              {
+                value: "android",
+                label: (
+                  <>
+                    <PlatformIcon platform="android" className="mr-2" /> Android
+                  </>
+                ),
+              },
+              {
+                value: "ios",
+                label: (
+                  <>
+                    <PlatformIcon platform="ios" className="mr-2" /> iOS
+                  </>
+                ),
+              },
+              {
+                value: "harmony",
+                label: (
+                  <>
+                    <PlatformIcon platform="harmony" className="mr-[10px]" />
+                    HarmonyOS
+                  </>
+                ),
+              },
+            ]}
+          />
         </Form.Item>
       </Form>
     ),
@@ -160,11 +182,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
             <Menu.Item key={i.id} className="!h-16">
               <div className="flex flex-row items-center gap-4">
                 <div className="flex flex-col justify-center">
-                  {i.platform === "ios" ? (
-                    <AppleFilled style={style.ios} className="!text-xl" />
-                  ) : (
-                    <AndroidFilled style={style.android} className="!text-xl" />
-                  )}
+                  <PlatformIcon platform={i.platform} className="!text-xl" />
                 </div>
                 <Link
                   to={`/apps/${i.id}`}
@@ -199,7 +217,4 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
 
 const style: Style = {
   sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
-
-  ios: { color: "#a6b1b7" },
-  android: { color: "#3ddc84" },
 };

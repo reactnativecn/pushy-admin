@@ -22,6 +22,7 @@ import PackageList from "./components/package-list";
 import SettingModal from "./components/setting-modal";
 import VersionTable from "./components/version-table";
 import { ManageProvider, useManageContext } from "./hooks/useManageContext";
+import PlatformIcon from "@/components/platform-icon";
 
 const ManageDashBoard = () => {
   const { packages, unusedPackages, packagesLoading } = useManageContext();
@@ -73,6 +74,7 @@ export const Manage = () => {
               <Link to="/apps">应用列表</Link>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
+              <PlatformIcon platform={app?.platform} className="mr-1" />
               {app?.name}
               {app?.status === "paused" && <Tag className="ml-2">暂停</Tag>}
             </Breadcrumb.Item>
