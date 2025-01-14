@@ -26,7 +26,11 @@ const SettingModal = () => {
       <Form.Item label="应用名" name="name" layout="vertical">
         <Input />
       </Form.Item>
-      <Form.Item label="下载地址" name="downloadUrl" layout="vertical">
+      <Form.Item
+        label="原生包下载地址（当用户端的原生版本过期时，会使用此地址下载）"
+        name="downloadUrl"
+        layout="vertical"
+      >
         <Input />
       </Form.Item>
       <Form.Item
