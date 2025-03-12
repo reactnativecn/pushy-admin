@@ -116,7 +116,7 @@ function removeSelectedVersions({
     okButtonProps: { danger: true },
     async onOk() {
       await Promise.all(
-        selected.map((id) => api.deleteVersion({ appId, versionId: id })),
+        selected.map((id) => api.deleteVersion({ appId, versionId: id }))
       );
     },
   });
@@ -217,7 +217,7 @@ const TextColumn = ({
             key === "metaInfo" ? (
               <MetaInfoEditor
                 className="h-96"
-                content={{ text: value }}
+                content={{ text: value ?? "" }}
                 onChange={(content) => {
                   value = (content as TextContent).text;
                 }}

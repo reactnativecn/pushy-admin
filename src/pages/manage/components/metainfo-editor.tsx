@@ -10,7 +10,7 @@ export default function MetaInfoEditor({
   ...props
 }: JSONEditorPropsOptional & { className?: string }) {
   const refContainer = useRef<HTMLDivElement>(null);
-  const refEditor = useRef<ReturnType<typeof createJSONEditor>>();
+  const refEditor = useRef<ReturnType<typeof createJSONEditor>>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
@@ -26,7 +26,6 @@ export default function MetaInfoEditor({
     return () => {
       if (refEditor.current) {
         refEditor.current.destroy();
-        refEditor.current = undefined;
       }
     };
   }, []);
