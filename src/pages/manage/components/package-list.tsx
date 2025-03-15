@@ -14,11 +14,15 @@ import {
   Typography,
 } from "antd";
 import { useManageContext } from "../hooks/useManageContext";
+import { Commit } from "./commit";
 
 const PackageList = ({
   dataSource,
   loading,
-}: { dataSource?: Package[]; loading?: boolean }) => (
+}: {
+  dataSource?: Package[];
+  loading?: boolean;
+}) => (
   <List
     loading={loading}
     className="packages"
@@ -106,7 +110,7 @@ const Item = ({ item }: { item: Package }) => {
             </Row>
           }
           description={
-            <>
+            <div>
               {item.note && (
                 <Typography.Paragraph
                   className="mb-0"
@@ -116,8 +120,15 @@ const Item = ({ item }: { item: Package }) => {
                   备注：{item.note}
                 </Typography.Paragraph>
               )}
-              编译时间：{item.buildTime}
-            </>
+              <div className="text-xs flex flex-col gap-1">
+                <div>编译时间：{item.buildTime}</div>
+                <Commit
+                  commit={item.commit}
+                  className="text-inherit [&_a]:!max-w-36"
+                  prefix="最近提交："
+                />
+              </div>
+            </div>
           }
         />
       </List.Item>

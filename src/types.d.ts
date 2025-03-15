@@ -47,12 +47,7 @@ interface Package extends PackageBase {
   buildTime?: string;
   buildNumber?: string;
   deps?: Record<string, string>;
-  commit?: Partial<{
-    hash: string;
-    message: string;
-    author: string;
-    timestamp: string;
-  }>;
+  commit?: Commit;
   hash: string;
   version?: Version;
 }

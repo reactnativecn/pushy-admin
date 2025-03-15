@@ -1,8 +1,17 @@
-import { Descriptions, Tooltip, Typography } from "antd";
+import { Tooltip, Typography } from "antd";
 import dayjs from "dayjs";
 import gitUrlParse from "git-url-parse";
-
-export const Commit = ({ commit }: { commit?: Commit }) => {
+import cn from "classnames";
+import type { ReactNode } from "react";
+export const Commit = ({
+  commit,
+  className,
+  prefix,
+}: {
+  commit?: Commit;
+  className?: string;
+  prefix?: ReactNode;
+}) => {
   if (!commit) return null;
   const { origin, hash, message, author } = commit;
   let url = "";
@@ -20,9 +29,14 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
   );
 
   return (
-    <div className="text-xs text-gray-500 flex flex-row">
-      <span>{time.fromNow()}</span>
-      <span className="mx-1">•</span>
+    <div className={cn("text-xs text-gray-500 flex flex-row", className)}>
+      {prefix ?? (
+        <>
+          <span>{time.fromNow()}</span>
+          <span className="mx-1">•</span>
+        </>
+      )}
+
       <Tooltip
         title={
           <>
