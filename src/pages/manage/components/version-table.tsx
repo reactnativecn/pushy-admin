@@ -20,8 +20,9 @@ import type { TextContent } from "vanilla-jsoneditor";
 import { useManageContext } from "../hooks/useManageContext";
 import BindPackage from "./bind-package";
 import MetaInfoEditor from "./metainfo-editor";
+import { Commit } from "./commit";
 
-const TestQrCode = ({ name, hash }: { name: string; hash: string }) => {
+const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   const { appId, deepLink, setDeepLink } = useManageContext();
   const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
 
@@ -127,11 +128,14 @@ const columns: ColumnType<Version>[] = [
     title: "版本",
     dataIndex: "name",
     render: (_, record) => (
-      <TextColumn
-        record={record}
-        recordKey="name"
-        extra={<TestQrCode name={record.name} hash={record.hash} />}
-      />
+      <>
+        <TextColumn
+          record={record}
+          recordKey="name"
+          extra={<TestQrCode name={record.name} hash={record.hash} />}
+        />
+        <Commit commit={record.commit} />
+      </>
     ),
   },
   {
@@ -299,8 +303,7 @@ export default function VersionTable() {
       loading={isLoading}
       footer={
         selected.length
-          ? // eslint-disable-next-line react/no-unstable-nested-components
-            () => (
+          ? () => (
               <Button
                 onClick={() =>
                   removeSelectedVersions({ selected, versions, appId })

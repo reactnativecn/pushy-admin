@@ -51,10 +51,18 @@ interface Package extends PackageBase {
     hash: string;
     message: string;
     author: string;
-    date: string;
+    timestamp: string;
   }>;
   hash: string;
   version?: Version;
+}
+
+interface Commit {
+  hash: string;
+  message: string;
+  author: string;
+  timestamp: string;
+  origin?: string;
 }
 
 interface Version {
@@ -70,19 +78,13 @@ interface Version {
     };
   };
   deps?: Record<string, string>;
-  commit?: Partial<{
-    hash: string;
-    message: string;
-    author: string;
-    date: string;
-    origin: string;
-  }>;
+  commit?: Commit;
 }
 
 interface AppDetail extends App {
   appKey: string;
   appSecret: string;
-  downloadUrl: string;
+  downloadUrl?: string;
 }
 
 interface SiderMenuProps {

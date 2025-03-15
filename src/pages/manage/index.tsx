@@ -7,6 +7,7 @@ import {
   Layout,
   Modal,
   Row,
+  Space,
   Tabs,
   Tag,
   message,
@@ -80,7 +81,7 @@ export const Manage = () => {
             </Breadcrumb.Item>
           </Breadcrumb>
         </Col>
-        <Button.Group>
+        <Space.Compact>
           <Button
             type="primary"
             icon={<SettingFilled />}
@@ -113,7 +114,7 @@ export const Manage = () => {
           >
             应用设置
           </Button>
-        </Button.Group>
+        </Space.Compact>
       </Row>
       <ManageProvider appId={id}>
         {contextHolder}

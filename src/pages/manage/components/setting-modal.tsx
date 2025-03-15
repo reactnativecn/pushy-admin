@@ -56,8 +56,8 @@ const SettingModal = () => {
             (user?.tier === "free" || user?.tier === "standard") &&
             ignoreBuildTime !== "enabled"
           }
-          checkedChildren="启用"
-          unCheckedChildren="不启用"
+          checkedChildren="已启用"
+          unCheckedChildren="已禁用"
         />
       </Form.Item>
       <Form.Item label="删除应用" layout="vertical">

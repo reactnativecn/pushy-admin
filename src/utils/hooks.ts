@@ -3,6 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/services/api";
 import { getToken } from "@/services/request";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/zh-cn";
+
+dayjs.locale("zh-cn");
+dayjs.extend(relativeTime);
 
 export const useUserInfo = () => {
   const { data } = useQuery({
