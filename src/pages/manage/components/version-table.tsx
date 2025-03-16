@@ -23,7 +23,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import type { TextContent } from "vanilla-jsoneditor";
 import { useManageContext } from "../hooks/useManageContext";
 import BindPackage from "./bind-package";
-import MetaInfoEditor from "./metainfo-editor";
+import JsonEditor from "./json-editor";
 import { Commit } from "./commit";
 import { DepsTable } from "./deps-table";
 
@@ -227,7 +227,7 @@ const TextColumn = ({
           maskClosable: true,
           content:
             key === "metaInfo" ? (
-              <MetaInfoEditor
+              <JsonEditor
                 className="h-96"
                 content={{ text: value ?? "" }}
                 onChange={(content) => {

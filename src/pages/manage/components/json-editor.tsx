@@ -5,7 +5,7 @@ import {
   createJSONEditor,
 } from "vanilla-jsoneditor";
 
-export default function MetaInfoEditor({
+export default function JsonEditor({
   className,
   ...props
 }: JSONEditorPropsOptional & { className?: string }) {

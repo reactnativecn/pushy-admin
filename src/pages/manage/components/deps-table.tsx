@@ -1,6 +1,6 @@
 import { JavaScriptOutlined } from "@ant-design/icons";
 import { Popover, Button } from "antd";
-import MetaInfoEditor from "./metainfo-editor";
+import JsonEditor from "./json-editor";
 import { Mode } from "vanilla-jsoneditor";
 
 export const DepsTable = ({ deps }: { deps?: Record<string, string> }) => {
@@ -13,8 +13,18 @@ export const DepsTable = ({ deps }: { deps?: Record<string, string> }) => {
             <h4>JavaScript 依赖列表</h4>
             {deps ? (
               <div>
-                <MetaInfoEditor
-                  content={{ json: deps }}
+                <JsonEditor
+                  content={{
+                    json: Object.keys(deps)
+                      .sort() // Sort the keys alphabetically
+                      .reduce(
+                        (obj, key) => {
+                          obj[key] = deps[key]; // Rebuild the object with sorted keys
+                          return obj;
+                        },
+                        {} as Record<string, string>
+                      ),
+                  }}
                   mode={Mode.tree}
                   readOnly
                 />
