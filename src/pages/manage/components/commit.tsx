@@ -1,7 +1,7 @@
 import { Popover, Button } from "antd";
 import dayjs from "dayjs";
 import gitUrlParse from "git-url-parse";
-import { DiffOutlined } from "@ant-design/icons";
+import { PullRequestOutlined } from "@ant-design/icons";
 
 export const Commit = ({ commit }: { commit?: Commit }) => {
   if (!commit) {
@@ -20,7 +20,7 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
           </div>
         }
       >
-        <Button type="link" icon={<DiffOutlined />} onClick={() => {}} />
+        <Button type="link" icon={<PullRequestOutlined />} onClick={() => {}} />
       </Popover>
     );
   }
@@ -54,7 +54,7 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
         </div>
       }
     >
-      <Button type="link" icon={<DiffOutlined />} onClick={() => {}} />
+      <Button type="link" icon={<PullRequestOutlined />} onClick={() => {}} />
     </Popover>
   );
 };

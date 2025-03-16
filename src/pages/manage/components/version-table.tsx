@@ -138,7 +138,7 @@ const columns: ColumnType<Version>[] = [
         recordKey="name"
         extra={
           <>
-            <DepsTable deps={record.deps} />
+            <DepsTable deps={record.deps} name={"热更包 " + record.name} />
             <Commit commit={record.commit} />
             <TestQrCode name={record.name} hash={record.hash} />
           </>

@@ -97,7 +97,7 @@ const Item = ({ item }: { item: Package }) => {
                   <Tag className="ml-2">{status[item.status]}</Tag>
                 )}
               </Col>
-              <DepsTable deps={item.deps} />
+              <DepsTable deps={item.deps} name={"原生包 " + item.name} />
               <Commit commit={item.commit} />
               <Button
                 type="link"
