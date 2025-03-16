@@ -65,7 +65,7 @@ interface Version {
   hash: string;
   id: number;
   metaInfo?: string;
-  name?: string;
+  name: string;
   packages?: PackageBase[];
   config?: {
     rollout?: {

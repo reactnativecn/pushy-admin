@@ -18,8 +18,8 @@ export default function MetaInfoEditor({
     refEditor.current = createJSONEditor({
       target: refContainer.current!,
       props: {
-        ...props,
         mode: Mode.text,
+        ...props,
       },
     });
 

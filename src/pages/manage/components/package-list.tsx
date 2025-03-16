@@ -15,6 +15,7 @@ import {
 } from "antd";
 import { useManageContext } from "../hooks/useManageContext";
 import { Commit } from "./commit";
+import { DepsTable } from "./deps-table";
 
 const PackageList = ({
   dataSource,
@@ -96,6 +97,8 @@ const Item = ({ item }: { item: Package }) => {
                   <Tag className="ml-2">{status[item.status]}</Tag>
                 )}
               </Col>
+              <DepsTable deps={item.deps} />
+              <Commit commit={item.commit} />
               <Button
                 type="link"
                 icon={<EditOutlined />}
@@ -122,11 +125,6 @@ const Item = ({ item }: { item: Package }) => {
               )}
               <div className="text-xs flex flex-col gap-1">
                 <div>编译时间：{item.buildTime}</div>
-                <Commit
-                  commit={item.commit}
-                  className="text-inherit [&_a]:!max-w-36"
-                  prefix="最近提交："
-                />
               </div>
             </div>
           }

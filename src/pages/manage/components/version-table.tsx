@@ -2,7 +2,11 @@ import { TEST_QR_CODE_DOC } from "@/constants/links";
 import { api } from "@/services/api";
 import { useVersions } from "@/utils/hooks";
 /* eslint-disable react/no-unstable-nested-components */
-import { InfoCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
+import {
+  InfoCircleOutlined,
+  JavaScriptOutlined,
+  QrcodeOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Checkbox,
@@ -21,6 +25,7 @@ import { useManageContext } from "../hooks/useManageContext";
 import BindPackage from "./bind-package";
 import MetaInfoEditor from "./metainfo-editor";
 import { Commit } from "./commit";
+import { DepsTable } from "./deps-table";
 
 const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   const { appId, deepLink, setDeepLink } = useManageContext();
@@ -128,14 +133,17 @@ const columns: ColumnType<Version>[] = [
     title: "版本",
     dataIndex: "name",
     render: (_, record) => (
-      <>
-        <TextColumn
-          record={record}
-          recordKey="name"
-          extra={<TestQrCode name={record.name} hash={record.hash} />}
-        />
-        <Commit commit={record.commit} />
-      </>
+      <TextColumn
+        record={record}
+        recordKey="name"
+        extra={
+          <>
+            <DepsTable deps={record.deps} />
+            <Commit commit={record.commit} />
+            <TestQrCode name={record.name} hash={record.hash} />
+          </>
+        }
+      />
     ),
   },
   {
