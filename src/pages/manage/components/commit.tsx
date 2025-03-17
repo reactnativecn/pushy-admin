@@ -28,8 +28,12 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
   const { origin, hash, message, author } = commit;
   let url = "";
   if (origin) {
-    const { owner, name, source } = gitUrlParse(origin);
-    url = `https://${source}/${owner}/${name}/commit/${hash}`;
+    try {
+      const { owner, name, source } = gitUrlParse(origin);
+      url = `https://${source}/${owner}/${name}/commit/${hash}`;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const time = dayjs(+commit.timestamp * 1000);
@@ -47,9 +51,18 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
             </div>
             <div>摘要：{message}</div>
             <hr />
-            <a className="text-xs" href={url} target="_blank" rel="noreferrer">
-              {hash}
-            </a>
+            {url ? (
+              <a
+                className="text-xs"
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {hash}
+              </a>
+            ) : (
+              <span className="text-xs">{hash}</span>
+            )}
           </div>
         </div>
       }
