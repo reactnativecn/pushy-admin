@@ -142,8 +142,7 @@ export const DepsTable = ({
               <div>
                 <h4>JavaScript 依赖列表</h4>
                 <div className="text-gray-500">
-                  需要使用 cli v1.42.0+ 版本上传，且使用 git
-                  管理代码才能查看依赖列表
+                  需要使用 cli v1.42.0+ 版本上传才能查看依赖列表
                 </div>
               </div>
             )}
