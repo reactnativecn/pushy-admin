@@ -5,3 +5,62 @@ export function isPasswordValid(password: string) {
 export function cn(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
+
+export function promiseAny<T>(promises: Promise<T>[]) {
+  return new Promise<T>((resolve, reject) => {
+    let count = 0;
+
+    for (const promise of promises) {
+      Promise.resolve(promise)
+        .then(resolve)
+        .catch(() => {
+          count++;
+          if (count === promises.length) {
+            reject(new Error("All promises were rejected"));
+          }
+        });
+    }
+  });
+}
+
+export const ping = async (url: string) => {
+  let pingFinished = false;
+  return Promise.race([
+    fetch(url, {
+      method: "HEAD",
+    })
+      .then(({ status, statusText }) => {
+        pingFinished = true;
+        if (status === 200) {
+          return url;
+        }
+        console.log("ping failed", url, status, statusText);
+        return null;
+      })
+      .catch((e) => {
+        pingFinished = true;
+        console.log("ping error", url, e);
+        return null;
+      }),
+    new Promise((r) =>
+      setTimeout(() => {
+        r(null);
+        if (!pingFinished) {
+          console.log("ping timeout", url);
+        }
+      }, 2000)
+    ),
+  ]) as Promise<string | null>;
+};
+
+export const testUrls = async (urls?: string[]) => {
+  if (!urls?.length) {
+    return null;
+  }
+  const ret = await promiseAny(urls.map(ping));
+  if (ret) {
+    return ret;
+  }
+  console.log("all ping failed, use first url:", urls[0]);
+  return urls[0];
+};
