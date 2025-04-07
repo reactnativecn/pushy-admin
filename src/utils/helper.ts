@@ -32,19 +32,20 @@ export const ping = async (url: string) => {
       .then(({ status, statusText }) => {
         pingFinished = true;
         if (status === 200) {
+          console.log("ping success", url);
           return url;
         }
         console.log("ping failed", url, status, statusText);
-        return null;
+        throw new Error("ping failed");
       })
       .catch((e) => {
         pingFinished = true;
         console.log("ping error", url, e);
-        return null;
+        throw new Error("ping error");
       }),
-    new Promise((r) =>
+    new Promise((_, reject) =>
       setTimeout(() => {
-        r(null);
+        reject(new Error("ping timeout"));
         if (!pingFinished) {
           console.log("ping timeout", url);
         }

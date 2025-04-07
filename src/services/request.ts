@@ -16,21 +16,26 @@ const SERVER = {
   main: [
     "https://update.react-native.cn/api",
     "https://update.reactnative.cn/api",
-    "https://pushy-koa-qgbgqmcpis.cn-beijing.fcapp.run"
+    "https://pushy-koa-qgbgqmcpis.cn-beijing.fcapp.run",
   ],
 };
 
 // const baseUrl = `http://localhost:9000`;
-let baseUrl = SERVER.main[0];
+// let baseUrl = SERVER.main[0];
 // const baseUrl = `https://p.reactnative.cn/api`;
 // const baseUrl = `http://k.reactnative.cn/api`;
 
-testUrls(SERVER.main.map((url) => `${url}/status`)).then((ret) => {
-  if (ret) {
-    // remove /status
-    baseUrl = ret.replace("/status", "");
-  }
-});
+const getBaseUrl = (async () => {
+  return testUrls(SERVER.main.map((url) => `${url}/status`)).then((ret) => {
+    let baseUrl = SERVER.main[0];
+    if (ret) {
+      // remove /status
+      baseUrl = ret.replace("/status", "");
+    }
+    console.log("baseUrl", baseUrl);
+    return baseUrl;
+  });
+})();
 
 interface PushyResponse {
   message?: string;
@@ -43,6 +48,7 @@ export default async function request<T extends Record<any, any>>(
 ) {
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
+  const baseUrl = await getBaseUrl;
   let url = `${baseUrl}${path}`;
   if (_token) {
     headers["x-accesstoken"] = _token;
