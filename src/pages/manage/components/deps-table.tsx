@@ -44,7 +44,7 @@ export const DepsTable = ({
                         </>
                       )}
                     </div>
-                    <div className="absolute right-4 top-7">
+                    <div className="absolute right-8 top-7">
                       {diffs ? (
                         <Button
                           className="content-end"
@@ -109,27 +109,32 @@ export const DepsTable = ({
                       )}
                     </div>
                   </h4>
-                  {diffs ? (
-                    <DepsDiff oldDeps={diffs.oldDeps} newDeps={diffs.newDeps} />
-                  ) : (
-                    <JsonEditor
-                      content={{
-                        json: Object.keys(deps)
-                          .sort() // Sort the keys alphabetically
-                          .reduce(
-                            (obj, key) => {
-                              obj[key] = deps[key]; // Rebuild the object with sorted keys
-                              return obj;
-                            },
-                            {} as Record<string, string>
-                          ),
-                      }}
-                      mode={Mode.tree}
-                      mainMenuBar={false}
-                      statusBar={false}
-                      readOnly
-                    />
-                  )}
+                  <div className="max-h-[50vh] overflow-y-auto">
+                    {diffs ? (
+                      <DepsDiff
+                        oldDeps={diffs.oldDeps}
+                        newDeps={diffs.newDeps}
+                      />
+                    ) : (
+                      <JsonEditor
+                        content={{
+                          json: Object.keys(deps)
+                            .sort() // Sort the keys alphabetically
+                            .reduce(
+                              (obj, key) => {
+                                obj[key] = deps[key]; // Rebuild the object with sorted keys
+                                return obj;
+                              },
+                              {} as Record<string, string>
+                            ),
+                        }}
+                        mode={Mode.tree}
+                        mainMenuBar={false}
+                        statusBar={false}
+                        readOnly
+                      />
+                    )}
+                  </div>
 
                   <div className="text-gray-500 my-4">
                     仅在<span className="font-bold underline">上传</span>
