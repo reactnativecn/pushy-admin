@@ -1,8 +1,7 @@
-import { rootRouterPath, router } from "@/router";
-import { api } from "@/services/api";
-import { useUserInfo } from "@/utils/hooks";
 import { DeleteFilled } from "@ant-design/icons";
 import { Button, Form, Input, Modal, Switch, Typography } from "antd";
+import { api } from "@/services/api";
+import { useUserInfo } from "@/utils/hooks";
 import { useManageContext } from "../hooks/useManageContext";
 
 const SettingModal = () => {
@@ -72,7 +71,7 @@ const SettingModal = () => {
               async onOk() {
                 await api.deleteApp(appId);
                 Modal.destroyAll();
-                router.navigate(rootRouterPath.apps);
+                window.location.href = "/apps";
               },
             });
           }}

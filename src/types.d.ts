@@ -1,16 +1,16 @@
-type Style = { [name: string]: import("react").CSSProperties };
+type Style = { [name: string]: import('react').CSSProperties };
 
-declare module "*.svg" {
+declare module '*.svg' {
   export const ReactComponent: React.FunctionComponent<
     React.SVGProps<SVGSVGElement>
   >;
 }
 
-declare module "*.png" {
+declare module '*.png' {
   const content: string;
   export default content;
 }
-declare module "*.jpg" {
+declare module '*.jpg' {
   const content: string;
   export default content;
 }
@@ -19,7 +19,7 @@ interface User {
   email: string;
   id: number;
   name: string;
-  tier: "free" | "standard" | "premium" | "pro";
+  tier: 'free' | 'standard' | 'premium' | 'pro';
   tierExpiresAt?: string;
   checkQuota?: number;
   last7dAvg?: number;
@@ -28,9 +28,9 @@ interface User {
 interface App {
   id: number;
   name: string;
-  platform: "android" | "ios" | "harmony";
-  status?: "normal" | "paused" | null;
-  ignoreBuildTime?: "enabled" | "disabled";
+  platform: 'android' | 'ios' | 'harmony';
+  status?: 'normal' | 'paused' | null;
+  ignoreBuildTime?: 'enabled' | 'disabled';
   checkCount?: number;
   downloadUrl?: string;
   appKey?: string;
@@ -40,7 +40,7 @@ interface PackageBase {
   id: number;
   name: string;
   note?: string;
-  status?: "normal" | "paused" | "expired" | null;
+  status?: 'normal' | 'paused' | 'expired' | null;
 }
 
 interface Package extends PackageBase {

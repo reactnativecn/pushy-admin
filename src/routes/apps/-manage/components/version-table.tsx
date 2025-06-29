@@ -1,12 +1,5 @@
-import { TEST_QR_CODE_DOC } from "@/constants/links";
-import { api } from "@/services/api";
-import { useVersions } from "@/utils/hooks";
 /* eslint-disable react/no-unstable-nested-components */
-import {
-  InfoCircleOutlined,
-  JavaScriptOutlined,
-  QrcodeOutlined,
-} from "@ant-design/icons";
+import { InfoCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
 import {
   Button,
   Checkbox,
@@ -21,11 +14,14 @@ import type { ColumnType } from "antd/lib/table";
 // import { useDrag, useDrop } from "react-dnd";
 import { type ReactNode, useEffect, useState } from "react";
 import type { TextContent } from "vanilla-jsoneditor";
+import { TEST_QR_CODE_DOC } from "@/constants/links";
+import { api } from "@/services/api";
+import { useVersions } from "@/utils/hooks";
 import { useManageContext } from "../hooks/useManageContext";
 import BindPackage from "./bind-package";
-import JsonEditor from "./json-editor";
 import { Commit } from "./commit";
 import { DepsTable } from "./deps-table";
+import JsonEditor from "./json-editor";
 
 const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   const { appId, deepLink, setDeepLink } = useManageContext();

@@ -1,4 +1,5 @@
 import { SettingFilled } from "@ant-design/icons";
+import { Link, useParams } from "@tanstack/react-router";
 import {
   Breadcrumb,
   Button,
@@ -6,24 +7,22 @@ import {
   Form,
   Layout,
   Modal,
+  message,
   Row,
   Space,
   Tabs,
   Tag,
-  message,
 } from "antd";
-
-import { Link, useParams } from "react-router-dom";
 import "./index.scss";
 
+import { useEffect } from "react";
+import PlatformIcon from "@/components/platform-icon";
 import { api } from "@/services/api";
 import { useApp } from "@/utils/hooks";
-import { useEffect } from "react";
-import PackageList from "./components/package-list";
-import SettingModal from "./components/setting-modal";
-import VersionTable from "./components/version-table";
-import { ManageProvider, useManageContext } from "./hooks/useManageContext";
-import PlatformIcon from "@/components/platform-icon";
+import { ManageProvider, useManageContext } from "../hooks/useManageContext";
+import PackageList from "./package-list";
+import SettingModal from "./setting-modal";
+import VersionTable from "./version-table";
 
 const ManageDashBoard = () => {
   const { packages, unusedPackages, packagesLoading } = useManageContext();

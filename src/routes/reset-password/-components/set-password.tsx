@@ -1,13 +1,13 @@
-import { api } from "@/services/api";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Button, Form, Input, message } from "antd";
 import md5 from "blueimp-md5";
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
-import { rootRouterPath, router } from "../../../router";
-import { isPasswordValid } from "../../../utils/helper";
+import { api } from "@/services/api";
+import { isPasswordValid } from "@/utils/helper";
 
 export default function SetPassword() {
   const { search } = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
   return (
     <Form
@@ -19,7 +19,7 @@ export default function SetPassword() {
             token: new URLSearchParams(search).get("code") ?? "",
             newPwd: md5(values.newPwd),
           });
-          router.navigate(rootRouterPath.resetPassword("3"));
+          navigate({ to: "/reset-password/3" });
         } catch (e) {
           console.log(e);
           message.error((e as Error).message ?? "网络错误");
@@ -37,8 +37,8 @@ export default function SetPassword() {
               if (value && !isPasswordValid(value)) {
                 return Promise.reject(
                   new Error(
-                    "密码中需要同时包含大、小写字母和数字，且长度不少于6位",
-                  ),
+                    "密码中需要同时包含大、小写字母和数字，且长度不少于6位"
+                  )
                 );
               }
               return Promise.resolve();

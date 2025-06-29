@@ -1,4 +1,5 @@
 import { AlipayCircleOutlined } from '@ant-design/icons';
+import { createFileRoute } from '@tanstack/react-router';
 import { Button, Descriptions, Popover, Space, Spin } from 'antd';
 import { type ReactNode, useState } from 'react';
 import { api } from '@/services/api';
@@ -144,4 +145,6 @@ async function purchase(tier?: string) {
   }
 }
 
-export const Component = UserPanel;
+export const Route = createFileRoute('/user')({
+  component: UserPanel,
+});

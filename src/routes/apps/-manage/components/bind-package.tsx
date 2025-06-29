@@ -1,4 +1,3 @@
-import { api } from "@/services/api";
 import {
   CloudDownloadOutlined,
   ExperimentOutlined,
@@ -6,6 +5,7 @@ import {
   RestOutlined,
 } from "@ant-design/icons";
 import { Button, Dropdown, type MenuProps } from "antd";
+import { api } from "@/services/api";
 import { useManageContext } from "../hooks/useManageContext";
 
 const BindPackage = ({
@@ -19,7 +19,7 @@ const BindPackage = ({
 }) => {
   const { packages: allPackages, appId } = useManageContext();
   const availablePackages = allPackages.filter(
-    (i) => !packages.some((j) => i.id === j.id),
+    (i) => !packages.some((j) => i.id === j.id)
   );
 
   const bindedPackages = packages.map((p) => {

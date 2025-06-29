@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 import {
+  createJSONEditor,
   type JSONEditorPropsOptional,
   Mode,
-  createJSONEditor,
-} from "vanilla-jsoneditor";
+} from 'vanilla-jsoneditor';
 
 export default function JsonEditor({
   className,

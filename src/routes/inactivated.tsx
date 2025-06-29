@@ -1,16 +1,19 @@
 import { useMutation } from '@tanstack/react-query';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Button, message, Result } from 'antd';
 import { useEffect } from 'react';
 import { api } from '@/services/api';
 import { getUserEmail } from '@/services/auth';
-import { rootRouterPath, router } from '../router';
 
-export const Inactivated = () => {
+function InactivatedComponent() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (!getUserEmail()) {
-      router.navigate({ to: rootRouterPath.login });
+      navigate({ to: '/login' });
     }
-  }, []);
+  }, [navigate]);
+
   const { mutate: sendEmail, isPending } = useMutation({
     mutationFn: () => api.sendEmail({ email: getUserEmail() }),
     onSuccess: () => {
@@ -39,6 +42,8 @@ export const Inactivated = () => {
       ]}
     />
   );
-};
+}
 
-export const Component = Inactivated;
+export const Route = createFileRoute('/inactivated')({
+  component: InactivatedComponent,
+});

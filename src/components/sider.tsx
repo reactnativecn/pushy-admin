@@ -1,8 +1,3 @@
-import { PRICING_LINK } from "@/constants/links";
-import { quotas } from "@/constants/quotas";
-import { rootRouterPath } from "@/router";
-import { api } from "@/services/api";
-import { useAppList, useUserInfo } from "@/utils/hooks";
 import {
   AndroidFilled,
   AppleFilled,
@@ -10,7 +5,8 @@ import {
   HarmonyOSOutlined,
   PlusOutlined,
   UserOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
+import { Link, useLocation } from '@tanstack/react-router';
 import {
   Card,
   Form,
@@ -18,19 +14,23 @@ import {
   Layout,
   Menu,
   Modal,
+  message,
   Progress,
   Select,
   Tag,
   Tooltip,
-  message,
-} from "antd";
-import { Link, useLocation } from "react-router-dom";
-import { ReactComponent as LogoH } from "../assets/logo-h.svg";
-import PlatformIcon from "./platform-icon";
+} from 'antd';
+import { PRICING_LINK } from '@/constants/links';
+import { quotas } from '@/constants/quotas';
+import { rootRouterPath } from '@/router';
+import { api } from '@/services/api';
+import { useAppList, useUserInfo } from '@/utils/hooks';
+import { ReactComponent as LogoH } from '../assets/logo-h.svg';
+import PlatformIcon from './platform-icon';
 
 function addApp() {
-  let name = "";
-  let platform = "android";
+  let name = '';
+  let platform = 'android';
   Modal.confirm({
     icon: null,
     closable: true,
@@ -51,7 +51,7 @@ function addApp() {
             }}
             options={[
               {
-                value: "android",
+                value: 'android',
                 label: (
                   <>
                     <PlatformIcon platform="android" className="mr-2" /> Android
@@ -59,7 +59,7 @@ function addApp() {
                 ),
               },
               {
-                value: "ios",
+                value: 'ios',
                 label: (
                   <>
                     <PlatformIcon platform="ios" className="mr-2" /> iOS
@@ -67,7 +67,7 @@ function addApp() {
                 ),
               },
               {
-                value: "harmony",
+                value: 'harmony',
                 label: (
                   <>
                     <PlatformIcon platform="harmony" className="mr-[10px]" />
@@ -82,7 +82,7 @@ function addApp() {
     ),
     onOk() {
       if (!name) {
-        message.warning("请输入应用名称");
+        message.warning('请输入应用名称');
         return false;
       }
       return api.createApp({ name, platform }).catch((error) => {
@@ -97,11 +97,11 @@ export default function Sider() {
   const { user } = useUserInfo();
   if (!user) return null;
 
-  const initPath = pathname?.replace(/^\//, "")?.split("/");
+  const initPath = pathname?.replace(/^\//, '')?.split('/');
   let selectedKeys = initPath;
   if (selectedKeys?.length === 0) {
-    if (pathname === "/") {
-      selectedKeys = ["/user"];
+    if (pathname === '/') {
+      selectedKeys = ['/user'];
     } else {
       selectedKeys = initPath;
     }
@@ -139,12 +139,12 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
           className="mr-2 mb-4"
         >
           <Progress
-            status={percent && percent > 40 ? "normal" : "exception"}
-            size={["100%", 30]}
+            status={percent && percent > 40 ? 'normal' : 'exception'}
+            size={['100%', 30]}
             percent={percent}
-            percentPosition={{ type: "inner", align: "center" }}
+            percentPosition={{ type: 'inner', align: 'center' }}
             format={() =>
-              consumedQuota ? `${consumedQuota.toLocaleString()} 次` : ""
+              consumedQuota ? `${consumedQuota.toLocaleString()} 次` : ''
             }
           />
           <div className="text-xs mt-2 text-center">
@@ -155,8 +155,8 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
               {quota?.title}
             </a>
             可用: {pvQuota?.toLocaleString()} 次/每日
-          </div>{" "}
-          {user?.tier !== "free" && (
+          </div>{' '}
+          {user?.tier !== 'free' && (
             <div className="text-xs mt-2 text-center">
               有效期至：{displayExpireDay}
               {displayRemainingDays && (
@@ -170,7 +170,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
         </Card>
       )}
       <Menu
-        defaultOpenKeys={["apps"]}
+        defaultOpenKeys={['apps']}
         selectedKeys={selectedKeys}
         mode="inline"
       >
@@ -190,7 +190,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
                 >
                   <div className="flex flex-row items-center font-bold">
                     {i.name}
-                    {i.status === "paused" && <Tag className="ml-2">暂停</Tag>}
+                    {i.status === 'paused' && <Tag className="ml-2">暂停</Tag>}
                   </div>
                   {i.checkCount && (
                     <div className="text-xs text-gray-500 mb-2">
@@ -216,5 +216,5 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
 };
 
 const style: Style = {
-  sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
+  sider: { boxShadow: '2px 0 8px 0 rgb(29 35 41 / 5%)', zIndex: 2 },
 };

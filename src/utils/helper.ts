@@ -3,7 +3,7 @@ export function isPasswordValid(password: string) {
 }
 
 export function cn(...classes: (string | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
+  return classes.filter(Boolean).join(' ');
 }
 
 export function promiseAny<T>(promises: Promise<T>[]) {
@@ -16,7 +16,7 @@ export function promiseAny<T>(promises: Promise<T>[]) {
         .catch(() => {
           count++;
           if (count === promises.length) {
-            reject(new Error("All promises were rejected"));
+            reject(new Error('All promises were rejected'));
           }
         });
     }
@@ -27,29 +27,29 @@ export const ping = async (url: string) => {
   let pingFinished = false;
   return Promise.race([
     fetch(url, {
-      method: "HEAD",
+      method: 'HEAD',
     })
       .then(({ status, statusText }) => {
         pingFinished = true;
         if (status === 200) {
-          console.log("ping success", url);
+          console.log('ping success', url);
           return url;
         }
-        console.log("ping failed", url, status, statusText);
-        throw new Error("ping failed");
+        console.log('ping failed', url, status, statusText);
+        throw new Error('ping failed');
       })
       .catch((e) => {
         pingFinished = true;
-        console.log("ping error", url, e);
-        throw new Error("ping error");
+        console.log('ping error', url, e);
+        throw new Error('ping error');
       }),
     new Promise((_, reject) =>
       setTimeout(() => {
-        reject(new Error("ping timeout"));
+        reject(new Error('ping timeout'));
         if (!pingFinished) {
-          console.log("ping timeout", url);
+          console.log('ping timeout', url);
         }
-      }, 2000)
+      }, 2000),
     ),
   ]) as Promise<string | null>;
 };
@@ -62,6 +62,6 @@ export const testUrls = async (urls?: string[]) => {
   if (ret) {
     return ret;
   }
-  console.log("all ping failed, use first url:", urls[0]);
+  console.log('all ping failed, use first url:', urls[0]);
   return urls[0];
 };

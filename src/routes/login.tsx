@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { Button, Form, Input, Row } from 'antd';
 import { useState } from 'react';
 import { login } from '@/services/auth';
@@ -7,7 +7,7 @@ import { ReactComponent as Logo } from '../assets/logo.svg';
 let email: string;
 let password: string;
 
-export const Login = () => {
+function LoginComponent() {
   const [loading, setLoading] = useState(false);
   return (
     <div style={style.body}>
@@ -64,9 +64,7 @@ export const Login = () => {
       </form>
     </div>
   );
-};
-
-export const Component = Login;
+}
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },
@@ -74,3 +72,7 @@ const style: Style = {
   logo: { textAlign: 'center', margin: '48px 0' },
   slogan: { marginTop: 16, color: '#00000073', fontSize: 18 },
 };
+
+export const Route = createFileRoute('/login')({
+  component: LoginComponent,
+});

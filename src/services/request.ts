@@ -1,22 +1,22 @@
-import { message } from "antd";
-import { logout } from "./auth";
-import { testUrls } from "@/utils/helper";
+import { message } from 'antd';
+import { testUrls } from '@/utils/helper';
+import { logout } from './auth';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-let _token = localStorage.getItem("token");
+let _token = localStorage.getItem('token');
 
 export const setToken = (token: string) => {
   _token = token;
-  localStorage.setItem("token", token);
+  localStorage.setItem('token', token);
 };
 
 export const getToken = () => _token;
 
 const SERVER = {
   main: [
-    "https://update.react-native.cn/api",
-    "https://update.reactnative.cn/api",
-    "https://pushy-koa-qgbgqmcpis.cn-beijing.fcapp.run",
+    'https://update.react-native.cn/api',
+    'https://update.reactnative.cn/api',
+    'https://pushy-koa-qgbgqmcpis.cn-beijing.fcapp.run',
   ],
 };
 
@@ -30,9 +30,9 @@ const getBaseUrl = (async () => {
     let baseUrl = SERVER.main[0];
     if (ret) {
       // remove /status
-      baseUrl = ret.replace("/status", "");
+      baseUrl = ret.replace('/status', '');
     }
-    console.log("baseUrl", baseUrl);
+    console.log('baseUrl', baseUrl);
     return baseUrl;
   });
 })();
@@ -42,22 +42,22 @@ interface PushyResponse {
 }
 
 export default async function request<T extends Record<any, any>>(
-  method: "get" | "post" | "put" | "delete",
+  method: 'get' | 'post' | 'put' | 'delete',
   path: string,
-  params?: Record<any, any>
+  params?: Record<any, any>,
 ) {
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
   const baseUrl = await getBaseUrl;
   let url = `${baseUrl}${path}`;
   if (_token) {
-    headers["x-accesstoken"] = _token;
+    headers['x-accesstoken'] = _token;
   }
   if (params) {
-    if (method === "get") {
+    if (method === 'get') {
       url += `?${new URLSearchParams(params).toString()}`;
     } else {
-      headers["content-type"] = "application/json";
+      headers['content-type'] = 'application/json';
       options.body = JSON.stringify(params);
     }
   }
@@ -76,7 +76,7 @@ export default async function request<T extends Record<any, any>>(
     message.error(json.message);
     throw new Error(`${response.status}: ${json.message}`);
   } catch (err) {
-    if ((err as Error).message.includes("Unauthorized")) {
+    if ((err as Error).message.includes('Unauthorized')) {
       logout();
     } else {
       message.error((err as Error).message);

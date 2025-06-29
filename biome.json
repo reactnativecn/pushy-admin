@@ -1,6 +1,7 @@
 {
   "files": {
-    "ignore": ["dist"]
+    "ignoreUnknown": false,
+    "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
   },
   "linter": {
     "enabled": true,

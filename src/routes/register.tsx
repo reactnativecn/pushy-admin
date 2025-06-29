@@ -1,15 +1,15 @@
-import { Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Button, Checkbox, Form, Input, message, Row } from 'antd';
 import md5 from 'blueimp-md5';
 import { useState } from 'react';
 import { api } from '@/services/api';
 import { setUserEmail } from '@/services/auth';
 import { ReactComponent as Logo } from '../assets/logo.svg';
-import { rootRouterPath, router } from '../router';
 import { isPasswordValid } from '../utils/helper';
 
-export const Register = () => {
+function RegisterComponent() {
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   async function submit(values: { [key: string]: string }) {
     delete values.pwd2;
@@ -19,7 +19,7 @@ export const Register = () => {
     try {
       await api.register(values);
       setUserEmail(values.email);
-      router.navigate({ to: rootRouterPath.welcome });
+      navigate({ to: '/welcome' });
     } catch (_) {
       message.error('该邮箱已被注册');
     }
@@ -129,9 +129,7 @@ export const Register = () => {
       </Form>
     </div>
   );
-};
-
-export const Component = Register;
+}
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },
@@ -139,3 +137,7 @@ const style: Style = {
   logo: { textAlign: 'center', margin: '48px 0' },
   slogan: { marginTop: 16, color: '#00000073', fontSize: 18 },
 };
+
+export const Route = createFileRoute('/register')({
+  component: RegisterComponent,
+});

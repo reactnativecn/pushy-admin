@@ -1,10 +1,10 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation } from '@tanstack/react-router';
+import { createFileRoute, Link, useLocation } from '@tanstack/react-router';
 import { Button, Result } from 'antd';
 import { api } from '@/services/api';
 
-export const Activate = () => {
+function ActivateComponent() {
   const { search } = useLocation();
   const token = new URLSearchParams(search).get('code') || '';
   const { isLoading, error } = useQuery({
@@ -29,6 +29,8 @@ export const Activate = () => {
       }
     />
   );
-};
+}
 
-export const Component = Activate;
+export const Route = createFileRoute('/activate')({
+  component: ActivateComponent,
+});

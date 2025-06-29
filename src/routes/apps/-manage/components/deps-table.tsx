@@ -1,11 +1,11 @@
 import { JavaScriptOutlined } from "@ant-design/icons";
-import { Popover, Dropdown, Button } from "antd";
-import JsonEditor from "./json-editor";
-import { Mode } from "vanilla-jsoneditor";
-import { useManageContext } from "../hooks/useManageContext";
-import { useVersions } from "@/utils/hooks";
+import { Button, Dropdown, Popover } from "antd";
 import { useState } from "react";
+import { Mode } from "vanilla-jsoneditor";
+import { useVersions } from "@/utils/hooks";
+import { useManageContext } from "../hooks/useManageContext";
 import { DepsDiff } from "./deps-diff";
+import JsonEditor from "./json-editor";
 export const DepsTable = ({
   deps,
   name,

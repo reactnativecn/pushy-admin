@@ -1,54 +1,54 @@
-import { queryClient } from "@/utils/queryClient";
-import request from "./request";
+import { queryClient } from '@/utils/queryClient';
+import request from './request';
 
 export const api = {
   login: (params: { email: string; pwd: string }) =>
-    request<{ token: string }>("post", "/user/login", params),
+    request<{ token: string }>('post', '/user/login', params),
   activate: (params: { token: string }) =>
-    request("post", "/user/activate", params),
-  me: () => request<User>("get", "/user/me"),
+    request('post', '/user/activate', params),
+  me: () => request<User>('get', '/user/me'),
   sendEmail: (params: { email: string }) =>
-    request("post", "/user/activate/sendmail", params),
+    request('post', '/user/activate/sendmail', params),
   resetpwdSendMail: (params: { email: string }) =>
-    request("post", "/user/resetpwd/sendmail", params),
+    request('post', '/user/resetpwd/sendmail', params),
   register: (params: { [key: string]: string }) =>
-    request("post", "/user/register", params),
+    request('post', '/user/register', params),
   resetPwd: (params: { token: string; newPwd: string }) =>
-    request("post", "/user/resetpwd/reset", params),
+    request('post', '/user/resetpwd/reset', params),
   // app
-  appList: () => request<{ data: App[] }>("get", "/app/list"),
-  getApp: (appId: number) => request<App>("get", `/app/${appId}`),
+  appList: () => request<{ data: App[] }>('get', '/app/list'),
+  getApp: (appId: number) => request<App>('get', `/app/${appId}`),
   deleteApp: (appId: number) =>
-    request("delete", `/app/${appId}`).then(() => {
-      queryClient.setQueryData(["appList"], ({ data }: { data: App[] }) => ({
+    request('delete', `/app/${appId}`).then(() => {
+      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
         data: data?.filter((i) => i.id !== appId),
       }));
     }),
   createApp: (params: { name: string; platform: string }) =>
-    request<{ id: number }>("post", "/app/create", params).then((response) => {
-      if (!response) throw new Error("Failed to create app");
+    request<{ id: number }>('post', '/app/create', params).then((response) => {
+      if (!response) throw new Error('Failed to create app');
       const { id } = response;
-      queryClient.setQueryData(["appList"], ({ data }: { data: App[] }) => ({
+      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
         data: [...(data || []), { ...params, id }],
       }));
     }),
   updateApp: (
     appId: number,
-    params: Omit<App, "appKey" | "checkCount" | "id" | "platform">,
+    params: Omit<App, 'appKey' | 'checkCount' | 'id' | 'platform'>,
   ) =>
-    request("put", `/app/${appId}`, params).then(() => {
-      queryClient.setQueryData(["app", appId], (old: App | undefined) => ({
+    request('put', `/app/${appId}`, params).then(() => {
+      queryClient.setQueryData(['app', appId], (old: App | undefined) => ({
         ...old,
         ...params,
       }));
-      queryClient.setQueryData(["appList"], ({ data }: { data: App[] }) => ({
+      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
         data: data?.map((i) => (i.id === appId ? { ...i, ...params } : i)),
       }));
     }),
   // package
   getPackages: (appId: number) =>
     request<{ data: Package[]; count: number }>(
-      "get",
+      'get',
       `/app/${appId}/package/list?limit=1000`,
     ),
   updatePackage: ({
@@ -60,13 +60,13 @@ export const api = {
     packageId: number;
     params: {
       note?: string;
-      status?: Package["status"];
+      status?: Package['status'];
       versionId?: number | null;
     };
   }) =>
-    request("put", `/app/${appId}/package/${packageId}`, params).then(() => {
+    request('put', `/app/${appId}/package/${packageId}`, params).then(() => {
       queryClient.setQueryData(
-        ["packages", appId],
+        ['packages', appId],
         ({ data }: { data: Package[] }) => ({
           data: data?.map((i) =>
             i.id === packageId ? { ...i, ...params } : i,
@@ -74,13 +74,13 @@ export const api = {
         }),
       );
       if (params.versionId !== undefined) {
-        queryClient.invalidateQueries({ queryKey: ["versions", appId] });
+        queryClient.invalidateQueries({ queryKey: ['versions', appId] });
       }
     }),
   deletePackage: ({ appId, packageId }: { appId: number; packageId: number }) =>
-    request("delete", `/app/${appId}/package/${packageId}`).then(() => {
+    request('delete', `/app/${appId}/package/${packageId}`).then(() => {
       queryClient.setQueryData(
-        ["packages", appId],
+        ['packages', appId],
         ({ data }: { data: Package[] }) => ({
           data: data?.filter((i) => i.id !== packageId),
         }),
@@ -97,7 +97,7 @@ export const api = {
     limit?: number;
   }) =>
     request<{ data: Version[]; count: number }>(
-      "get",
+      'get',
       `/app/${appId}/version/list?offset=${offset}&limit=${limit}`,
     ),
   updateVersion: ({
@@ -107,11 +107,11 @@ export const api = {
   }: {
     versionId: number;
     appId: number;
-    params: Partial<Omit<Version, "id" | "packages">>;
+    params: Partial<Omit<Version, 'id' | 'packages'>>;
   }) =>
-    request("put", `/app/${appId}/version/${versionId}`, params).then(() => {
+    request('put', `/app/${appId}/version/${versionId}`, params).then(() => {
       queryClient.setQueriesData(
-        { queryKey: ["versions", appId] },
+        { queryKey: ['versions', appId] },
         (old?: { data: Version[] }) =>
           old
             ? {
@@ -124,9 +124,9 @@ export const api = {
       );
     }),
   deleteVersion: ({ appId, versionId }: { appId: number; versionId: number }) =>
-    request("delete", `/app/${appId}/version/${versionId}`).then(() => {
+    request('delete', `/app/${appId}/version/${versionId}`).then(() => {
       queryClient.setQueriesData(
-        { queryKey: ["versions", appId] },
+        { queryKey: ['versions', appId] },
         (old?: { data: Version[] }) =>
           old
             ? {
@@ -138,5 +138,5 @@ export const api = {
     }),
   // order
   createOrder: (params: { tier?: string }) =>
-    request<{ payUrl: string }>("post", "/orders", params),
+    request<{ payUrl: string }>('post', '/orders', params),
 };
