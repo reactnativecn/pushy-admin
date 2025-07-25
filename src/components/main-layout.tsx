@@ -1,5 +1,3 @@
-import { logout } from "@/services/auth";
-import { useUserInfo } from "@/utils/hooks";
 import {
   CommentOutlined,
   InfoCircleOutlined,
@@ -7,14 +5,17 @@ import {
   ReadOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, Row, message } from "antd";
+import { Layout, Menu, message, Row } from "antd";
 import type { ReactNode } from "react";
 import { Outlet } from "react-router-dom";
+import { logout } from "@/services/auth";
+import { useUserInfo } from "@/utils/hooks";
 import Footer from "./footer";
 import Sider from "./sider";
 
 const MainLayout = () => {
   const { user } = useUserInfo();
+
   return (
     <Layout>
       <Sider />
