@@ -2,10 +2,6 @@ import { Modal } from "antd";
 
 const { confirm } = Modal;
 
-const disableV8DeprecationAlert = localStorage.getItem(
-  "disable-v8-deprecation-alert"
-);
-
 const notices = {
   "v8-deprecation": {
     title: "通知：react-native-update 即将停止支持 v8 以下版本",
