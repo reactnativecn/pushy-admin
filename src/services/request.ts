@@ -1,6 +1,6 @@
 import { message } from "antd";
-import { logout } from "./auth";
 import { testUrls } from "@/utils/helper";
+import { logout } from "./auth";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 let _token = localStorage.getItem("token");
@@ -16,25 +16,24 @@ const SERVER = {
   main: [
     "https://update.react-native.cn/api",
     "https://update.reactnative.cn/api",
-    "https://pushy-koa-qgbgqmcpis.cn-beijing.fcapp.run",
   ],
 };
 
 // const baseUrl = `http://localhost:9000`;
 // let baseUrl = SERVER.main[0];
 // const baseUrl = `https://p.reactnative.cn/api`;
-// const baseUrl = `http://k.reactnative.cn/api`;
 
 const getBaseUrl = (async () => {
-  return testUrls(SERVER.main.map((url) => `${url}/status`)).then((ret) => {
-    let baseUrl = SERVER.main[0];
-    if (ret) {
-      // remove /status
-      baseUrl = ret.replace("/status", "");
-    }
-    console.log("baseUrl", baseUrl);
-    return baseUrl;
-  });
+  return SERVER.main[0];
+  // return testUrls(SERVER.main.map((url) => `${url}/status`)).then((ret) => {
+  //   let baseUrl = SERVER.main[0];
+  //   if (ret) {
+  //     // remove /status
+  //     baseUrl = ret.replace("/status", "");
+  //   }
+  //   console.log("baseUrl", baseUrl);
+  //   return baseUrl;
+  // });
 })();
 
 interface PushyResponse {

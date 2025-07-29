@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+import { message } from "antd";
+import { md5 } from "hash-wasm";
 import { rootRouterPath, router } from "@/router";
 import { api } from "@/services/api";
 import { setToken } from "@/services/request";
-/* eslint-disable @typescript-eslint/naming-convention */
-import { message } from "antd";
-import md5 from "blueimp-md5";
 
 let _email = "";
 export const setUserEmail = (email: string) => {
@@ -14,14 +14,14 @@ export const getUserEmail = () => _email;
 
 export async function login(email: string, password: string) {
   _email = email;
-  const params = { email, pwd: md5(password) };
+  const params = { email, pwd: await md5(password) };
   try {
     const res = await api.login(params);
     if (res?.token) {
       setToken(res.token);
       message.success("登录成功");
       const loginFrom = new URLSearchParams(window.location.search).get(
-        "loginFrom",
+        "loginFrom"
       );
       router.navigate(loginFrom || rootRouterPath.user);
     }

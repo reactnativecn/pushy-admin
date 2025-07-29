@@ -1,9 +1,9 @@
-import { api } from "@/services/api";
-import { setUserEmail } from "@/services/auth";
-import { Button, Checkbox, Form, Input, Row, message } from "antd";
-import md5 from "blueimp-md5";
+import { Button, Checkbox, Form, Input, message, Row } from "antd";
+import { md5 } from "hash-wasm";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "@/services/api";
+import { setUserEmail } from "@/services/auth";
 import { ReactComponent as Logo } from "../assets/logo.svg";
 import { rootRouterPath, router } from "../router";
 import { isPasswordValid } from "../utils/helper";
@@ -14,7 +14,7 @@ export const Register = () => {
   async function submit(values: { [key: string]: string }) {
     delete values.pwd2;
     delete values.agreed;
-    values.pwd = md5(values.pwd);
+    values.pwd = await md5(values.pwd);
     setLoading(true);
     try {
       await api.register(values);
