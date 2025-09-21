@@ -90,7 +90,7 @@ export const api = {
   getVersions: ({
     appId,
     offset = 0,
-    limit = 10,
+    limit = 1000,
   }: {
     appId: number;
     offset?: number;

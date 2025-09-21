@@ -72,7 +72,7 @@ export default async function request<T extends Record<any, any>>(
     }
 
     message.error(json.message);
-    throw new Error(`${response.status}: ${json.message}`);
+    throw Error(`${response.status}: ${json.message}`);
   } catch (err) {
     if ((err as Error).message.includes("Unauthorized")) {
       logout();

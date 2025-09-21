@@ -14,7 +14,7 @@ export const DepsTable = ({
   name?: string;
 }) => {
   const { packages, appId } = useManageContext();
-  const { versions } = useVersions({ appId, limit: 1000 });
+  const { allVersions: versions } = useVersions({ appId });
   const [diffs, setDiffs] = useState<{
     oldDeps?: Record<string, string>;
     newDeps?: Record<string, string>;

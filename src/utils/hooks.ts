@@ -64,17 +64,34 @@ export const usePackages = (appId: number) => {
 
 export const useVersions = ({
   appId,
-  offset,
-  limit,
+  offset = 0,
+  limit = 10,
 }: {
   appId: number;
   offset?: number;
   limit?: number;
 }) => {
+  // Fetch all versions (up to 1000) from backend and cache them
   const { data, isLoading } = useQuery({
-    queryKey: ["versions", appId, offset, limit],
-    staleTime: 0,
-    queryFn: () => api.getVersions({ appId, offset, limit }),
+    queryKey: ["versions", appId],
+    staleTime: 3000,
+    queryFn: () => api.getVersions({ appId, offset: 0, limit: 1000 }),
   });
-  return { versions: data?.data ?? [], count: data?.count ?? 0, isLoading };
+
+  // Implement frontend pagination
+  const allVersions = data?.data ?? [];
+  const totalCount = data?.count ?? 0;
+
+  // Calculate pagination
+  const startIndex = offset;
+  const endIndex = offset + limit;
+  const paginatedVersions = allVersions.slice(startIndex, endIndex);
+
+  return {
+    versions: paginatedVersions,
+    count: totalCount,
+    isLoading,
+    // Also return all versions for components that might need them
+    allVersions,
+  };
 };
