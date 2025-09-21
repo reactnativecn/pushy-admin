@@ -36,9 +36,7 @@ export default function SetPassword() {
             validator(_, value: string) {
               if (value && !isPasswordValid(value)) {
                 return Promise.reject(
-                  new Error(
-                    "密码中需要同时包含大、小写字母和数字，且长度不少于6位"
-                  )
+                  Error("密码中需要同时包含大、小写字母和数字，且长度不少于6位")
                 );
               }
               return Promise.resolve();
@@ -56,7 +54,7 @@ export default function SetPassword() {
           ({ getFieldValue }) => ({
             validator(_, value: string) {
               if (getFieldValue("newPwd") !== value) {
-                return Promise.reject(new Error("两次输入的密码不一致"));
+                return Promise.reject(Error("两次输入的密码不一致"));
               }
               return Promise.resolve();
             },

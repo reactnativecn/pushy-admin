@@ -4,10 +4,7 @@ import { rootRouterPath } from "@/router";
 import { api } from "@/services/api";
 import { useAppList, useUserInfo } from "@/utils/hooks";
 import {
-  AndroidFilled,
-  AppleFilled,
   AppstoreOutlined,
-  HarmonyOSOutlined,
   PlusOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -27,6 +24,14 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { ReactComponent as LogoH } from "../assets/logo-h.svg";
 import PlatformIcon from "./platform-icon";
+
+interface SiderMenuProps {
+  selectedKeys: string[];
+}
+
+interface Style {
+  sider: React.CSSProperties;
+}
 
 function addApp() {
   let name = "";
@@ -173,44 +178,62 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
         defaultOpenKeys={["apps"]}
         selectedKeys={selectedKeys}
         mode="inline"
-      >
-        <Menu.Item key="user" icon={<UserOutlined />}>
-          <Link to={rootRouterPath.user}>账户设置</Link>
-        </Menu.Item>
-        <Menu.SubMenu key="apps" title="应用管理" icon={<AppstoreOutlined />}>
-          {apps?.map((i) => (
-            <Menu.Item key={i.id} className="!h-16">
-              <div className="flex flex-row items-center gap-4">
-                <div className="flex flex-col justify-center">
-                  <PlatformIcon platform={i.platform} className="!text-xl" />
-                </div>
-                <Link
-                  to={`/apps/${i.id}`}
-                  className="flex flex-col h-16 justify-center"
-                >
-                  <div className="flex flex-row items-center font-bold">
-                    {i.name}
-                    {i.status === "paused" && <Tag className="ml-2">暂停</Tag>}
-                  </div>
-                  {i.checkCount && (
-                    <div className="text-xs text-gray-500 mb-2">
-                      <Tooltip
-                        mouseEnterDelay={1}
-                        title="今日此应用查询热更的次数"
-                      >
-                        <a>{i.checkCount.toLocaleString()} 次</a>
-                      </Tooltip>
+        items={[
+          {
+            key: "user",
+            icon: <UserOutlined />,
+            label: <Link to={rootRouterPath.user}>账户设置</Link>,
+          },
+          {
+            key: "apps",
+            icon: <AppstoreOutlined />,
+            label: "应用管理",
+            children: [
+              ...(apps?.map((i) => ({
+                key: i.id,
+                className: "!h-16",
+                label: (
+                  <div className="flex flex-row items-center gap-4">
+                    <div className="flex flex-col justify-center">
+                      <PlatformIcon
+                        platform={i.platform}
+                        className="!text-xl"
+                      />
                     </div>
-                  )}
-                </Link>
-              </div>
-            </Menu.Item>
-          ))}
-          <Menu.Item key="add-app" icon={<PlusOutlined />} onClick={addApp}>
-            添加应用
-          </Menu.Item>
-        </Menu.SubMenu>
-      </Menu>
+                    <Link
+                      to={`/apps/${i.id}`}
+                      className="flex flex-col h-16 justify-center"
+                    >
+                      <div className="flex flex-row items-center font-bold">
+                        {i.name}
+                        {i.status === "paused" && (
+                          <Tag className="ml-2">暂停</Tag>
+                        )}
+                      </div>
+                      {i.checkCount && (
+                        <div className="text-xs text-gray-500 mb-2">
+                          <Tooltip
+                            mouseEnterDelay={1}
+                            title="今日此应用查询热更的次数"
+                          >
+                            <a>{i.checkCount.toLocaleString()} 次</a>
+                          </Tooltip>
+                        </div>
+                      )}
+                    </Link>
+                  </div>
+                ),
+              })) || []),
+              {
+                key: "add-app",
+                icon: <PlusOutlined />,
+                label: "添加应用",
+                onClick: addApp,
+              },
+            ],
+          },
+        ]}
+      />
     </div>
   );
 };

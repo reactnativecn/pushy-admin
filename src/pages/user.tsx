@@ -129,7 +129,7 @@ function UserPanel() {
       <Descriptions
         title="账户信息"
         column={1}
-        labelStyle={{ width: 134 }}
+        styles={{ label: { width: 134 } }}
         bordered
       >
         <Descriptions.Item label="用户名">{name}</Descriptions.Item>

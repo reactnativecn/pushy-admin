@@ -13,6 +13,11 @@ import { useUserInfo } from "@/utils/hooks";
 import Footer from "./footer";
 import Sider from "./sider";
 
+interface Style {
+  header: React.CSSProperties;
+  body: React.CSSProperties;
+}
+
 const MainLayout = () => {
   const { user } = useUserInfo();
 
@@ -22,41 +27,59 @@ const MainLayout = () => {
       <Layout>
         <Layout.Header style={style.header}>
           <Row className="h-full" justify="end">
-            <Menu mode="horizontal" selectable={false}>
-              <Menu.Item key="issues" icon={<CommentOutlined />}>
-                <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
-                  讨论
-                </ExtLink>
-              </Menu.Item>
-              <Menu.Item key="document" icon={<ReadOutlined />}>
-                <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
-                  文档
-                </ExtLink>
-              </Menu.Item>
-              <Menu.Item key="about" icon={<InfoCircleOutlined />}>
-                <ExtLink href="https://reactnative.cn/about.html">
-                  关于我们
-                </ExtLink>
-              </Menu.Item>
-              {user && (
-                <Menu.SubMenu
-                  key="user"
-                  icon={<UserOutlined />}
-                  title={user.name}
-                >
-                  <Menu.Item
-                    key="logout"
-                    onClick={() => {
-                      logout();
-                      message.info("您已退出登录");
-                    }}
-                    icon={<LogoutOutlined />}
-                  >
-                    退出登录
-                  </Menu.Item>
-                </Menu.SubMenu>
-              )}
-            </Menu>
+            <Menu
+              mode="horizontal"
+              selectable={false}
+              items={[
+                {
+                  key: "issues",
+                  icon: <CommentOutlined />,
+                  label: (
+                    <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
+                      讨论
+                    </ExtLink>
+                  ),
+                },
+                {
+                  key: "document",
+                  icon: <ReadOutlined />,
+                  label: (
+                    <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
+                      文档
+                    </ExtLink>
+                  ),
+                },
+                {
+                  key: "about",
+                  icon: <InfoCircleOutlined />,
+                  label: (
+                    <ExtLink href="https://reactnative.cn/about.html">
+                      关于我们
+                    </ExtLink>
+                  ),
+                },
+                ...(user
+                  ? [
+                      {
+                        key: "user",
+                        icon: <UserOutlined />,
+                        label: user.name,
+                        children: [
+                          {
+                            key: "logout",
+                            icon: <LogoutOutlined />,
+                            label: "退出登录",
+                            onClick: () => {
+                              logout();
+                              message.info("您已退出登录");
+                            },
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           </Row>
         </Layout.Header>
         <Layout.Content id="main-body" style={style.body}>
@@ -81,7 +104,7 @@ const ExtLink = ({ children, href }: ExtLinkProps) => (
   <a
     href={href}
     target="_blank"
-    onClick={(e) => e.stopPropagation()}
+    // onClick={(e) => e.stopPropagation()}
     rel="noreferrer"
   >
     {children}

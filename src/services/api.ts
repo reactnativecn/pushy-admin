@@ -26,7 +26,7 @@ export const api = {
     }),
   createApp: (params: { name: string; platform: string }) =>
     request<{ id: number }>("post", "/app/create", params).then((response) => {
-      if (!response) throw new Error("Failed to create app");
+      if (!response) throw Error("Failed to create app");
       const { id } = response;
       queryClient.setQueryData(["appList"], ({ data }: { data: App[] }) => ({
         data: [...(data || []), { ...params, id }],
@@ -34,7 +34,7 @@ export const api = {
     }),
   updateApp: (
     appId: number,
-    params: Omit<App, "appKey" | "checkCount" | "id" | "platform">,
+    params: Omit<App, "appKey" | "checkCount" | "id" | "platform">
   ) =>
     request("put", `/app/${appId}`, params).then(() => {
       queryClient.setQueryData(["app", appId], (old: App | undefined) => ({
@@ -49,7 +49,7 @@ export const api = {
   getPackages: (appId: number) =>
     request<{ data: Package[]; count: number }>(
       "get",
-      `/app/${appId}/package/list?limit=1000`,
+      `/app/${appId}/package/list?limit=1000`
     ),
   updatePackage: ({
     appId,
@@ -69,9 +69,9 @@ export const api = {
         ["packages", appId],
         ({ data }: { data: Package[] }) => ({
           data: data?.map((i) =>
-            i.id === packageId ? { ...i, ...params } : i,
+            i.id === packageId ? { ...i, ...params } : i
           ),
-        }),
+        })
       );
       if (params.versionId !== undefined) {
         queryClient.invalidateQueries({ queryKey: ["versions", appId] });
@@ -83,7 +83,7 @@ export const api = {
         ["packages", appId],
         ({ data }: { data: Package[] }) => ({
           data: data?.filter((i) => i.id !== packageId),
-        }),
+        })
       );
     }),
   // version
@@ -98,7 +98,7 @@ export const api = {
   }) =>
     request<{ data: Version[]; count: number }>(
       "get",
-      `/app/${appId}/version/list?offset=${offset}&limit=${limit}`,
+      `/app/${appId}/version/list?offset=${offset}&limit=${limit}`
     ),
   updateVersion: ({
     versionId,
@@ -117,10 +117,10 @@ export const api = {
             ? {
                 ...old,
                 data: old.data?.map((i) =>
-                  i.id === versionId ? { ...i, ...params } : i,
+                  i.id === versionId ? { ...i, ...params } : i
                 ),
               }
-            : undefined,
+            : undefined
       );
     }),
   deleteVersion: ({ appId, versionId }: { appId: number; versionId: number }) =>
@@ -133,7 +133,7 @@ export const api = {
                 ...old,
                 data: old.data?.filter((i) => i.id !== versionId),
               }
-            : undefined,
+            : undefined
       );
     }),
   // order

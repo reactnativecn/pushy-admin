@@ -16,7 +16,7 @@ export function promiseAny<T>(promises: Promise<T>[]) {
         .catch(() => {
           count++;
           if (count === promises.length) {
-            reject(new Error("All promises were rejected"));
+            reject(Error("All promises were rejected"));
           }
         });
     }
@@ -36,16 +36,16 @@ export const ping = async (url: string) => {
           return url;
         }
         console.log("ping failed", url, status, statusText);
-        throw new Error("ping failed");
+        throw Error("ping failed");
       })
       .catch((e) => {
         pingFinished = true;
         console.log("ping error", url, e);
-        throw new Error("ping error");
+        throw Error("ping error");
       }),
     new Promise((_, reject) =>
       setTimeout(() => {
-        reject(new Error("ping timeout"));
+        reject(Error("ping timeout"));
         if (!pingFinished) {
           console.log("ping timeout", url);
         }

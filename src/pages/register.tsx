@@ -103,7 +103,7 @@ export const Register = () => {
                   validator: (_, value) =>
                     value
                       ? Promise.resolve()
-                      : Promise.reject(new Error("请阅读并同意后勾选此处")),
+                      : Promise.reject(Error("请阅读并同意后勾选此处")),
                 },
               ]}
               hasFeedback
