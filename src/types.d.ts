@@ -50,6 +50,7 @@ interface Package extends PackageBase {
   commit?: Commit;
   hash: string;
   version?: Version;
+  expVersionId?: number;
 }
 
 interface Commit {
@@ -88,4 +89,10 @@ interface SiderMenuProps {
 
 interface CotentProps {
   app: App;
+}
+
+interface VersionConfig {
+  rollout?: {
+    [packageVersion: string]: number | null;
+  };
 }

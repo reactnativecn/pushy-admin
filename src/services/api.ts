@@ -77,6 +77,26 @@ export const api = {
         queryClient.invalidateQueries({ queryKey: ["versions", appId] });
       }
     }),
+  bindVersion: ({
+    appId,
+    packageId,
+    versionId,
+    expVersionId,
+  }: {
+    appId: number;
+    packageId: number;
+    versionId?: number | null;
+    expVersionId?: number | null;
+  }) =>
+    request("put", `/app/${appId}/package/${packageId}/bind`, {
+      versionId,
+      expVersionId,
+    }).then(() => {
+      if (versionId !== undefined || expVersionId !== undefined) {
+        queryClient.invalidateQueries({ queryKey: ["versions", appId] });
+        queryClient.invalidateQueries({ queryKey: ["packages", appId] });
+      }
+    }),
   deletePackage: ({ appId, packageId }: { appId: number; packageId: number }) =>
     request("delete", `/app/${appId}/package/${packageId}`).then(() => {
       queryClient.setQueryData(

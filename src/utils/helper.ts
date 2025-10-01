@@ -65,3 +65,15 @@ export const testUrls = async (urls?: string[]) => {
   console.log("all ping failed, use first url:", urls[0]);
   return urls[0];
 };
+
+export const isExpVersion = (
+  config: VersionConfig | null | undefined,
+  packageVersion: string,
+): boolean => {
+  if (!config?.rollout) return false;
+
+  const rollout = config.rollout[packageVersion];
+  if (rollout === null) return false;
+
+  return rollout < 100;
+};

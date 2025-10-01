@@ -14,8 +14,9 @@ export const getToken = () => _token;
 
 const SERVER = {
   main: [
-    "https://update.react-native.cn/api",
-    "https://update.reactnative.cn/api",
+    // "https://update.react-native.cn/api",
+    // "https://update.reactnative.cn/api",
+    "https://3.rnupdate.online/api",
   ],
 };
 
