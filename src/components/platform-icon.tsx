@@ -16,10 +16,10 @@ export default function PlatformIcon({
     return null;
   }
   if (platform === "android") {
-    return <AndroidFilled className={cn("text-[#3ddc84]", className)} />;
+    return <AndroidFilled className={cn("text-[#3ddc84]!", className)} />;
   }
   if (platform === "ios") {
-    return <AppleFilled className={cn("text-[#a6b1b7]", className)} />;
+    return <AppleFilled className={cn("text-[#a6b1b7]!", className)} />;
   }
-  return <HarmonyOSOutlined className={cn("text-[#a6b1b7]", className)} />;
+  return <HarmonyOSOutlined className={cn("text-[#a6b1b7]!", className)} />;
 }

@@ -51,7 +51,7 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
       className="ant-typography-edit"
       content={
         <div>
-          <div className="text-center my-1 mx-auto">
+          <div className="text-center my-2 mx-auto">
             测试二维码 <br />
             <a
               target="_blank"
@@ -62,15 +62,17 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
               如何使用？
             </a>
           </div>
-          <QRCode value={codeValue} bordered={false} className="my-0 mx-auto" />
-          <div className="text-center my-0 mx-auto">{name}</div>
+          <div className="flex justify-center">
+            <QRCode value={codeValue} bordered={false} />
+          </div>
+          <div className="text-center my-2 mx-auto">{name}</div>
           {/* <div style={{ textAlign: 'center', margin: '0 auto' }}>{hash}</div> */}
           <div>
             <Input.TextArea
               readOnly
               autoSize
               value={codeValue}
-              className="mb-1"
+              className="mb-2!"
             />
             <div className="flex flex-row items-center">
               <Checkbox

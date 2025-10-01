@@ -14,7 +14,7 @@ import {
 } from "antd";
 
 import { Link, useParams } from "react-router-dom";
-import "./index.scss";
+import "./manage.css";
 
 import { api } from "@/services/api";
 import { useApp } from "@/utils/hooks";

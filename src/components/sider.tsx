@@ -113,7 +113,7 @@ export default function Sider() {
   }
   return (
     <Layout.Sider width={240} theme="light" style={style.sider}>
-      <Layout.Header className="flex justify-center items-center bg-transparent px-0">
+      <Layout.Header className="flex justify-center items-center bg-transparent! px-0!">
         <LogoH />
       </Layout.Header>
       <SiderMenu selectedKeys={selectedKeys} />
@@ -141,7 +141,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
             </div>
           }
           size="small"
-          className="mr-2 mb-4"
+          className="mr-2! mb-4!"
         >
           <Progress
             status={percent && percent > 40 ? "normal" : "exception"}

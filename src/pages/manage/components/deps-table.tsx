@@ -1,4 +1,4 @@
-import { JavaScriptOutlined } from "@ant-design/icons";
+import { DownOutlined, JavaScriptOutlined } from "@ant-design/icons";
 import { Popover, Dropdown, Button } from "antd";
 import JsonEditor from "./json-editor";
 import { Mode } from "vanilla-jsoneditor";
@@ -34,17 +34,19 @@ export const DepsTable = ({
             {deps ? (
               <div>
                 <div className="flex flex-col items-center justify-center">
-                  <h4>
-                    JavaScript 依赖列表{!diffs && `(${name})`}
-                    <div>
-                      {diffs && (
-                        <>
-                          <span className="font-normal">{diffs.newName}</span>
-                          {` <-> ${name}`}
-                        </>
-                      )}
+                  <div className="h-12">
+                    <div className="font-bold">
+                      JavaScript 依赖列表{!diffs && `(${name})`}
+                      <div>
+                        {diffs && (
+                          <>
+                            <span className="font-normal">{diffs.newName}</span>
+                            {` <-> ${name}`}
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="absolute right-8 top-7">
+                    <div className="absolute right-3 top-3">
                       {diffs ? (
                         <Button
                           className="content-end"
@@ -55,8 +57,7 @@ export const DepsTable = ({
                           返回
                         </Button>
                       ) : (
-                        <Dropdown.Button
-                          className=""
+                        <Dropdown
                           menu={{
                             items: [
                               {
@@ -104,11 +105,14 @@ export const DepsTable = ({
                             },
                           }}
                         >
-                          对比变更
-                        </Dropdown.Button>
+                          <Button>
+                            对比变更
+                            <DownOutlined />
+                          </Button>
+                        </Dropdown>
                       )}
                     </div>
-                  </h4>
+                  </div>
                   <div className="max-h-[50vh] overflow-y-auto">
                     {diffs ? (
                       <DepsDiff
@@ -120,13 +124,10 @@ export const DepsTable = ({
                         content={{
                           json: Object.keys(deps)
                             .sort() // Sort the keys alphabetically
-                            .reduce(
-                              (obj, key) => {
-                                obj[key] = deps[key]; // Rebuild the object with sorted keys
-                                return obj;
-                              },
-                              {} as Record<string, string>
-                            ),
+                            .reduce((obj, key) => {
+                              obj[key] = deps[key]; // Rebuild the object with sorted keys
+                              return obj;
+                            }, {} as Record<string, string>),
                         }}
                         mode={Mode.tree}
                         mainMenuBar={false}
