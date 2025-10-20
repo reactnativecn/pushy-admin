@@ -101,8 +101,8 @@ export const useBindings = (appId: number) => {
     queryKey: ["bindings", appId],
     queryFn: () => api.getBindings(appId),
   });
-  const {packages} = usePackages(appId);
-  const {versions} = useVersions({appId});
+  // const {packages} = usePackages(appId);
+  // const {versions} = useVersions({appId});
   const bindings = data?.data ?? [];
   // let fullBindings: Binding[] = [];
   // let expBindings: Binding[] = [];

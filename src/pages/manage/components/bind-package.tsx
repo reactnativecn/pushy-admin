@@ -17,13 +17,16 @@ const BindPackage = ({
   versionId: number;
   config: Version["config"];
 }) => {
-  const { packages: allPackages, appId } = useManageContext();
+  const { packages: allPackages, appId, bindings } = useManageContext();
   const availablePackages = allPackages.filter(
-    (i) => !packages.some((j) => i.id === j.id),
+    (i) => !packages.some((j) => i.id === j.id)
   );
 
   const bindedPackages = packages.map((p) => {
-    const rolloutConfig = config?.rollout?.[p.name];
+    const binding = bindings.find(
+      (b) => b.packageId === p.id && b.versionId === versionId
+    );
+    const rolloutConfig = binding?.rollout || config?.rollout?.[p.name];
     const isFull =
       rolloutConfig === 100 ||
       rolloutConfig === undefined ||

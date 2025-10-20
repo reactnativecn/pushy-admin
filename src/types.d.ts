@@ -104,6 +104,6 @@ interface Binding {
   type: BindingType;
   // appId: number;
   versionId: number;
-  // packageId: number;
+  packageId: number;
   rollout: number;
 }
