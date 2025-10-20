@@ -159,4 +159,34 @@ export const api = {
   // order
   createOrder: (params: { tier?: string }) =>
     request<{ payUrl: string }>("post", "/orders", params),
+  // bindings
+  getBindings: (appId: number) =>
+    request<{ data: Binding[] }>("get", `/app/${appId}/bindings`),
+  upsertBinding: ({
+    appId,
+    versionId,
+    packageId,
+    rollout,
+    config,
+  }: {
+    appId: number;
+    versionId: number;
+    packageId: number;
+    rollout?: number | null;
+    config?: Record<string, any>;
+  }) =>
+    request("post", `/app/${appId}/bindings/${packageId}`, {
+      versionId,
+      rollout,
+      config,
+    }),
+  deleteBinding: ({
+    appId,
+    packageId,
+    bindingId,
+  }: {
+    appId: number;
+    packageId: number;
+    bindingId: number;
+  }) => request("delete", `/app/${appId}/bindings/${packageId}/${bindingId}`),
 };

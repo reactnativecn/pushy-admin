@@ -96,3 +96,14 @@ interface VersionConfig {
     [packageVersion: string]: number | null;
   };
 }
+
+type BindingType = "full" | "exp";
+
+interface Binding {
+  id: number;
+  type: BindingType;
+  // appId: number;
+  versionId: number;
+  // packageId: number;
+  rollout: number;
+}
