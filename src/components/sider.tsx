@@ -29,10 +29,6 @@ interface SiderMenuProps {
   selectedKeys: string[];
 }
 
-interface Style {
-  sider: React.CSSProperties;
-}
-
 function addApp() {
   let name = "";
   let platform = "android";
@@ -97,6 +93,10 @@ function addApp() {
   });
 }
 
+const style = {
+  sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
+};
+
 export default function Sider() {
   const { pathname } = useLocation();
   const { user } = useUserInfo();
@@ -112,7 +112,12 @@ export default function Sider() {
     }
   }
   return (
-    <Layout.Sider width={240} theme="light" style={style.sider}>
+    <Layout.Sider
+      className="[&>.ant-layout-sider-children]:flex [&>.ant-layout-sider-children]:flex-col!"
+      width={240}
+      theme="light"
+      style={style.sider}
+    >
       <Layout.Header className="flex justify-center items-center bg-transparent! px-0!">
         <LogoH />
       </Layout.Header>
@@ -130,7 +135,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
   const percent =
     pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
   return (
-    <div>
+    <div className="flex flex-col h-full overflow-hidden">
       {percent && (
         <Card
           title={
@@ -174,70 +179,68 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
           )}
         </Card>
       )}
-      <Menu
-        defaultOpenKeys={["apps"]}
-        selectedKeys={selectedKeys}
-        mode="inline"
-        items={[
-          {
-            key: "user",
-            icon: <UserOutlined />,
-            label: <Link to={rootRouterPath.user}>账户设置</Link>,
-          },
-          {
-            key: "apps",
-            icon: <AppstoreOutlined />,
-            label: "应用管理",
-            children: [
-              ...(apps?.map((i) => ({
-                key: i.id,
-                className: "!h-16",
-                label: (
-                  <div className="flex flex-row items-center gap-4">
-                    <div className="flex flex-col justify-center">
-                      <PlatformIcon
-                        platform={i.platform}
-                        className="!text-xl"
-                      />
-                    </div>
-                    <Link
-                      to={`/apps/${i.id}`}
-                      className="flex flex-col h-16 justify-center"
-                    >
-                      <div className="flex flex-row items-center font-bold">
-                        {i.name}
-                        {i.status === "paused" && (
-                          <Tag className="ml-2">暂停</Tag>
-                        )}
+      <div className="overflow-y-auto">
+        <Menu
+          defaultOpenKeys={["apps"]}
+          selectedKeys={selectedKeys}
+          mode="inline"
+          items={[
+            {
+              key: "user",
+              icon: <UserOutlined />,
+              label: <Link to={rootRouterPath.user}>账户设置</Link>,
+            },
+            {
+              key: "apps",
+              icon: <AppstoreOutlined />,
+              label: "应用管理",
+              children: [
+                ...(apps?.map((i, index) => ({
+                  key: `${i.id}-${index}`,
+                  className: "!h-16",
+                  label: (
+                    <div className="flex flex-row items-center gap-4">
+                      <div className="flex flex-col justify-center">
+                        <PlatformIcon
+                          platform={i.platform}
+                          className="text-xl!"
+                        />
                       </div>
-                      {i.checkCount && (
-                        <div className="text-xs text-gray-500 mb-2">
-                          <Tooltip
-                            mouseEnterDelay={1}
-                            title="今日此应用查询热更的次数"
-                          >
-                            <a>{i.checkCount.toLocaleString()} 次</a>
-                          </Tooltip>
+                      <Link
+                        to={`/apps/${i.id}`}
+                        className="flex flex-col h-16 justify-center"
+                      >
+                        <div className="flex flex-row items-center font-bold">
+                          {i.name}
+                          {i.status === "paused" && (
+                            <Tag className="ml-2">暂停</Tag>
+                          )}
                         </div>
-                      )}
-                    </Link>
-                  </div>
-                ),
-              })) || []),
-              {
-                key: "add-app",
-                icon: <PlusOutlined />,
-                label: "添加应用",
-                onClick: addApp,
-              },
-            ],
-          },
-        ]}
-      />
+                        {i.checkCount && (
+                          <div className="text-xs text-gray-500 mb-2">
+                            <Tooltip
+                              mouseEnterDelay={1}
+                              title="今日此应用查询热更的次数"
+                            >
+                              <a>{i.checkCount.toLocaleString()} 次</a>
+                            </Tooltip>
+                          </div>
+                        )}
+                      </Link>
+                    </div>
+                  ),
+                })) || []),
+                {
+                  key: "add-app",
+                  icon: <PlusOutlined />,
+                  label: "添加应用",
+                  onClick: addApp,
+                },
+              ],
+            },
+          ]}
+        />
+      </div>
     </div>
   );
-};
-
-const style: Style = {
-  sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
 };
