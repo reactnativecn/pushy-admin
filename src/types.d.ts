@@ -50,7 +50,6 @@ interface Package extends PackageBase {
   commit?: Commit;
   hash: string;
   version?: Version;
-  expVersionId?: number;
 }
 
 interface Commit {

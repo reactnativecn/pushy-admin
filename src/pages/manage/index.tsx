@@ -35,19 +35,29 @@ const ManageDashBoard = () => {
         width={240}
       >
         <div className="py-4">原生包</div>
-        <Tabs>
-          <Tabs.TabPane tab="全部" key="all">
-            <PackageList dataSource={packages} loading={packagesLoading} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="未使用" key="unused">
-            <PackageList
-              dataSource={unusedPackages}
-              loading={packagesLoading}
-            />
-          </Tabs.TabPane>
-        </Tabs>
+        <Tabs
+          items={[
+            {
+              key: "all",
+              label: "全部",
+              children: (
+                <PackageList dataSource={packages} loading={packagesLoading} />
+              ),
+            },
+            {
+              key: "unused",
+              label: "未使用",
+              children: (
+                <PackageList
+                  dataSource={unusedPackages}
+                  loading={packagesLoading}
+                />
+              ),
+            },
+          ]}
+        />
       </Layout.Sider>
-      <Layout.Content className="!p-0">
+      <Layout.Content className="p-0!">
         <VersionTable />
       </Layout.Content>
     </Layout>
@@ -70,16 +80,24 @@ export const Manage = () => {
     <Form layout="vertical" form={form} initialValues={app}>
       <Row className="mb-4">
         <Col flex={1}>
-          <Breadcrumb>
-            <Breadcrumb.Item>
-              <Link to="/apps">应用列表</Link>
-            </Breadcrumb.Item>
-            <Breadcrumb.Item>
-              <PlatformIcon platform={app?.platform} className="mr-1" />
-              {app?.name}
-              {app?.status === "paused" && <Tag className="ml-2">暂停</Tag>}
-            </Breadcrumb.Item>
-          </Breadcrumb>
+          <Breadcrumb
+            items={[
+              {
+                title: <Link to="/apps">应用列表</Link>,
+              },
+              {
+                title: (
+                  <>
+                    <PlatformIcon platform={app?.platform} className="mr-1" />
+                    {app?.name}
+                    {app?.status === "paused" && (
+                      <Tag className="ml-2">暂停</Tag>
+                    )}
+                  </>
+                ),
+              },
+            ]}
+          />
         </Col>
         <Space.Compact>
           <Button

@@ -1,11 +1,5 @@
-import { useBindings, usePackages } from "@/utils/hooks";
-import {
-  type ReactNode,
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { useBinding, usePackages } from "@/utils/hooks";
+import { type ReactNode, createContext, useContext, useState } from "react";
 
 const noop = () => {};
 // const asyncNoop = () => Promise.resolve();
@@ -17,6 +11,7 @@ export const defaultManageContext = {
   packages: [],
   unusedPackages: [],
   bindings: [],
+  packageMap: new Map(),
 };
 
 export const ManageContext = createContext<{
@@ -26,6 +21,7 @@ export const ManageContext = createContext<{
   packages: Package[];
   unusedPackages: Package[];
   packagesLoading?: boolean;
+  packageMap: Map<number, Package>;
   bindings: Binding[];
   bindingsLoading?: boolean;
 }>(defaultManageContext);
@@ -43,12 +39,13 @@ export const ManageProvider = ({
     window.localStorage.getItem(`${appId}_deeplink`) ?? ""
   );
   const {
-    packages = [],
-    unusedPackages = [],
+    packages,
+    unusedPackages,
     isLoading: packagesLoading,
+    packageMap,
   } = usePackages(appId);
 
-  const { bindings, isLoading: bindingsLoading } = useBindings(appId);
+  const { bindings, isLoading: bindingsLoading } = useBinding(appId);
 
   return (
     <ManageContext.Provider
@@ -57,6 +54,7 @@ export const ManageProvider = ({
         deepLink,
         setDeepLink,
         packages,
+        packageMap,
         unusedPackages,
         packagesLoading,
         bindings,

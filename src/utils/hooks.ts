@@ -5,6 +5,7 @@ import { getToken } from "@/services/request";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
+import { useMemo } from "react";
 
 dayjs.locale("zh-cn");
 dayjs.extend(relativeTime);
@@ -55,9 +56,22 @@ export const usePackages = (appId: number) => {
     queryKey: ["packages", appId],
     queryFn: () => api.getPackages(appId),
   });
+  const { unusedPackages, packageMap, packages } = useMemo(() => {
+    const packages = data?.data ?? [];
+    const unusedPackages = [];
+    const packageMap = new Map();
+    for (const p of packages) {
+      if (p.version === null) {
+        unusedPackages.push(p);
+      }
+      packageMap.set(p.id, p);
+    }
+    return { unusedPackages, packageMap, packages };
+  }, [data?.data]);
   return {
-    packages: data?.data,
-    unusedPackages: data?.data?.filter((i) => i.version === null),
+    packages,
+    unusedPackages,
+    packageMap,
     isLoading,
   };
 };
@@ -96,10 +110,10 @@ export const useVersions = ({
   };
 };
 
-export const useBindings = (appId: number) => {
+export const useBinding = (appId: number) => {
   const { data, isLoading } = useQuery({
     queryKey: ["bindings", appId],
-    queryFn: () => api.getBindings(appId),
+    queryFn: () => api.getBinding(appId),
   });
   // const {packages} = usePackages(appId);
   // const {versions} = useVersions({appId});

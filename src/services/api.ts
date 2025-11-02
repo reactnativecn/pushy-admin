@@ -139,9 +139,9 @@ export const api = {
   // order
   createOrder: (params: { tier?: string }) =>
     request<{ payUrl: string }>("post", "/orders", params),
-  // bindings
-  getBindings: (appId: number) =>
-    request<{ data: Binding[] }>("get", `/app/${appId}/bindings`),
+  // binding
+  getBinding: (appId: number) =>
+    request<{ data: Binding[] }>("get", `/app/${appId}/binding`),
   upsertBinding: ({
     appId,
     versionId,
@@ -155,7 +155,7 @@ export const api = {
     rollout?: number | null;
     config?: Record<string, any>;
   }) =>
-    request("post", `/app/${appId}/bindings/`, {
+    request("post", `/app/${appId}/binding/`, {
       versionId,
       rollout,
       config,
@@ -164,7 +164,7 @@ export const api = {
       queryClient.invalidateQueries({ queryKey: ["bindings", appId] });
     }),
   deleteBinding: ({ appId, bindingId }: { appId: number; bindingId: number }) =>
-    request("delete", `/app/${appId}/bindings/${bindingId}`).then(() => {
+    request("delete", `/app/${appId}/binding/${bindingId}`).then(() => {
       queryClient.setQueriesData(
         { queryKey: ["bindings", appId] },
         (old?: { data: Binding[] }) =>
