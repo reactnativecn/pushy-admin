@@ -77,26 +77,6 @@ export const api = {
         queryClient.invalidateQueries({ queryKey: ["versions", appId] });
       }
     }),
-  bindVersion: ({
-    appId,
-    packageId,
-    versionId,
-    expVersionId,
-  }: {
-    appId: number;
-    packageId: number;
-    versionId?: number | null;
-    expVersionId?: number | null;
-  }) =>
-    request("put", `/app/${appId}/package/${packageId}/bind`, {
-      versionId,
-      expVersionId,
-    }).then(() => {
-      if (versionId !== undefined || expVersionId !== undefined) {
-        queryClient.invalidateQueries({ queryKey: ["versions", appId] });
-        queryClient.invalidateQueries({ queryKey: ["packages", appId] });
-      }
-    }),
   deletePackage: ({ appId, packageId }: { appId: number; packageId: number }) =>
     request("delete", `/app/${appId}/package/${packageId}`).then(() => {
       queryClient.setQueryData(
@@ -175,18 +155,22 @@ export const api = {
     rollout?: number | null;
     config?: Record<string, any>;
   }) =>
-    request("post", `/app/${appId}/bindings/${packageId}`, {
+    request("post", `/app/${appId}/bindings/`, {
       versionId,
       rollout,
       config,
+      packageId,
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["bindings", appId] });
     }),
-  deleteBinding: ({
-    appId,
-    packageId,
-    bindingId,
-  }: {
-    appId: number;
-    packageId: number;
-    bindingId: number;
-  }) => request("delete", `/app/${appId}/bindings/${packageId}/${bindingId}`),
+  deleteBinding: ({ appId, bindingId }: { appId: number; bindingId: number }) =>
+    request("delete", `/app/${appId}/bindings/${bindingId}`).then(() => {
+      queryClient.setQueriesData(
+        { queryKey: ["bindings", appId] },
+        (old?: { data: Binding[] }) =>
+          old
+            ? { ...old, data: old.data?.filter((i) => i.id !== bindingId) }
+            : undefined
+      );
+    }),
 };

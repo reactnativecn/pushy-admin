@@ -10,10 +10,13 @@ export function ErrorBoundary() {
   const error = useRouteError() as ChunkError;
   const navigate = useNavigate();
 
+  const message = error?.message || "";
+
   const isChunkError =
-    error?.message?.includes("Loading CSS chunk") ||
-    error?.message?.includes("Loading chunk") ||
-    error?.message?.includes("ChunkLoadError");
+    message &&
+    (message.includes("Loading CSS chunk") ||
+      message.includes("Loading chunk") ||
+      message.includes("ChunkLoadError"));
 
   useEffect(() => {
     if (isChunkError) {
@@ -33,7 +36,7 @@ export function ErrorBoundary() {
     <Result
       status="500"
       title="页面出错了"
-      subTitle={error?.message || "发生了未知错误"}
+      subTitle={message || "发生了未知错误"}
       extra={
         <>
           <Button type="primary" onClick={handleRetry}>

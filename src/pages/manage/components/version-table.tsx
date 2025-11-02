@@ -1,12 +1,7 @@
 import { TEST_QR_CODE_DOC } from "@/constants/links";
 import { api } from "@/services/api";
 import { useVersions } from "@/utils/hooks";
-/* eslint-disable react/no-unstable-nested-components */
-import {
-  InfoCircleOutlined,
-  JavaScriptOutlined,
-  QrcodeOutlined,
-} from "@ant-design/icons";
+import { InfoCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
 import {
   Button,
   Checkbox,
@@ -18,7 +13,6 @@ import {
   Typography,
 } from "antd";
 import type { ColumnType } from "antd/lib/table";
-// import { useDrag, useDrop } from "react-dnd";
 import { type ReactNode, useEffect, useState } from "react";
 import type { TextContent } from "vanilla-jsoneditor";
 import { useManageContext } from "../hooks/useManageContext";
@@ -178,8 +172,8 @@ const columns: ColumnType<Version>[] = [
     ),
     dataIndex: "packages",
     width: "100%",
-    render: (_, { packages = [], id, config }) => (
-      <BindPackage config={config} packages={packages} versionId={id} />
+    render: (_, { id, config }) => (
+      <BindPackage config={config} versionId={id} />
     ),
   },
   {
