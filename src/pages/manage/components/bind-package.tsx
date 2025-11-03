@@ -28,7 +28,7 @@ const BindPackage = ({
     const result = [];
     const legacyBindings = [];
     for (const p of allPackages) {
-      if (p.version?.id === versionId) {
+      if (p.versions?.id === versionId) {
         const legacyConfig = config?.rollout?.[p.name];
         legacyBindings.push({
           packageId: p.id,

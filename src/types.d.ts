@@ -49,7 +49,7 @@ interface Package extends PackageBase {
   deps?: Record<string, string>;
   commit?: Commit;
   hash: string;
-  version?: Version;
+  versions?: Version;
 }
 
 interface Commit {
