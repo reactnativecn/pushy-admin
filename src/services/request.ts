@@ -78,7 +78,8 @@ export default async function request<T extends Record<any, any>>(
     if ((err as Error).message.includes("Unauthorized")) {
       logout();
     } else {
-      message.error((err as Error).message);
+      message.error(`错误：${(err as Error).message}`);
+      message.error("如有使用代理，请关闭代理后重试");
       throw err;
     }
   }
