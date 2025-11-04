@@ -87,7 +87,7 @@ export default function PublishFeatureTable() {
           },
         ]}
       />
-      <div className="mt-2">注：取消绑定不会导致已更新的用户回滚。</div>
+      <div className="mt-2">注：取消发布不会导致已更新的用户回滚。</div>
     </div>
   );
 }

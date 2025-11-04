@@ -96,7 +96,7 @@ const BindPackage = ({
       }
       items.push({
         key: "unpublish",
-        label: "取消绑定",
+        label: "取消发布",
         icon: <RestOutlined />,
         onClick: () => {
           const bindingId = binding.id;
@@ -169,7 +169,7 @@ const BindPackage = ({
           className="ant-typography-edit"
         >
           <Button type="link" size="small" icon={<LinkOutlined />}>
-            绑定
+            发布
           </Button>
         </Dropdown>
       )}
