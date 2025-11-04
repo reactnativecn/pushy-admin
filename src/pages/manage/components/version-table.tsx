@@ -20,6 +20,7 @@ import BindPackage from "./bind-package";
 import JsonEditor from "./json-editor";
 import { Commit } from "./commit";
 import { DepsTable } from "./deps-table";
+import PublishFeatureTable from "./publish-feature-table";
 
 const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   const { appId, deepLink, setDeepLink } = useManageContext();
@@ -156,18 +157,12 @@ const columns: ColumnType<Version>[] = [
   },
   {
     title: (
-      <Popover
-        content={
-          <>
-            灰度发布测试中，需要 pushy 版本 v10.15.0 +。
-            <br />
-            低于此版本的只能全量发布。
-            <br />
-            取消绑定不会导致已更新的用户回滚。
-          </>
-        }
-      >
-        绑定原生包 <InfoCircleOutlined />
+      <Popover content={<PublishFeatureTable />}>
+        发布到原生包
+        <span className="text-amber-600">
+          (<InfoCircleOutlined />
+          功能说明)
+        </span>
       </Popover>
     ),
     dataIndex: "packages",
