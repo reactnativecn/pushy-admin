@@ -1,9 +1,9 @@
-import { api } from "@/services/api";
-import { getUserEmail } from "@/services/auth";
-import { useMutation } from "@tanstack/react-query";
-import { Button, Result, message } from "antd";
-import { useEffect } from "react";
-import { rootRouterPath, router } from "../router";
+import { useMutation } from '@tanstack/react-query';
+import { Button, message, Result } from 'antd';
+import { useEffect } from 'react';
+import { api } from '@/services/api';
+import { getUserEmail } from '@/services/auth';
+import { rootRouterPath, router } from '../router';
 
 export const Welcome = () => {
   useEffect(() => {
@@ -15,10 +15,10 @@ export const Welcome = () => {
   const { mutate: sendEmail, isPending } = useMutation({
     mutationFn: () => api.sendEmail({ email: getUserEmail() }),
     onSuccess: () => {
-      message.info("邮件发送成功，请注意查收");
+      message.info('邮件发送成功，请注意查收');
     },
     onError: () => {
-      message.error("邮件发送失败");
+      message.error('邮件发送失败');
     },
   });
 

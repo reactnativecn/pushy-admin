@@ -1,4 +1,3 @@
-import { api } from "@/services/api";
 import {
   CloudDownloadOutlined,
   ExperimentOutlined,
@@ -6,8 +5,9 @@ import {
   RestOutlined,
 } from "@ant-design/icons";
 import { Button, Dropdown, type MenuProps } from "antd";
-import { useManageContext } from "../hooks/useManageContext";
 import { useMemo } from "react";
+import { api } from "@/services/api";
+import { useManageContext } from "../hooks/useManageContext";
 
 const BindPackage = ({
   versionId,
@@ -34,7 +34,6 @@ const BindPackage = ({
           packageId: p.id,
           rollout: legacyConfig,
         });
-        continue;
       }
     }
     const matchedBindings: {
@@ -128,7 +127,7 @@ const BindPackage = ({
       );
     }
     return result;
-  }, [allPackages, bindings, versionId]);
+  }, [allPackages, bindings, versionId, appId, config, packageMap]);
 
   return (
     <div className="flex flex-wrap gap-1">

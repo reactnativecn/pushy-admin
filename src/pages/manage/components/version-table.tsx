@@ -1,7 +1,4 @@
-import { TEST_QR_CODE_DOC } from "@/constants/links";
-import { api } from "@/services/api";
-import { useVersions } from "@/utils/hooks";
-import { InfoCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, QrcodeOutlined } from '@ant-design/icons';
 import {
   Button,
   Checkbox,
@@ -11,22 +8,25 @@ import {
   QRCode,
   Table,
   Typography,
-} from "antd";
-import type { ColumnType } from "antd/lib/table";
-import { type ReactNode, useEffect, useState } from "react";
-import type { TextContent } from "vanilla-jsoneditor";
-import { useManageContext } from "../hooks/useManageContext";
-import BindPackage from "./bind-package";
-import JsonEditor from "./json-editor";
-import { Commit } from "./commit";
-import { DepsTable } from "./deps-table";
-import PublishFeatureTable from "./publish-feature-table";
+} from 'antd';
+import type { ColumnType } from 'antd/lib/table';
+import { type ReactNode, useEffect, useState } from 'react';
+import type { TextContent } from 'vanilla-jsoneditor';
+import { TEST_QR_CODE_DOC } from '@/constants/links';
+import { api } from '@/services/api';
+import { useVersions } from '@/utils/hooks';
+import { useManageContext } from '../hooks/useManageContext';
+import BindPackage from './bind-package';
+import { Commit } from './commit';
+import { DepsTable } from './deps-table';
+import JsonEditor from './json-editor';
+import PublishFeatureTable from './publish-feature-table';
 
 const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   const { appId, deepLink, setDeepLink } = useManageContext();
   const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
 
-  const isDeepLinkValid = enableDeepLink && deepLink.endsWith("://");
+  const isDeepLinkValid = enableDeepLink && deepLink.endsWith('://');
 
   useEffect(() => {
     if (isDeepLinkValid) {
@@ -35,7 +35,7 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   }, [appId, deepLink, isDeepLinkValid]);
 
   const codePayload = {
-    type: "__rnPushyVersionHash",
+    type: '__rnPushyVersionHash',
     data: hash,
   };
   const codeValue = isDeepLinkValid
@@ -113,13 +113,13 @@ function removeSelectedVersions({
     }
   }
   Modal.confirm({
-    title: "删除所选热更新包：",
-    content: versionNames.join("，"),
+    title: '删除所选热更新包：',
+    content: versionNames.join('，'),
     maskClosable: true,
     okButtonProps: { danger: true },
     async onOk() {
       await Promise.all(
-        selected.map((id) => api.deleteVersion({ appId, versionId: id }))
+        selected.map((id) => api.deleteVersion({ appId, versionId: id })),
       );
     },
   });
@@ -127,15 +127,15 @@ function removeSelectedVersions({
 
 const columns: ColumnType<Version>[] = [
   {
-    title: "版本",
-    dataIndex: "name",
+    title: '版本',
+    dataIndex: 'name',
     render: (_, record) => (
       <TextColumn
         record={record}
         recordKey="name"
         extra={
           <>
-            <DepsTable deps={record.deps} name={"热更包 " + record.name} />
+            <DepsTable deps={record.deps} name={`热更包 ${record.name}`} />
             <Commit commit={record.commit} />
             <TestQrCode name={record.name} hash={record.hash} />
           </>
@@ -144,15 +144,15 @@ const columns: ColumnType<Version>[] = [
     ),
   },
   {
-    title: "描述",
-    dataIndex: "description",
+    title: '描述',
+    dataIndex: 'description',
     render: (_, record) => (
       <TextColumn record={record} recordKey="description" />
     ),
   },
   {
-    title: "自定义元信息",
-    dataIndex: "metaInfo",
+    title: '自定义元信息',
+    dataIndex: 'metaInfo',
     render: (_, record) => <TextColumn record={record} recordKey="metaInfo" />,
   },
   {
@@ -165,15 +165,15 @@ const columns: ColumnType<Version>[] = [
         </span>
       </Popover>
     ),
-    dataIndex: "packages",
-    width: "100%",
+    dataIndex: 'packages',
+    width: '100%',
     render: (_, { id, config }) => (
       <BindPackage config={config} versionId={id} />
     ),
   },
   {
-    title: "上传时间",
-    dataIndex: "createdAt",
+    title: '上传时间',
+    dataIndex: 'createdAt',
     render: (_, record) => (
       <TextColumn record={record} recordKey="createdAt" isEditable={false} />
     ),
@@ -194,7 +194,7 @@ const TextColumn = ({
   const key = recordKey;
   const { appId } = useManageContext();
   let value = record[key as keyof Version] as string;
-  if (key === "createdAt") {
+  if (key === 'createdAt') {
     const t = new Date(value);
     const y = t.getFullYear();
     const month = t.getMonth() + 1;
@@ -212,15 +212,15 @@ const TextColumn = ({
         let originValue = value;
         Modal.confirm({
           icon: null,
-          width: key === "metaInfo" ? 640 : undefined,
+          width: key === 'metaInfo' ? 640 : undefined,
           title: columns.find((i) => i.dataIndex === key)?.title as string,
           closable: true,
           maskClosable: true,
           content:
-            key === "metaInfo" ? (
+            key === 'metaInfo' ? (
               <JsonEditor
                 className="h-96"
-                content={{ text: value ?? "" }}
+                content={{ text: value ?? '' }}
                 onChange={(content) => {
                   value = (content as TextContent).text;
                 }}
@@ -240,7 +240,7 @@ const TextColumn = ({
               versionId: record.id,
               params: { [key]: value } as unknown as Omit<
                 Version,
-                "id" | "packages"
+                'id' | 'packages'
               >,
             });
           },
@@ -275,7 +275,7 @@ export default function VersionTable() {
     <Table
       className="versions"
       rowKey="id"
-      title={() => "热更新包"}
+      title={() => '热更新包'}
       columns={columns}
       dataSource={versions}
       pagination={{

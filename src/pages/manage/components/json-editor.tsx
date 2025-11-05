@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 import {
+  createJSONEditor,
   type JSONEditorPropsOptional,
   Mode,
-  createJSONEditor,
-} from "vanilla-jsoneditor";
+} from 'vanilla-jsoneditor';
 
 export default function JsonEditor({
   className,
@@ -12,7 +12,7 @@ export default function JsonEditor({
   const refContainer = useRef<HTMLDivElement>(null);
   const refEditor = useRef<ReturnType<typeof createJSONEditor>>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: no need to re-create editor
   useEffect(() => {
     // create editor
     refEditor.current = createJSONEditor({
@@ -32,7 +32,7 @@ export default function JsonEditor({
 
   useEffect(() => {
     refEditor.current?.updateProps(props);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    // biome-ignore lint/correctness/useExhaustiveDependencies: no need
   }, [props]);
 
   return <div className={className} ref={refContainer} />;

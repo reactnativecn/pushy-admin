@@ -1,4 +1,4 @@
-import { SettingFilled } from "@ant-design/icons";
+import { SettingFilled } from '@ant-design/icons';
 import {
   Breadcrumb,
   Button,
@@ -6,24 +6,24 @@ import {
   Form,
   Layout,
   Modal,
+  message,
   Row,
   Space,
   Tabs,
   Tag,
-  message,
-} from "antd";
+} from 'antd';
 
-import { Link, useParams } from "react-router-dom";
-import "./manage.css";
+import { Link, useParams } from 'react-router-dom';
+import './manage.css';
 
-import { api } from "@/services/api";
-import { useApp } from "@/utils/hooks";
-import { useEffect } from "react";
-import PackageList from "./components/package-list";
-import SettingModal from "./components/setting-modal";
-import VersionTable from "./components/version-table";
-import { ManageProvider, useManageContext } from "./hooks/useManageContext";
-import PlatformIcon from "@/components/platform-icon";
+import { useEffect } from 'react';
+import PlatformIcon from '@/components/platform-icon';
+import { api } from '@/services/api';
+import { useApp } from '@/utils/hooks';
+import PackageList from './components/package-list';
+import SettingModal from './components/setting-modal';
+import VersionTable from './components/version-table';
+import { ManageProvider, useManageContext } from './hooks/useManageContext';
 
 const ManageDashBoard = () => {
   const { packages, unusedPackages, packagesLoading } = useManageContext();
@@ -38,15 +38,15 @@ const ManageDashBoard = () => {
         <Tabs
           items={[
             {
-              key: "all",
-              label: "全部",
+              key: 'all',
+              label: '全部',
               children: (
                 <PackageList dataSource={packages} loading={packagesLoading} />
               ),
             },
             {
-              key: "unused",
-              label: "未使用",
+              key: 'unused',
+              label: '未使用',
               children: (
                 <PackageList
                   dataSource={unusedPackages}
@@ -90,7 +90,7 @@ export const Manage = () => {
                   <>
                     <PlatformIcon platform={app?.platform} className="mr-1" />
                     {app?.name}
-                    {app?.status === "paused" && (
+                    {app?.status === 'paused' && (
                       <Tag className="ml-2">暂停</Tag>
                     )}
                   </>
@@ -112,20 +112,20 @@ export const Manage = () => {
                 async onOk() {
                   try {
                     await api.updateApp(id, {
-                      name: form.getFieldValue("name") as string,
-                      downloadUrl: form.getFieldValue("downloadUrl") as string,
-                      status: form.getFieldValue("status") as
-                        | "normal"
-                        | "paused",
-                      ignoreBuildTime: form.getFieldValue("ignoreBuildTime") as
-                        | "enabled"
-                        | "disabled",
+                      name: form.getFieldValue('name') as string,
+                      downloadUrl: form.getFieldValue('downloadUrl') as string,
+                      status: form.getFieldValue('status') as
+                        | 'normal'
+                        | 'paused',
+                      ignoreBuildTime: form.getFieldValue('ignoreBuildTime') as
+                        | 'enabled'
+                        | 'disabled',
                     });
                   } catch (e) {
                     message.error((e as Error).message);
                     return;
                   }
-                  message.success("修改成功");
+                  message.success('修改成功');
                 },
               });
             }}

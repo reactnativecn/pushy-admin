@@ -1,13 +1,8 @@
-import { PRICING_LINK } from "@/constants/links";
-import { quotas } from "@/constants/quotas";
-import { rootRouterPath } from "@/router";
-import { api } from "@/services/api";
-import { useAppList, useUserInfo } from "@/utils/hooks";
 import {
   AppstoreOutlined,
   PlusOutlined,
   UserOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 import {
   Card,
   Form,
@@ -15,23 +10,28 @@ import {
   Layout,
   Menu,
   Modal,
+  message,
   Progress,
   Select,
   Tag,
   Tooltip,
-  message,
-} from "antd";
-import { Link, useLocation } from "react-router-dom";
-import { ReactComponent as LogoH } from "../assets/logo-h.svg";
-import PlatformIcon from "./platform-icon";
+} from 'antd';
+import { Link, useLocation } from 'react-router-dom';
+import { PRICING_LINK } from '@/constants/links';
+import { quotas } from '@/constants/quotas';
+import { rootRouterPath } from '@/router';
+import { api } from '@/services/api';
+import { useAppList, useUserInfo } from '@/utils/hooks';
+import { ReactComponent as LogoH } from '../assets/logo-h.svg';
+import PlatformIcon from './platform-icon';
 
 interface SiderMenuProps {
   selectedKeys: string[];
 }
 
 function addApp() {
-  let name = "";
-  let platform = "android";
+  let name = '';
+  let platform = 'android';
   Modal.confirm({
     icon: null,
     closable: true,
@@ -52,7 +52,7 @@ function addApp() {
             }}
             options={[
               {
-                value: "android",
+                value: 'android',
                 label: (
                   <>
                     <PlatformIcon platform="android" className="mr-2" /> Android
@@ -60,7 +60,7 @@ function addApp() {
                 ),
               },
               {
-                value: "ios",
+                value: 'ios',
                 label: (
                   <>
                     <PlatformIcon platform="ios" className="mr-2" /> iOS
@@ -68,7 +68,7 @@ function addApp() {
                 ),
               },
               {
-                value: "harmony",
+                value: 'harmony',
                 label: (
                   <>
                     <PlatformIcon platform="harmony" className="mr-[10px]" />
@@ -83,7 +83,7 @@ function addApp() {
     ),
     onOk() {
       if (!name) {
-        message.warning("请输入应用名称");
+        message.warning('请输入应用名称');
         return false;
       }
       return api.createApp({ name, platform }).catch((error) => {
@@ -94,7 +94,7 @@ function addApp() {
 }
 
 const style = {
-  sider: { boxShadow: "2px 0 8px 0 rgb(29 35 41 / 5%)", zIndex: 2 },
+  sider: { boxShadow: '2px 0 8px 0 rgb(29 35 41 / 5%)', zIndex: 2 },
 };
 
 export default function Sider() {
@@ -102,11 +102,11 @@ export default function Sider() {
   const { user } = useUserInfo();
   if (!user) return null;
 
-  const initPath = pathname?.replace(/^\//, "")?.split("/");
+  const initPath = pathname?.replace(/^\//, '')?.split('/');
   let selectedKeys = initPath;
   if (selectedKeys?.length === 0) {
-    if (pathname === "/") {
-      selectedKeys = ["/user"];
+    if (pathname === '/') {
+      selectedKeys = ['/user'];
     } else {
       selectedKeys = initPath;
     }
@@ -149,12 +149,12 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
           className="mr-2! mb-4!"
         >
           <Progress
-            status={percent && percent > 40 ? "normal" : "exception"}
-            size={["100%", 30]}
+            status={percent && percent > 40 ? 'normal' : 'exception'}
+            size={['100%', 30]}
             percent={percent}
-            percentPosition={{ type: "inner", align: "center" }}
+            percentPosition={{ type: 'inner', align: 'center' }}
             format={() =>
-              consumedQuota ? `${consumedQuota.toLocaleString()} 次` : ""
+              consumedQuota ? `${consumedQuota.toLocaleString()} 次` : ''
             }
           />
           <div className="text-xs mt-2 text-center">
@@ -165,8 +165,8 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
               {quota?.title}
             </a>
             可用: {pvQuota?.toLocaleString()} 次/每日
-          </div>{" "}
-          {user?.tier !== "free" && (
+          </div>{' '}
+          {user?.tier !== 'free' && (
             <div className="text-xs mt-2 text-center">
               有效期至：{displayExpireDay}
               {displayRemainingDays && (
@@ -181,23 +181,23 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
       )}
       <div className="overflow-y-auto">
         <Menu
-          defaultOpenKeys={["apps"]}
+          defaultOpenKeys={['apps']}
           selectedKeys={selectedKeys}
           mode="inline"
           items={[
             {
-              key: "user",
+              key: 'user',
               icon: <UserOutlined />,
               label: <Link to={rootRouterPath.user}>账户设置</Link>,
             },
             {
-              key: "apps",
+              key: 'apps',
               icon: <AppstoreOutlined />,
-              label: "应用管理",
+              label: '应用管理',
               children: [
                 ...(apps?.map((i, index) => ({
                   key: `${i.id}-${index}`,
-                  className: "!h-16",
+                  className: '!h-16',
                   label: (
                     <div className="flex flex-row items-center gap-4">
                       <div className="flex flex-col justify-center">
@@ -212,7 +212,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
                       >
                         <div className="flex flex-row items-center font-bold">
                           {i.name}
-                          {i.status === "paused" && (
+                          {i.status === 'paused' && (
                             <Tag className="ml-2">暂停</Tag>
                           )}
                         </div>
@@ -231,9 +231,9 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
                   ),
                 })) || []),
                 {
-                  key: "add-app",
+                  key: 'add-app',
                   icon: <PlusOutlined />,
-                  label: "添加应用",
+                  label: '添加应用',
                   onClick: addApp,
                 },
               ],

@@ -1,4 +1,4 @@
-import { Layout, Typography } from "antd";
+import { Layout, Typography } from 'antd';
 
 const Footer = () => (
   <Layout.Footer className="text-center">

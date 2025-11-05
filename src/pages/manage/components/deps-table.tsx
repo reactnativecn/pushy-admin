@@ -1,11 +1,11 @@
-import { DownOutlined, JavaScriptOutlined } from "@ant-design/icons";
-import { Popover, Dropdown, Button } from "antd";
-import JsonEditor from "./json-editor";
-import { Mode } from "vanilla-jsoneditor";
-import { useManageContext } from "../hooks/useManageContext";
-import { useVersions } from "@/utils/hooks";
-import { useState } from "react";
-import { DepsDiff } from "./deps-diff";
+import { DownOutlined, JavaScriptOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Popover } from 'antd';
+import { useState } from 'react';
+import { Mode } from 'vanilla-jsoneditor';
+import { useVersions } from '@/utils/hooks';
+import { useManageContext } from '../hooks/useManageContext';
+import { DepsDiff } from './deps-diff';
+import JsonEditor from './json-editor';
 export const DepsTable = ({
   deps,
   name,
@@ -61,9 +61,9 @@ export const DepsTable = ({
                           menu={{
                             items: [
                               {
-                                key: "package",
-                                type: "group",
-                                label: "原生包",
+                                key: 'package',
+                                type: 'group',
+                                label: '原生包',
                                 children: packages
                                   .filter((p) => !!p.deps)
                                   .map((p) => ({
@@ -72,9 +72,9 @@ export const DepsTable = ({
                                   })),
                               },
                               {
-                                key: "version",
-                                type: "group",
-                                label: "热更包",
+                                key: 'version',
+                                type: 'group',
+                                label: '热更包',
                                 children: versions
                                   .filter((v) => !!v.deps)
                                   .map((v) => ({
@@ -84,22 +84,22 @@ export const DepsTable = ({
                               },
                             ],
                             onClick: ({ key }) => {
-                              const [type, id] = key.split("_");
-                              if (type === "p") {
+                              const [type, id] = key.split('_');
+                              if (type === 'p') {
                                 const pkg = packages.find((p) => p.id === +id);
                                 setDiffs({
                                   oldDeps: pkg?.deps,
                                   newDeps: deps,
-                                  newName: "原生包 " + pkg?.name,
+                                  newName: `原生包 ${pkg?.name}`,
                                 });
                               } else {
                                 const version = versions.find(
-                                  (v) => v.id === +id
+                                  (v) => v.id === +id,
                                 );
                                 setDiffs({
                                   oldDeps: version?.deps,
                                   newDeps: deps,
-                                  newName: "热更包 " + version?.name,
+                                  newName: `热更包 ${version?.name}`,
                                 });
                               }
                             },
@@ -124,10 +124,13 @@ export const DepsTable = ({
                         content={{
                           json: Object.keys(deps)
                             .sort() // Sort the keys alphabetically
-                            .reduce((obj, key) => {
-                              obj[key] = deps[key]; // Rebuild the object with sorted keys
-                              return obj;
-                            }, {} as Record<string, string>),
+                            .reduce(
+                              (obj, key) => {
+                                obj[key] = deps[key]; // Rebuild the object with sorted keys
+                                return obj;
+                              },
+                              {} as Record<string, string>,
+                            ),
                         }}
                         mode={Mode.tree}
                         mainMenuBar={false}

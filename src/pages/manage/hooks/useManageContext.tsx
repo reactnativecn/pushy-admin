@@ -1,12 +1,12 @@
-import { useBinding, usePackages } from "@/utils/hooks";
-import { type ReactNode, createContext, useContext, useState } from "react";
+import { createContext, type ReactNode, useContext, useState } from 'react';
+import { useBinding, usePackages } from '@/utils/hooks';
 
 const noop = () => {};
 // const asyncNoop = () => Promise.resolve();
 
 export const defaultManageContext = {
   appId: 0,
-  deepLink: "",
+  deepLink: '',
   setDeepLink: noop,
   packages: [],
   unusedPackages: [],
@@ -36,7 +36,7 @@ export const ManageProvider = ({
   appId: number;
 }) => {
   const [deepLink, setDeepLink] = useState(
-    window.localStorage.getItem(`${appId}_deeplink`) ?? ""
+    window.localStorage.getItem(`${appId}_deeplink`) ?? '',
   );
   const {
     packages,

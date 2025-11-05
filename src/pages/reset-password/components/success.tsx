@@ -1,4 +1,4 @@
-import { Button, Result } from "antd";
+import { Button, Result } from 'antd';
 
 export default function Success() {
   return (

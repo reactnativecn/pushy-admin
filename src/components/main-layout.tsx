@@ -4,14 +4,14 @@ import {
   LogoutOutlined,
   ReadOutlined,
   UserOutlined,
-} from "@ant-design/icons";
-import { Layout, Menu, message, Row } from "antd";
-import type { ReactNode } from "react";
-import { Outlet } from "react-router-dom";
-import { logout } from "@/services/auth";
-import { useUserInfo } from "@/utils/hooks";
-import Footer from "./footer";
-import Sider from "./sider";
+} from '@ant-design/icons';
+import { Layout, Menu, message, Row } from 'antd';
+import type { ReactNode } from 'react';
+import { Outlet } from 'react-router-dom';
+import { logout } from '@/services/auth';
+import { useUserInfo } from '@/utils/hooks';
+import Footer from './footer';
+import Sider from './sider';
 
 interface Style {
   header: React.CSSProperties;
@@ -32,7 +32,7 @@ const MainLayout = () => {
               selectable={false}
               items={[
                 {
-                  key: "issues",
+                  key: 'issues',
                   icon: <CommentOutlined />,
                   label: (
                     <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
@@ -41,7 +41,7 @@ const MainLayout = () => {
                   ),
                 },
                 {
-                  key: "document",
+                  key: 'document',
                   icon: <ReadOutlined />,
                   label: (
                     <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
@@ -50,7 +50,7 @@ const MainLayout = () => {
                   ),
                 },
                 {
-                  key: "about",
+                  key: 'about',
                   icon: <InfoCircleOutlined />,
                   label: (
                     <ExtLink href="https://reactnative.cn/about.html">
@@ -61,17 +61,17 @@ const MainLayout = () => {
                 ...(user
                   ? [
                       {
-                        key: "user",
+                        key: 'user',
                         icon: <UserOutlined />,
                         label: user.name,
                         children: [
                           {
-                            key: "logout",
+                            key: 'logout',
                             icon: <LogoutOutlined />,
-                            label: "退出登录",
+                            label: '退出登录',
                             onClick: () => {
                               logout();
-                              message.info("您已退出登录");
+                              message.info('您已退出登录');
                             },
                           },
                         ],
@@ -113,17 +113,17 @@ const ExtLink = ({ children, href }: ExtLinkProps) => (
 
 const style: Style = {
   header: {
-    background: "#fff",
+    background: '#fff',
     height: 48,
-    lineHeight: "46px",
-    boxShadow: "2px 1px 4px rgba(0, 21, 41, 0.08)",
+    lineHeight: '46px',
+    boxShadow: '2px 1px 4px rgba(0, 21, 41, 0.08)',
     zIndex: 1,
   },
   body: {
-    overflow: "auto",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
+    overflow: 'auto',
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
     paddingBottom: 0,
   },
 };

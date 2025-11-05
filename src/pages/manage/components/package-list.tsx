@@ -1,6 +1,6 @@
 // import { useDrag } from "react-dnd";
-import { api } from "@/services/api";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import {
   Button,
   Col,
@@ -12,10 +12,11 @@ import {
   Select,
   Tag,
   Typography,
-} from "antd";
-import { useManageContext } from "../hooks/useManageContext";
-import { Commit } from "./commit";
-import { DepsTable } from "./deps-table";
+} from 'antd';
+import { api } from '@/services/api';
+import { useManageContext } from '../hooks/useManageContext';
+import { Commit } from './commit';
+import { DepsTable } from './deps-table';
 
 const PackageList = ({
   dataSource,
@@ -61,7 +62,7 @@ function edit(item: Package, appId: number) {
         </Form.Item>
         <Form.Item name="status" label="状态">
           <Select
-            onSelect={(value: Package["status"]) => {
+            onSelect={(value: Package['status']) => {
               status = value;
             }}
           >
@@ -93,11 +94,11 @@ const Item = ({ item }: { item: Package }) => {
             <Row align="middle">
               <Col flex={1}>
                 {item.name}
-                {item.status && item.status !== "normal" && (
+                {item.status && item.status !== 'normal' && (
                   <Tag className="ml-2">{status[item.status]}</Tag>
                 )}
               </Col>
-              <DepsTable deps={item.deps} name={"原生包 " + item.name} />
+              <DepsTable deps={item.deps} name={`原生包 ${item.name}`} />
               <Commit commit={item.commit} />
               <Button
                 type="link"
@@ -134,6 +135,6 @@ const Item = ({ item }: { item: Package }) => {
   );
 };
 const status = {
-  paused: "暂停",
-  expired: "过期",
+  paused: '暂停',
+  expired: '过期',
 };

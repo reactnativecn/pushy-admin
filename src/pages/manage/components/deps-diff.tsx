@@ -1,11 +1,11 @@
-import { Differ, Viewer } from "json-diff-kit";
-import "json-diff-kit/dist/viewer.css";
+import { Differ, Viewer } from 'json-diff-kit';
+import 'json-diff-kit/dist/viewer.css';
 
 const differ = new Differ({
   detectCircular: true, // default `true`
   maxDepth: Number.POSITIVE_INFINITY, // default `Infinity`
   showModifications: true, // default `true`
-  arrayDiffMethod: "lcs", // default `"normal"`, but `"lcs"` may be more useful
+  arrayDiffMethod: 'lcs', // default `"normal"`, but `"lcs"` may be more useful
 });
 
 export const DepsDiff = ({

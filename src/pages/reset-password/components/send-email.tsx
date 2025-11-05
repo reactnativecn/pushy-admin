@@ -1,17 +1,17 @@
-import { api } from "@/services/api";
-import { useMutation } from "@tanstack/react-query";
-import { Button, Form, Input, Result, message } from "antd";
-import { useState } from "react";
+import { useMutation } from '@tanstack/react-query';
+import { Button, Form, Input, message, Result } from 'antd';
+import { useState } from 'react';
+import { api } from '@/services/api';
 
 export default function SendEmail() {
   const [sent, setSent] = useState<boolean>(false);
   const { mutateAsync: sendEmail, isPending } = useMutation({
     mutationFn: (email: string) => api.resetpwdSendMail({ email }),
     onSuccess: () => {
-      message.info("邮件发送成功，请注意查收");
+      message.info('邮件发送成功，请注意查收');
     },
     onError: () => {
-      message.error("邮件发送失败");
+      message.error('邮件发送失败');
     },
   });
 
@@ -35,7 +35,7 @@ export default function SendEmail() {
     >
       <Form.Item
         name="email"
-        rules={[{ type: "email", message: "请输入正确的邮箱" }]}
+        rules={[{ type: 'email', message: '请输入正确的邮箱' }]}
       >
         <Input placeholder="输入绑定邮箱" type="email" required />
       </Form.Item>

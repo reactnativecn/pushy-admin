@@ -1,11 +1,11 @@
-import { AlipayCircleOutlined } from "@ant-design/icons";
-import type { MenuProps } from "antd";
-import { Button, Descriptions, Dropdown, Popover, Space, Spin } from "antd";
-import { type ReactNode, useState } from "react";
-import { api } from "@/services/api";
-import { useUserInfo } from "@/utils/hooks";
-import { PRICING_LINK } from "../constants/links";
-import { quotas } from "../constants/quotas";
+import { AlipayCircleOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
+import { Button, Descriptions, Dropdown, Popover, Space, Spin } from 'antd';
+import { type ReactNode, useState } from 'react';
+import { api } from '@/services/api';
+import { useUserInfo } from '@/utils/hooks';
+import { PRICING_LINK } from '../constants/links';
+import { quotas } from '../constants/quotas';
 
 const InvoiceHint = (
   <div>
@@ -43,7 +43,7 @@ const PurchaseButton = ({
       }}
       loading={loading}
     >
-      {loading ? "跳转至支付页面" : children}
+      {loading ? '跳转至支付页面' : children}
     </Button>
   );
 };
@@ -58,17 +58,17 @@ const UpgradeDropdown = ({
   // 获取所有可升级的版本
   const getUpgradeOptions = () => {
     const allTiers = [
-      { key: "standard", title: "升级标准版", tier: "standard" },
-      { key: "premium", title: "升级高级版", tier: "premium" },
-      { key: "pro", title: "升级专业版", tier: "pro" },
-      { key: "vip1", title: "升级大客户VIP1版", tier: "vip1" },
-      { key: "vip2", title: "升级大客户VIP2版", tier: "vip2" },
-      { key: "vip3", title: "升级大客户VIP3版", tier: "vip3" },
+      { key: 'standard', title: '升级标准版', tier: 'standard' },
+      { key: 'premium', title: '升级高级版', tier: 'premium' },
+      { key: 'pro', title: '升级专业版', tier: 'pro' },
+      { key: 'vip1', title: '升级大客户VIP1版', tier: 'vip1' },
+      { key: 'vip2', title: '升级大客户VIP2版', tier: 'vip2' },
+      { key: 'vip3', title: '升级大客户VIP3版', tier: 'vip3' },
     ];
 
     return allTiers.filter(
       (option) =>
-        currentQuota.pv < quotas[option.tier as keyof typeof quotas].pv
+        currentQuota.pv < quotas[option.tier as keyof typeof quotas].pv,
     );
   };
 
@@ -78,12 +78,12 @@ const UpgradeDropdown = ({
     return null; // 没有可升级的版本
   }
 
-  const handleMenuClick: MenuProps["onClick"] = async ({ key }) => {
+  const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
     setLoading(true);
     await purchase(key);
   };
 
-  const menuItems: MenuProps["items"] = upgradeOptions.map((option) => ({
+  const menuItems: MenuProps['items'] = upgradeOptions.map((option) => ({
     key: option.tier,
     label: option.title,
     icon: <AlipayCircleOutlined />,
@@ -108,7 +108,7 @@ const UpgradeDropdown = ({
       }}
       onClick={handleMainButtonClick}
     >
-      {loading ? "跳转至支付页面" : upgradeOptions[0]?.title || "升级服务"}
+      {loading ? '跳转至支付页面' : upgradeOptions[0]?.title || '升级服务'}
     </Dropdown.Button>
   );
 };
@@ -153,9 +153,9 @@ function UserPanel() {
                 )}
               </div>
             ) : (
-              "无"
+              '无'
             )}
-            {tier !== "free" && (
+            {tier !== 'free' && (
               <>
                 <PurchaseButton tier={tier}>续费</PurchaseButton>
                 <Popover content={InvoiceHint} trigger="click">

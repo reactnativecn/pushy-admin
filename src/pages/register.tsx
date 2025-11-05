@@ -1,12 +1,12 @@
-import { Button, Checkbox, Form, Input, message, Row } from "antd";
-import { md5 } from "hash-wasm";
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { api } from "@/services/api";
-import { setUserEmail } from "@/services/auth";
-import { ReactComponent as Logo } from "../assets/logo.svg";
-import { rootRouterPath, router } from "../router";
-import { isPasswordValid } from "../utils/helper";
+import { Button, Checkbox, Form, Input, message, Row } from 'antd';
+import { md5 } from 'hash-wasm';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { api } from '@/services/api';
+import { setUserEmail } from '@/services/auth';
+import { ReactComponent as Logo } from '../assets/logo.svg';
+import { rootRouterPath, router } from '../router';
+import { isPasswordValid } from '../utils/helper';
 
 export const Register = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -21,7 +21,7 @@ export const Register = () => {
       setUserEmail(values.email);
       router.navigate(rootRouterPath.welcome);
     } catch (_) {
-      message.error("该邮箱已被注册");
+      message.error('该邮箱已被注册');
     }
     setLoading(false);
   }
@@ -47,7 +47,7 @@ export const Register = () => {
             () => ({
               async validator(_, value: string) {
                 if (value && !isPasswordValid(value)) {
-                  throw "密码中需要同时包含大、小写字母和数字，且长度不少于6位";
+                  throw '密码中需要同时包含大、小写字母和数字，且长度不少于6位';
                 }
               },
             }),
@@ -68,8 +68,8 @@ export const Register = () => {
           rules={[
             ({ getFieldValue }) => ({
               async validator(_, value: string) {
-                if (getFieldValue("pwd") !== value) {
-                  throw "两次输入的密码不一致";
+                if (getFieldValue('pwd') !== value) {
+                  throw '两次输入的密码不一致';
                 }
               },
             }),
@@ -103,7 +103,7 @@ export const Register = () => {
                   validator: (_, value) =>
                     value
                       ? Promise.resolve()
-                      : Promise.reject(Error("请阅读并同意后勾选此处")),
+                      : Promise.reject(Error('请阅读并同意后勾选此处')),
                 },
               ]}
               hasFeedback
@@ -134,8 +134,8 @@ export const Register = () => {
 export const Component = Register;
 
 const style: Style = {
-  body: { display: "flex", flexDirection: "column", height: "100%" },
-  form: { width: 320, margin: "auto", paddingTop: 16, flex: 1 },
-  logo: { textAlign: "center", margin: "48px 0" },
-  slogan: { marginTop: 16, color: "#00000073", fontSize: 18 },
+  body: { display: 'flex', flexDirection: 'column', height: '100%' },
+  form: { width: 320, margin: 'auto', paddingTop: 16, flex: 1 },
+  logo: { textAlign: 'center', margin: '48px 0' },
+  slogan: { marginTop: 16, color: '#00000073', fontSize: 18 },
 };

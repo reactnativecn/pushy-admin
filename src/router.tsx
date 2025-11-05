@@ -1,20 +1,20 @@
-import { Alert } from "antd";
-import { createHashRouter, Navigate, redirect } from "react-router-dom";
-import { ErrorBoundary } from "./components/error-boundary";
-import MainLayout from "./components/main-layout";
-import { getToken } from "./services/request";
-import "./utils/notice";
+import { Alert } from 'antd';
+import { createHashRouter, Navigate, redirect } from 'react-router-dom';
+import { ErrorBoundary } from './components/error-boundary';
+import MainLayout from './components/main-layout';
+import { getToken } from './services/request';
+import './utils/notice';
 
 export const rootRouterPath = {
-  user: "/user",
-  apps: "/apps",
+  user: '/user',
+  apps: '/apps',
   versions: (id: string) => `/apps/${id}`,
   resetPassword: (step: string) => `/reset-password/${step}`,
-  activate: "/activate",
-  inactivated: "/inactivated",
-  login: "/login",
-  welcome: "/welcome",
-  register: "/register",
+  activate: '/activate',
+  inactivated: '/inactivated',
+  login: '/login',
+  welcome: '/welcome',
+  register: '/register',
 };
 
 export const needAuthLoader = ({ request }: { request: Request }) => {
@@ -23,11 +23,11 @@ export const needAuthLoader = ({ request }: { request: Request }) => {
     if (pathname === rootRouterPath.login) {
       return null;
     }
-    if (pathname === "/") {
+    if (pathname === '/') {
       return redirect(rootRouterPath.login);
     }
     return redirect(
-      `${rootRouterPath.login}?loginFrom=${encodeURIComponent(pathname + search)}`
+      `${rootRouterPath.login}?loginFrom=${encodeURIComponent(pathname + search)}`,
     );
   }
   return null;
@@ -35,52 +35,52 @@ export const needAuthLoader = ({ request }: { request: Request }) => {
 
 export const router = createHashRouter([
   {
-    path: "/",
+    path: '/',
     element: <MainLayout />,
     errorElement: <ErrorBoundary />,
     children: [
       {
-        path: "",
+        path: '',
         element: <Navigate to={rootRouterPath.user} />,
       },
       {
-        path: "welcome",
-        lazy: () => import("./pages/welcome"),
+        path: 'welcome',
+        lazy: () => import('./pages/welcome'),
       },
       {
-        path: "reset-password/:step",
-        lazy: () => import("./pages/reset-password"),
+        path: 'reset-password/:step',
+        lazy: () => import('./pages/reset-password'),
       },
       {
-        path: "activate",
-        lazy: () => import("./pages/activate"),
+        path: 'activate',
+        lazy: () => import('./pages/activate'),
       },
       {
-        path: "inactivated",
-        lazy: () => import("./pages/inactivated"),
+        path: 'inactivated',
+        lazy: () => import('./pages/inactivated'),
       },
       {
-        path: "register",
-        lazy: () => import("./pages/register"),
+        path: 'register',
+        lazy: () => import('./pages/register'),
       },
       {
-        path: "login",
-        lazy: () => import("./pages/login"),
+        path: 'login',
+        lazy: () => import('./pages/login'),
       },
       {
-        path: "apps",
+        path: 'apps',
         loader: needAuthLoader,
         element: <Alert message="请选择应用" showIcon />,
       },
       {
-        path: "apps/:id",
+        path: 'apps/:id',
         loader: needAuthLoader,
-        lazy: () => import("./pages/manage"),
+        lazy: () => import('./pages/manage'),
       },
       {
-        path: "user",
+        path: 'user',
         loader: needAuthLoader,
-        lazy: () => import("./pages/user"),
+        lazy: () => import('./pages/user'),
       },
     ],
   },

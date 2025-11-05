@@ -1,8 +1,8 @@
-import { login } from "@/services/auth";
-import { Button, Form, Input, Row } from "antd";
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ReactComponent as Logo } from "../assets/logo.svg";
+import { Button, Form, Input, Row } from 'antd';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { login } from '@/services/auth';
+import { ReactComponent as Logo } from '../assets/logo.svg';
 
 let email: string;
 let password: string;
@@ -69,8 +69,8 @@ export const Login = () => {
 export const Component = Login;
 
 const style: Style = {
-  body: { display: "flex", flexDirection: "column", height: "100%" },
-  form: { width: 320, margin: "auto", paddingTop: 16, flex: 1 },
-  logo: { textAlign: "center", margin: "48px 0" },
-  slogan: { marginTop: 16, color: "#00000073", fontSize: 18 },
+  body: { display: 'flex', flexDirection: 'column', height: '100%' },
+  form: { width: 320, margin: 'auto', paddingTop: 16, flex: 1 },
+  logo: { textAlign: 'center', margin: '48px 0' },
+  slogan: { marginTop: 16, color: '#00000073', fontSize: 18 },
 };

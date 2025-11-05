@@ -1,7 +1,5 @@
 {
-  "files": {
-    "ignore": ["dist"]
-  },
+  "files": {},
   "linter": {
     "enabled": true,
     "rules": {
