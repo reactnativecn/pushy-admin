@@ -49,8 +49,7 @@ interface Package extends PackageBase {
   deps?: Record<string, string>;
   commit?: Commit;
   hash: string;
-  version?: Version;
-  expVersionId?: number;
+  versions?: Version;
 }
 
 interface Commit {
@@ -95,4 +94,15 @@ interface VersionConfig {
   rollout?: {
     [packageVersion: string]: number | null;
   };
+}
+
+type BindingType = "full" | "exp";
+
+interface Binding {
+  id: number;
+  type: BindingType;
+  // appId: number;
+  versionId: number;
+  packageId: number;
+  rollout: number;
 }

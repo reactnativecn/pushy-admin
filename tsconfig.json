@@ -2,8 +2,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "lib": ["dom", "esnext"],
-    "jsx": "react",
-    "reactNamespace": "window",
+    "jsx": "react-jsx",
     "esModuleInterop": true,
     "strict": true,
     "resolveJsonModule": true,
