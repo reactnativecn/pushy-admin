@@ -1,5 +1,3 @@
-type Style = { [name: string]: import('react').CSSProperties };
-
 declare module '*.svg' {
   export const ReactComponent: React.FunctionComponent<
     React.SVGProps<SVGSVGElement>
@@ -86,7 +84,7 @@ interface SiderMenuProps {
   selectedKeys?: string[];
 }
 
-interface CotentProps {
+interface ContentProps {
   app: App;
 }
 

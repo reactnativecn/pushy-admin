@@ -13,12 +13,14 @@ export const setToken = (token: string) => {
 export const getToken = () => _token;
 
 const SERVER = {
-  main: [
-    // "http://localhost:9000",
-    'https://update.react-native.cn/api',
-    'https://update.reactnative.cn/api',
-    // "https://5.rnupdate.online/api",
-  ],
+  main:
+    process.env.NODE_ENV === 'production'
+      ? [
+          'https://update.react-native.cn/api',
+          'https://update.reactnative.cn/api',
+          // "https://5.rnupdate.online/api",
+        ]
+      : ['http://localhost:9000'],
 };
 
 // const baseUrl = `http://localhost:9000`;
