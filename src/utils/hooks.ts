@@ -24,7 +24,7 @@ export const useUserInfo = () => {
     : null;
   const isExpiringSoon = remainingDays !== null && remainingDays <= 90;
   const displayRemainingDays = isExpiringSoon
-    ? `(剩余 ${remainingDays} 天)`
+    ? `(剩余 ${remainingDays} 天，之后转为免费版)`
     : '';
   return {
     user: getToken() ? data : null,
