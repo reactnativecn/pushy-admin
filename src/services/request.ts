@@ -20,7 +20,7 @@ const SERVER = {
           'https://update.reactnative.cn/api',
           // "https://5.rnupdate.online/api",
         ]
-      : ['http://localhost:9000'],
+      : [process.env.PUBLIC_API ?? 'http://localhost:9000'],
 };
 
 // const baseUrl = `http://localhost:9000`;
