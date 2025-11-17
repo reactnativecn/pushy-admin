@@ -19,6 +19,9 @@ dayjs.extend(isSameOrBefore);
 dayjs.locale('zh-cn');
 
 export const getUA = (userAgent: string) => {
+  if (userAgent.startsWith('react-native-update-cli')) {
+    return <div>cli {userAgent.split('/')[1]}</div>;
+  }
   const { browser, os } = UAParser(userAgent);
   return (
     <>
@@ -337,9 +340,17 @@ export const AuditLogs = () => {
       let browserInfo = '-';
       let osInfo = '-';
       if (log.userAgent) {
-        const { browser, os } = UAParser(log.userAgent);
-        browserInfo = `${browser.name || '-'} ${browser.version || ''}`.trim();
-        osInfo = `${os.name || '-'} ${os.version || ''}`.trim();
+        // 处理特殊的 CLI useragent 格式
+        if (log.userAgent.startsWith('react-native-update-cli')) {
+          const version = log.userAgent.split('/')[1] || '';
+          browserInfo = `cli ${version}`.trim();
+          osInfo = '-';
+        } else {
+          const { browser, os } = UAParser(log.userAgent);
+          browserInfo =
+            `${browser.name || '-'} ${browser.version || ''}`.trim();
+          osInfo = `${os.name || '-'} ${os.version || ''}`.trim();
+        }
       }
 
       return {
