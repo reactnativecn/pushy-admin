@@ -132,3 +132,40 @@ export const useBinding = (appId: number) => {
   // });
   return { bindings, isLoading };
 };
+
+export const useAuditLogs = ({
+  offset = 0,
+  limit = 20,
+}: {
+  offset?: number;
+  limit?: number;
+}) => {
+  // Fetch all audit logs (up to 1000) from backend and cache them
+  const { data, isLoading } = useQuery({
+    queryKey: ['auditLogs'],
+    staleTime: 3000,
+    queryFn: () =>
+      api.getAuditLogs({
+        offset: 0,
+        limit: 1000,
+        startDate: dayjs().subtract(1, 'year').toISOString(),
+      }),
+  });
+
+  // Implement frontend pagination
+  const allAuditLogs = data?.data ?? [];
+  const totalCount = data?.count ?? 0;
+
+  // Calculate pagination
+  const startIndex = offset;
+  const endIndex = offset + limit;
+  const paginatedAuditLogs = allAuditLogs.slice(startIndex, endIndex);
+
+  return {
+    auditLogs: paginatedAuditLogs,
+    count: totalCount,
+    isLoading,
+    // Also return all audit logs for components that might need them
+    allAuditLogs,
+  };
+};

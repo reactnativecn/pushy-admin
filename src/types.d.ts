@@ -104,3 +104,17 @@ interface Binding {
   packageId: number;
   rollout: number;
 }
+
+interface AuditLog {
+  id: number;
+  method: string;
+  path: string;
+  data?: Record<string, any>;
+  statusCode: string;
+  ip?: string;
+  userAgent?: string;
+  apiTokens?: {
+    tokenSuffix: string;
+  }
+  createdAt: string;
+}

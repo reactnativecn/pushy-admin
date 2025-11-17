@@ -1,5 +1,6 @@
 import {
   AppstoreOutlined,
+  FileTextOutlined,
   PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -189,6 +190,11 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
               key: 'user',
               icon: <UserOutlined />,
               label: <Link to={rootRouterPath.user}>账户设置</Link>,
+            },
+            {
+              key: 'audit-logs',
+              icon: <FileTextOutlined />,
+              label: <Link to={rootRouterPath.auditLogs}>操作日志</Link>,
             },
             {
               key: 'apps',

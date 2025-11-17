@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "PUBLIC_API=https://update.reactnative.cn/api rsbuild dev",
-    "dev:local": "rsbuild dev",
+    "dev:local": "PUBLIC_API=http://localhost:9000 rsbuild dev",
     "build": "NODE_ENV=production rsbuild build",
     "preview": "rsbuild preview",
     "lint": "tsc --noEmit & biome check --write ."
@@ -24,7 +24,9 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
-    "vanilla-jsoneditor": "^3.10.0"
+    "ua-parser-js": "^2.0.6",
+    "vanilla-jsoneditor": "^3.10.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.5",
