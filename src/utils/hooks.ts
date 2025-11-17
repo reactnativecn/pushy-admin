@@ -148,7 +148,7 @@ export const useAuditLogs = ({
       api.getAuditLogs({
         offset: 0,
         limit: 1000,
-        startDate: dayjs().subtract(1, 'year').toISOString(),
+        startDate: dayjs().subtract(180, 'day').toISOString(),
       }),
   });
 

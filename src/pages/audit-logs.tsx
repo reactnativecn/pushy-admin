@@ -263,15 +263,15 @@ export const AuditLogs = () => {
   const handleDateRangeChange = (
     dates: [Dayjs | null, Dayjs | null] | null,
   ) => {
-    // 验证日期范围不超过一年
+    // 验证日期范围不超过180天
     if (dates?.[0] && dates?.[1]) {
       const startDate = dates[0];
       const endDate = dates[1];
       const diffInDays = endDate.diff(startDate, 'day');
 
-      if (diffInDays > 365) {
-        // 如果超过一年，自动调整为一年
-        const adjustedEndDate = startDate.add(365, 'day');
+      if (diffInDays > 180) {
+        // 如果超过180天，自动调整为180天
+        const adjustedEndDate = startDate.add(180, 'day');
         setDateRange([startDate, adjustedEndDate]);
       } else {
         setDateRange(dates);
@@ -282,40 +282,40 @@ export const AuditLogs = () => {
     setOffset(0); // 重置到第一页
   };
 
-  // 限制日期选择：不能超过一年，不能选择未来日期，不能选择超过一年前的日期
+  // 限制日期选择：不能超过180天，不能选择未来日期，不能选择超过180天前的日期
   const disabledDate = (current: Dayjs | null) => {
     if (!current) return false;
 
     const today = dayjs();
-    const oneYearAgo = today.subtract(1, 'year');
+    const oneHundredEightyDaysAgo = today.subtract(180, 'day');
 
     // 不能选择未来日期
     if (current.isAfter(today, 'day')) {
       return true;
     }
 
-    // 不能选择超过一年前的日期（从今天开始往过去超过一年）
-    if (current.isBefore(oneYearAgo, 'day')) {
+    // 不能选择超过180天前的日期（从今天开始往过去超过180天）
+    if (current.isBefore(oneHundredEightyDaysAgo, 'day')) {
       return true;
     }
 
-    // 如果已经选择了开始日期，限制结束日期不能超过开始日期一年
+    // 如果已经选择了开始日期，限制结束日期不能超过开始日期180天
     if (dateRange?.[0] && !dateRange[1]) {
       const startDate = dateRange[0];
-      const oneYearLater = startDate.add(1, 'year');
+      const oneHundredEightyDaysLater = startDate.add(180, 'day');
       return (
         current.isBefore(startDate, 'day') ||
-        current.isAfter(oneYearLater, 'day')
+        current.isAfter(oneHundredEightyDaysLater, 'day')
       );
     }
 
-    // 如果已经选择了结束日期，限制开始日期不能早于结束日期一年
+    // 如果已经选择了结束日期，限制开始日期不能早于结束日期180天
     if (!dateRange?.[0] && dateRange?.[1]) {
       const endDate = dateRange[1];
-      const oneYearEarlier = endDate.subtract(1, 'year');
+      const oneHundredEightyDaysEarlier = endDate.subtract(180, 'day');
       return (
         current.isAfter(endDate, 'day') ||
-        current.isBefore(oneYearEarlier, 'day')
+        current.isBefore(oneHundredEightyDaysEarlier, 'day')
       );
     }
 
@@ -391,8 +391,8 @@ export const AuditLogs = () => {
               操作日志
             </h2>
             <p className="text-gray-500 text-sm mt-1">
-              日志功能从 2025 年 11 月 17
-              日开始测试，没有更早的数据。将仅保留一年内的数据。
+              日志功能从 2025 年 11 月 17 日开始测试，没有更早的数据。将仅保留
+              180 天内的数据。
             </p>
           </div>
           <Space>
