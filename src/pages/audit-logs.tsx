@@ -60,15 +60,19 @@ const actionMap: Record<string, string> = {
   // 文件相关
   'POST /upload': '上传文件',
   // 原生包相关
+  'POST /app/{id}/package/{id}/create': '创建原生包',
   'PUT /app/{id}/package/{id}': '修改原生包设置',
   'DELETE /app/{id}/package/{id}': '删除原生包',
   // 热更包相关
-  'POST /app/{id}/version/{id}': '创建热更包',
+  'POST /app/{id}/version/{id}/create': '创建热更包',
   'PUT /app/{id}/version/{id}': '修改热更包设置',
   'DELETE /app/{id}/version/{id}': '删除热更包',
   // 绑定相关
   'POST /app/{id}/binding': '创建/更新绑定',
   'DELETE /app/{id}/binding/{id}': '删除绑定',
+  // api key 相关
+  'POST /api-token/create': '创建 API Key',
+  'DELETE /api-token/{id}': '删除 API Key',
 };
 
 // 获取操作语义描述
