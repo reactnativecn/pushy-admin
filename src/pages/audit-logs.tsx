@@ -60,11 +60,11 @@ const actionMap: Record<string, string> = {
   // 文件相关
   'POST /upload': '上传文件',
   // 原生包相关
-  'POST /app/{id}/package/{id}/create': '创建原生包',
+  'POST /app/{id}/package/create': '创建原生包',
   'PUT /app/{id}/package/{id}': '修改原生包设置',
   'DELETE /app/{id}/package/{id}': '删除原生包',
   // 热更包相关
-  'POST /app/{id}/version/{id}/create': '创建热更包',
+  'POST /app/{id}/version/create': '创建热更包',
   'PUT /app/{id}/version/{id}': '修改热更包设置',
   'DELETE /app/{id}/version/{id}': '删除热更包',
   // 绑定相关
