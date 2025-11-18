@@ -37,9 +37,9 @@ export const getUA = (userAgent: string) => {
 
 const { Text } = Typography;
 
-// 将 path 中的数字替换为 {id}
+// 将 path 中的数字替换为 {id}，并移除末尾的斜杠
 const normalizePath = (path: string): string => {
-  return path.replace(/\/\d+/g, '/{id}');
+  return path.replace(/\/\d+/g, '/{id}').replace(/\/$/, '');
 };
 
 // API 操作语义映射字典（只包含写操作）
@@ -67,7 +67,7 @@ const actionMap: Record<string, string> = {
   'PUT /app/{id}/version/{id}': '修改热更包设置',
   'DELETE /app/{id}/version/{id}': '删除热更包',
   // 绑定相关
-  'POST /app/{id}/binding/': '创建/更新绑定',
+  'POST /app/{id}/binding': '创建/更新绑定',
   'DELETE /app/{id}/binding/{id}': '删除绑定',
 };
 
