@@ -59,14 +59,6 @@ const pathPatterns: Array<{
   getAction: (method: string) => string;
 }> = [
   {
-    pattern: /^\/app\/\d+$/,
-    getAction: (method) => {
-      if (method === 'PUT') return '更新应用';
-      if (method === 'DELETE') return '删除应用';
-      return '';
-    },
-  },
-  {
     pattern: /^\/app\/\d+\/package\/\d+$/,
     getAction: (method) => {
       if (method === 'PUT') return '修改原生包设置';
@@ -90,6 +82,14 @@ const pathPatterns: Array<{
   {
     pattern: /^\/app\/\d+\/binding\/\d+$/,
     getAction: () => '删除绑定',
+  },
+  {
+    pattern: /^\/app\/\d+$/,
+    getAction: (method) => {
+      if (method === 'PUT') return '更新应用';
+      if (method === 'DELETE') return '删除应用';
+      return '';
+    },
   },
 ];
 
