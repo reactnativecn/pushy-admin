@@ -113,7 +113,7 @@ function removeSelectedVersions({
     }
   }
   Modal.confirm({
-    title: '删除所选热更新包：',
+    title: '删除所选热更包：',
     content: versionNames.join('，'),
     maskClosable: true,
     okButtonProps: { danger: true },
@@ -275,7 +275,7 @@ export default function VersionTable() {
     <Table
       className="versions"
       rowKey="id"
-      title={() => '热更新包'}
+      title={() => '热更包'}
       columns={columns}
       dataSource={versions}
       pagination={{

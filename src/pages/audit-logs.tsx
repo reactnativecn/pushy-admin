@@ -50,6 +50,7 @@ const actionMap: Record<string, string> = {
   'POST /app/create': '创建应用',
   // 订单相关
   'POST /orders': '创建订单',
+  'POST /upload': '上传文件',
 };
 
 // 路径模式匹配（用于动态路径，只包含写操作）
@@ -68,7 +69,7 @@ const pathPatterns: Array<{
   {
     pattern: /^\/app\/\d+\/package\/\d+$/,
     getAction: (method) => {
-      if (method === 'PUT') return '更新原生包';
+      if (method === 'PUT') return '修改原生包设置';
       if (method === 'DELETE') return '删除原生包';
       return '';
     },
@@ -76,8 +77,9 @@ const pathPatterns: Array<{
   {
     pattern: /^\/app\/\d+\/version\/\d+$/,
     getAction: (method) => {
-      if (method === 'PUT') return '更新热更新包';
-      if (method === 'DELETE') return '删除热更新包';
+      if (method === 'PUT') return '修改热更包设置';
+      if (method === 'DELETE') return '删除热更包';
+      if (method === 'POST') return '创建热更包';
       return '';
     },
   },
@@ -165,19 +167,27 @@ const columns: ColumnType<AuditLog>[] = [
   },
   {
     title: '提交数据',
-    dataIndex: 'data',
     width: 300,
     ellipsis: {
       showTitle: false,
     },
-    render: (data?: Record<string, any>) =>
-      data ? (
+    render: (_, { path, data }: AuditLog) => {
+      const isUpload = path.startsWith('/upload');
+      if (isUpload) {
+        if (data?.ext === '.ppk') {
+          return <Text>热更包</Text>;
+        } else {
+          return <Text>原生包</Text>;
+        }
+      }
+      return data ? (
         <Text ellipsis={{ tooltip: JSON.stringify(data, null, 2) }}>
           {JSON.stringify(data)}
         </Text>
       ) : (
         <Text type="secondary">-</Text>
-      ),
+      );
+    },
   },
   {
     title: '设备信息',
