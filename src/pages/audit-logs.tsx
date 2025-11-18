@@ -164,12 +164,15 @@ const columns: ColumnType<AuditLog>[] = [
           return <Text>原生包</Text>;
         }
       }
-      return data ? (
+      if (!data) {
+        return <Text type="secondary">-</Text>;
+      }
+      delete data.deps;
+      delete data.commit;
+      return (
         <Text ellipsis={{ tooltip: JSON.stringify(data, null, 2) }}>
           {JSON.stringify(data)}
         </Text>
-      ) : (
-        <Text type="secondary">-</Text>
       );
     },
   },
