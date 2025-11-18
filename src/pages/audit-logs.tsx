@@ -37,7 +37,12 @@ export const getUA = (userAgent: string) => {
 
 const { Text } = Typography;
 
-// API 操作语义映射字典（精确匹配，只包含写操作）
+// 将 path 中的数字替换为 {id}
+const normalizePath = (path: string): string => {
+  return path.replace(/\/\d+/g, '/{id}');
+};
+
+// API 操作语义映射字典（只包含写操作）
 const actionMap: Record<string, string> = {
   // 用户相关
   'POST /user/login': '登录',
@@ -48,77 +53,47 @@ const actionMap: Record<string, string> = {
   'POST /user/resetpwd/reset': '重置密码',
   // 应用相关
   'POST /app/create': '创建应用',
+  'PUT /app/{id}': '更新应用',
+  'DELETE /app/{id}': '删除应用',
   // 订单相关
   'POST /orders': '创建订单',
+  // 文件相关
   'POST /upload': '上传文件',
+  // 原生包相关
+  'PUT /app/{id}/package/{id}': '修改原生包设置',
+  'DELETE /app/{id}/package/{id}': '删除原生包',
+  // 热更包相关
+  'POST /app/{id}/version/{id}': '创建热更包',
+  'PUT /app/{id}/version/{id}': '修改热更包设置',
+  'DELETE /app/{id}/version/{id}': '删除热更包',
+  // 绑定相关
+  'POST /app/{id}/binding/': '创建/更新绑定',
+  'DELETE /app/{id}/binding/{id}': '删除绑定',
 };
-
-// 路径模式匹配（用于动态路径，只包含写操作）
-const pathPatterns: Array<{
-  pattern: RegExp;
-  getAction: (method: string) => string;
-}> = [
-  {
-    pattern: /^\/app\/\d+\/package\/\d+$/,
-    getAction: (method) => {
-      if (method === 'PUT') return '修改原生包设置';
-      if (method === 'DELETE') return '删除原生包';
-      return '';
-    },
-  },
-  {
-    pattern: /^\/app\/\d+\/version\/\d+$/,
-    getAction: (method) => {
-      if (method === 'PUT') return '修改热更包设置';
-      if (method === 'DELETE') return '删除热更包';
-      if (method === 'POST') return '创建热更包';
-      return '';
-    },
-  },
-  {
-    pattern: /^\/app\/\d+\/binding\/$/,
-    getAction: () => '创建/更新绑定',
-  },
-  {
-    pattern: /^\/app\/\d+\/binding\/\d+$/,
-    getAction: () => '删除绑定',
-  },
-  {
-    pattern: /^\/app\/\d+$/,
-    getAction: (method) => {
-      if (method === 'PUT') return '更新应用';
-      if (method === 'DELETE') return '删除应用';
-      return '';
-    },
-  },
-];
 
 // 获取操作语义描述
 const getActionLabel = (method: string, path: string): string => {
-  const key = `${method.toUpperCase()} ${path}`;
+  const normalizedPath = normalizePath(path);
+  const key = `${method.toUpperCase()} ${normalizedPath}`;
 
-  // 先尝试精确匹配
-  if (actionMap[key]) {
-    return actionMap[key];
-  }
-
-  // 尝试模式匹配
-  for (const { pattern, getAction } of pathPatterns) {
-    if (pattern.test(path)) {
-      return getAction(method.toUpperCase());
-    }
-  }
-
-  // 如果没有匹配到，返回原始 method + path
-  return `${method.toUpperCase()} ${path}`;
+  return actionMap[key] || `${method.toUpperCase()} ${path}`;
 };
+
+// 生成操作类型的 filter
+const actionFilters = Object.values(actionMap)
+  .sort()
+  .map((value) => ({
+    text: value,
+    value,
+  }));
 
 const columns: ColumnType<AuditLog>[] = [
   {
     title: '时间',
     dataIndex: 'createdAt',
     width: 180,
-    sorter: true,
+    sorter: (a, b) =>
+      dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
     render: (createdAt: string) => {
       const date = dayjs(createdAt);
       return (
@@ -134,6 +109,11 @@ const columns: ColumnType<AuditLog>[] = [
   {
     title: '操作',
     width: 120,
+    filters: actionFilters,
+    onFilter: (value, record) => {
+      const actionLabel = getActionLabel(record.method, record.path);
+      return actionLabel === value;
+    },
     render: (_, record) => {
       const actionLabel = getActionLabel(record.method, record.path);
       const isDelete = record.method.toUpperCase() === 'DELETE';
@@ -265,13 +245,6 @@ export const AuditLogs = () => {
       return true;
     });
   }, [allAuditLogs, dateRange]);
-
-  // 前端分页
-  const paginatedAuditLogs = useMemo(() => {
-    const startIndex = offset;
-    const endIndex = offset + pageSize;
-    return filteredAuditLogs.slice(startIndex, endIndex);
-  }, [filteredAuditLogs, offset, pageSize]);
 
   const handleDateRangeChange = (
     dates: [Dayjs | null, Dayjs | null] | null,
@@ -439,7 +412,7 @@ export const AuditLogs = () => {
       <Table
         rowKey="id"
         columns={columns}
-        dataSource={paginatedAuditLogs}
+        dataSource={filteredAuditLogs}
         loading={isLoading}
         pagination={{
           showSizeChanger: true,
