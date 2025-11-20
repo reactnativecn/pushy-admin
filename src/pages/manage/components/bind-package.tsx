@@ -3,18 +3,18 @@ import {
   ExperimentOutlined,
   LinkOutlined,
   RestOutlined,
-} from "@ant-design/icons";
-import { Button, Dropdown, type MenuProps } from "antd";
-import { useMemo } from "react";
-import { api } from "@/services/api";
-import { useManageContext } from "../hooks/useManageContext";
+} from '@ant-design/icons';
+import { Button, Dropdown, type MenuProps } from 'antd';
+import { useMemo } from 'react';
+import { api } from '@/services/api';
+import { useManageContext } from '../hooks/useManageContext';
 
 const BindPackage = ({
   versionId,
   config,
 }: {
   versionId: number;
-  config: Version["config"];
+  config: Version['config'];
 }) => {
   const {
     packages: allPackages,
@@ -41,25 +41,28 @@ const BindPackage = ({
       packageId: number;
       rollout: number | null | undefined;
     }[] = legacyBindings.concat(
-      bindings.filter((b) => b.versionId === versionId)
+      bindings.filter((b) => b.versionId === versionId),
     );
 
     if (matchedBindings.length === 0 || allPackages.length === 0) return null;
 
     for (const binding of matchedBindings) {
-      const p = packageMap.get(binding.packageId)!;
+      const p = packageMap.get(binding.packageId);
+      if (!p) {
+        continue;
+      }
       const rolloutConfig = binding.rollout;
       const isFull =
         rolloutConfig === 100 ||
         rolloutConfig === undefined ||
         rolloutConfig === null;
       const rolloutConfigNumber = Number(rolloutConfig);
-      const items: MenuProps["items"] = isFull
+      const items: MenuProps['items'] = isFull
         ? []
         : [
             {
-              key: "full",
-              label: "全量",
+              key: 'full',
+              label: '全量',
               icon: <CloudDownloadOutlined />,
               onClick: () =>
                 api.upsertBinding({
@@ -72,8 +75,8 @@ const BindPackage = ({
 
       if (rolloutConfigNumber < 50 && !isFull) {
         items.push({
-          key: "gray",
-          label: "灰度",
+          key: 'gray',
+          label: '灰度',
           icon: <ExperimentOutlined />,
           children: [1, 2, 5, 10, 20, 50]
             .filter((percentage) => percentage > rolloutConfigNumber)
@@ -91,11 +94,11 @@ const BindPackage = ({
         });
       }
       if (items.length > 0) {
-        items.push({ type: "divider" });
+        items.push({ type: 'divider' });
       }
       items.push({
-        key: "unpublish",
-        label: "取消发布",
+        key: 'unpublish',
+        label: '取消发布',
         icon: <RestOutlined />,
         onClick: () => {
           const bindingId = binding.id;
@@ -114,16 +117,16 @@ const BindPackage = ({
         <Button
           size="small"
           color="primary"
-          variant={isFull ? "filled" : "dashed"}
+          variant={isFull ? 'filled' : 'dashed'}
         >
           <span className="font-bold">{p.name}</span>
-          <span className="text-xs">{isFull ? "" : `(${rolloutConfig}%)`}</span>
+          <span className="text-xs">{isFull ? '' : `(${rolloutConfig}%)`}</span>
         </Button>
       );
       result.push(
         <Dropdown key={p.id} menu={{ items }}>
           {button}
-        </Dropdown>
+        </Dropdown>,
       );
     }
     return result;
@@ -140,15 +143,15 @@ const BindPackage = ({
               label: p.name,
               children: [
                 {
-                  key: "full",
-                  label: "全量",
+                  key: 'full',
+                  label: '全量',
                   icon: <CloudDownloadOutlined />,
                   onClick: () =>
                     api.upsertBinding({ appId, packageId: p.id, versionId }),
                 },
                 {
-                  key: "gray",
-                  label: "灰度",
+                  key: 'gray',
+                  label: '灰度',
                   icon: <ExperimentOutlined />,
                   children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
                     key: `${percentage}`,
