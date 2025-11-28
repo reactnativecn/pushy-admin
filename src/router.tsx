@@ -3,7 +3,7 @@ import { createHashRouter, Navigate, redirect } from 'react-router-dom';
 import { ErrorBoundary } from './components/error-boundary';
 import MainLayout from './components/main-layout';
 import { getToken } from './services/request';
-import './utils/notice';
+// import './utils/notice';
 
 export const rootRouterPath = {
   user: '/user',
