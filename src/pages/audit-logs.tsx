@@ -53,7 +53,7 @@ const actionMap: Record<string, string> = {
   'POST /user/resetpwd/reset': '重置密码',
   // 应用相关
   'POST /app/create': '创建应用',
-  'PUT /app/{id}': '更新应用',
+  'PUT /app/{id}': '修改应用设置',
   'DELETE /app/{id}': '删除应用',
   // 订单相关
   'POST /orders': '创建订单',
