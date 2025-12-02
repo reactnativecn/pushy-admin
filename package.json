@@ -14,7 +14,7 @@
     "@rsbuild/plugin-react": "^1.4.2",
     "@rsbuild/plugin-svgr": "^1.2.2",
     "@tanstack/react-query": "^5.90.11",
-    "antd": "^6.0.0",
+    "antd": "^6.0.1",
     "dayjs": "^1.11.19",
     "git-url-parse": "^16.1.0",
     "hash-wasm": "^4.12.0",
