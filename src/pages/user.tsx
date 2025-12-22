@@ -1,6 +1,14 @@
 import { AlipayCircleOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Descriptions, Dropdown, Popover, Space, Spin } from 'antd';
+import {
+  Button,
+  Descriptions,
+  Dropdown,
+  message,
+  Popover,
+  Space,
+  Spin,
+} from 'antd';
 import { type ReactNode, useState } from 'react';
 import { api } from '@/services/api';
 import { useUserInfo } from '@/utils/hooks';
@@ -38,6 +46,9 @@ const PurchaseButton = ({
       className="ml-6"
       icon={<AlipayCircleOutlined />}
       onClick={async () => {
+        if (tier === 'custom') {
+          return message.error('定制版用户付费请联系客服');
+        }
         setLoading(true);
         await purchase(tier);
       }}
@@ -122,8 +133,39 @@ function UserPanel() {
       </div>
     );
   }
-  const { name, email, tier } = user;
-  const currentQuota = quotas[tier as keyof typeof quotas];
+  const { name, email, tier, quota } = user;
+  const defaultQuota = quotas[tier as keyof typeof quotas];
+  const currentQuota = quota || defaultQuota;
+
+  const tierDisplay = currentQuota.title;
+  const quotaTableData = [
+    { key: 'app', item: '应用数量', value: `${currentQuota.app} 个` },
+    {
+      key: 'package',
+      item: '每个应用原生包数量',
+      value: `${currentQuota.package} 个`,
+    },
+    {
+      key: 'packageSize',
+      item: '单个原生包大小',
+      value: currentQuota.packageSize,
+    },
+    {
+      key: 'bundle',
+      item: '每个应用热更包数量',
+      value: `${currentQuota.bundle} 个`,
+    },
+    {
+      key: 'bundleSize',
+      item: '单个热更包大小',
+      value: currentQuota.bundleSize,
+    },
+    {
+      key: 'pv',
+      item: '每日总查询次数',
+      value: `${currentQuota.pv.toLocaleString()} 次`,
+    },
+  ];
   return (
     <div className="body">
       <Descriptions
@@ -136,8 +178,10 @@ function UserPanel() {
         <Descriptions.Item label="邮箱">{email}</Descriptions.Item>
         <Descriptions.Item label="服务版本">
           <Space>
-            {currentQuota.title}
-            <UpgradeDropdown currentQuota={currentQuota} />
+            {tierDisplay}
+            {!quota && defaultQuota && (
+              <UpgradeDropdown currentQuota={defaultQuota} />
+            )}
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
@@ -164,6 +208,17 @@ function UserPanel() {
               </>
             )}
           </Space>
+        </Descriptions.Item>
+        <Descriptions.Item label="额度详情">
+          {quotaTableData.map(({ key, item, value }) => (
+            <div key={key}>
+              {item}：{value} <br />
+            </div>
+          ))}
+          <div className="h-px my-4 w-md bg-gray-300" />
+          <div className="text-xm text-gray-500">
+            如有定制需求（限高级版以上），请联系 QQ 客服 34731408
+          </div>
         </Descriptions.Item>
       </Descriptions>
       <br />

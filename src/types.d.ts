@@ -13,14 +13,28 @@ declare module '*.jpg' {
   export default content;
 }
 
+type Tier = 'free' | 'standard' | 'premium' | 'pro' | 'custom';
+
 interface User {
   email: string;
   id: number;
   name: string;
-  tier: 'free' | 'standard' | 'premium' | 'pro';
+  tier: Tier;
   tierExpiresAt?: string;
   checkQuota?: number;
   last7dAvg?: number;
+  quota?: Quota;
+}
+
+export interface Quota {
+  base?: Exclude<Tier, 'custom'>;
+  app: number;
+  package: number;
+  packageSize: string;
+  bundle: number;
+  bundleSize: string;
+  pv: number;
+  price?: number;
 }
 
 interface App {
@@ -115,6 +129,6 @@ interface AuditLog {
   userAgent?: string;
   apiTokens?: {
     tokenSuffix: string;
-  }
+  };
   createdAt: string;
 }

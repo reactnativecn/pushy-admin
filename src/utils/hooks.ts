@@ -26,6 +26,9 @@ export const useUserInfo = () => {
   const displayRemainingDays = isExpiringSoon
     ? `(剩余 ${remainingDays} 天，之后转为免费版)`
     : '';
+  if (data?.tier === 'custom') {
+    data.quota.title = '定制版';
+  }
   return {
     user: getToken() ? data : null,
     displayExpireDay,

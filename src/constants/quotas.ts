@@ -62,4 +62,4 @@ export const quotas = {
     bundleSize: '200m',
     pv: 100000000,
   },
-};
+} as const;

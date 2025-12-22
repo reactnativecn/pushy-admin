@@ -130,7 +130,7 @@ export default function Sider() {
 const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
   const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
   const { apps } = useAppList();
-  const quota = quotas[user?.tier as keyof typeof quotas];
+  const quota = user.quota || quotas[user?.tier as keyof typeof quotas];
   const pvQuota = quota?.pv;
   const consumedQuota = user?.checkQuota;
   const percent =
