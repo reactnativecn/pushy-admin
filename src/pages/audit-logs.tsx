@@ -57,6 +57,7 @@ const actionMap: Record<string, string> = {
   'DELETE /app/{id}': '删除应用',
   // 订单相关
   'POST /orders': '创建订单',
+  'POST alipayCallback': '支付',
   // 文件相关
   'POST /upload': '上传文件',
   // 原生包相关
