@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   FileTextOutlined,
   PlusOutlined,
+  SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import {
@@ -244,6 +245,23 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
                 },
               ],
             },
+            ...(user.admin
+              ? [
+                  {
+                    key: 'admin',
+                    icon: <SettingOutlined />,
+                    label: '管理员',
+                    children: [
+                      {
+                        key: 'admin-config',
+                        label: (
+                          <Link to={rootRouterPath.adminConfig}>动态配置</Link>
+                        ),
+                      },
+                    ],
+                  },
+                ]
+              : []),
           ]}
         />
       </div>

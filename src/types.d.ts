@@ -24,6 +24,7 @@ interface User {
   checkQuota?: number;
   last7dAvg?: number;
   quota?: Quota;
+  admin?: boolean;
 }
 
 export interface Quota {

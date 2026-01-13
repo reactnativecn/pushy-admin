@@ -16,6 +16,7 @@ export const rootRouterPath = {
   welcome: '/welcome',
   register: '/register',
   auditLogs: '/audit-logs',
+  adminConfig: '/admin-config',
 };
 
 export const needAuthLoader = ({ request }: { request: Request }) => {
@@ -87,6 +88,11 @@ export const router = createHashRouter([
         path: 'audit-logs',
         loader: needAuthLoader,
         lazy: () => import('./pages/audit-logs'),
+      },
+      {
+        path: 'admin-config',
+        loader: needAuthLoader,
+        lazy: () => import('./pages/admin-config'),
       },
     ],
   },

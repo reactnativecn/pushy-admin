@@ -187,4 +187,13 @@ export const api = {
       'get',
       `/audit/logs?offset=${offset}&limit=${limit}&startDate=${startDate}`,
     ),
+  // admin
+  getAdminConfig: () =>
+    request<{ data?: Record<string, string> }>('get', `/admin/config`),
+  setAdminConfig: (key: string, value: string) =>
+    request<{ key: string; value: string }>('post', '/admin/config', {
+      key,
+      value,
+    }),
+  deleteAdminConfig: (key: string) => request('delete', `/admin/config/${key}`),
 };
