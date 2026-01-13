@@ -264,6 +264,12 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
                           <Link to={rootRouterPath.adminUsers}>用户管理</Link>
                         ),
                       },
+                      {
+                        key: 'admin-metrics',
+                        label: (
+                          <Link to={rootRouterPath.adminMetrics}>全局统计</Link>
+                        ),
+                      },
                     ],
                   },
                 ]

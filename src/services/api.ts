@@ -204,4 +204,17 @@ export const api = {
     ),
   updateUser: (id: number, data: Partial<AdminUser>) =>
     request<AdminUser>('put', `/admin/users/${id}`, data),
+  // global metrics
+  getGlobalMetrics: (params: {
+    start: string;
+    end: string;
+    mode?: 'pv' | 'uv';
+  }) =>
+    request<{
+      dict: string[];
+      data: Array<{ time: string; data: Array<[number, number]> }>;
+    }>(
+      'get',
+      `/metrics/global?start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}&mode=${params.mode || 'pv'}`,
+    ),
 };

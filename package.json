@@ -9,6 +9,7 @@
     "lint": "tsc --noEmit & biome check --write ."
   },
   "dependencies": {
+    "@ant-design/charts": "^2.6.7",
     "@ant-design/icons": "^6.1.0",
     "@rsbuild/core": "^1.7.2",
     "@rsbuild/plugin-react": "^1.4.2",
