@@ -1,3 +1,14 @@
+import type {
+  AdminApp,
+  AdminUser,
+  AdminVersion,
+  App,
+  AuditLog,
+  Binding,
+  Package,
+  User,
+  Version,
+} from '@/types';
 import { queryClient } from '@/utils/queryClient';
 import request from './request';
 
@@ -200,7 +211,9 @@ export const api = {
   searchUsers: (search?: string) =>
     request<{ data: AdminUser[] }>(
       'get',
-      search ? `/admin/users?search=${encodeURIComponent(search)}` : '/admin/users',
+      search
+        ? `/admin/users?search=${encodeURIComponent(search)}`
+        : '/admin/users',
     ),
   updateUser: (id: number, data: Partial<AdminUser>) =>
     request<AdminUser>('put', `/admin/users/${id}`, data),
@@ -217,4 +230,35 @@ export const api = {
       'get',
       `/metrics/global?start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}&mode=${params.mode || 'pv'}`,
     ),
+  getAppMetrics: (params: { appKey: string; start: string; end: string }) =>
+    request<{
+      dict: string[];
+      data: Array<{ time: string; data: Array<[number, number]> }>;
+    }>(
+      'get',
+      `/metrics/app?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
+    ),
+  // admin app management
+  searchApps: (search?: string) =>
+    request<{ data: AdminApp[] }>(
+      'get',
+      search
+        ? `/admin/apps?search=${encodeURIComponent(search)}`
+        : '/admin/apps',
+    ),
+  updateApp: (id: number, data: Partial<AdminApp>) =>
+    request<AdminApp>('put', `/admin/apps/${id}`, data),
+  // admin version management
+  searchVersions: (params?: { search?: string; appId?: number }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.set('search', params.search);
+    if (params?.appId) queryParams.set('appId', String(params.appId));
+    const query = queryParams.toString();
+    return request<{ data: AdminVersion[] }>(
+      'get',
+      query ? `/admin/versions?${query}` : '/admin/versions',
+    );
+  },
+  updateVersion: (id: number, data: Partial<AdminVersion>) =>
+    request<AdminVersion>('put', `/admin/versions/${id}`, data),
 };

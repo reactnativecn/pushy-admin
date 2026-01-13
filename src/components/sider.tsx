@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   FileTextOutlined,
+  LineChartOutlined,
   PlusOutlined,
   SettingOutlined,
   UserOutlined,
@@ -198,6 +199,13 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
               label: <Link to={rootRouterPath.auditLogs}>操作日志</Link>,
             },
             {
+              key: 'realtime-metrics',
+              icon: <LineChartOutlined />,
+              label: (
+                <Link to={rootRouterPath.realtimeMetrics}>实时数据</Link>
+              ),
+            },
+            {
               key: 'apps',
               icon: <AppstoreOutlined />,
               label: '应用管理',
@@ -262,6 +270,12 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
                         key: 'admin-users',
                         label: (
                           <Link to={rootRouterPath.adminUsers}>用户管理</Link>
+                        ),
+                      },
+                      {
+                        key: 'admin-apps',
+                        label: (
+                          <Link to={rootRouterPath.adminApps}>应用管理</Link>
                         ),
                       },
                       {

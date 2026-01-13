@@ -38,6 +38,33 @@ interface AdminUser {
   createdAt?: string;
 }
 
+interface AdminApp {
+  id: number;
+  userId: number | null;
+  platform: 'ios' | 'android' | 'harmony';
+  name: string;
+  appKey: string;
+  appSecret: string;
+  downloadUrl: string | null;
+  status: string | null;
+  ignoreBuildTime: 'enabled' | 'disabled' | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface AdminVersion {
+  id: number;
+  appId: number;
+  hash: string;
+  name: string;
+  description: string | null;
+  metaInfo: string | null;
+  config: any | null;
+  deps: string | null;
+  commit: string | null;
+  createdAt?: string;
+}
+
 export interface Quota {
   base?: Exclude<Tier, 'custom'>;
   app: number;
