@@ -196,4 +196,12 @@ export const api = {
       value,
     }),
   deleteAdminConfig: (key: string) => request('delete', `/admin/config/${key}`),
+  // admin user management
+  searchUsers: (search?: string) =>
+    request<{ data: AdminUser[] }>(
+      'get',
+      search ? `/admin/users?search=${encodeURIComponent(search)}` : '/admin/users',
+    ),
+  updateUser: (id: number, data: Partial<AdminUser>) =>
+    request<AdminUser>('put', `/admin/users/${id}`, data),
 };

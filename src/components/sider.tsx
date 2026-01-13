@@ -258,6 +258,12 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
                           <Link to={rootRouterPath.adminConfig}>动态配置</Link>
                         ),
                       },
+                      {
+                        key: 'admin-users',
+                        label: (
+                          <Link to={rootRouterPath.adminUsers}>用户管理</Link>
+                        ),
+                      },
                     ],
                   },
                 ]

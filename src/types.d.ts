@@ -27,6 +27,17 @@ interface User {
   admin?: boolean;
 }
 
+interface AdminUser {
+  id: number;
+  email: string;
+  name: string;
+  status: 'normal' | 'unverified' | null;
+  tier: string;
+  tierExpiresAt?: string | null;
+  quota?: Quota | null;
+  createdAt?: string;
+}
+
 export interface Quota {
   base?: Exclude<Tier, 'custom'>;
   app: number;
