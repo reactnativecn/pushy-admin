@@ -306,7 +306,7 @@ export const Component = () => {
           </div> */}
 
           {/* Chart */}
-          <Card title="趋势图" size="small" style={{ marginBottom: 20 }}>
+          <Card size="small" style={{ marginBottom: 20 }}>
             {lineData.length > 0 ? (
               <Line {...lineConfig} />
             ) : (

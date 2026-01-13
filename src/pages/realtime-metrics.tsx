@@ -347,7 +347,7 @@ export const Component = () => {
         </div>
 
         <Spin spinning={isLoading}>
-          <Card title="趋势图" size="small" style={{ marginBottom: 20 }}>
+          <Card size="small" style={{ marginBottom: 20 }}>
             {!selectedAppKey ? (
               <div className="h-80 flex items-center justify-center text-gray-400">
                 请选择应用
