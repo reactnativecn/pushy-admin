@@ -259,6 +259,4 @@ export const api = {
       query ? `/admin/versions?${query}` : '/admin/versions',
     );
   },
-  updateVersion: (id: number, data: Partial<AdminVersion>) =>
-    request<AdminVersion>('put', `/admin/versions/${id}`, data),
 };
