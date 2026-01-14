@@ -1,14 +1,4 @@
-import type {
-  AdminApp,
-  AdminUser,
-  AdminVersion,
-  App,
-  AuditLog,
-  Binding,
-  Package,
-  User,
-  Version,
-} from '@/types';
+import type { App, AuditLog, Binding, Package, User, Version } from '@/types';
 import { queryClient } from '@/utils/queryClient';
 import request from './request';
 
@@ -198,25 +188,6 @@ export const api = {
       'get',
       `/audit/logs?offset=${offset}&limit=${limit}&startDate=${startDate}`,
     ),
-  // admin
-  getAdminConfig: () =>
-    request<{ data?: Record<string, string> }>('get', `/admin/config`),
-  setAdminConfig: (key: string, value: string) =>
-    request<{ key: string; value: string }>('post', '/admin/config', {
-      key,
-      value,
-    }),
-  deleteAdminConfig: (key: string) => request('delete', `/admin/config/${key}`),
-  // admin user management
-  searchUsers: (search?: string) =>
-    request<{ data: AdminUser[] }>(
-      'get',
-      search
-        ? `/admin/users?search=${encodeURIComponent(search)}`
-        : '/admin/users',
-    ),
-  updateUser: (id: number, data: Partial<AdminUser>) =>
-    request<AdminUser>('put', `/admin/users/${id}`, data),
   // global metrics
   getGlobalMetrics: (params: {
     start: string;
@@ -238,23 +209,4 @@ export const api = {
       'get',
       `/metrics/app?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
     ),
-  // admin app management
-  searchApps: (search?: string) =>
-    request<{ data: AdminApp[] }>(
-      'get',
-      search
-        ? `/admin/apps?search=${encodeURIComponent(search)}`
-        : '/admin/apps',
-    ),
-  // admin version management
-  searchVersions: (params?: { search?: string; appId?: number }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.search) queryParams.set('search', params.search);
-    if (params?.appId) queryParams.set('appId', String(params.appId));
-    const query = queryParams.toString();
-    return request<{ data: AdminVersion[] }>(
-      'get',
-      query ? `/admin/versions?${query}` : '/admin/versions',
-    );
-  },
 };

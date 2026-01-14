@@ -17,7 +17,7 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { JSONEditor, type Content, type OnChange } from 'vanilla-jsoneditor';
-import { api } from '@/services/api';
+import { adminApi } from '@/services/admin-api';
 
 const { Title } = Typography;
 
@@ -92,12 +92,12 @@ export const Component = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['adminUsers', debouncedSearch],
-    queryFn: () => api.searchUsers(debouncedSearch || undefined),
+    queryFn: () => adminApi.searchUsers(debouncedSearch || undefined),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminUser> }) =>
-      api.updateUser(id, data),
+      adminApi.updateUser(id, data),
     onSuccess: () => {
       message.success('用户信息已更新');
       setIsModalOpen(false);

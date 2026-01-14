@@ -15,7 +15,7 @@ import {
 } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { JSONEditor, type Content, type OnChange } from 'vanilla-jsoneditor';
-import { api } from '@/services/api';
+import { adminApi } from '@/services/admin-api';
 
 const { Title } = Typography;
 
@@ -87,7 +87,7 @@ export const Component = () => {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['adminConfig'],
-    queryFn: () => api.getAdminConfig(),
+    queryFn: () => adminApi.getConfig(),
   });
 
   const configList: ConfigItem[] = data?.data
@@ -128,7 +128,7 @@ export const Component = () => {
       }
 
       const compactValue = JSON.stringify(parsedValue);
-      await api.setAdminConfig(key, compactValue);
+      await adminApi.setConfig(key, compactValue);
       message.success('保存成功');
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['adminConfig'] });
@@ -140,7 +140,7 @@ export const Component = () => {
   const handleDelete = useCallback(
     async (key: string) => {
       try {
-        await api.deleteAdminConfig(key);
+        await adminApi.deleteConfig(key);
         message.success('已删除');
         refetch();
       } catch (error) {

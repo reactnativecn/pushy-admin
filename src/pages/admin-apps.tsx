@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
+import { adminApi } from '@/services/admin-api';
 import { api } from '@/services/api';
 
 const { Title } = Typography;
@@ -35,12 +36,12 @@ export const Component = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['adminApps', debouncedSearch],
-    queryFn: () => api.searchApps(debouncedSearch || undefined),
+    queryFn: () => adminApi.searchApps(debouncedSearch || undefined),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminApp> }) =>
-      api.updateApp(id, data),
+      adminApi.updateApp(id, data),
     onSuccess: () => {
       message.success('应用信息已更新');
       setIsModalOpen(false);
