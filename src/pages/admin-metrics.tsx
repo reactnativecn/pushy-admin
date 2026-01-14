@@ -7,7 +7,7 @@ import {
   Select,
   Space,
   Spin,
-  // Statistic,
+  Statistic,
   Typography,
 } from 'antd';
 import type { Dayjs } from 'dayjs';
@@ -27,7 +27,16 @@ interface ChartDataPoint {
   category: string;
 }
 
+interface MetricsResponse {
+  dict: string[];
+  data: Array<{ time: string; data: Array<[number, number]> }>;
+}
+
 const TOTAL_SERIES_LABEL = 'total';
+const modeLabels: Record<MetricMode, string> = {
+  pv: '请求数',
+  uv: '用户数',
+};
 
 const metricKeyOptions = [
   { label: 'rn', value: 'rn' },
@@ -50,30 +59,41 @@ export const Component = () => {
   const [selectedKeyPrefix, setSelectedKeyPrefix] =
     useState<MetricKeyPrefix>('rn');
   const legendValuesRef = useRef<string[]>([]);
+  const startDate = dateRange[0].toISOString();
+  const endDate = dateRange[1].toISOString();
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      'globalMetrics',
-      dateRange[0].toISOString(),
-      dateRange[1].toISOString(),
-      mode,
-    ],
+  const { data: pvMetrics, isLoading: isLoadingPv } = useQuery({
+    queryKey: ['globalMetrics', startDate, endDate, 'pv'],
     queryFn: () =>
       api.getGlobalMetrics({
-        start: dateRange[0].toISOString(),
-        end: dateRange[1].toISOString(),
-        mode,
+        start: startDate,
+        end: endDate,
+        mode: 'pv',
       }),
     enabled: !!dateRange[0] && !!dateRange[1],
   });
 
+  const { data: uvMetrics, isLoading: isLoadingUv } = useQuery({
+    queryKey: ['globalMetrics', startDate, endDate, 'uv'],
+    queryFn: () =>
+      api.getGlobalMetrics({
+        start: startDate,
+        end: endDate,
+        mode: 'uv',
+      }),
+    enabled: !!dateRange[0] && !!dateRange[1],
+  });
+
+  const metricsData = mode === 'pv' ? pvMetrics : uvMetrics;
+  const isChartLoading = mode === 'pv' ? isLoadingPv : isLoadingUv;
+
   // Transform data for chart
   const chartData = useMemo(() => {
-    if (!data?.data || !data?.dict) return [];
+    if (!metricsData?.data || !metricsData?.dict) return [];
     const points: ChartDataPoint[] = [];
-    for (const bucket of data.data) {
+    for (const bucket of metricsData.data) {
       for (const [dictIndex, count] of bucket.data) {
-        const rawCategory = data.dict[dictIndex] || '';
+        const rawCategory = metricsData.dict[dictIndex] || '';
         // Skip _total entry
         if (rawCategory === '_total') {
           continue;
@@ -91,7 +111,7 @@ export const Component = () => {
       }
     }
     return points;
-  }, [data]);
+  }, [metricsData]);
 
   const prefixFilteredChartData = useMemo(() => {
     if (!chartData.length) return [];
@@ -154,6 +174,27 @@ export const Component = () => {
 
   legendValuesRef.current = defaultLegendValues;
 
+  const getMetricsTotal = (metrics?: MetricsResponse) => {
+    if (!metrics?.data || !metrics.dict) return 0;
+    let total = 0;
+    for (const bucket of metrics.data) {
+      let bucketTotal = 0;
+      for (const [dictIndex, count] of bucket.data) {
+        const key = metrics.dict[dictIndex];
+        if (key === '_total') {
+          bucketTotal = count;
+          break;
+        }
+        bucketTotal += count;
+      }
+      total += bucketTotal;
+    }
+    return total;
+  };
+
+  const totalPv = useMemo(() => getMetricsTotal(pvMetrics), [pvMetrics]);
+  const totalUv = useMemo(() => getMetricsTotal(uvMetrics), [uvMetrics]);
+
   const displayTotals = useMemo(() => {
     if (!prefixFilteredChartData.length) {
       return { total: 0, categories: new Map<string, number>() };
@@ -201,7 +242,7 @@ export const Component = () => {
         },
       },
       y: {
-        title: mode.toUpperCase(),
+        title: modeLabels[mode],
       },
     },
     tooltip: {
@@ -241,8 +282,8 @@ export const Component = () => {
           </Title>
           <Space>
             <Radio.Group value={mode} onChange={(e) => setMode(e.target.value)}>
-              <Radio.Button value="pv">PV</Radio.Button>
-              <Radio.Button value="uv">UV</Radio.Button>
+              <Radio.Button value="pv">请求数</Radio.Button>
+              <Radio.Button value="uv">用户数</Radio.Button>
             </Radio.Group>
             <Select
               placeholder="筛选 Key"
@@ -284,7 +325,21 @@ export const Component = () => {
           </Space>
         </div>
 
-        <Spin spinning={isLoading}>
+        <Spin spinning={isChartLoading}>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <Card size="small">
+              <Statistic
+                title="总请求数"
+                value={isLoadingPv ? '-' : totalPv.toLocaleString()}
+              />
+            </Card>
+            <Card size="small">
+              <Statistic
+                title="总用户数"
+                value={isLoadingUv ? '-' : totalUv.toLocaleString()}
+              />
+            </Card>
+          </div>
           {/* Summary statistics */}
           {/* <div className="grid grid-cols-4 gap-4 mb-6">
             <Card size="small">
