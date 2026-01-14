@@ -50,7 +50,6 @@ export const Component = () => {
   const [selectedKeyPrefix, setSelectedKeyPrefix] =
     useState<MetricKeyPrefix>('rn');
   const legendValuesRef = useRef<string[]>([]);
-  const lastAppliedLegendRef = useRef('');
 
   const { data, isLoading } = useQuery({
     queryKey: [
@@ -221,12 +220,9 @@ export const Component = () => {
         chart.on('afterrender', () => {
           const values = legendValuesRef.current;
           if (!values.length) return;
-          const serialized = values.join('|');
-          if (serialized === lastAppliedLegendRef.current) return;
           chart.emit('legend:filter', {
             data: { channel: 'color', values },
           });
-          lastAppliedLegendRef.current = serialized;
         });
       } catch (error) {
         // eslint-disable-next-line no-console

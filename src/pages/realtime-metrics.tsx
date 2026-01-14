@@ -43,7 +43,10 @@ const formatCategory = (rawCategory: string) => {
   const parts = rawCategory.split(CATEGORY_SEPARATOR);
   if (parts.length >= 2) {
     const key = parts[0];
-    const value = parts.slice(1).join(CATEGORY_SEPARATOR) || 'unknown';
+    let value = parts.slice(1).join();
+    if (!value || value === 'unknown') {
+      value = '无';
+    }
     if (key === 'hash') {
       return { label: `热更包: ${value}`, attribute: 'hash', isTotal: false };
     }
@@ -55,9 +58,12 @@ const formatCategory = (rawCategory: string) => {
       };
     }
   }
-  if (rawCategory.endsWith(CATEGORY_SEPARATOR)) {
+  if (
+    rawCategory.endsWith(CATEGORY_SEPARATOR) ||
+    rawCategory.endsWith(`${CATEGORY_SEPARATOR}unknown`)
+  ) {
     return {
-      label: rawCategory.replace(CATEGORY_SEPARATOR, ': unknown'),
+      label: rawCategory.replace(CATEGORY_SEPARATOR, ': 无'),
       isTotal: false,
     };
   }
@@ -85,7 +91,6 @@ export const Component = () => {
   const [selectedAttribute, setSelectedAttribute] =
     useState<MetricAttribute>('hash');
   const legendValuesRef = useRef<string[]>([]);
-  const lastAppliedLegendRef = useRef('');
 
   const { apps } = useAppList();
   const { user } = useUserInfo();
@@ -138,10 +143,6 @@ export const Component = () => {
       setManualAppKey('');
     }
   };
-
-  useEffect(() => {
-    lastAppliedLegendRef.current = '';
-  }, [selectedAppKey, dateRange, selectedAttribute]);
 
   const { data, isLoading } = useQuery({
     queryKey: [
@@ -261,12 +262,9 @@ export const Component = () => {
         chart.on('afterrender', () => {
           const values = legendValuesRef.current;
           if (!values.length) return;
-          const serialized = values.join('|');
-          if (serialized === lastAppliedLegendRef.current) return;
           chart.emit('legend:filter', {
             data: { channel: 'color', values },
           });
-          lastAppliedLegendRef.current = serialized;
         });
       } catch (error) {
         // eslint-disable-next-line no-console
