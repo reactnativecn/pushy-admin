@@ -246,8 +246,6 @@ export const api = {
         ? `/admin/apps?search=${encodeURIComponent(search)}`
         : '/admin/apps',
     ),
-  updateApp: (id: number, data: Partial<AdminApp>) =>
-    request<AdminApp>('put', `/admin/apps/${id}`, data),
   // admin version management
   searchVersions: (params?: { search?: string; appId?: number }) => {
     const queryParams = new URLSearchParams();
