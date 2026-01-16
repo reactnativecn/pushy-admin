@@ -195,13 +195,18 @@ export const Component = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="page-section">
       <Card>
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
           <Title level={4} className="m-0!">
             动态配置管理
           </Title>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAdd}
+            className="w-full md:w-auto"
+          >
             添加配置
           </Button>
         </div>
@@ -212,6 +217,7 @@ export const Component = () => {
             columns={columns}
             rowKey="key"
             pagination={false}
+            scroll={{ x: 720 }}
           />
         </Spin>
       </Card>

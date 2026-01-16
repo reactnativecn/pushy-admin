@@ -34,3 +34,28 @@
     background-color: #e6f7ff;
   }
 }
+
+.manage-layout.ant-layout-has-sider {
+  flex-direction: row;
+}
+
+@media (max-width: 768px) {
+  .manage-layout.ant-layout-has-sider {
+    flex-direction: column;
+  }
+
+  .manage-sider {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    flex: 0 0 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 16px !important;
+    height: auto !important;
+  }
+
+  .manage-content {
+    width: 100%;
+    min-width: 0;
+  }
+}

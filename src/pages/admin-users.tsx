@@ -216,9 +216,9 @@ export const Component = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="page-section">
       <Card>
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
           <Title level={4} className="m-0!">
             用户管理
           </Title>
@@ -227,8 +227,8 @@ export const Component = () => {
             prefix={<SearchOutlined />}
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            style={{ width: 300 }}
             allowClear
+            className="w-full md:w-72"
           />
         </div>
 
@@ -238,6 +238,7 @@ export const Component = () => {
             columns={columns}
             rowKey="id"
             pagination={{ pageSize: 20 }}
+            scroll={{ x: 900 }}
           />
         </Spin>
       </Card>

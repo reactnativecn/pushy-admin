@@ -43,7 +43,7 @@ const PurchaseButton = ({
   return (
     <Button
       // type='link'
-      className="ml-6"
+      className="mt-2 md:mt-0 md:ml-6"
       icon={<AlipayCircleOutlined />}
       onClick={async () => {
         if (tier === 'custom') {
@@ -110,7 +110,7 @@ const UpgradeDropdown = ({
 
   return (
     <Dropdown.Button
-      className="ml-6"
+      className="mt-2 md:mt-0 md:ml-6"
       icon={<AlipayCircleOutlined />}
       loading={loading}
       menu={{
@@ -177,7 +177,7 @@ function UserPanel() {
         <Descriptions.Item label="用户名">{name}</Descriptions.Item>
         <Descriptions.Item label="邮箱">{email}</Descriptions.Item>
         <Descriptions.Item label="服务版本">
-          <Space>
+          <Space wrap>
             {tierDisplay}
             {!quota && defaultQuota && (
               <UpgradeDropdown currentQuota={defaultQuota} />
@@ -185,7 +185,7 @@ function UserPanel() {
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
-          <Space>
+          <Space wrap>
             {displayExpireDay ? (
               <div className="flex flex-col">
                 {displayExpireDay}
@@ -222,18 +222,19 @@ function UserPanel() {
         </Descriptions.Item>
       </Descriptions>
       <br />
-      <Button href={PRICING_LINK} target="_blank">
-        查看价格表
-      </Button>
-
-      <Button
-        type="primary"
-        className="ml-6"
-        href="https://pushy.reactnative.cn/docs/faq.html#%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E9%93%B6%E8%A1%8C%E8%BD%AC%E8%B4%A6%E4%BB%98%E6%AC%BE%E5%90%97"
-        target="_blank"
-      >
-        使用网银转账
-      </Button>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <Button href={PRICING_LINK} target="_blank" className="w-full md:w-auto">
+          查看价格表
+        </Button>
+        <Button
+          type="primary"
+          className="w-full md:w-auto"
+          href="https://pushy.reactnative.cn/docs/faq.html#%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E9%93%B6%E8%A1%8C%E8%BD%AC%E8%B4%A6%E4%BB%98%E6%AC%BE%E5%90%97"
+          target="_blank"
+        >
+          使用网银转账
+        </Button>
+      </div>
     </div>
   );
 }

@@ -9,6 +9,16 @@ body {
   padding: 24px;
 }
 
+.page-section {
+  padding: 24px;
+}
+
+.reset-card {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
 .ant-layout-header .ant-menu {
   border-bottom: 0;
 }
@@ -37,4 +47,22 @@ a.ant-typography:hover .ant-typography {
 
 [draggable] {
   cursor: default;
+}
+
+@media (max-width: 768px) {
+  .ant-layout-content {
+    padding: 12px;
+  }
+
+  .page-section {
+    padding: 12px;
+  }
+
+  .body {
+    padding: 12px;
+  }
+
+  .reset-card {
+    margin: 0;
+  }
 }

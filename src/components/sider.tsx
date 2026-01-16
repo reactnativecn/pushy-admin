@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import {
   Card,
+  Drawer,
   Form,
   Input,
   Layout,
@@ -30,6 +31,7 @@ import PlatformIcon from './platform-icon';
 
 interface SiderMenuProps {
   selectedKeys: string[];
+  onNavigate?: () => void;
 }
 
 function addApp() {
@@ -100,11 +102,8 @@ const style = {
   sider: { boxShadow: '2px 0 8px 0 rgb(29 35 41 / 5%)', zIndex: 2 },
 };
 
-export default function Sider() {
+const useSelectedKeys = () => {
   const { pathname } = useLocation();
-  const { user } = useUserInfo();
-  if (!user) return null;
-
   const initPath = pathname?.replace(/^\//, '')?.split('/');
   let selectedKeys = initPath;
   if (selectedKeys?.length === 0) {
@@ -114,6 +113,13 @@ export default function Sider() {
       selectedKeys = initPath;
     }
   }
+  return selectedKeys;
+};
+
+export default function Sider() {
+  const { user } = useUserInfo();
+  if (!user) return null;
+  const selectedKeys = useSelectedKeys();
   return (
     <Layout.Sider
       className="[&>.ant-layout-sider-children]:flex [&>.ant-layout-sider-children]:flex-col!"
@@ -121,15 +127,51 @@ export default function Sider() {
       theme="light"
       style={style.sider}
     >
-      <Layout.Header className="flex justify-center items-center bg-transparent! px-0!">
-        <LogoH />
-      </Layout.Header>
-      <SiderMenu selectedKeys={selectedKeys} />
+      <SiderContent selectedKeys={selectedKeys} />
     </Layout.Sider>
   );
 }
 
-const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
+export const SiderDrawer = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
+  const { user } = useUserInfo();
+  const selectedKeys = useSelectedKeys();
+  if (!user) return null;
+  return (
+    <Drawer
+      open={open}
+      placement="left"
+      width={260}
+      onClose={onClose}
+      styles={{
+        body: {
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+        },
+      }}
+    >
+      <SiderContent selectedKeys={selectedKeys} onNavigate={onClose} />
+    </Drawer>
+  );
+};
+
+const SiderContent = ({ selectedKeys, onNavigate }: SiderMenuProps) => (
+  <>
+    <Layout.Header className="flex justify-center items-center bg-transparent! px-0!">
+      <LogoH className="h-7 w-auto" />
+    </Layout.Header>
+    <SiderMenu selectedKeys={selectedKeys} onNavigate={onNavigate} />
+  </>
+);
+
+const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
   const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
   const { apps } = useAppList();
   const quota = user.quota || quotas[user?.tier as keyof typeof quotas];
@@ -149,7 +191,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
             </div>
           }
           size="small"
-          className="mr-2! mb-4!"
+          className="mb-4! mr-0! md:mr-2!"
         >
           <Progress
             status={percent && percent > 40 ? 'normal' : 'exception'}
@@ -187,6 +229,7 @@ const SiderMenu = ({ selectedKeys }: SiderMenuProps) => {
           defaultOpenKeys={['apps']}
           selectedKeys={selectedKeys}
           mode="inline"
+          onClick={() => onNavigate?.()}
           items={[
             {
               key: 'user',

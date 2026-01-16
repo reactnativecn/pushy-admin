@@ -6,7 +6,6 @@ import {
   Input,
   Radio,
   Select,
-  Space,
   Spin,
   Typography,
 } from 'antd';
@@ -281,13 +280,13 @@ export const Component = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="page-section">
       <Card>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
           <Title level={4} className="m-0!">
             实时数据
           </Title>
-          <Space>
+          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
             <Select
               placeholder="选择应用"
               showSearch
@@ -295,13 +294,14 @@ export const Component = () => {
               value={selectedAppKey}
               onChange={handleAppChange}
               options={appOptions}
-              style={{ width: 200 }}
+              className="w-full md:w-52"
             />
             <Radio.Group
               value={selectedAttribute}
               onChange={(e) => setSelectedAttribute(e.target.value)}
               optionType="button"
               buttonStyle="solid"
+              className="w-full md:w-auto"
             >
               {attributeOptions.map((option) => (
                 <Radio.Button key={option.value} value={option.value}>
@@ -315,13 +315,14 @@ export const Component = () => {
                 value={manualAppKey}
                 onChange={(e) => setManualAppKey(e.target.value)}
                 onPressEnter={handleManualAppKeySubmit}
-                style={{ width: 180 }}
+                className="w-full md:w-44"
               />
             )}
             <RangePicker
               showTime
               value={dateRange}
               onChange={handleDateChange}
+              className="w-full md:w-auto"
               presets={[
                 {
                   label: '过去1小时',
@@ -341,7 +342,7 @@ export const Component = () => {
                 },
               ]}
             />
-          </Space>
+          </div>
         </div>
 
         <Spin spinning={isLoading}>

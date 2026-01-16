@@ -1,5 +1,5 @@
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Space, Table, Typography } from 'antd';
+import { Button, DatePicker, Table, Typography } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
 import dayjs, { type Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -384,11 +384,11 @@ export const AuditLogs = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="page-section">
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-2">
           <div>
-            <h2 className="text-xl font-semibold flex items-center gap-2">
+            <h2 className="text-lg md:text-xl font-semibold flex items-center gap-2">
               <FileTextOutlined />
               操作日志
             </h2>
@@ -397,8 +397,9 @@ export const AuditLogs = () => {
               180 天内的数据。
             </p>
           </div>
-          <Space>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <RangePicker
+              className="w-full md:w-auto"
               value={dateRange}
               onChange={handleDateRangeChange}
               format="YYYY-MM-DD"
@@ -411,10 +412,11 @@ export const AuditLogs = () => {
               icon={<DownloadOutlined />}
               onClick={handleExportToExcel}
               disabled={filteredAuditLogs.length === 0}
+              className="w-full md:w-auto"
             >
               导出 Excel
             </Button>
-          </Space>
+          </div>
         </div>
       </div>
       <Table

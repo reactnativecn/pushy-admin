@@ -70,7 +70,13 @@ export const Component = Login;
 
 const style: Style = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },
-  form: { width: 320, margin: 'auto', paddingTop: 16, flex: 1 },
+  form: {
+    width: '100%',
+    maxWidth: 360,
+    margin: 'auto',
+    padding: '16px 16px 0',
+    flex: 1,
+  },
   logo: { textAlign: 'center', margin: '48px 0' },
   slogan: { marginTop: 16, color: '#00000073', fontSize: 18 },
 };

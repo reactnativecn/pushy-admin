@@ -5,7 +5,6 @@ import {
   DatePicker,
   Radio,
   Select,
-  Space,
   Spin,
   Statistic,
   Typography,
@@ -274,14 +273,18 @@ export const Component = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="page-section">
       <Card>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
           <Title level={4} className="m-0!">
             全局数据统计
           </Title>
-          <Space>
-            <Radio.Group value={mode} onChange={(e) => setMode(e.target.value)}>
+          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+            <Radio.Group
+              value={mode}
+              onChange={(e) => setMode(e.target.value)}
+              className="w-full md:w-auto"
+            >
               <Radio.Button value="pv">请求数</Radio.Button>
               <Radio.Button value="uv">用户数</Radio.Button>
             </Radio.Group>
@@ -293,12 +296,13 @@ export const Component = () => {
               value={selectedKeyPrefix}
               options={metricKeyOptions}
               onChange={(value) => setSelectedKeyPrefix(value)}
-              className="w-40"
+              className="w-full md:w-40"
             />
             <RangePicker
               showTime
               value={dateRange}
               onChange={handleDateChange}
+              className="w-full md:w-auto"
               presets={[
                 {
                   label: '过去1小时',
@@ -322,11 +326,11 @@ export const Component = () => {
                 },
               ]}
             />
-          </Space>
+          </div>
         </div>
 
         <Spin spinning={isChartLoading}>
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Card size="small">
               <Statistic
                 title="总请求数"

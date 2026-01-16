@@ -28,10 +28,10 @@ import { ManageProvider, useManageContext } from './hooks/useManageContext';
 const ManageDashBoard = () => {
   const { packages, unusedPackages, packagesLoading } = useManageContext();
   return (
-    <Layout>
+    <Layout className="manage-layout">
       <Layout.Sider
         theme="light"
-        className="p-4 pt-0 mr-4 h-full rounded-lg"
+        className="manage-sider p-4 pt-0 mr-4 h-full rounded-lg"
         width={240}
       >
         <div className="py-4">原生包</div>
@@ -57,7 +57,7 @@ const ManageDashBoard = () => {
           ]}
         />
       </Layout.Sider>
-      <Layout.Content className="p-0!">
+      <Layout.Content className="p-0! manage-content">
         <VersionTable />
       </Layout.Content>
     </Layout>
@@ -78,8 +78,8 @@ export const Manage = () => {
 
   return (
     <Form layout="vertical" form={form} initialValues={app}>
-      <Row className="mb-4">
-        <Col flex={1}>
+      <Row className="mb-4 flex-col gap-3 md:flex-row md:items-center">
+        <Col flex={1} className="min-w-0">
           <Breadcrumb
             items={[
               {
@@ -99,10 +99,11 @@ export const Manage = () => {
             ]}
           />
         </Col>
-        <Space.Compact>
+        <Space.Compact className="w-full md:w-auto">
           <Button
             type="primary"
             icon={<SettingFilled />}
+            className="w-full md:w-auto"
             onClick={() => {
               modal.confirm({
                 icon: null,

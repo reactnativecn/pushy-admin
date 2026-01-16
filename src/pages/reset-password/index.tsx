@@ -13,7 +13,7 @@ const body = {
 export const ResetPassword = () => {
   const { step = '0' } = useParams() as { step?: keyof typeof body };
   return (
-    <Card className="w-max mx-auto">
+    <Card className="reset-card">
       <Steps className="mb-12" current={Number(step)}>
         <Steps.Step title="输入绑定邮箱" />
         <Steps.Step title="设置新密码" />
