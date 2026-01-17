@@ -192,7 +192,7 @@ function ApiTokensPage() {
           >
             Pushy API
           </a>
-          。每个用户最多可创建 10 个 Token。
+          。每个用户最多可同时保留 10 个活跃的 Token。
         </Paragraph>
         <Table
           columns={columns}
