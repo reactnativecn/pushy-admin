@@ -211,7 +211,7 @@ const columns: ColumnType<AuditLog>[] = [
     render: (apiTokens?: { name: string; tokenSuffix: string }) =>
       apiTokens ? (
         <Text className="font-mono text-xs">
-          {apiTokens.name}({apiTokens.tokenSuffix})
+          {apiTokens.name}(****{apiTokens.tokenSuffix})
         </Text>
       ) : (
         <Text type="secondary">-</Text>
