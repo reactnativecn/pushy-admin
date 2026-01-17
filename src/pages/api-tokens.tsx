@@ -1,12 +1,13 @@
-import { KeyOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
   Card,
   Checkbox,
   Form,
   Input,
-  message,
   Modal,
+  message,
   Popconfirm,
   Select,
   Space,
@@ -17,8 +18,8 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api';
+import type { ApiToken } from '@/types';
 
 const { Paragraph } = Typography;
 
@@ -140,7 +141,8 @@ function ApiTokensPage() {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (createdAt: string) => dayjs(createdAt).format('YYYY-MM-DD HH:mm'),
+      render: (createdAt: string) =>
+        dayjs(createdAt).format('YYYY-MM-DD HH:mm'),
     },
     {
       title: '操作',
@@ -182,8 +184,15 @@ function ApiTokensPage() {
         }
       >
         <Paragraph type="secondary" className="mb-4">
-          API Token 可用于 CI/CD 流程或自动化脚本中调用 Pushy API。每个用户最多可创建
-          10 个 Token。
+          API Token 可用于 CI/CD 流程或自动化脚本中调用{' '}
+          <a
+            target="_blank"
+            href="https://update.reactnative.cn/api/openapi"
+            rel="noopener"
+          >
+            Pushy API
+          </a>
+          。每个用户最多可创建 10 个 Token。
         </Paragraph>
         <Table
           columns={columns}
