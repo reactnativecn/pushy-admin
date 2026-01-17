@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   FileTextOutlined,
+  KeyOutlined,
   LineChartOutlined,
   PlusOutlined,
   SettingOutlined,
@@ -235,6 +236,11 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
               key: 'user',
               icon: <UserOutlined />,
               label: <Link to={rootRouterPath.user}>账户设置</Link>,
+            },
+            {
+              key: 'api-tokens',
+              icon: <KeyOutlined />,
+              label: <Link to={rootRouterPath.apiTokens}>API Token</Link>,
             },
             {
               key: 'audit-logs',

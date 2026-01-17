@@ -21,6 +21,7 @@ export const rootRouterPath = {
   adminUsers: '/admin-users',
   adminApps: '/admin-apps',
   adminMetrics: '/admin-metrics',
+  apiTokens: '/api-tokens',
 };
 
 export const needAuthLoader = ({ request }: { request: Request }) => {
@@ -117,6 +118,11 @@ export const router = createHashRouter([
         path: 'admin-metrics',
         loader: needAuthLoader,
         lazy: () => import('./pages/admin-metrics'),
+      },
+      {
+        path: 'api-tokens',
+        loader: needAuthLoader,
+        lazy: () => import('./pages/api-tokens'),
       },
     ],
   },

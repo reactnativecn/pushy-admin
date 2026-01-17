@@ -171,3 +171,22 @@ interface AuditLog {
   };
   createdAt: string;
 }
+
+interface ApiToken {
+  id: number;
+  name: string;
+  token?: string; // Only available when creating
+  tokenSuffix: string;
+  permissions: {
+    read?: boolean;
+    write?: boolean;
+    delete?: boolean;
+  };
+  expiresAt: string | null;
+  revokedAt: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isExpired: boolean;
+  isRevoked: boolean;
+}

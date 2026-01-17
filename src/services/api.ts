@@ -209,4 +209,13 @@ export const api = {
       'get',
       `/metrics/app?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
     ),
+  // API Token
+  createApiToken: (params: {
+    name: string;
+    permissions: { read?: boolean; write?: boolean; delete?: boolean };
+    expiresAt?: string;
+  }) => request<ApiToken>('post', '/api-token/create', params),
+  listApiTokens: () => request<{ data: ApiToken[] }>('get', '/api-token/list'),
+  revokeApiToken: (tokenId: number) =>
+    request<{ message: string }>('delete', `/api-token/${tokenId}`),
 };
