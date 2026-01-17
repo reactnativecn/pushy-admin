@@ -206,11 +206,13 @@ const columns: ColumnType<AuditLog>[] = [
   },
   {
     title: 'API Key',
-    dataIndex: ['apiTokens', 'tokenSuffix'],
-    width: 120,
-    render: (tokenSuffix?: string) =>
-      tokenSuffix ? (
-        <Text className="font-mono text-xs">****{tokenSuffix}</Text>
+    dataIndex: 'apiTokens',
+    width: 150,
+    render: (apiTokens?: { name: string; tokenSuffix: string }) =>
+      apiTokens ? (
+        <Text className="font-mono text-xs">
+          {apiTokens.name}({apiTokens.tokenSuffix})
+        </Text>
       ) : (
         <Text type="secondary">-</Text>
       ),
@@ -352,7 +354,9 @@ export const AuditLogs = () => {
         浏览器: browserInfo,
         操作系统: osInfo,
         IP地址: log.ip || '-',
-        'API Key': `****${log.apiTokens?.tokenSuffix || '-'}`,
+        'API Key': log.apiTokens
+          ? `${log.apiTokens.name}(${log.apiTokens.tokenSuffix})`
+          : '-',
       };
     });
 

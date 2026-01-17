@@ -82,6 +82,12 @@ function ApiTokensPage() {
 
   const columns: ColumnsType<ApiToken> = [
     {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 60,
+    },
+    {
       title: '名称',
       dataIndex: 'name',
       key: 'name',
@@ -222,6 +228,9 @@ function ApiTokensPage() {
                 <Checkbox value="delete">
                   <b>删除 (delete)</b> - 删除应用、版本、原生包
                 </Checkbox>
+                <div className="text-xs text-gray-500 mt-1">
+                  注意：写入权限不包括读取权限，如需同时读取请勾选读取权限
+                </div>
               </Space>
             </Checkbox.Group>
           </Form.Item>
