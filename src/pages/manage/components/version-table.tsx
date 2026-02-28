@@ -167,8 +167,13 @@ const columns: ColumnType<Version>[] = [
     ),
     dataIndex: 'packages',
     width: '100%',
-    render: (_, { id, config }) => (
-      <BindPackage config={config} versionId={id} />
+    render: (_, { id, config, deps, name }) => (
+      <BindPackage
+        config={config}
+        versionId={id}
+        versionDeps={deps}
+        versionName={name}
+      />
     ),
   },
   {
