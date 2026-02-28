@@ -428,21 +428,21 @@ const BindPackage = ({
         <Dropdown
           menu={{
             items: availablePackages.map((p) => ({
-              key: p.id,
+              key: `pkg-${p.id}`,
               label: p.name,
               children: [
                 {
-                  key: 'full',
+                  key: `pkg-${p.id}-full`,
                   label: '全量',
                   icon: <CloudDownloadOutlined />,
                   onClick: () => publishToPackage(p),
                 },
                 {
-                  key: 'gray',
+                  key: `pkg-${p.id}-gray`,
                   label: '灰度',
                   icon: <ExperimentOutlined />,
                   children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
-                    key: `${percentage}`,
+                    key: `pkg-${p.id}-gray-${percentage}`,
                     label: `${percentage}%`,
                     onClick: () => publishToPackage(p, percentage),
                   })),
