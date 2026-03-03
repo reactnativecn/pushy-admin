@@ -209,6 +209,12 @@ function UserPanel() {
             )}
           </Space>
         </Descriptions.Item>
+        <Descriptions.Item label="购买说明">
+          <div className="text-sm text-gray-500">
+            只可续费相同服务版本或升级更高版本，如果您需要购买较低的服务版本，请等待当前版本过期，或联系
+            QQ 客服 34731408 手动处理。
+          </div>
+        </Descriptions.Item>
         <Descriptions.Item label="额度详情">
           {quotaTableData.map(({ key, item, value }) => (
             <div key={key}>
@@ -223,7 +229,11 @@ function UserPanel() {
       </Descriptions>
       <br />
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <Button href={PRICING_LINK} target="_blank" className="w-full md:w-auto">
+        <Button
+          href={PRICING_LINK}
+          target="_blank"
+          className="w-full md:w-auto"
+        >
           查看价格表
         </Button>
         <Button
