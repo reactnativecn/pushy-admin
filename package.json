@@ -29,10 +29,10 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.4",
+    "@biomejs/biome": "2.4.5",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/git-url-parse": "^16.0.2",
-    "@types/node": "^25.3.2",
+    "@types/node": "^25.3.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-router-dom": "^5.3.3",
