@@ -16,7 +16,7 @@
         "git-url-parse": "^16.1.0",
         "hash-wasm": "^4.12.0",
         "history": "^5.3.0",
-        "json-diff-kit": "^1.0.34",
+        "json-diff-kit": "^1.0.35",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
         "react-router-dom": "^7.13.1",
@@ -811,7 +811,7 @@
 
     "jsesc": ["jsesc@3.1.0", "", { "bin": { "jsesc": "bin/jsesc" } }, "sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA=="],
 
-    "json-diff-kit": ["json-diff-kit@1.0.34", "", { "dependencies": { "commander": "^11.1.0", "fast-myers-diff": "^3.0.1", "lodash": "^4.17.21", "prompts": "^2.4.2" }, "optionalDependencies": { "terminal-kit": "^3.0.1" }, "bin": { "jsondiff": "bin/jsondiff.cjs" } }, "sha512-LO58xp4AtD8Tw6sDDzYhCwZP0cPdEeQ2cf/adTQA9YFY9u7AEEYNtAoIBL4C7C6Tm3DL943IHF9DiCxg0OoCmA=="],
+    "json-diff-kit": ["json-diff-kit@1.0.35", "", { "dependencies": { "commander": "^11.1.0", "fast-myers-diff": "^3.0.1", "lodash": "^4.17.21", "prompts": "^2.4.2" }, "optionalDependencies": { "terminal-kit": "^3.0.1" }, "bin": { "jsondiff": "bin/jsondiff.cjs" } }, "sha512-eq9CbkkH1eB8q/kUfzRE8IQjz7TUX1ERhodx3A5QEwpBumHr3/SFZ4lQqyfLxnjMlyuDqMjnaO2ESa4z+i72qw=="],
 
     "json-parse-even-better-errors": ["json-parse-even-better-errors@2.3.1", "", {}, "sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w=="],
 

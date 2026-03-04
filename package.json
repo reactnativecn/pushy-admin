@@ -20,7 +20,7 @@
     "git-url-parse": "^16.1.0",
     "hash-wasm": "^4.12.0",
     "history": "^5.3.0",
-    "json-diff-kit": "^1.0.34",
+    "json-diff-kit": "^1.0.35",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.1",
