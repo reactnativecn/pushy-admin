@@ -48,7 +48,7 @@ const formatCategory = (rawCategory: string) => {
       value = '无';
     }
     if (key === 'hash') {
-      return { label: `热更包: ${value}`, attribute: 'hash', isTotal: false };
+      return { label: `已更新到热更包: ${value}`, attribute: 'hash', isTotal: false };
     }
     if (key === 'packageVersion_buildTime') {
       return {
