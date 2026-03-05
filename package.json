@@ -36,6 +36,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-router-dom": "^5.3.3",
+    "mitata": "^1.0.34",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   },
