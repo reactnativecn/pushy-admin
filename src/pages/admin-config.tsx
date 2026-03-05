@@ -5,8 +5,8 @@ import {
   Card,
   Form,
   Input,
-  message,
   Modal,
+  message,
   Popconfirm,
   Space,
   Spin,
@@ -14,7 +14,7 @@ import {
   Typography,
 } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { JSONEditor, type Content, type OnChange } from 'vanilla-jsoneditor';
+import { type Content, JSONEditor, type OnChange } from 'vanilla-jsoneditor';
 import { adminApi } from '@/services/admin-api';
 
 const { Title } = Typography;
