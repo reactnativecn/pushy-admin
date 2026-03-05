@@ -373,19 +373,18 @@ const BindPackage = ({
           key: 'gray',
           label: '灰度',
           icon: <ExperimentOutlined />,
-          children: [1, 2, 5, 10, 20, 50].reduce<NonNullable<MenuProps['items']>>(
-            (acc, percentage) => {
-              if (percentage > rolloutConfigNumber) {
-                acc.push({
-                  key: `${percentage}`,
-                  label: `${percentage}%`,
-                  onClick: () => publishToPackage(p, percentage),
-                });
-              }
-              return acc;
-            },
-            [],
-          ),
+          children: [1, 2, 5, 10, 20, 50].reduce<
+            NonNullable<MenuProps['items']>
+          >((acc, percentage) => {
+            if (percentage > rolloutConfigNumber) {
+              acc.push({
+                key: `${percentage}`,
+                label: `${percentage}%`,
+                onClick: () => publishToPackage(p, percentage),
+              });
+            }
+            return acc;
+          }, []),
         });
       }
       if (items.length > 0) {

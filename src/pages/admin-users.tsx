@@ -6,8 +6,8 @@ import {
   DatePicker,
   Form,
   Input,
-  message,
   Modal,
+  message,
   Select,
   Space,
   Spin,
@@ -16,7 +16,7 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
-import { JSONEditor, type Content, type OnChange } from 'vanilla-jsoneditor';
+import { type Content, JSONEditor, type OnChange } from 'vanilla-jsoneditor';
 import { adminApi } from '@/services/admin-api';
 
 const { Title } = Typography;
@@ -177,7 +177,9 @@ export const Component = () => {
       key: 'status',
       width: 100,
       render: (status: string) => (
-        <span className={status === 'normal' ? 'text-green-600' : 'text-orange-500'}>
+        <span
+          className={status === 'normal' ? 'text-green-600' : 'text-orange-500'}
+        >
           {status === 'normal' ? '正常' : '未验证'}
         </span>
       ),
@@ -293,10 +295,17 @@ export const Component = () => {
                 ]}
               />
             </Form.Item>
-            <Form.Item name="tierExpiresAt" label="套餐过期时间" className="mb-0!">
+            <Form.Item
+              name="tierExpiresAt"
+              label="套餐过期时间"
+              className="mb-0!"
+            >
               <DatePicker showTime className="w-full" />
             </Form.Item>
-            <Form.Item label="自定义配额 (JSON，留空则使用默认配额)" className="mb-0!">
+            <Form.Item
+              label="自定义配额 (JSON，留空则使用默认配额)"
+              className="mb-0!"
+            >
               <JsonEditorWrapper value={quotaValue} onChange={setQuotaValue} />
             </Form.Item>
           </Space>

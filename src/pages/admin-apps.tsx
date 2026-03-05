@@ -5,8 +5,8 @@ import {
   Card,
   Form,
   Input,
-  message,
   Modal,
+  message,
   Select,
   Space,
   Spin,
@@ -126,10 +126,15 @@ export const Component = () => {
       key: 'platform',
       width: 80,
       render: (platform: string) => (
-        <span className={
-          platform === 'ios' ? 'text-blue-600' :
-          platform === 'android' ? 'text-green-600' : 'text-orange-600'
-        }>
+        <span
+          className={
+            platform === 'ios'
+              ? 'text-blue-600'
+              : platform === 'android'
+                ? 'text-green-600'
+                : 'text-orange-600'
+          }
+        >
           {platform}
         </span>
       ),
@@ -231,7 +236,12 @@ export const Component = () => {
       >
         <Form form={form} layout="vertical" className="mt-4">
           <Space className="w-full" direction="vertical" size="middle">
-            <Form.Item name="name" label="名称" className="mb-0!" rules={[{ required: true }]}>
+            <Form.Item
+              name="name"
+              label="名称"
+              className="mb-0!"
+              rules={[{ required: true }]}
+            >
               <Input />
             </Form.Item>
             <Form.Item name="appKey" label="App Key" className="mb-0!">
@@ -255,7 +265,11 @@ export const Component = () => {
             <Form.Item name="status" label="状态" className="mb-0!">
               <Input placeholder="自定义状态" />
             </Form.Item>
-            <Form.Item name="ignoreBuildTime" label="忽略构建时间" className="mb-0!">
+            <Form.Item
+              name="ignoreBuildTime"
+              label="忽略构建时间"
+              className="mb-0!"
+            >
               <Select
                 allowClear
                 options={[
