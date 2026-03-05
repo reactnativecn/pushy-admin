@@ -7,8 +7,8 @@ import {
   ReadOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, Grid, Layout, Menu, message } from 'antd';
 import type { MenuProps } from 'antd';
+import { Button, Dropdown, Grid, Layout, Menu, message } from 'antd';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
@@ -57,7 +57,9 @@ const MainLayout = () => {
     {
       key: 'about',
       icon: <InfoCircleOutlined />,
-      label: <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>,
+      label: (
+        <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>
+      ),
     },
     ...(user
       ? [
@@ -103,9 +105,7 @@ const MainLayout = () => {
                   onClick={() => setMobileNavOpen(true)}
                 />
               )}
-              {isMobile && (
-                <LogoH className="h-6 w-auto max-w-[140px]" />
-              )}
+              {isMobile && <LogoH className="h-6 w-auto max-w-[140px]" />}
             </div>
             <div className="flex items-center">
               {isMobile ? (
@@ -117,7 +117,11 @@ const MainLayout = () => {
                   <Button type="text" icon={<MoreOutlined />} />
                 </Dropdown>
               ) : (
-                <Menu mode="horizontal" selectable={false} items={headerItems} />
+                <Menu
+                  mode="horizontal"
+                  selectable={false}
+                  items={headerItems}
+                />
               )}
             </div>
           </div>

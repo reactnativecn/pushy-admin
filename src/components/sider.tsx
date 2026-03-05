@@ -250,9 +250,7 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
             {
               key: 'realtime-metrics',
               icon: <LineChartOutlined />,
-              label: (
-                <Link to={rootRouterPath.realtimeMetrics}>实时数据</Link>
-              ),
+              label: <Link to={rootRouterPath.realtimeMetrics}>实时数据</Link>,
             },
             {
               key: 'apps',
