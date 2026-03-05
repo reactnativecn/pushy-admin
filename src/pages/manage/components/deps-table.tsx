@@ -64,23 +64,35 @@ export const DepsTable = ({
                                 key: 'package',
                                 type: 'group',
                                 label: '原生包',
-                                children: packages
-                                  .filter((p) => !!p.deps)
-                                  .map((p) => ({
-                                    key: `p_${p.id}`,
-                                    label: p.name,
-                                  })),
+                                children: packages.reduce(
+                                  (acc, p) => {
+                                    if (p.deps) {
+                                      acc.push({
+                                        key: `p_${p.id}`,
+                                        label: p.name,
+                                      });
+                                    }
+                                    return acc;
+                                  },
+                                  [] as { key: string; label: string }[],
+                                ),
                               },
                               {
                                 key: 'version',
                                 type: 'group',
                                 label: '热更包',
-                                children: versions
-                                  .filter((v) => !!v.deps)
-                                  .map((v) => ({
-                                    key: `v_${v.id}`,
-                                    label: v.name,
-                                  })),
+                                children: versions.reduce(
+                                  (acc, v) => {
+                                    if (v.deps) {
+                                      acc.push({
+                                        key: `v_${v.id}`,
+                                        label: v.name,
+                                      });
+                                    }
+                                    return acc;
+                                  },
+                                  [] as { key: string; label: string }[],
+                                ),
                               },
                             ],
                             onClick: ({ key }) => {
