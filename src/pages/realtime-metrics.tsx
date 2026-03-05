@@ -98,12 +98,18 @@ export const Component = () => {
   const isAdmin = user?.admin === true;
 
   const appOptions = useMemo(() => {
-    return (apps || [])
-      .filter((app) => !!app.appKey)
-      .map((app) => ({
-        label: app.name,
-        value: app.appKey as string,
-      }));
+    return (apps || []).reduce<{ label: string; value: string }[]>(
+      (acc, app) => {
+        if (app.appKey) {
+          acc.push({
+            label: app.name,
+            value: app.appKey as string,
+          });
+        }
+        return acc;
+      },
+      [],
+    );
   }, [apps]);
 
   // Sync URL param to state on mount or URL change
