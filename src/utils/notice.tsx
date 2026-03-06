@@ -25,9 +25,12 @@ const notices = {
   },
 };
 
-Object.entries(notices).forEach(([key, value]) => {
-  const flag = localStorage.getItem(key);
-  if (!flag) {
-    confirm(value);
+for (const key in notices) {
+  if (Object.hasOwn(notices, key)) {
+    const value = notices[key as keyof typeof notices];
+    const flag = localStorage.getItem(key);
+    if (!flag) {
+      confirm(value);
+    }
   }
-});
+}
