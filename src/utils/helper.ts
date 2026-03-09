@@ -66,6 +66,12 @@ export const testUrls = async (urls?: string[]) => {
   return urls[0];
 };
 
+export const isSafeRedirect = (url: string | null | undefined): boolean => {
+  if (!url) return false;
+  // Ensure it starts with / and not // or \
+  return url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/\\');
+};
+
 export const isExpVersion = (
   config: VersionConfig | null | undefined,
   packageVersion: string,

@@ -4,6 +4,7 @@ import { md5 } from 'hash-wasm';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { setToken } from '@/services/request';
+import { isSafeRedirect } from '@/utils/helper';
 
 let _email = '';
 export const setUserEmail = (email: string) => {
@@ -23,7 +24,9 @@ export async function login(email: string, password: string) {
       const loginFrom = new URLSearchParams(window.location.search).get(
         'loginFrom',
       );
-      router.navigate(loginFrom || rootRouterPath.user);
+      router.navigate(
+        isSafeRedirect(loginFrom) ? loginFrom! : rootRouterPath.user,
+      );
     }
   } catch (err) {
     const e = err as Error;
