@@ -23,10 +23,13 @@ import { adminApi } from '@/services/admin-api';
 const { Title } = Typography;
 
 const tierOptions = [
-  ...Object.entries(quotas).map(([value, quota]) => ({
-    value,
-    label: quota.title,
-  })),
+  { value: 'free', label: '免费版' },
+  { value: 'standard', label: '标准版' },
+  { value: 'premium', label: '高级版' },
+  { value: 'pro', label: '专业版' },
+  { value: 'vip1', label: '大客户VIP1版' },
+  { value: 'vip2', label: '大客户VIP2版' },
+  { value: 'vip3', label: '大客户VIP3版' },
   { value: 'custom', label: '定制版' },
 ];
 
