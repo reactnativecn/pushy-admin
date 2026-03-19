@@ -17,9 +17,20 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { type Content, JSONEditor, type OnChange } from 'vanilla-jsoneditor';
+import { quotas } from '@/constants/quotas';
 import { adminApi } from '@/services/admin-api';
 
 const { Title } = Typography;
+
+const tierOptions = [
+  ...Object.entries(quotas).map(([value, quota]) => ({
+    value,
+    label: quota.title,
+  })),
+  { value: 'custom', label: '定制版' },
+];
+
+const tierLabelMap = new Map(tierOptions.map((option) => [option.value, option.label]));
 
 // JSON Editor wrapper component for quota editing
 const JsonEditorWrapper = ({
@@ -188,7 +199,8 @@ export const Component = () => {
       title: '套餐',
       dataIndex: 'tier',
       key: 'tier',
-      width: 100,
+      width: 120,
+      render: (tier: string) => tierLabelMap.get(tier) || tier || '-',
     },
     {
       title: '套餐过期时间',
@@ -278,13 +290,9 @@ export const Component = () => {
             </Form.Item>
             <Form.Item name="tier" label="套餐" className="mb-0!">
               <Select
-                options={[
-                  { value: 'free', label: '免费版' },
-                  { value: 'standard', label: '标准版' },
-                  { value: 'premium', label: '高级版' },
-                  { value: 'pro', label: '专业版' },
-                  { value: 'custom', label: '定制版' },
-                ]}
+                options={tierOptions}
+                optionFilterProp="label"
+                showSearch
               />
             </Form.Item>
             <Form.Item name="status" label="状态" className="mb-0!">
