@@ -34,6 +34,7 @@ const tierOptions = [
 ];
 
 const tierLabelMap = new Map(tierOptions.map((option) => [option.value, option.label]));
+const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
 
 // JSON Editor wrapper component for quota editing
 const JsonEditorWrapper = ({
@@ -131,7 +132,11 @@ export const Component = () => {
       status: record.status,
       tierExpiresAt: record.tierExpiresAt ? dayjs(record.tierExpiresAt) : null,
     });
-    setQuotaValue(record.quota ? JSON.stringify(record.quota, null, 2) : '');
+    setQuotaValue(
+      record.quota
+        ? JSON.stringify(record.quota, null, 2)
+        : defaultPremiumQuotaText,
+    );
     setIsModalOpen(true);
   };
 
