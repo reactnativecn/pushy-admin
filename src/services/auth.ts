@@ -3,7 +3,7 @@ import { message } from 'antd';
 import { md5 } from 'hash-wasm';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
-import { setToken } from '@/services/request';
+import { RequestError, setToken } from '@/services/request';
 
 let _email = '';
 export const setUserEmail = (email: string) => {
@@ -26,11 +26,11 @@ export async function login(email: string, password: string) {
       router.navigate(loginFrom || rootRouterPath.user);
     }
   } catch (err) {
-    const e = err as Error;
-    if (e.message.startsWith('423:')) {
+    if (err instanceof RequestError && err.status === 423) {
       router.navigate(rootRouterPath.inactivated);
     } else {
-      message.error(e.message);
+      const errorMessage = err instanceof Error ? err.message : '登录失败';
+      message.error(errorMessage);
     }
   }
 }

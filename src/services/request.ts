@@ -43,10 +43,25 @@ interface PushyResponse {
   message?: string;
 }
 
+export class RequestError extends Error {
+  status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'RequestError';
+    this.status = status;
+  }
+}
+
+export interface RequestOptions {
+  suppressErrorToast?: boolean;
+}
+
 export default async function request<T extends Record<any, any>>(
   method: 'get' | 'post' | 'put' | 'delete',
   path: string,
   params?: Record<any, any>,
+  requestOptions: RequestOptions = {},
 ) {
   const headers: HeadersInit = {};
   const options: RequestInit = { method, headers };
@@ -75,14 +90,26 @@ export default async function request<T extends Record<any, any>>(
       return json as T & PushyResponse;
     }
 
-    message.error(json.message);
-    throw Error(`${response.status}: ${json.message}`);
+    const error = new RequestError(
+      json.message || `Request failed with status ${response.status}`,
+      response.status,
+    );
+    if (!requestOptions.suppressErrorToast && error.message) {
+      message.error(error.message);
+    }
+    throw error;
   } catch (err) {
+    if (err instanceof RequestError) {
+      throw err;
+    }
+
     if ((err as Error).message.includes('Unauthorized')) {
       logout();
     } else {
-      message.error(`错误：${(err as Error).message}`);
-      message.error('如有使用代理，请关闭代理后重试');
+      if (!requestOptions.suppressErrorToast) {
+        message.error(`错误：${(err as Error).message}`);
+        message.error('如有使用代理，请关闭代理后重试');
+      }
       throw err;
     }
   }

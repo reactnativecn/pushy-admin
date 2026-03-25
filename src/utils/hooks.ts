@@ -4,10 +4,71 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { api } from '@/services/api';
 import { getToken } from '@/services/request';
 import 'dayjs/locale/zh-cn';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 dayjs.locale('zh-cn');
 dayjs.extend(relativeTime);
+
+const getCooldownRemainingSeconds = (
+  storageKey: string,
+  durationMs: number,
+) => {
+  const storedSentAt = window.localStorage.getItem(storageKey);
+  const sentAt = Number(storedSentAt);
+
+  if (!Number.isFinite(sentAt) || sentAt <= 0) {
+    return 0;
+  }
+
+  const remainingMs = durationMs - (Date.now() - sentAt);
+  if (remainingMs <= 0) {
+    window.localStorage.removeItem(storageKey);
+    return 0;
+  }
+
+  return Math.ceil(remainingMs / 1000);
+};
+
+export const useLocalStorageCooldown = ({
+  storageKey,
+  durationMs,
+}: {
+  storageKey: string;
+  durationMs: number;
+}) => {
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+
+  useEffect(() => {
+    const syncRemainingSeconds = () => {
+      setRemainingSeconds(getCooldownRemainingSeconds(storageKey, durationMs));
+    };
+
+    syncRemainingSeconds();
+    const timer = window.setInterval(syncRemainingSeconds, 1000);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === storageKey) {
+        syncRemainingSeconds();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [storageKey, durationMs]);
+
+  const startCooldown = () => {
+    window.localStorage.setItem(storageKey, String(Date.now()));
+    setRemainingSeconds(Math.ceil(durationMs / 1000));
+  };
+
+  return {
+    isCoolingDown: remainingSeconds > 0,
+    remainingSeconds,
+    startCooldown,
+  };
+};
 
 export const useUserInfo = () => {
   const { data } = useQuery({

@@ -1,8 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { Button, message, Result } from 'antd';
 import { useEffect } from 'react';
+import { activationEmailResendCooldownStorageKey } from '@/constants/local-storage';
 import { api } from '@/services/api';
 import { getUserEmail } from '@/services/auth';
+import { useLocalStorageCooldown } from '@/utils/hooks';
 import { rootRouterPath, router } from '../router';
 
 export const Welcome = () => {
@@ -12,9 +14,16 @@ export const Welcome = () => {
     }
   }, []);
 
+  const { isCoolingDown, remainingSeconds, startCooldown } =
+    useLocalStorageCooldown({
+      storageKey: activationEmailResendCooldownStorageKey,
+      durationMs: 60_000,
+    });
+
   const { mutate: sendEmail, isPending } = useMutation({
     mutationFn: () => api.sendEmail({ email: getUserEmail() }),
     onSuccess: () => {
+      startCooldown();
       message.info('邮件发送成功，请注意查收');
     },
     onError: () => {
@@ -36,8 +45,13 @@ export const Welcome = () => {
       }
       subTitle="如未收到激活邮件，请点击"
       extra={
-        <Button type="primary" onClick={() => sendEmail()} loading={isPending}>
-          重新发送
+        <Button
+          type="primary"
+          onClick={() => sendEmail()}
+          loading={isPending}
+          disabled={isCoolingDown}
+        >
+          {isCoolingDown ? `${remainingSeconds}s 后可再次发送` : '重新发送'}
         </Button>
       }
     />
