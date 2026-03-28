@@ -220,9 +220,12 @@ function getDepsChanges(
     return null;
   }
   const rows: DepChangeRow[] = [];
-  const keys = Object.keys({ ...oldDeps, ...newDeps }).sort((a, b) =>
-    a.localeCompare(b),
-  );
+  const keys = Array.from(
+    new Set([
+      ...Object.keys(oldDeps || {}),
+      ...Object.keys(newDeps || {}),
+    ]),
+  ).sort((a, b) => a.localeCompare(b));
   for (const key of keys) {
     const oldValue = oldDeps[key];
     const newValue = newDeps[key];
