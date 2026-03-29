@@ -178,22 +178,7 @@ export const useBinding = (appId: number) => {
     queryKey: ['bindings', appId],
     queryFn: () => api.getBinding(appId),
   });
-  // const {packages} = usePackages(appId);
-  // const {versions} = useVersions({appId});
   const bindings = data?.data ?? [];
-  // let fullBindings: Binding[] = [];
-  // let expBindings: Binding[] = [];
-  // bindings.forEach((binding) => {
-  //   if (
-  //     binding.rollout === 100 ||
-  //     binding.rollout === undefined ||
-  //     binding.rollout === null
-  //   ) {
-  //     fullBindings.push(binding);
-  //   } else {
-  //     expBindings.push(binding);
-  //   }
-  // });
   return { bindings, isLoading };
 };
 
