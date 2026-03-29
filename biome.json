@@ -1,5 +1,9 @@
 {
-  "files": {},
+  "files": {
+    "ignoreUnknown": false,
+    "includes": ["src/**", "*.json", "*.ts", "*.js", "!dist", "!node_modules"],
+    "maxSize": 1048576
+  },
   "linter": {
     "enabled": true,
     "rules": {

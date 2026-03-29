@@ -30,6 +30,11 @@ interface FormattedCategory {
 const TOTAL_LABEL = '查询热更次数';
 const CATEGORY_SEPARATOR = '\u001f';
 
+type ChartController = {
+  emit: (...args: unknown[]) => unknown;
+  on: (...args: unknown[]) => unknown;
+};
+
 const formatCategory = (rawCategory: string): FormattedCategory => {
   if (!rawCategory) {
     return { label: 'unknown', isTotal: false };
@@ -298,7 +303,7 @@ export const Component = () => {
           color: { domain: colorDomain },
         }
       : undefined,
-    onReady: ({ chart }: { chart: { on: Function; emit: Function } }) => {
+    onReady: ({ chart }: { chart: ChartController }) => {
       try {
         chart.on('afterrender', () => {
           const values = legendValuesRef.current;

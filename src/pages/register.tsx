@@ -1,5 +1,6 @@
 import { Button, Checkbox, Form, Input, message, Row } from 'antd';
 import { md5 } from 'hash-wasm';
+import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '@/services/api';
@@ -133,7 +134,7 @@ export const Register = () => {
 
 export const Component = Register;
 
-const style: Style = {
+const style: Record<'body' | 'form' | 'logo' | 'slogan', CSSProperties> = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },
   form: {
     width: '100%',

@@ -14,7 +14,12 @@ import {
   Typography,
 } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type Content, JSONEditor, type OnChange } from 'vanilla-jsoneditor';
+import {
+  type Content,
+  createJSONEditor,
+  Mode,
+  type OnChange,
+} from 'vanilla-jsoneditor';
 import { adminApi } from '@/services/admin-api';
 
 const { Title } = Typography;
@@ -33,8 +38,9 @@ const JsonEditorWrapper = ({
   onChange: (value: string) => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<JSONEditor | null>(null);
+  const editorRef = useRef<ReturnType<typeof createJSONEditor> | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: create the editor only once
   useEffect(() => {
     if (containerRef.current && !editorRef.current) {
       const handleChange: OnChange = (
@@ -51,12 +57,12 @@ const JsonEditorWrapper = ({
         }
       };
 
-      editorRef.current = new JSONEditor({
+      editorRef.current = createJSONEditor({
         target: containerRef.current,
         props: {
           content: { text: value },
           onChange: handleChange,
-          mode: 'text',
+          mode: Mode.text,
         },
       });
     }
@@ -71,7 +77,7 @@ const JsonEditorWrapper = ({
 
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.update({ text: value });
+      editorRef.current.updateProps({ content: { text: value } });
     }
   }, [value]);
 

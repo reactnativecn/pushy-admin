@@ -1,4 +1,5 @@
 import { Button, Form, Input, Row } from 'antd';
+import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { login } from '@/services/auth';
@@ -68,7 +69,7 @@ export const Login = () => {
 
 export const Component = Login;
 
-const style: Style = {
+const style: Record<'body' | 'form' | 'logo' | 'slogan', CSSProperties> = {
   body: { display: 'flex', flexDirection: 'column', height: '100%' },
   form: {
     width: '100%',

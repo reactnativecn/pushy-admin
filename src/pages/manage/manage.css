@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: Ant Layout injects inline widths on Sider, so the mobile override needs !important here. */
 .packages {
   .ant-list-empty-text {
     padding: 5px;

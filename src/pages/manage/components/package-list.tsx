@@ -134,7 +134,7 @@ const Item = ({ item }: { item: Package }) => {
     </div>
   );
 };
-const status = {
+const status: Partial<Record<NonNullable<Package['status']>, string>> = {
   paused: '暂停',
   expired: '过期',
 };

@@ -76,6 +76,16 @@ export const useUserInfo = () => {
     queryFn: api.me,
     enabled: () => !!getToken(),
   });
+  const user =
+    data?.tier === 'custom' && data.quota
+      ? {
+          ...data,
+          quota: {
+            ...data.quota,
+            title: '定制版',
+          },
+        }
+      : data;
   const expireDay = dayjs(data?.tierExpiresAt);
   const displayExpireDay = data?.tierExpiresAt
     ? expireDay.format('YYYY年MM月DD日')
@@ -87,11 +97,8 @@ export const useUserInfo = () => {
   const displayRemainingDays = isExpiringSoon
     ? `(剩余 ${remainingDays} 天，之后转为免费版)`
     : '';
-  if (data?.tier === 'custom') {
-    data.quota.title = '定制版';
-  }
   return {
-    user: getToken() ? data : null,
+    user: getToken() ? user : null,
     displayExpireDay,
     displayRemainingDays,
     isExpiringSoon,

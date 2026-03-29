@@ -119,8 +119,8 @@ const useSelectedKeys = () => {
 
 export default function Sider() {
   const { user } = useUserInfo();
-  if (!user) return null;
   const selectedKeys = useSelectedKeys();
+  if (!user) return null;
   return (
     <Layout.Sider
       className="[&>.ant-layout-sider-children]:flex [&>.ant-layout-sider-children]:flex-col!"
@@ -175,9 +175,12 @@ const SiderContent = ({ selectedKeys, onNavigate }: SiderMenuProps) => (
 const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
   const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
   const { apps } = useAppList();
-  const quota = user.quota || quotas[user?.tier as keyof typeof quotas];
+  if (!user) {
+    return null;
+  }
+  const quota = user.quota ?? quotas[user.tier as keyof typeof quotas];
   const pvQuota = quota?.pv;
-  const consumedQuota = user?.checkQuota;
+  const consumedQuota = user.checkQuota;
   const percent =
     pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
   return (
@@ -186,7 +189,7 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
         <Card
           title={
             <div className="text-center py-1">
-              <span className="">{user?.email}</span>
+              <span className="">{user.email}</span>
               <br />
               <span className="font-normal">今日剩余总查询热更次数</span>
             </div>
@@ -204,7 +207,7 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
             }
           />
           <div className="text-xs mt-2 text-center">
-            7日平均剩余次数：{user?.last7dAvg?.toLocaleString()} 次
+            7日平均剩余次数：{user.last7dAvg?.toLocaleString()} 次
           </div>
           <div className="text-xs mt-2 text-center">
             <a target="_blank" href={PRICING_LINK} rel="noreferrer">
@@ -212,7 +215,7 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
             </a>
             可用: {pvQuota?.toLocaleString()} 次/每日
           </div>{' '}
-          {user?.tier !== 'free' && (
+          {user.tier !== 'free' && (
             <div className="text-xs mt-2 text-center">
               有效期至：{displayExpireDay}
               {displayRemainingDays && (

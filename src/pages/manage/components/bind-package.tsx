@@ -221,10 +221,7 @@ function getDepsChanges(
   }
   const rows: DepChangeRow[] = [];
   const keys = Array.from(
-    new Set([
-      ...Object.keys(oldDeps || {}),
-      ...Object.keys(newDeps || {}),
-    ]),
+    new Set([...Object.keys(oldDeps || {}), ...Object.keys(newDeps || {})]),
   ).sort((a, b) => a.localeCompare(b));
   for (const key of keys) {
     const oldValue = oldDeps[key];

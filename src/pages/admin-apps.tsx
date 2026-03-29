@@ -16,7 +16,6 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/services/admin-api';
-import { api } from '@/services/api';
 
 const { Title } = Typography;
 

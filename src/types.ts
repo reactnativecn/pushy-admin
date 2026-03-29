@@ -1,21 +1,14 @@
-declare module '*.svg' {
-  export const ReactComponent: React.FunctionComponent<
-    React.SVGProps<SVGSVGElement>
-  >;
-}
+export type Tier =
+  | 'free'
+  | 'standard'
+  | 'premium'
+  | 'pro'
+  | 'vip1'
+  | 'vip2'
+  | 'vip3'
+  | 'custom';
 
-declare module '*.png' {
-  const content: string;
-  export default content;
-}
-declare module '*.jpg' {
-  const content: string;
-  export default content;
-}
-
-type Tier = 'free' | 'standard' | 'premium' | 'pro' | 'custom';
-
-interface User {
+export interface User {
   email: string;
   id: number;
   name: string;
@@ -27,18 +20,18 @@ interface User {
   admin?: boolean;
 }
 
-interface AdminUser {
+export interface AdminUser {
   id: number;
   email: string;
   name: string;
   status: 'normal' | 'unverified' | null;
-  tier: string;
+  tier: Tier;
   tierExpiresAt?: string | null;
   quota?: Quota | null;
   createdAt?: string;
 }
 
-interface AdminApp {
+export interface AdminApp {
   id: number;
   userId: number | null;
   platform: 'ios' | 'android' | 'harmony';
@@ -52,14 +45,14 @@ interface AdminApp {
   updatedAt?: string;
 }
 
-interface AdminVersion {
+export interface AdminVersion {
   id: number;
   appId: number;
   hash: string;
   name: string;
   description: string | null;
   metaInfo: string | null;
-  config: any | null;
+  config: Record<string, any> | null;
   deps: string | null;
   commit: string | null;
   createdAt?: string;
@@ -67,6 +60,7 @@ interface AdminVersion {
 
 export interface Quota {
   base?: Exclude<Tier, 'custom'>;
+  title?: string;
   app: number;
   package: number;
   packageSize: string;
@@ -76,34 +70,34 @@ export interface Quota {
   price?: number;
 }
 
-interface App {
+export interface App {
   id: number;
   name: string;
   platform: 'android' | 'ios' | 'harmony';
   status?: 'normal' | 'paused' | null;
-  ignoreBuildTime?: 'enabled' | 'disabled';
+  ignoreBuildTime?: 'enabled' | 'disabled' | null;
   checkCount?: number;
-  downloadUrl?: string;
+  downloadUrl?: string | null;
   appKey?: string;
 }
 
-interface PackageBase {
+export interface PackageBase {
   id: number;
   name: string;
   note?: string;
   status?: 'normal' | 'paused' | 'expired' | null;
 }
 
-interface Package extends PackageBase {
+export interface Package extends PackageBase {
   buildTime?: string;
   buildNumber?: string;
   deps?: Record<string, string>;
   commit?: Commit;
   hash: string;
-  versions?: Version;
+  versions?: Version | null;
 }
 
-interface Commit {
+export interface Commit {
   hash: string;
   message: string;
   author: string;
@@ -111,7 +105,8 @@ interface Commit {
   origin?: string;
 }
 
-interface Version {
+export interface Version {
+  createdAt?: string;
   description?: string;
   hash: string;
   id: number;
@@ -127,38 +122,37 @@ interface Version {
   commit?: Commit;
 }
 
-interface AppDetail extends App {
+export interface AppDetail extends App {
   appKey: string;
   appSecret: string;
   downloadUrl?: string;
 }
 
-interface SiderMenuProps {
+export interface SiderMenuProps {
   selectedKeys?: string[];
 }
 
-interface ContentProps {
+export interface ContentProps {
   app: App;
 }
 
-interface VersionConfig {
+export interface VersionConfig {
   rollout?: {
     [packageVersion: string]: number | null;
   };
 }
 
-type BindingType = 'full' | 'exp';
+export type BindingType = 'full' | 'exp';
 
-interface Binding {
+export interface Binding {
   id: number;
   type: BindingType;
-  // appId: number;
   versionId: number;
   packageId: number;
   rollout: number;
 }
 
-interface AuditLog {
+export interface AuditLog {
   id: number;
   method: string;
   path: string;
@@ -167,15 +161,16 @@ interface AuditLog {
   ip?: string;
   userAgent?: string;
   apiTokens?: {
+    name?: string;
     tokenSuffix: string;
   };
   createdAt: string;
 }
 
-interface ApiToken {
+export interface ApiToken {
   id: number;
   name: string;
-  token?: string; // Only available when creating
+  token?: string;
   tokenSuffix: string;
   permissions: {
     read?: boolean;

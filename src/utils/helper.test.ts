@@ -11,7 +11,6 @@ describe('isExpVersion', () => {
   });
 
   test('should return false when config.rollout is missing', () => {
-    // @ts-expect-error
     expect(isExpVersion({}, '1.0.0')).toBe(false);
   });
 

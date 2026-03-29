@@ -1,4 +1,12 @@
-import type { App, AuditLog, Binding, Package, User, Version } from '@/types';
+import type {
+  ApiToken,
+  App,
+  AuditLog,
+  Binding,
+  Package,
+  User,
+  Version,
+} from '@/types';
 import { queryClient } from '@/utils/queryClient';
 import request from './request';
 

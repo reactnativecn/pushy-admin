@@ -49,6 +49,29 @@ const getCategoryPrefix = (category: string) => {
   return category.slice(0, separatorIndex).trim();
 };
 
+const getMetricsTotal = (metrics?: MetricsResponse) => {
+  if (!metrics?.data || !metrics.dict) return 0;
+  let total = 0;
+  for (const bucket of metrics.data) {
+    let bucketTotal = 0;
+    for (const [dictIndex, count] of bucket.data) {
+      const key = metrics.dict[dictIndex];
+      if (key === '_total') {
+        bucketTotal = count;
+        break;
+      }
+      bucketTotal += count;
+    }
+    total += bucketTotal;
+  }
+  return total;
+};
+
+type ChartController = {
+  emit: (...args: unknown[]) => unknown;
+  on: (...args: unknown[]) => unknown;
+};
+
 export const Component = () => {
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().subtract(24, 'hour'),
@@ -173,24 +196,6 @@ export const Component = () => {
 
   legendValuesRef.current = defaultLegendValues;
 
-  const getMetricsTotal = (metrics?: MetricsResponse) => {
-    if (!metrics?.data || !metrics.dict) return 0;
-    let total = 0;
-    for (const bucket of metrics.data) {
-      let bucketTotal = 0;
-      for (const [dictIndex, count] of bucket.data) {
-        const key = metrics.dict[dictIndex];
-        if (key === '_total') {
-          bucketTotal = count;
-          break;
-        }
-        bucketTotal += count;
-      }
-      total += bucketTotal;
-    }
-    return total;
-  };
-
   const totalPv = useMemo(() => getMetricsTotal(pvMetrics), [pvMetrics]);
   const totalUv = useMemo(() => getMetricsTotal(uvMetrics), [uvMetrics]);
 
@@ -255,7 +260,7 @@ export const Component = () => {
           color: { domain: colorDomain },
         }
       : undefined,
-    onReady: ({ chart }: { chart: { on: Function; emit: Function } }) => {
+    onReady: ({ chart }: { chart: ChartController }) => {
       try {
         chart.on('afterrender', () => {
           const values = legendValuesRef.current;

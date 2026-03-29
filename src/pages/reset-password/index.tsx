@@ -14,11 +14,15 @@ export const ResetPassword = () => {
   const { step = '0' } = useParams() as { step?: keyof typeof body };
   return (
     <Card className="reset-card">
-      <Steps className="mb-12" current={Number(step)}>
-        <Steps.Step title="输入绑定邮箱" />
-        <Steps.Step title="设置新密码" />
-        <Steps.Step title="设置成功" />
-      </Steps>
+      <Steps
+        className="mb-12"
+        current={Number(step)}
+        items={[
+          { title: '输入绑定邮箱' },
+          { title: '设置新密码' },
+          { title: '设置成功' },
+        ]}
+      />
       {body[step]}
     </Card>
   );
