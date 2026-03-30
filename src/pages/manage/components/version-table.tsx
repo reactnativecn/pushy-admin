@@ -2,6 +2,7 @@ import { InfoCircleOutlined, QrcodeOutlined } from '@ant-design/icons';
 import {
   Button,
   Checkbox,
+  Grid,
   Input,
   Modal,
   Popover,
@@ -69,9 +70,9 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
               value={codeValue}
               className="mb-2!"
             />
-            <div className="flex flex-row items-center">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Checkbox
-                className="mr-4"
+                className="mr-0 sm:mr-4"
                 checked={enableDeepLink}
                 onChange={({ target }) => {
                   setEnableDeepLink(target.checked);
@@ -146,6 +147,7 @@ const columns: ColumnType<Version>[] = [
   {
     title: '描述',
     dataIndex: 'description',
+    responsive: ['md'],
     render: (_, record) => (
       <TextColumn record={record} recordKey="description" />
     ),
@@ -153,6 +155,7 @@ const columns: ColumnType<Version>[] = [
   {
     title: '自定义元信息',
     dataIndex: 'metaInfo',
+    responsive: ['lg'],
     render: (_, record) => <TextColumn record={record} recordKey="metaInfo" />,
   },
   {
@@ -179,6 +182,7 @@ const columns: ColumnType<Version>[] = [
   {
     title: '上传时间',
     dataIndex: 'createdAt',
+    responsive: ['md'],
     render: (_, record) => (
       <TextColumn record={record} recordKey="createdAt" isEditable={false} />
     ),
@@ -258,7 +262,11 @@ const TextColumn = ({
   }
   return (
     <div>
-      <Typography.Text className="w-40" editable={editable} ellipsis>
+      <Typography.Text
+        className="block max-w-[9rem] md:w-40"
+        editable={editable}
+        ellipsis
+      >
         {value}
       </Typography.Text>
       {extra}
@@ -266,6 +274,8 @@ const TextColumn = ({
   );
 };
 export default function VersionTable() {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const { appId } = useManageContext();
   const [selected, setSelected] = useState<number[]>([]);
   const [offset, setOffset] = useState<number>(0);
@@ -283,12 +293,14 @@ export default function VersionTable() {
       title={() => '热更包'}
       columns={columns}
       dataSource={versions}
+      size={isMobile ? 'small' : 'middle'}
       pagination={{
-        showSizeChanger: true,
+        showSizeChanger: !isMobile,
+        simple: isMobile,
         total: count,
         current: offset / pageSize + 1,
         pageSize,
-        showTotal: (total) => `共 ${total} 个 `,
+        showTotal: isMobile ? undefined : (total) => `共 ${total} 个 `,
         onChange(page, size) {
           if (size) {
             setOffset((page - 1) * size);
@@ -296,12 +308,11 @@ export default function VersionTable() {
           }
         },
       }}
+      scroll={{ x: 960 }}
       rowSelection={{
-        selections: [
-          Table.SELECTION_ALL,
-          Table.SELECTION_INVERT,
-          Table.SELECTION_NONE,
-        ],
+        selections: isMobile
+          ? undefined
+          : [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
         onChange: (keys) => setSelected(keys as number[]),
       }}
       loading={isLoading}
@@ -309,6 +320,7 @@ export default function VersionTable() {
         selected.length
           ? () => (
               <Button
+                className={isMobile ? 'w-full' : undefined}
                 onClick={() =>
                   removeSelectedVersions({ selected, versions, appId })
                 }

@@ -1,5 +1,5 @@
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Table, Typography } from 'antd';
+import { Button, DatePicker, Grid, Table, Typography } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
 import dayjs, { type Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -152,6 +152,7 @@ const columns: ColumnType<AuditLog>[] = [
   },
   {
     title: '提交数据',
+    responsive: ['md'],
     width: 300,
     ellipsis: {
       showTitle: false,
@@ -180,6 +181,7 @@ const columns: ColumnType<AuditLog>[] = [
   {
     title: '设备信息',
     dataIndex: 'userAgent',
+    responsive: ['lg'],
     width: 250,
     ellipsis: {
       showTitle: false,
@@ -207,6 +209,7 @@ const columns: ColumnType<AuditLog>[] = [
   {
     title: 'API Key',
     dataIndex: 'apiTokens',
+    responsive: ['lg'],
     width: 150,
     render: (apiTokens?: { name: string; tokenSuffix: string }) =>
       apiTokens ? (
@@ -220,6 +223,8 @@ const columns: ColumnType<AuditLog>[] = [
 ];
 
 export const AuditLogs = () => {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [offset, setOffset] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(20);
   const [dateRange, setDateRange] = useState<
@@ -429,12 +434,13 @@ export const AuditLogs = () => {
         dataSource={filteredAuditLogs}
         loading={isLoading}
         pagination={{
-          showSizeChanger: true,
-          showQuickJumper: true,
+          showSizeChanger: !isMobile,
+          showQuickJumper: !isMobile,
+          simple: isMobile,
           total: filteredAuditLogs.length,
           current: offset / pageSize + 1,
           pageSize,
-          showTotal: (total) => `共 ${total} 条记录`,
+          showTotal: isMobile ? undefined : (total) => `共 ${total} 条记录`,
           onChange(page, size) {
             if (size) {
               setOffset((page - 1) * size);
@@ -442,7 +448,8 @@ export const AuditLogs = () => {
             }
           },
         }}
-        scroll={{ x: 1200 }}
+        size={isMobile ? 'small' : 'middle'}
+        scroll={{ x: isMobile ? 720 : 1200 }}
       />
     </div>
   );

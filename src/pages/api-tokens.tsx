@@ -5,6 +5,7 @@ import {
   Card,
   Checkbox,
   Form,
+  Grid,
   Input,
   Modal,
   message,
@@ -25,6 +26,8 @@ const { Paragraph } = Typography;
 
 function ApiTokensPage() {
   const queryClient = useQueryClient();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [form] = Form.useForm();
@@ -86,6 +89,7 @@ function ApiTokensPage() {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
+      responsive: ['md'],
       width: 60,
     },
     {
@@ -93,7 +97,7 @@ function ApiTokensPage() {
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: ApiToken) => (
-        <Space>
+        <Space wrap size={[4, 8]}>
           <KeyOutlined />
           {name}
           {record.isRevoked && <Tag color="red">已撤销</Tag>}
@@ -108,7 +112,9 @@ function ApiTokensPage() {
       dataIndex: 'tokenSuffix',
       key: 'tokenSuffix',
       render: (tokenSuffix: string) => (
-        <span className="font-mono text-gray-500">****{tokenSuffix}</span>
+        <span className="font-mono text-xs text-gray-500 break-all">
+          ****{tokenSuffix}
+        </span>
       ),
     },
     {
@@ -127,6 +133,7 @@ function ApiTokensPage() {
       title: '过期时间',
       dataIndex: 'expiresAt',
       key: 'expiresAt',
+      responsive: ['sm'],
       render: (expiresAt: string | null) =>
         expiresAt ? dayjs(expiresAt).format('YYYY-MM-DD HH:mm') : '永不过期',
     },
@@ -134,6 +141,7 @@ function ApiTokensPage() {
       title: '最后使用',
       dataIndex: 'lastUsedAt',
       key: 'lastUsedAt',
+      responsive: ['lg'],
       render: (lastUsedAt: string | null) =>
         lastUsedAt ? dayjs(lastUsedAt).format('YYYY-MM-DD HH:mm') : '从未使用',
     },
@@ -141,6 +149,7 @@ function ApiTokensPage() {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      responsive: ['lg'],
       render: (createdAt: string) =>
         dayjs(createdAt).format('YYYY-MM-DD HH:mm'),
     },
@@ -171,41 +180,46 @@ function ApiTokensPage() {
 
   return (
     <div className="body">
-      <Card
-        title="API Token 管理"
-        extra={
+      <Card>
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-lg font-semibold">API Token 管理</div>
+            <Paragraph type="secondary" className="mb-0 mt-1">
+              API Token 可用于 CI/CD 流程或自动化脚本中调用{' '}
+              <a
+                target="_blank"
+                href="https://update.reactnative.cn/api/openapi"
+                rel="noopener"
+              >
+                Pushy API
+              </a>
+              。每个用户最多可同时保留 10 个活跃的 Token。
+            </Paragraph>
+          </div>
           <Button
             type="primary"
             icon={<KeyOutlined />}
             onClick={() => setCreateModalVisible(true)}
+            className="w-full md:w-auto"
           >
             创建 Token
           </Button>
-        }
-      >
-        <Paragraph type="secondary" className="mb-4">
-          API Token 可用于 CI/CD 流程或自动化脚本中调用{' '}
-          <a
-            target="_blank"
-            href="https://update.reactnative.cn/api/openapi"
-            rel="noopener"
-          >
-            Pushy API
-          </a>
-          。每个用户最多可同时保留 10 个活跃的 Token。
-        </Paragraph>
+        </div>
         <Table
           columns={columns}
           dataSource={data?.data}
           loading={isLoading}
           rowKey="id"
+          size={isMobile ? 'small' : 'middle'}
           pagination={false}
+          scroll={{ x: 720 }}
         />
       </Card>
 
       <Modal
         title="创建 API Token"
         open={createModalVisible}
+        width={isMobile ? 'calc(100vw - 32px)' : 520}
         onCancel={() => {
           setCreateModalVisible(false);
           form.resetFields();
@@ -270,6 +284,7 @@ function ApiTokensPage() {
       <Modal
         title="Token 创建成功"
         open={!!newToken}
+        width={isMobile ? 'calc(100vw - 32px)' : 520}
         onOk={() => setNewToken(null)}
         onCancel={() => setNewToken(null)}
         cancelButtonProps={{ style: { display: 'none' } }}
@@ -287,7 +302,8 @@ function ApiTokensPage() {
           />
           <Button
             icon={<CopyOutlined />}
-            className="mt-2"
+            className="mt-2 w-full sm:w-auto"
+            block={isMobile}
             onClick={() => {
               if (newToken) {
                 navigator.clipboard.writeText(newToken);

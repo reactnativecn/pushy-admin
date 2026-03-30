@@ -4,6 +4,7 @@ import {
   Button,
   Col,
   Form,
+  Grid,
   Layout,
   Modal,
   message,
@@ -26,38 +27,65 @@ import VersionTable from './components/version-table';
 import { ManageProvider, useManageContext } from './hooks/useManageContext';
 
 const ManageDashBoard = () => {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const { packages, unusedPackages, packagesLoading } = useManageContext();
+  const packageTabItems = [
+    {
+      key: 'all',
+      label: '全部',
+      children: <PackageList dataSource={packages} loading={packagesLoading} />,
+    },
+    {
+      key: 'unused',
+      label: '未使用',
+      children: (
+        <PackageList dataSource={unusedPackages} loading={packagesLoading} />
+      ),
+    },
+  ];
+
+  if (isMobile) {
+    return (
+      <Tabs
+        defaultActiveKey="versions"
+        size="small"
+        items={[
+          {
+            key: 'versions',
+            label: '热更包',
+            children: <VersionTable />,
+          },
+          {
+            key: 'packages',
+            label: '原生包',
+            children: (
+              <div className="rounded-lg bg-white px-4 pb-4 pt-1">
+                <Tabs
+                  defaultActiveKey="all"
+                  size="small"
+                  items={packageTabItems}
+                />
+              </div>
+            ),
+          },
+        ]}
+      />
+    );
+  }
+
   return (
     <Layout className="manage-layout">
       <Layout.Sider
         theme="light"
-        className="manage-sider p-4 pt-0 mr-4 h-full rounded-lg"
+        className="manage-sider h-full rounded-lg p-4 pt-0"
         width={240}
+        style={{ marginRight: 16, maxWidth: '100%' }}
       >
         <div className="py-4">原生包</div>
-        <Tabs
-          items={[
-            {
-              key: 'all',
-              label: '全部',
-              children: (
-                <PackageList dataSource={packages} loading={packagesLoading} />
-              ),
-            },
-            {
-              key: 'unused',
-              label: '未使用',
-              children: (
-                <PackageList
-                  dataSource={unusedPackages}
-                  loading={packagesLoading}
-                />
-              ),
-            },
-          ]}
-        />
+        <Tabs size="middle" items={packageTabItems} />
       </Layout.Sider>
-      <Layout.Content className="p-0! manage-content">
+      <Layout.Content className="p-0! manage-content" style={{ minWidth: 0 }}>
         <VersionTable />
       </Layout.Content>
     </Layout>
@@ -66,6 +94,7 @@ const ManageDashBoard = () => {
 
 export const Manage = () => {
   const [modal, contextHolder] = Modal.useModal();
+  const screens = Grid.useBreakpoint();
   const params = useParams<{ id?: string }>();
   const id = Number(params.id!);
   const { app } = useApp(id);
@@ -87,19 +116,24 @@ export const Manage = () => {
               },
               {
                 title: (
-                  <>
+                  <span className="inline-flex max-w-full items-center gap-1">
                     <PlatformIcon platform={app?.platform} className="mr-1" />
-                    {app?.name}
+                    <span className="max-w-[160px] truncate md:max-w-none">
+                      {app?.name}
+                    </span>
                     {app?.status === 'paused' && (
                       <Tag className="ml-2">暂停</Tag>
                     )}
-                  </>
+                  </span>
                 ),
               },
             ]}
           />
         </Col>
-        <Space.Compact className="w-full md:w-auto">
+        <Space.Compact
+          direction={!screens.md ? 'vertical' : 'horizontal'}
+          className="w-full md:w-auto"
+        >
           <Button
             type="primary"
             icon={<SettingFilled />}
@@ -109,6 +143,7 @@ export const Manage = () => {
                 icon: null,
                 closable: true,
                 maskClosable: true,
+                width: !screens.md ? 'calc(100vw - 32px)' : 520,
                 content: <SettingModal />,
                 async onOk() {
                   try {

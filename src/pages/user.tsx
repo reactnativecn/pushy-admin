@@ -4,9 +4,9 @@ import {
   Button,
   Descriptions,
   Dropdown,
+  Grid,
   message,
   Popover,
-  Space,
   Spin,
 } from 'antd';
 import { type ReactNode, useState } from 'react';
@@ -43,7 +43,7 @@ const PurchaseButton = ({
   return (
     <Button
       // type='link'
-      className="mt-2 md:mt-0 md:ml-6"
+      className="mt-2 w-full justify-center sm:w-auto md:mt-0 md:ml-6"
       icon={<AlipayCircleOutlined />}
       onClick={async () => {
         if (tier === 'custom') {
@@ -110,7 +110,7 @@ const UpgradeDropdown = ({
 
   return (
     <Dropdown.Button
-      className="mt-2 md:mt-0 md:ml-6"
+      className="mt-2 w-full sm:w-auto md:mt-0 md:ml-6"
       icon={<AlipayCircleOutlined />}
       loading={loading}
       menu={{
@@ -126,6 +126,8 @@ const UpgradeDropdown = ({
 
 function UserPanel() {
   const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -171,23 +173,30 @@ function UserPanel() {
       <Descriptions
         title="账户信息"
         column={1}
-        styles={{ label: { width: 134 } }}
+        layout={isMobile ? 'vertical' : 'horizontal'}
+        size={isMobile ? 'small' : undefined}
+        styles={{
+          content: { wordBreak: 'break-word' },
+          label: isMobile ? undefined : { width: 134 },
+        }}
         bordered
       >
         <Descriptions.Item label="用户名">{name}</Descriptions.Item>
-        <Descriptions.Item label="邮箱">{email}</Descriptions.Item>
+        <Descriptions.Item label="邮箱">
+          <span className="break-all">{email}</span>
+        </Descriptions.Item>
         <Descriptions.Item label="服务版本">
-          <Space wrap>
-            {tierDisplay}
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <span>{tierDisplay}</span>
             {!quota && defaultQuota && (
               <UpgradeDropdown currentQuota={defaultQuota} />
             )}
-          </Space>
+          </div>
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
-          <Space wrap>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             {displayExpireDay ? (
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 {displayExpireDay}
                 {displayRemainingDays && (
                   <>
@@ -200,14 +209,19 @@ function UserPanel() {
               '无'
             )}
             {tier !== 'free' && (
-              <>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <PurchaseButton tier={tier}>续费</PurchaseButton>
                 <Popover content={InvoiceHint} trigger="click">
-                  <Button type="link">申请发票</Button>
+                  <Button
+                    type="link"
+                    className="justify-start px-0 sm:px-4 md:px-0"
+                  >
+                    申请发票
+                  </Button>
                 </Popover>
-              </>
+              </div>
             )}
-          </Space>
+          </div>
         </Descriptions.Item>
         <Descriptions.Item label="购买说明">
           <div className="text-sm text-gray-500">
@@ -216,12 +230,18 @@ function UserPanel() {
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="额度详情">
-          {quotaTableData.map(({ key, item, value }) => (
-            <div key={key}>
-              {item}：{value} <br />
-            </div>
-          ))}
-          <div className="h-px my-4 w-md bg-gray-300" />
+          <div className="grid gap-2 sm:grid-cols-2">
+            {quotaTableData.map(({ key, item, value }) => (
+              <div
+                key={key}
+                className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
+              >
+                <div className="text-xs text-gray-500">{item}</div>
+                <div className="mt-1 font-medium">{value}</div>
+              </div>
+            ))}
+          </div>
+          <div className="h-px my-4 w-full max-w-md bg-gray-300" />
           <div className="text-xm text-gray-500">
             如有定制需求（限高级版以上），请联系 QQ 客服 34731408
           </div>

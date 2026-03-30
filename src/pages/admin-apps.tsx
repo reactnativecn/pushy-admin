@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Form,
+  Grid,
   Input,
   Modal,
   message,
@@ -13,6 +14,7 @@ import {
   Table,
   Typography,
 } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/services/admin-api';
@@ -21,6 +23,8 @@ const { Title } = Typography;
 
 export const Component = () => {
   const queryClient = useQueryClient();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [searchKeyword, setSearchKeyword] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,11 +90,12 @@ export const Component = () => {
     }
   };
 
-  const columns = [
+  const columns: ColumnsType<AdminApp> = [
     {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
+      responsive: ['md'],
       width: 60,
     },
     {
@@ -105,8 +110,8 @@ export const Component = () => {
       key: 'appKey',
       width: 200,
       render: (key: string) => (
-        <Space>
-          <span className="font-mono text-xs">{key}</span>
+        <Space wrap size={[4, 8]}>
+          <span className="font-mono text-xs break-all">{key}</span>
           <Button
             type="text"
             size="small"
@@ -142,12 +147,14 @@ export const Component = () => {
       title: '用户ID',
       dataIndex: 'userId',
       key: 'userId',
+      responsive: ['lg'],
       width: 80,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
+      responsive: ['md'],
       width: 80,
       render: (status: string | null) => status || '-',
     },
@@ -155,6 +162,7 @@ export const Component = () => {
       title: '忽略构建时间',
       dataIndex: 'ignoreBuildTime',
       key: 'ignoreBuildTime',
+      responsive: ['lg'],
       width: 120,
       render: (v: string | null) => (
         <span className={v === 'enabled' ? 'text-green-600' : ''}>
@@ -166,6 +174,7 @@ export const Component = () => {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      responsive: ['lg'],
       width: 160,
       render: (date: string | undefined) =>
         date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
@@ -208,8 +217,13 @@ export const Component = () => {
             dataSource={data?.data || []}
             columns={columns}
             rowKey="id"
-            pagination={{ pageSize: 20 }}
-            scroll={{ x: 1000 }}
+            size={isMobile ? 'small' : 'middle'}
+            pagination={
+              isMobile
+                ? { pageSize: 10, simple: true }
+                : { pageSize: 20, showSizeChanger: true }
+            }
+            scroll={{ x: 760 }}
           />
         </Spin>
       </Card>
@@ -217,6 +231,7 @@ export const Component = () => {
       <Modal
         title={`编辑应用: ${editingApp?.name}`}
         open={isModalOpen}
+        width={isMobile ? 'calc(100vw - 32px)' : 600}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>
@@ -231,7 +246,6 @@ export const Component = () => {
             保存
           </Button>,
         ]}
-        width={600}
       >
         <Form form={form} layout="vertical" className="mt-4">
           <Space className="w-full" direction="vertical" size="middle">

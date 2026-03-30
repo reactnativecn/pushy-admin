@@ -5,6 +5,7 @@ import {
   Card,
   DatePicker,
   Form,
+  Grid,
   Input,
   Modal,
   message,
@@ -14,6 +15,7 @@ import {
   Table,
   Typography,
 } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -45,9 +47,11 @@ const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
 
 // JSON Editor wrapper component for quota editing
 const JsonEditorWrapper = ({
+  height = 200,
   value,
   onChange,
 }: {
+  height?: number;
   value: string;
   onChange: (value: string) => void;
 }) => {
@@ -95,11 +99,13 @@ const JsonEditorWrapper = ({
     }
   }, [value]);
 
-  return <div ref={containerRef} style={{ height: 200 }} />;
+  return <div ref={containerRef} style={{ height }} />;
 };
 
 export const Component = () => {
   const queryClient = useQueryClient();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [searchKeyword, setSearchKeyword] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -181,11 +187,12 @@ export const Component = () => {
     }
   };
 
-  const columns = [
+  const columns: ColumnsType<AdminUser> = [
     {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
+      responsive: ['md'],
       width: 80,
     },
     {
@@ -202,6 +209,7 @@ export const Component = () => {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
+      responsive: ['sm'],
       width: 100,
       render: (status: string) => (
         <span
@@ -215,6 +223,7 @@ export const Component = () => {
       title: '套餐',
       dataIndex: 'tier',
       key: 'tier',
+      responsive: ['sm'],
       width: 120,
       render: (tier: string) => tierLabelMap.get(tier) || tier || '-',
     },
@@ -222,6 +231,7 @@ export const Component = () => {
       title: '套餐过期时间',
       dataIndex: 'tierExpiresAt',
       key: 'tierExpiresAt',
+      responsive: ['lg'],
       width: 180,
       render: (date: string | null) =>
         date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
@@ -230,6 +240,7 @@ export const Component = () => {
       title: '自定义配额',
       dataIndex: 'quota',
       key: 'quota',
+      responsive: ['md'],
       width: 100,
       render: (quota: Quota | null) => (quota ? '有' : '-'),
     },
@@ -271,8 +282,13 @@ export const Component = () => {
             dataSource={data?.data || []}
             columns={columns}
             rowKey="id"
-            pagination={{ pageSize: 20 }}
-            scroll={{ x: 900 }}
+            size={isMobile ? 'small' : 'middle'}
+            pagination={
+              isMobile
+                ? { pageSize: 10, simple: true }
+                : { pageSize: 20, showSizeChanger: true }
+            }
+            scroll={{ x: 760 }}
           />
         </Spin>
       </Card>
@@ -280,6 +296,7 @@ export const Component = () => {
       <Modal
         title={`编辑用户: ${editingUser?.email}`}
         open={isModalOpen}
+        width={isMobile ? 'calc(100vw - 32px)' : 600}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>
@@ -294,7 +311,6 @@ export const Component = () => {
             保存
           </Button>,
         ]}
-        width={600}
       >
         <Form form={form} layout="vertical" className="mt-4">
           <Space className="w-full" direction="vertical" size="middle">
@@ -330,7 +346,11 @@ export const Component = () => {
               label="自定义配额 (JSON，留空则使用默认配额)"
               className="mb-0!"
             >
-              <JsonEditorWrapper value={quotaValue} onChange={setQuotaValue} />
+              <JsonEditorWrapper
+                height={isMobile ? 180 : 200}
+                value={quotaValue}
+                onChange={setQuotaValue}
+              />
             </Form.Item>
           </Space>
         </Form>

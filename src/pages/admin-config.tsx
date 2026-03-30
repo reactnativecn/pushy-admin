@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Form,
+  Grid,
   Input,
   Modal,
   message,
@@ -13,6 +14,7 @@ import {
   Table,
   Typography,
 } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   type Content,
@@ -31,9 +33,11 @@ interface ConfigItem {
 
 // JSON Editor wrapper component
 const JsonEditorWrapper = ({
+  height = 300,
   value,
   onChange,
 }: {
+  height?: number;
   value: string;
   onChange: (value: string) => void;
 }) => {
@@ -81,11 +85,13 @@ const JsonEditorWrapper = ({
     }
   }, [value]);
 
-  return <div ref={containerRef} style={{ height: 300 }} />;
+  return <div ref={containerRef} style={{ height }} />;
 };
 
 export const Component = () => {
   const queryClient = useQueryClient();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ConfigItem | null>(null);
   const [form] = Form.useForm();
@@ -156,7 +162,7 @@ export const Component = () => {
     [refetch],
   );
 
-  const columns = [
+  const columns: ColumnsType<ConfigItem> = [
     {
       title: 'Key',
       dataIndex: 'key',
@@ -167,6 +173,7 @@ export const Component = () => {
       title: 'Value',
       dataIndex: 'value',
       key: 'value',
+      responsive: ['sm'],
       render: (value: string) => {
         try {
           const parsed = JSON.parse(value);
@@ -222,6 +229,7 @@ export const Component = () => {
             dataSource={configList}
             columns={columns}
             rowKey="key"
+            size={isMobile ? 'small' : 'middle'}
             pagination={false}
             scroll={{ x: 720 }}
           />
@@ -231,6 +239,7 @@ export const Component = () => {
       <Modal
         title={editingItem ? '编辑配置' : '添加配置'}
         open={isModalOpen}
+        width={isMobile ? 'calc(100vw - 32px)' : 700}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>
@@ -245,7 +254,6 @@ export const Component = () => {
             保存
           </Button>,
         ]}
-        width={700}
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -256,7 +264,11 @@ export const Component = () => {
             <Input disabled={!!editingItem} placeholder="配置键名" />
           </Form.Item>
           <Form.Item label="Value (JSON)">
-            <JsonEditorWrapper value={jsonValue} onChange={setJsonValue} />
+            <JsonEditorWrapper
+              height={isMobile ? 220 : 300}
+              value={jsonValue}
+              onChange={setJsonValue}
+            />
           </Form.Item>
         </Form>
       </Modal>
