@@ -46,6 +46,14 @@ const tierLabelMap = new Map(
 const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
 const expiryShortcutDays = [7, 30, 365] as const;
 
+const getInitialQuotaValue = (record: AdminUser) => {
+  if (record.quota) {
+    return JSON.stringify(record.quota, null, 2);
+  }
+
+  return record.tier === 'custom' ? defaultPremiumQuotaText : '';
+};
+
 // JSON Editor wrapper component for quota editing
 const JsonEditorWrapper = ({
   height = 200,
@@ -147,12 +155,14 @@ export const Component = () => {
       status: record.status,
       tierExpiresAt: record.tierExpiresAt ? dayjs(record.tierExpiresAt) : null,
     });
-    setQuotaValue(
-      record.quota
-        ? JSON.stringify(record.quota, null, 2)
-        : defaultPremiumQuotaText,
-    );
+    setQuotaValue(getInitialQuotaValue(record));
     setIsModalOpen(true);
+  };
+
+  const handleTierChange = (tier: Tier) => {
+    if (tier === 'custom' && !quotaValue.trim()) {
+      setQuotaValue(defaultPremiumQuotaText);
+    }
   };
 
   const handleSave = async () => {
@@ -343,6 +353,7 @@ export const Component = () => {
                 options={tierOptions}
                 optionFilterProp="label"
                 showSearch
+                onChange={handleTierChange}
               />
             </Form.Item>
             <Form.Item name="status" label="状态" className="mb-0!">
