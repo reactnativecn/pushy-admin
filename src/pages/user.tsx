@@ -110,7 +110,7 @@ const UpgradeDropdown = ({
 
   return (
     <Dropdown.Button
-      className="mt-2 w-full sm:w-auto md:mt-0 md:ml-6"
+      className="shrink-0"
       icon={<AlipayCircleOutlined />}
       loading={loading}
       menu={{
@@ -186,8 +186,8 @@ function UserPanel() {
           <span className="break-all">{email}</span>
         </Descriptions.Item>
         <Descriptions.Item label="服务版本">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <span>{tierDisplay}</span>
+          <div className="flex items-center gap-4">
+            <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
               <UpgradeDropdown currentQuota={defaultQuota} />
             )}
