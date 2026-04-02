@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '@/services/api';
+import { patchSearchParams } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 
 const { Title } = Typography;
@@ -85,22 +86,22 @@ const attributeOptions = [
 ];
 
 export const Component = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams({ attribute: 'hash' });
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().subtract(24, 'hour'),
     dayjs(),
   ]);
-  const [selectedAppKey, setSelectedAppKey] = useState<string | undefined>(
-    searchParams.get('appKey') || undefined,
-  );
   const [manualAppKey, setManualAppKey] = useState('');
-  const [selectedAttribute, setSelectedAttribute] =
-    useState<MetricAttribute>('hash');
   const legendValuesRef = useRef<string[]>([]);
 
   const { apps } = useAppList();
   const { user } = useUserInfo();
   const isAdmin = user?.admin === true;
+  const urlAppKey = searchParams.get('appKey') || undefined;
+  const selectedAttribute: MetricAttribute =
+    searchParams.get('attribute') === 'packageVersion_buildTime'
+      ? 'packageVersion_buildTime'
+      : 'hash';
 
   const appOptions = useMemo(() => {
     return (apps || []).reduce<{ label: string; value: string }[]>(
@@ -116,42 +117,36 @@ export const Component = () => {
       [],
     );
   }, [apps]);
-
-  // Sync URL param to state on mount or URL change
-  useEffect(() => {
-    const urlAppKey = searchParams.get('appKey');
-    if (urlAppKey && urlAppKey !== selectedAppKey) {
-      // Admin can access any appKey, non-admin can only access their own
-      if (isAdmin || appOptions.some((opt) => opt.value === urlAppKey)) {
-        setSelectedAppKey(urlAppKey);
-      }
+  const selectedAppKey = useMemo(() => {
+    if (!urlAppKey) {
+      return undefined;
     }
-  }, [searchParams, isAdmin, appOptions, selectedAppKey]);
+    if (isAdmin || appOptions.some((opt) => opt.value === urlAppKey)) {
+      return urlAppKey;
+    }
+    return undefined;
+  }, [appOptions, isAdmin, urlAppKey]);
 
   // Default to first app if no selection
   useEffect(() => {
-    if (
-      !selectedAppKey &&
-      appOptions.length > 0 &&
-      !searchParams.get('appKey')
-    ) {
-      const firstAppKey = appOptions[0].value;
-      setSelectedAppKey(firstAppKey);
-      setSearchParams({ appKey: firstAppKey }, { replace: true });
+    if (!urlAppKey && appOptions.length > 0) {
+      patchSearchParams(setSearchParams, {
+        appKey: appOptions[0].value,
+      });
     }
-  }, [appOptions, selectedAppKey, searchParams, setSearchParams]);
+  }, [appOptions, setSearchParams, urlAppKey]);
 
   // Update URL when selection changes
   const handleAppChange = (appKey: string) => {
-    setSelectedAppKey(appKey);
-    setSearchParams({ appKey }, { replace: true });
+    patchSearchParams(setSearchParams, { appKey });
   };
 
   // Admin manual appKey input
   const handleManualAppKeySubmit = () => {
     if (manualAppKey.trim()) {
-      setSelectedAppKey(manualAppKey.trim());
-      setSearchParams({ appKey: manualAppKey.trim() }, { replace: true });
+      patchSearchParams(setSearchParams, {
+        appKey: manualAppKey.trim(),
+      });
       setManualAppKey('');
     }
   };
@@ -355,7 +350,11 @@ export const Component = () => {
             </div>
             <Radio.Group
               value={selectedAttribute}
-              onChange={(e) => setSelectedAttribute(e.target.value)}
+              onChange={(e) => {
+                patchSearchParams(setSearchParams, {
+                  attribute: e.target.value as MetricAttribute,
+                });
+              }}
               optionType="button"
               buttonStyle="solid"
             >

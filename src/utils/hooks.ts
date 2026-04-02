@@ -9,6 +9,71 @@ import { useEffect, useMemo, useState } from 'react';
 dayjs.locale('zh-cn');
 dayjs.extend(relativeTime);
 
+const METRIC_CATEGORY_SEPARATOR = '\u001f';
+const PACKAGE_METRIC_PREFIX = `packageVersion_buildTime${METRIC_CATEGORY_SEPARATOR}`;
+
+const buildPackageMetricValue = ({
+  name,
+  buildTime,
+}: Pick<Package, 'name' | 'buildTime'>) => `${name}_${buildTime || 'unknown'}`;
+
+const getPackageTimestampWarnings = ({
+  dict,
+  packages,
+}: {
+  dict?: string[];
+  packages: Package[];
+}) => {
+  const warningTimestamps = new Map<number, Set<string>>();
+
+  if (!dict?.length || packages.length === 0) {
+    return new Map<number, string[]>();
+  }
+
+  const packageCandidates = packages
+    .map((pkg) => ({
+      pkg,
+      currentMetricValue: buildPackageMetricValue(pkg),
+    }))
+    .sort((a, b) => b.pkg.name.length - a.pkg.name.length);
+
+  for (const entry of dict) {
+    if (!entry.startsWith(PACKAGE_METRIC_PREFIX)) {
+      continue;
+    }
+
+    const metricValue = entry.slice(PACKAGE_METRIC_PREFIX.length);
+    if (!metricValue) {
+      continue;
+    }
+
+    const matchedPackage = packageCandidates.find(
+      ({ pkg, currentMetricValue }) =>
+        metricValue === currentMetricValue ||
+        metricValue.startsWith(`${pkg.name}_`),
+    );
+
+    if (!matchedPackage || metricValue === matchedPackage.currentMetricValue) {
+      continue;
+    }
+
+    const timestamp = metricValue.startsWith(`${matchedPackage.pkg.name}_`)
+      ? metricValue.slice(matchedPackage.pkg.name.length + 1) || 'unknown'
+      : metricValue;
+    const currentWarningTimestamps =
+      warningTimestamps.get(matchedPackage.pkg.id) ?? new Set<string>();
+    currentWarningTimestamps.add(timestamp);
+    warningTimestamps.set(matchedPackage.pkg.id, currentWarningTimestamps);
+  }
+
+  return new Map(
+    Array.from(warningTimestamps.entries()).map(([packageId, timestamps]) => [
+      packageId,
+      Array.from(timestamps).sort(),
+    ]),
+  );
+};
+
 const getCooldownRemainingSeconds = (
   storageKey: string,
   durationMs: number,
@@ -187,6 +252,53 @@ export const useBinding = (appId: number) => {
   });
   const bindings = data?.data ?? [];
   return { bindings, isLoading };
+};
+
+export const usePackageTimestampWarnings = (appId: number) => {
+  const { app } = useApp(appId);
+  const { packages } = usePackages(appId);
+  const [metricsRange] = useState(() => ({
+    start: dayjs().subtract(7, 'day').toISOString(),
+    end: dayjs().toISOString(),
+  }));
+
+  const { data, isLoading } = useQuery({
+    queryKey: [
+      'packageTimestampWarnings',
+      appId,
+      app?.appKey,
+      metricsRange.start,
+      metricsRange.end,
+    ],
+    queryFn: () =>
+      api.getAppMetrics({
+        appKey: app?.appKey as string,
+        start: metricsRange.start,
+        end: metricsRange.end,
+      }),
+    enabled:
+      !!app?.appKey &&
+      packages.length > 0 &&
+      app.ignoreBuildTime !== 'enabled',
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const packageTimestampWarnings = useMemo(() => {
+    if (app?.ignoreBuildTime === 'enabled') {
+      return new Map<number, string[]>();
+    }
+
+    return getPackageTimestampWarnings({
+      dict: data?.dict,
+      packages,
+    });
+  }, [app?.ignoreBuildTime, data?.dict, packages]);
+
+  return {
+    app,
+    packageTimestampWarnings,
+    isLoading,
+  };
 };
 
 export const useAuditLogs = ({
