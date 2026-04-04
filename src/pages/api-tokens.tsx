@@ -189,7 +189,7 @@ function ApiTokensPage() {
               <a
                 target="_blank"
                 href="https://update.reactnative.cn/api/openapi"
-                rel="noopener"
+                rel="noopener noreferrer"
               >
                 Pushy API
               </a>

@@ -149,7 +149,7 @@ const ExtLink = ({ children, href }: ExtLinkProps) => (
     href={href}
     target="_blank"
     // onClick={(e) => e.stopPropagation()}
-    rel="noreferrer"
+    rel="noopener noreferrer"
   >
     {children}
   </a>

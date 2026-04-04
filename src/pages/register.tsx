@@ -116,7 +116,7 @@ export const Register = () => {
                   <a
                     target="_blank"
                     href="https://pushy.reactnative.cn/agreement/"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
                     用户协议
                   </a>
