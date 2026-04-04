@@ -170,7 +170,7 @@ export const Manage = () => {
           </Button>
         </Space.Compact>
       </Row>
-      <ManageProvider appId={id}>
+      <ManageProvider appId={id} app={app}>
         {contextHolder}
         <ManageDashBoard />
       </ManageProvider>

@@ -21,7 +21,6 @@ import {
 import { Link } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
-import { usePackageTimestampWarnings } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
 import { Commit } from './commit';
 import { DepsTable } from './deps-table';
@@ -33,8 +32,7 @@ const PackageList = ({
   dataSource?: Package[];
   loading?: boolean;
 }) => {
-  const { appId } = useManageContext();
-  const { app, packageTimestampWarnings } = usePackageTimestampWarnings(appId);
+  const { app, packageTimestampWarnings } = useManageContext();
   const realtimeMetricsPath = app?.appKey
     ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
         appKey: app.appKey,
@@ -152,7 +150,6 @@ const Item = ({
   const { appId } = useManageContext();
   const hasTimestampWarning = warningTimestamps.length > 0;
   return (
-    // const [_, drag] = useDrag(() => ({ item, type: "package" }));
     <div className="bg-white my-0 [&_li]:px-0!">
       <List.Item className="p-2">
         <List.Item.Meta

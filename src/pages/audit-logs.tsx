@@ -1,12 +1,11 @@
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Grid, Table, Typography } from 'antd';
+import { Button, DatePicker, Grid, message, Table, Typography } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
 import dayjs, { type Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useMemo, useState } from 'react';
-import * as XLSX from 'xlsx';
 import { useAuditLogs } from '@/utils/hooks';
 import 'dayjs/locale/zh-cn';
 import { UAParser } from 'ua-parser-js';
@@ -324,72 +323,78 @@ export const AuditLogs = () => {
   };
 
   // 导出到 Excel
-  const handleExportToExcel = () => {
+  const handleExportToExcel = async () => {
     if (filteredAuditLogs.length === 0) {
       return;
     }
 
-    // 格式化数据
-    const excelData = filteredAuditLogs.map((log) => {
-      const date = dayjs(log.createdAt);
-      const actionLabel = getActionLabel(log.method, log.path);
+    try {
+      const XLSX = await import('xlsx');
 
-      // 解析 UA 信息
-      let browserInfo = '-';
-      let osInfo = '-';
-      if (log.userAgent) {
-        // 处理特殊的 CLI useragent 格式
-        if (log.userAgent.startsWith('react-native-update-cli')) {
-          const version = log.userAgent.split('/')[1] || '';
-          browserInfo = `cli ${version}`.trim();
-          osInfo = '-';
-        } else {
-          const { browser, os } = UAParser(log.userAgent);
-          browserInfo =
-            `${browser.name || '-'} ${browser.version || ''}`.trim();
-          osInfo = `${os.name || '-'} ${os.version || ''}`.trim();
+      // 格式化数据
+      const excelData = filteredAuditLogs.map((log) => {
+        const date = dayjs(log.createdAt);
+        const actionLabel = getActionLabel(log.method, log.path);
+
+        // 解析 UA 信息
+        let browserInfo = '-';
+        let osInfo = '-';
+        if (log.userAgent) {
+          // 处理特殊的 CLI useragent 格式
+          if (log.userAgent.startsWith('react-native-update-cli')) {
+            const version = log.userAgent.split('/')[1] || '';
+            browserInfo = `cli ${version}`.trim();
+            osInfo = '-';
+          } else {
+            const { browser, os } = UAParser(log.userAgent);
+            browserInfo =
+              `${browser.name || '-'} ${browser.version || ''}`.trim();
+            osInfo = `${os.name || '-'} ${os.version || ''}`.trim();
+          }
         }
-      }
 
-      return {
-        时间: date.format('YYYY-MM-DD HH:mm:ss'),
-        操作: actionLabel,
-        状态码: log.statusCode,
-        提交数据: log.data ? JSON.stringify(log.data) : '-',
-        浏览器: browserInfo,
-        操作系统: osInfo,
-        IP地址: log.ip || '-',
-        'API Key': log.apiTokens
-          ? `${log.apiTokens.name}(${log.apiTokens.tokenSuffix})`
-          : '-',
-      };
-    });
+        return {
+          时间: date.format('YYYY-MM-DD HH:mm:ss'),
+          操作: actionLabel,
+          状态码: log.statusCode,
+          提交数据: log.data ? JSON.stringify(log.data) : '-',
+          浏览器: browserInfo,
+          操作系统: osInfo,
+          IP地址: log.ip || '-',
+          'API Key': log.apiTokens
+            ? `${log.apiTokens.name}(${log.apiTokens.tokenSuffix})`
+            : '-',
+        };
+      });
 
-    // 创建工作簿
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(excelData);
+      // 创建工作簿
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
 
-    // 设置列宽
-    const colWidths = [
-      { wch: 20 }, // 时间
-      { wch: 15 }, // 操作
-      { wch: 10 }, // 状态码
-      { wch: 40 }, // 提交数据
-      { wch: 20 }, // 浏览器
-      { wch: 20 }, // 操作系统
-      { wch: 15 }, // IP地址
-      { wch: 15 }, // 是否使用API
-    ];
-    ws['!cols'] = colWidths;
+      // 设置列宽
+      const colWidths = [
+        { wch: 20 }, // 时间
+        { wch: 15 }, // 操作
+        { wch: 10 }, // 状态码
+        { wch: 40 }, // 提交数据
+        { wch: 20 }, // 浏览器
+        { wch: 20 }, // 操作系统
+        { wch: 15 }, // IP地址
+        { wch: 15 }, // 是否使用API
+      ];
+      ws['!cols'] = colWidths;
 
-    // 添加工作表到工作簿
-    XLSX.utils.book_append_sheet(wb, ws, '操作日志');
+      // 添加工作表到工作簿
+      XLSX.utils.book_append_sheet(wb, ws, '操作日志');
 
-    // 生成文件名
-    const fileName = `操作日志_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`;
+      // 生成文件名
+      const fileName = `操作日志_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`;
 
-    // 导出文件
-    XLSX.writeFile(wb, fileName);
+      // 导出文件
+      XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      message.error(`导出失败：${(error as Error).message}`);
+    }
   };
 
   return (

@@ -7,6 +7,7 @@ import type {
   User,
   Version,
 } from '@/types';
+import { versionKeys } from '@/utils/query-keys';
 import { queryClient } from '@/utils/queryClient';
 import request from './request';
 
@@ -85,7 +86,7 @@ export const api = {
         }),
       );
       if (params.versionId !== undefined) {
-        queryClient.invalidateQueries({ queryKey: ['versions', appId] });
+        queryClient.invalidateQueries({ queryKey: versionKeys.byApp(appId) });
       }
     }),
   deletePackage: ({ appId, packageId }: { appId: number; packageId: number }) =>
@@ -122,8 +123,8 @@ export const api = {
   }) =>
     request('put', `/app/${appId}/version/${versionId}`, params).then(() => {
       queryClient.setQueriesData(
-        { queryKey: ['versions', appId] },
-        (old?: { data: Version[] }) =>
+        { queryKey: versionKeys.byApp(appId) },
+        (old?: { data: Version[]; count?: number }) =>
           old
             ? {
                 ...old,
@@ -137,12 +138,13 @@ export const api = {
   deleteVersion: ({ appId, versionId }: { appId: number; versionId: number }) =>
     request('delete', `/app/${appId}/version/${versionId}`).then(() => {
       queryClient.setQueriesData(
-        { queryKey: ['versions', appId] },
-        (old?: { data: Version[] }) =>
+        { queryKey: versionKeys.byApp(appId) },
+        (old?: { data: Version[]; count?: number }) =>
           old
             ? {
                 ...old,
                 data: old.data?.filter((i) => i.id !== versionId),
+                count: Math.max((old.count ?? old.data.length) - 1, 0),
               }
             : undefined,
       );
