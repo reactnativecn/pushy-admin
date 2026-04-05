@@ -56,7 +56,7 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
                 className="text-xs"
                 href={url}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 {hash}
               </a>

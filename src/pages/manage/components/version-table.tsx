@@ -53,7 +53,7 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
               target="_blank"
               className="ml-1 text-xs"
               href={TEST_QR_CODE_DOC}
-              rel="noreferrer"
+              rel="noopener noreferrer"
             >
               如何使用？
             </a>

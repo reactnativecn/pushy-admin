@@ -252,6 +252,7 @@ function UserPanel() {
         <Button
           href={PRICING_LINK}
           target="_blank"
+          rel="noopener noreferrer"
           className="w-full md:w-auto"
         >
           查看价格表
@@ -261,6 +262,7 @@ function UserPanel() {
           className="w-full md:w-auto"
           href="https://pushy.reactnative.cn/docs/faq.html#%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E9%93%B6%E8%A1%8C%E8%BD%AC%E8%B4%A6%E4%BB%98%E6%AC%BE%E5%90%97"
           target="_blank"
+          rel="noopener noreferrer"
         >
           使用网银转账
         </Button>
