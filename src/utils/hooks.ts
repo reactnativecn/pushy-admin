@@ -18,7 +18,7 @@ const buildPackageMetricValue = ({
   buildTime,
 }: Pick<Package, 'name' | 'buildTime'>) => `${name}_${buildTime || 'unknown'}`;
 
-const getPackageTimestampWarnings = ({
+export const getPackageTimestampWarnings = ({
   dict,
   packages,
 }: {
@@ -31,12 +31,25 @@ const getPackageTimestampWarnings = ({
     return new Map<number, string[]>();
   }
 
-  const packageCandidates = packages
-    .map((pkg) => ({
-      pkg,
-      currentMetricValue: buildPackageMetricValue(pkg),
-    }))
-    .sort((a, b) => b.pkg.name.length - a.pkg.name.length);
+  const packageCandidates = packages.map((pkg) => ({
+    pkg,
+    currentMetricValue: buildPackageMetricValue(pkg),
+  }));
+
+  const exactMatchMap = new Map<string, (typeof packageCandidates)[0]>();
+  const nameMatchMap = new Map<string, (typeof packageCandidates)[0]>();
+
+  // Sort by name length descending to ensure the longest package name wins in prefix match
+  for (const candidate of [...packageCandidates].sort(
+    (a, b) => b.pkg.name.length - a.pkg.name.length,
+  )) {
+    if (!exactMatchMap.has(candidate.currentMetricValue)) {
+      exactMatchMap.set(candidate.currentMetricValue, candidate);
+    }
+    if (!nameMatchMap.has(candidate.pkg.name)) {
+      nameMatchMap.set(candidate.pkg.name, candidate);
+    }
+  }
 
   for (const entry of dict) {
     if (!entry.startsWith(PACKAGE_METRIC_PREFIX)) {
@@ -48,11 +61,19 @@ const getPackageTimestampWarnings = ({
       continue;
     }
 
-    const matchedPackage = packageCandidates.find(
-      ({ pkg, currentMetricValue }) =>
-        metricValue === currentMetricValue ||
-        metricValue.startsWith(`${pkg.name}_`),
-    );
+    let matchedPackage = exactMatchMap.get(metricValue);
+
+    if (!matchedPackage) {
+      let idx = metricValue.lastIndexOf('_');
+      while (idx !== -1) {
+        const potentialName = metricValue.slice(0, idx);
+        matchedPackage = nameMatchMap.get(potentialName);
+        if (matchedPackage) {
+          break;
+        }
+        idx = metricValue.lastIndexOf('_', idx - 1);
+      }
+    }
 
     if (!matchedPackage || metricValue === matchedPackage.currentMetricValue) {
       continue;
