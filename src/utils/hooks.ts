@@ -18,6 +18,11 @@ const buildPackageMetricValue = ({
   buildTime,
 }: Pick<Package, 'name' | 'buildTime'>) => `${name}_${buildTime || 'unknown'}`;
 
+const isZeroTimestamp = (timestamp: string) => {
+  const normalizedTimestamp = timestamp.trim();
+  return normalizedTimestamp !== '' && Number(normalizedTimestamp) === 0;
+};
+
 export const getPackageTimestampWarnings = ({
   dict,
   packages,
@@ -82,6 +87,9 @@ export const getPackageTimestampWarnings = ({
     const timestamp = metricValue.startsWith(`${matchedPackage.pkg.name}_`)
       ? metricValue.slice(matchedPackage.pkg.name.length + 1) || 'unknown'
       : metricValue;
+    if (isZeroTimestamp(timestamp)) {
+      continue;
+    }
     const currentWarningTimestamps =
       warningTimestamps.get(matchedPackage.pkg.id) ?? new Set<string>();
     currentWarningTimestamps.add(timestamp);

@@ -37,7 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-router-dom": "^5.3.3",
-    "@typescript/native-preview": "^7.0.0-dev.20260403.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260407.1",
     "mitata": "^1.0.34",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2"
