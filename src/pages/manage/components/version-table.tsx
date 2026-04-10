@@ -108,8 +108,9 @@ function removeSelectedVersions({
   appId: number;
 }) {
   const versionNames: string[] = [];
+  const selectedSet = new Set(selected);
   for (const v of versions) {
-    if (selected.includes(v.id)) {
+    if (selectedSet.has(v.id)) {
       versionNames.push(v.name);
     }
   }
