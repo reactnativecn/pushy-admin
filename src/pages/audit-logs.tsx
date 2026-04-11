@@ -36,6 +36,16 @@ export const getUA = (userAgent: string) => {
 
 const { Text } = Typography;
 
+const getApiTokenLabel = (apiTokens?: AuditLog['apiTokens']) => {
+  if (!apiTokens?.tokenSuffix) {
+    return undefined;
+  }
+
+  return apiTokens.name
+    ? `${apiTokens.name}(****${apiTokens.tokenSuffix})`
+    : `****${apiTokens.tokenSuffix}`;
+};
+
 // 将 path 中的数字替换为 {id}，并移除末尾的斜杠
 const normalizePath = (path: string): string => {
   return path.replace(/\/\d+/g, '/{id}').replace(/\/$/, '');
@@ -181,18 +191,23 @@ const columns: ColumnType<AuditLog>[] = [
     title: '设备信息',
     dataIndex: 'userAgent',
     responsive: ['lg'],
-    width: 250,
+    width: 200,
     ellipsis: {
       showTitle: false,
     },
     render: (userAgent: string | undefined, record: AuditLog) => {
-      const hasInfo = userAgent || record.ip;
+      const apiToken = getApiTokenLabel(record.apiTokens);
+      const hasInfo = userAgent || record.ip || apiToken;
       if (!hasInfo) {
         return <Text type="secondary">-</Text>;
       }
 
+      const title = [userAgent, record.ip && `IP: ${record.ip}`, apiToken]
+        .filter(Boolean)
+        .join('\n');
+
       return (
-        <div title={userAgent || record.ip}>
+        <div title={title}>
           {userAgent && <div>{getUA(userAgent)}</div>}
           {record.ip && (
             <div className="mt-1">
@@ -201,23 +216,16 @@ const columns: ColumnType<AuditLog>[] = [
               </Text>
             </div>
           )}
+          {apiToken && (
+            <div className="mt-1">
+              <Text type="secondary" className="font-mono text-xs">
+                API Key：{apiToken}
+              </Text>
+            </div>
+          )}
         </div>
       );
     },
-  },
-  {
-    title: 'API Key',
-    dataIndex: 'apiTokens',
-    responsive: ['lg'],
-    width: 150,
-    render: (apiTokens?: { name: string; tokenSuffix: string }) =>
-      apiTokens ? (
-        <Text className="font-mono text-xs">
-          {apiTokens.name}(****{apiTokens.tokenSuffix})
-        </Text>
-      ) : (
-        <Text type="secondary">-</Text>
-      ),
   },
 ];
 
