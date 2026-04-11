@@ -211,14 +211,6 @@ function UserPanel() {
             {tier !== 'free' && (
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <PurchaseButton tier={tier}>续费</PurchaseButton>
-                <Popover content={InvoiceHint} trigger="click">
-                  <Button
-                    type="link"
-                    className="justify-start px-0 sm:px-4 md:px-0"
-                  >
-                    申请发票
-                  </Button>
-                </Popover>
               </div>
             )}
           </div>
@@ -227,6 +219,11 @@ function UserPanel() {
           <div className="text-sm text-gray-500">
             只可续费相同服务版本或升级更高版本，如果您需要购买较低的服务版本，请等待当前版本过期，或联系
             QQ 客服 34731408 手动处理。
+            <div className="mt-2">
+              <Popover content={InvoiceHint} trigger="click">
+                <a className="font-semibold">点此查看如何申请发票</a>
+              </Popover>
+            </div>
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="额度详情">
