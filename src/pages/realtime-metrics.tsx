@@ -86,7 +86,9 @@ const attributeOptions = [
 ];
 
 export const Component = () => {
-  const [searchParams, setSearchParams] = useSearchParams({ attribute: 'hash' });
+  const [searchParams, setSearchParams] = useSearchParams({
+    attribute: 'hash',
+  });
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().subtract(24, 'hour'),
     dayjs(),
