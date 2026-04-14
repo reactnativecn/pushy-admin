@@ -28,6 +28,13 @@ declare module 'bun:test' {
   export function test(name: string, fn: TestHandler): void;
   export function expect<T>(actual: T): {
     toBe(expected: unknown): void;
+    toBeNull(): void;
+  };
+  export function beforeEach(fn: () => void | Promise<void>): void;
+  export function afterEach(fn: () => void | Promise<void>): void;
+  export function setSystemTime(time: Date | number | null): void;
+  export const mock: {
+    module(path: string, factory: () => any): void;
   };
 }
 
