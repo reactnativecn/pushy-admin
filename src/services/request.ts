@@ -57,10 +57,10 @@ export interface RequestOptions {
   suppressErrorToast?: boolean;
 }
 
-export default async function request<T extends Record<any, any>>(
+export default async function request<T = unknown>(
   method: 'get' | 'post' | 'put' | 'delete',
   path: string,
-  params?: Record<any, any>,
+  params?: Record<string, unknown>,
   requestOptions: RequestOptions = {},
 ) {
   const headers: HeadersInit = {};
@@ -72,7 +72,7 @@ export default async function request<T extends Record<any, any>>(
   }
   if (params) {
     if (method === 'get') {
-      url += `?${new URLSearchParams(params).toString()}`;
+      url += `?${new URLSearchParams(params as Record<string, string>).toString()}`;
     } else {
       headers['content-type'] = 'application/json';
       options.body = JSON.stringify(params);
