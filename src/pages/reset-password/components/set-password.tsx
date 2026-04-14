@@ -21,7 +21,6 @@ export default function SetPassword() {
           });
           router.navigate(rootRouterPath.resetPassword('3'));
         } catch (e) {
-          console.log(e);
           message.error((e as Error).message ?? '网络错误');
         }
         setLoading(false);
