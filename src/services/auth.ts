@@ -12,6 +12,23 @@ export const setUserEmail = (email: string) => {
 
 export const getUserEmail = () => _email;
 
+function getSearchParam(name: string) {
+  return new URLSearchParams(router.state.location.search).get(name);
+}
+
+function resolveLoginFrom(loginFrom?: string | null) {
+  if (!loginFrom?.startsWith('/') || loginFrom.startsWith('//')) {
+    return rootRouterPath.user;
+  }
+  if (
+    loginFrom === rootRouterPath.login ||
+    loginFrom.startsWith(`${rootRouterPath.login}?`)
+  ) {
+    return rootRouterPath.user;
+  }
+  return loginFrom;
+}
+
 export async function login(email: string, password: string) {
   _email = email;
   const params = { email, pwd: await md5(password) };
@@ -20,10 +37,7 @@ export async function login(email: string, password: string) {
     if (res?.token) {
       setToken(res.token);
       message.success('登录成功');
-      const loginFrom = new URLSearchParams(window.location.search).get(
-        'loginFrom',
-      );
-      router.navigate(loginFrom || rootRouterPath.user);
+      router.navigate(resolveLoginFrom(getSearchParam('loginFrom')));
     }
   } catch (err) {
     if (err instanceof RequestError && err.status === 423) {
@@ -37,9 +51,9 @@ export async function login(email: string, password: string) {
 
 export function logout() {
   const currentPath = router.state.location.pathname;
+  setToken('');
   if (currentPath !== rootRouterPath.login) {
-    setToken('');
     router.navigate(rootRouterPath.login);
-    window.location.reload();
   }
+  window.location.reload();
 }

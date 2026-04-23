@@ -40,6 +40,29 @@ export const needAuthLoader = ({ request }: { request: Request }) => {
   return null;
 };
 
+function resolveAuthenticatedRedirect(loginFrom?: string | null) {
+  if (!loginFrom?.startsWith('/') || loginFrom.startsWith('//')) {
+    return rootRouterPath.user;
+  }
+  if (
+    loginFrom === rootRouterPath.login ||
+    loginFrom.startsWith(`${rootRouterPath.login}?`)
+  ) {
+    return rootRouterPath.user;
+  }
+  return loginFrom;
+}
+
+export const publicOnlyLoader = ({ request }: { request: Request }) => {
+  if (!getToken()) {
+    return null;
+  }
+
+  const { search } = new URL(request.url);
+  const loginFrom = new URLSearchParams(search).get('loginFrom');
+  return redirect(resolveAuthenticatedRedirect(loginFrom));
+};
+
 export const router = createHashRouter([
   {
     path: '/',
@@ -72,6 +95,7 @@ export const router = createHashRouter([
       },
       {
         path: 'login',
+        loader: publicOnlyLoader,
         lazy: () => import('./pages/login'),
       },
       {

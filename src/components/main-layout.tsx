@@ -11,7 +11,7 @@ import type { MenuProps } from 'antd';
 import { Button, Dropdown, Grid, Layout, Menu, message } from 'antd';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { logout } from '@/services/auth';
 import { useUserInfo } from '@/utils/hooks';
 import { ReactComponent as LogoH } from '../assets/logo-h.svg';
@@ -25,8 +25,21 @@ interface Style {
 
 const MainLayout = () => {
   const { user } = useUserInfo();
+  const location = useLocation();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
+  const usesPublicChrome = [
+    '/activate',
+    '/inactivated',
+    '/login',
+    '/register',
+    '/reset-password',
+    '/welcome',
+  ].some(
+    (path) =>
+      location.pathname === path || location.pathname.startsWith(`${path}/`),
+  );
+  const showAuthenticatedChrome = Boolean(user) && !usesPublicChrome;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
@@ -61,7 +74,7 @@ const MainLayout = () => {
         <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>
       ),
     },
-    ...(user
+    ...(showAuthenticatedChrome && user
       ? [
           {
             key: 'user',
@@ -85,8 +98,8 @@ const MainLayout = () => {
 
   return (
     <Layout>
-      {!isMobile && <Sider />}
-      {isMobile && (
+      {showAuthenticatedChrome && !isMobile && <Sider />}
+      {showAuthenticatedChrome && isMobile && (
         <SiderDrawer
           open={mobileNavOpen}
           onClose={() => setMobileNavOpen(false)}
@@ -98,7 +111,7 @@ const MainLayout = () => {
         >
           <div className="flex w-full items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              {user && isMobile && (
+              {showAuthenticatedChrome && isMobile && (
                 <Button
                   type="text"
                   icon={<MenuOutlined />}
