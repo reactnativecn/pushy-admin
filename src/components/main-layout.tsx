@@ -40,7 +40,7 @@ const MainLayout = () => {
           />
         </Layout.Header>
         <Layout.Content id="main-body" style={style.body}>
-          <div className="h-full">
+          <div className="flex-1">
             <Outlet />
           </div>
           <Footer />

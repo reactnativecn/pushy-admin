@@ -1,15 +1,6 @@
-import { Area, Line } from '@ant-design/charts';
+import { Line } from '@ant-design/charts';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Card,
-  DatePicker,
-  Input,
-  Radio,
-  Select,
-  Spin,
-  Tabs,
-  Typography,
-} from 'antd';
+import { Card, DatePicker, Input, Radio, Select, Spin, Typography } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -27,7 +18,6 @@ interface ChartDataPoint {
   category: string;
   attribute?: MetricAttribute;
   isTotal?: boolean;
-  rawValue?: string;
   sharePercent?: number;
 }
 
@@ -37,22 +27,10 @@ interface FormattedCategory {
   label: string;
   attribute?: MetricAttribute;
   isTotal: boolean;
-  rawValue?: string;
-}
-
-interface ArrivalRatePoint {
-  time: string;
-  value: number;
-  category: string;
-  checks: number;
-  totalChecks: number;
 }
 
 const TOTAL_LABEL = '查询热更次数';
-const OTHER_ARRIVAL_LABEL = '其他热更包';
-const NO_BUNDLE_LABEL = '未安装热更包';
 const CATEGORY_SEPARATOR = '\u001f';
-const MAX_ARRIVAL_SERIES_COUNT = 8;
 
 type ChartController = {
   emit: (...args: unknown[]) => unknown;
@@ -70,7 +48,6 @@ const formatCategory = (rawCategory: string): FormattedCategory => {
   if (parts.length >= 2) {
     const key = parts[0];
     let value = parts.slice(1).join();
-    const rawValue = value;
     if (!value || value === 'unknown') {
       value = '无';
     }
@@ -79,7 +56,6 @@ const formatCategory = (rawCategory: string): FormattedCategory => {
         label: `已更新到热更包: ${value}`,
         attribute: 'hash',
         isTotal: false,
-        rawValue,
       };
     }
     if (key === 'packageVersion_buildTime') {
@@ -87,7 +63,6 @@ const formatCategory = (rawCategory: string): FormattedCategory => {
         label: `原生包: ${value}`,
         attribute: 'packageVersion_buildTime',
         isTotal: false,
-        rawValue,
       };
     }
   }
@@ -117,19 +92,6 @@ const formatTooltipItem = (point: ChartDataPoint) => {
     return countLabel;
   }
   return `${countLabel} (${point.sharePercent.toFixed(1)}%)`;
-};
-
-const formatArrivalRateItem = (point: ArrivalRatePoint) => {
-  return `${point.value.toFixed(1)}% (${point.checks.toLocaleString()} / ${point.totalChecks.toLocaleString()} 次)`;
-};
-
-const formatPercentAxis = (value: string) => {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? `${numericValue.toFixed(0)}%` : value;
-};
-
-const isArrivedHashValue = (value?: string) => {
-  return !!value && value !== 'unknown';
 };
 
 export const Component = () => {
@@ -222,15 +184,13 @@ export const Component = () => {
     for (const bucket of data.data) {
       for (const [dictIndex, count] of bucket.data) {
         const rawCategory = data.dict[dictIndex] || '';
-        const { label, attribute, isTotal, rawValue } =
-          formatCategory(rawCategory);
+        const { label, attribute, isTotal } = formatCategory(rawCategory);
         points.push({
           time: bucket.time,
           value: count,
           category: label,
           attribute,
           isTotal,
-          rawValue,
         });
       }
     }
@@ -327,124 +287,6 @@ export const Component = () => {
     return topCategories.length > 0 ? topCategories[0][1] : 0;
   }, [topCategories]);
 
-  const hotUpdateArrivalCategories = useMemo(() => {
-    const totals = new Map<string, number>();
-    for (const point of chartData) {
-      if (point.attribute !== 'hash' || !isArrivedHashValue(point.rawValue)) {
-        continue;
-      }
-      totals.set(
-        point.category,
-        (totals.get(point.category) || 0) + point.value,
-      );
-    }
-    return Array.from(totals.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, MAX_ARRIVAL_SERIES_COUNT)
-      .map(([category]) => category);
-  }, [chartData]);
-
-  const hotUpdateArrivalColorDomain = useMemo(() => {
-    return [
-      ...hotUpdateArrivalCategories,
-      OTHER_ARRIVAL_LABEL,
-      NO_BUNDLE_LABEL,
-    ];
-  }, [hotUpdateArrivalCategories]);
-
-  const hotUpdateArrivalData = useMemo(() => {
-    const enabledCategories = new Set(hotUpdateArrivalCategories);
-    const denominators = new Map<string, number>();
-    const hashFallbackDenominators = new Map<string, number>();
-    const arrivedTotals = new Map<string, number>();
-    const categoryCountsByTime = new Map<string, Map<string, number>>();
-
-    for (const point of chartData) {
-      if (point.isTotal) {
-        denominators.set(
-          point.time,
-          (denominators.get(point.time) || 0) + point.value,
-        );
-      }
-      if (point.attribute === 'hash') {
-        hashFallbackDenominators.set(
-          point.time,
-          (hashFallbackDenominators.get(point.time) || 0) + point.value,
-        );
-      }
-      if (point.attribute === 'hash' && isArrivedHashValue(point.rawValue)) {
-        arrivedTotals.set(
-          point.time,
-          (arrivedTotals.get(point.time) || 0) + point.value,
-        );
-        const counts =
-          categoryCountsByTime.get(point.time) || new Map<string, number>();
-        counts.set(
-          point.category,
-          (counts.get(point.category) || 0) + point.value,
-        );
-        categoryCountsByTime.set(point.time, counts);
-      }
-    }
-
-    const times = Array.from(
-      new Set([
-        ...denominators.keys(),
-        ...hashFallbackDenominators.keys(),
-        ...categoryCountsByTime.keys(),
-      ]),
-    ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-    const points: ArrivalRatePoint[] = [];
-    for (const time of times) {
-      const fallbackDenominator = hashFallbackDenominators.get(time) || 0;
-      const denominator = Math.max(
-        denominators.get(time) || 0,
-        fallbackDenominator,
-      );
-      if (denominator <= 0) {
-        continue;
-      }
-      const counts =
-        categoryCountsByTime.get(time) || new Map<string, number>();
-      let selectedArrivedChecks = 0;
-
-      for (const category of hotUpdateArrivalCategories) {
-        const checks = counts.get(category) || 0;
-        selectedArrivedChecks += checks;
-        points.push({
-          time,
-          value: (checks / denominator) * 100,
-          category,
-          checks,
-          totalChecks: denominator,
-        });
-      }
-
-      const arrivedChecks = arrivedTotals.get(time) || 0;
-      const otherChecks = Math.max(arrivedChecks - selectedArrivedChecks, 0);
-      const noBundleChecks = Math.max(denominator - arrivedChecks, 0);
-      if (enabledCategories.size > 0) {
-        points.push({
-          time,
-          value: (otherChecks / denominator) * 100,
-          category: OTHER_ARRIVAL_LABEL,
-          checks: otherChecks,
-          totalChecks: denominator,
-        });
-      }
-      points.push({
-        time,
-        value: (noBundleChecks / denominator) * 100,
-        category: NO_BUNDLE_LABEL,
-        checks: noBundleChecks,
-        totalChecks: denominator,
-      });
-    }
-
-    return points;
-  }, [chartData, hotUpdateArrivalCategories]);
-
   const dateRangeLabel = useMemo(() => {
     return `${dateRange[0].format('YYYY/MM/DD HH:mm')} - ${dateRange[1].format('YYYY/MM/DD HH:mm')}`;
   }, [dateRange]);
@@ -524,59 +366,6 @@ export const Component = () => {
       }
     },
     height: 480,
-  };
-
-  const arrivalRateConfig = {
-    interaction: {
-      legendFilter: true,
-      tooltip: { shared: true },
-    },
-    data: hotUpdateArrivalData,
-    xField: (d: ArrivalRatePoint) => new Date(d.time),
-    yField: 'value',
-    colorField: 'category',
-    shapeField: 'smooth',
-    stack: true,
-    style: {
-      fillOpacity: 0.78,
-    },
-    line: {
-      style: {
-        lineWidth: 1,
-      },
-    },
-    axis: {
-      x: {
-        title: '时间',
-        labelAutoRotate: true,
-        labelFormatter: (value: string) => {
-          const parsed = dayjs(value);
-          return parsed.isValid() ? parsed.format('MM/DD HH:mm') : value;
-        },
-      },
-      y: {
-        title: '抵达率',
-        labelFormatter: formatPercentAxis,
-      },
-    },
-    tooltip: {
-      title: (point: ArrivalRatePoint) =>
-        dayjs(point.time).format('MM/DD HH:mm'),
-      items: [
-        (point: ArrivalRatePoint) => ({
-          name: point.category,
-          value: formatArrivalRateItem(point),
-        }),
-      ],
-    },
-    legend: {
-      position: 'top',
-    },
-    scale: {
-      y: { domain: [0, 100] },
-      color: { domain: hotUpdateArrivalColorDomain },
-    },
-    height: 420,
   };
 
   const handleDateChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
@@ -765,49 +554,17 @@ export const Component = () => {
             )}
           </Card>
           <Card size="small" style={{ marginBottom: 16 }}>
-            <Tabs
-              items={[
-                {
-                  key: 'request-trend',
-                  label: '请求趋势',
-                  children: !selectedAppKey ? (
-                    <div className="h-80 flex items-center justify-center text-gray-400">
-                      请选择应用
-                    </div>
-                  ) : filteredChartData.length > 0 ? (
-                    <Line {...lineConfig} />
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-400">
-                      暂无数据
-                    </div>
-                  ),
-                },
-                {
-                  key: 'hot-update-arrival-rate',
-                  label: '热更抵达率',
-                  children: (
-                    <>
-                      <div className="mb-3 text-gray-500 text-xs">
-                        使用百分比堆叠面积图展示各热更包份额随时间的变化，包含抵达量最高的
-                        Top {MAX_ARRIVAL_SERIES_COUNT}
-                        热更包、其他热更包和未安装热更包。
-                      </div>
-                      {!selectedAppKey ? (
-                        <div className="h-80 flex items-center justify-center text-gray-400">
-                          请选择应用
-                        </div>
-                      ) : hotUpdateArrivalData.length > 0 ? (
-                        <Area {...arrivalRateConfig} />
-                      ) : (
-                        <div className="h-80 flex items-center justify-center text-gray-400">
-                          暂无热更抵达率数据
-                        </div>
-                      )}
-                    </>
-                  ),
-                },
-              ]}
-            />
+            {!selectedAppKey ? (
+              <div className="h-80 flex items-center justify-center text-gray-400">
+                请选择应用
+              </div>
+            ) : filteredChartData.length > 0 ? (
+              <Line {...lineConfig} />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-gray-400">
+                暂无数据
+              </div>
+            )}
           </Card>
         </Spin>
       </Card>

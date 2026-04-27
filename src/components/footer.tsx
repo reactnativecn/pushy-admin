@@ -1,7 +1,7 @@
 import { Layout, Typography } from 'antd';
 
 const Footer = () => (
-  <Layout.Footer className="text-center">
+  <Layout.Footer className="shrink-0 text-center">
     <Typography.Paragraph type="secondary">
       React Native 中文网 © {new Date().getFullYear()} 武汉青罗网络科技有限公司
     </Typography.Paragraph>

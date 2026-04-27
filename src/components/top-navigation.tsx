@@ -6,8 +6,7 @@ import {
   InfoCircleOutlined,
   KeyOutlined,
   LineChartOutlined,
-  LogoutOutlined,
-  MoreOutlined,
+  MenuOutlined,
   PlusOutlined,
   ReadOutlined,
   SearchOutlined,
@@ -15,21 +14,11 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import {
-  Button,
-  Dropdown,
-  Empty,
-  Input,
-  Menu,
-  message,
-  Popover,
-  Tag,
-} from 'antd';
+import { Button, Drawer, Empty, Input, Menu, Popover, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { rootRouterPath, router } from '@/router';
-import { logout } from '@/services/auth';
 import { cn, getRecentAppIds, rememberRecentApp } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { ReactComponent as LogoH } from '../assets/logo-h.svg';
@@ -84,12 +73,8 @@ export default function TopNavigation({
 }: TopNavigationProps) {
   const { user } = useUserInfo();
   const { pathname } = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const selectedKeys = useMemo(() => getSelectedKeys(pathname), [pathname]);
-
-  const handleLogout = () => {
-    logout();
-    message.info('您已退出登录');
-  };
 
   const authenticatedItems: MenuItems =
     showAuthenticatedChrome && user
@@ -159,30 +144,44 @@ export default function TopNavigation({
             icon: <UserOutlined />,
             label: <Link to={rootRouterPath.user}>账户设置</Link>,
           },
-          {
-            key: 'logout',
-            icon: <LogoutOutlined />,
-            label: '退出登录',
-            onClick: handleLogout,
-          },
         ]
       : []),
   ];
 
   return (
-    <div className="flex min-h-16 w-full min-w-0 items-center gap-2 md:gap-3">
+    <div className="flex min-h-16 w-full min-w-0 items-center gap-1.5 md:gap-3">
       <Link to="/" className="flex shrink-0 items-center no-underline">
-        <LogoH className="h-7 w-auto max-w-[104px] sm:max-w-[130px] md:max-w-[150px]" />
+        <LogoH className="h-7 w-auto max-w-[88px] sm:max-w-[130px] md:max-w-[150px]" />
       </Link>
       {showAuthenticatedChrome && user && <AppSwitcher compact={isMobile} />}
       {isMobile ? (
-        <Dropdown
-          menu={{ items: mobileItems, selectable: true, selectedKeys }}
-          placement="bottomRight"
-          trigger={['click']}
-        >
-          <Button className="ml-auto" type="text" icon={<MoreOutlined />} />
-        </Dropdown>
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          {showAuthenticatedChrome && user && (
+            <Link
+              to={rootRouterPath.user}
+              className="shrink-0 rounded-lg px-0.5 no-underline"
+            >
+              <DailyCheckQuotaUserTrigger compact userName={user.name} />
+            </Link>
+          )}
+          <button
+            aria-label="打开菜单"
+            className={cn(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-0 bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-500',
+              showAuthenticatedChrome && user ? undefined : 'ml-auto',
+            )}
+            onClick={() => setMobileMenuOpen(true)}
+            type="button"
+          >
+            <MenuOutlined className="text-base" />
+          </button>
+          <MobileMenuSheet
+            items={mobileItems}
+            onClose={() => setMobileMenuOpen(false)}
+            open={mobileMenuOpen}
+            selectedKeys={selectedKeys}
+          />
+        </div>
       ) : (
         <>
           <Menu
@@ -193,34 +192,50 @@ export default function TopNavigation({
             style={{ height: 64, lineHeight: '64px' }}
           />
           {showAuthenticatedChrome && user && (
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: 'user',
-                    icon: <UserOutlined />,
-                    label: <Link to={rootRouterPath.user}>账户设置</Link>,
-                  },
-                  { type: 'divider' },
-                  {
-                    key: 'logout',
-                    icon: <LogoutOutlined />,
-                    label: '退出登录',
-                    onClick: handleLogout,
-                  },
-                ],
-              }}
-              placement="bottomRight"
-              trigger={['click']}
+            <Link
+              to={rootRouterPath.user}
+              className="flex h-14 w-60 items-center rounded-xl px-2 text-slate-700 no-underline transition-colors hover:bg-slate-50"
             >
-              <Button className="h-12! w-48! rounded-2xl! border-slate-200! bg-white! px-3! text-slate-700! shadow-none! hover:border-blue-300! hover:bg-slate-50!">
-                <DailyCheckQuotaUserTrigger userName={user.name} />
-              </Button>
-            </Dropdown>
+              <DailyCheckQuotaUserTrigger
+                showPlanDetails
+                userName={user.name}
+              />
+            </Link>
           )}
         </>
       )}
     </div>
+  );
+}
+
+function MobileMenuSheet({
+  items,
+  onClose,
+  open,
+  selectedKeys,
+}: {
+  items: MenuItems;
+  onClose: () => void;
+  open: boolean;
+  selectedKeys: string[];
+}) {
+  return (
+    <Drawer
+      height="68vh"
+      onClose={onClose}
+      open={open}
+      placement="bottom"
+      title="菜单"
+      styles={{ body: { padding: 8 } }}
+    >
+      <Menu
+        className="border-e-0!"
+        items={items}
+        mode="inline"
+        onClick={onClose}
+        selectedKeys={selectedKeys}
+      />
+    </Drawer>
   );
 }
 
@@ -280,47 +295,72 @@ function AppSwitcher({ compact }: { compact: boolean }) {
   };
 
   const triggerLabel = currentApp?.name ?? '选择应用';
+  const content = (
+    <AppSwitcherContent
+      currentAppId={currentAppId}
+      filteredApps={filteredApps}
+      isSheet={compact}
+      onCreateApp={createApp}
+      onNavigateToApp={navigateToApp}
+      query={query}
+      recentApps={recentApps}
+      setQuery={setQuery}
+    />
+  );
+  const trigger = (
+    <button
+      className={cn(
+        'flex h-16 min-w-0 items-center border-0 border-slate-200 border-x bg-slate-50 px-4 text-left transition-colors hover:bg-white',
+        compact ? 'max-w-[150px] flex-1 px-2' : 'w-72 lg:w-80',
+      )}
+      onClick={compact ? () => setOpen(true) : undefined}
+      type="button"
+    >
+      <span className="flex min-w-0 flex-1 items-center gap-2">
+        {currentApp ? (
+          <PlatformIcon platform={currentApp.platform} className="shrink-0" />
+        ) : (
+          <AppstoreOutlined className="shrink-0" />
+        )}
+        <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
+          <span className="truncate">{triggerLabel}</span>
+          {currentApp?.status === 'paused' && (
+            <Tag className="m-0 shrink-0">暂停</Tag>
+          )}
+        </span>
+        <DownOutlined className="ml-auto shrink-0 text-xs" />
+      </span>
+    </button>
+  );
+
+  if (compact) {
+    return (
+      <>
+        {trigger}
+        <Drawer
+          height="72vh"
+          onClose={() => setOpen(false)}
+          open={open}
+          placement="bottom"
+          title="选择应用"
+          styles={{ body: { padding: 0 } }}
+        >
+          {content}
+        </Drawer>
+      </>
+    );
+  }
 
   return (
     <Popover
       arrow={false}
-      content={
-        <AppSwitcherContent
-          currentAppId={currentAppId}
-          filteredApps={filteredApps}
-          onCreateApp={createApp}
-          onNavigateToApp={navigateToApp}
-          query={query}
-          recentApps={recentApps}
-          setQuery={setQuery}
-        />
-      }
+      content={content}
       open={open}
       onOpenChange={setOpen}
       placement="bottomLeft"
       trigger="click"
     >
-      <Button
-        className={cn(
-          'h-16! min-w-0 rounded-none! border-y-0! bg-slate-50! px-4! text-left hover:bg-white!',
-          compact ? 'w-[156px] sm:w-[180px]' : 'w-72 lg:w-80',
-        )}
-      >
-        <span className="flex min-w-0 items-center gap-2">
-          {currentApp ? (
-            <PlatformIcon platform={currentApp.platform} className="shrink-0" />
-          ) : (
-            <AppstoreOutlined className="shrink-0" />
-          )}
-          <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
-            <span className="truncate">{triggerLabel}</span>
-            {currentApp?.status === 'paused' && (
-              <Tag className="m-0 shrink-0">暂停</Tag>
-            )}
-          </span>
-          <DownOutlined className="ml-auto shrink-0 text-xs" />
-        </span>
-      </Button>
+      {trigger}
     </Popover>
   );
 }
@@ -328,6 +368,7 @@ function AppSwitcher({ compact }: { compact: boolean }) {
 interface AppSwitcherContentProps {
   currentAppId: number | null;
   filteredApps: AppItem[];
+  isSheet?: boolean;
   onCreateApp: () => void;
   onNavigateToApp: (appId: number) => void;
   query: string;
@@ -338,6 +379,7 @@ interface AppSwitcherContentProps {
 function AppSwitcherContent({
   currentAppId,
   filteredApps,
+  isSheet = false,
   onCreateApp,
   onNavigateToApp,
   query,
@@ -347,7 +389,7 @@ function AppSwitcherContent({
   const hasSearch = query.trim().length > 0;
 
   return (
-    <div className="w-[min(460px,calc(100vw-32px))]">
+    <div className={isSheet ? 'w-full' : 'w-[min(460px,calc(100vw-32px))]'}>
       <div className="border-gray-100 border-b p-3">
         <Input
           allowClear
@@ -388,7 +430,12 @@ function AppSwitcherContent({
         <div className="px-2 pb-1 font-medium text-gray-500 text-xs">
           {hasSearch ? '搜索结果' : '全部应用'}
         </div>
-        <div className="max-h-[360px] overflow-y-auto">
+        <div
+          className={cn(
+            'overflow-y-auto',
+            isSheet ? 'max-h-[calc(72vh-230px)]' : 'max-h-[360px]',
+          )}
+        >
           {filteredApps.length > 0 ? (
             filteredApps.map((app) => (
               <AppRow

@@ -1,4 +1,4 @@
-import { AlipayCircleOutlined } from '@ant-design/icons';
+import { AlipayCircleOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useQueries } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
 import {
@@ -11,9 +11,11 @@ import {
   Progress,
   Spin,
   Tag,
+  Tooltip,
 } from 'antd';
 import { type ReactNode, useState } from 'react';
 import { api } from '@/services/api';
+import { logout } from '@/services/auth';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
@@ -140,6 +142,13 @@ function UserPanel() {
       staleTime: 60_000,
     })),
   });
+  const packageCountQueries = useQueries({
+    queries: appList.map((app) => ({
+      queryKey: ['accountQuotaPackages', app.id],
+      queryFn: () => api.getPackages(app.id),
+      staleTime: 60_000,
+    })),
+  });
 
   if (!user) {
     return (
@@ -158,87 +167,83 @@ function UserPanel() {
   const isVersionCountLoading = versionCountQueries.some(
     (query) => query.isLoading,
   );
-  const totalVersionCount = versionCounts.reduce<number>(
-    (sum, count) => sum + (count ?? 0),
-    0,
+  const packageCounts = packageCountQueries.map(
+    (query) => query.data?.count ?? query.data?.data?.length,
+  );
+  const isPackageCountLoading = packageCountQueries.some(
+    (query) => query.isLoading,
   );
   const maxVersionCount = Math.max(
     0,
     ...versionCounts.map((count) => count ?? 0),
   );
+  const maxPackageCount = Math.max(
+    0,
+    ...packageCounts.map((count) => count ?? 0),
+  );
   const remainingChecks = user.checkQuota;
-  const usedChecks =
-    typeof remainingChecks === 'number'
-      ? Math.max(0, currentQuota.pv - remainingChecks)
-      : undefined;
-  const usedCheckPercent =
-    usedChecks === undefined
-      ? 0
-      : Math.min(100, (usedChecks / currentQuota.pv) * 100);
-  const isCheckQuotaExceeded =
-    typeof remainingChecks === 'number' && remainingChecks <= 0;
-  const quotaCards = [
+  const quotaUsageRows: QuotaUsageRow[] = [
     {
       key: 'app',
-      item: '应用数量',
-      value: `${appCount.toLocaleString()} / ${currentQuota.app.toLocaleString()} 个`,
+      label: '应用数量',
+      limit: currentQuota.app,
+      note: '当前账户下应用总数',
       percent: Math.min(100, (appCount / currentQuota.app) * 100),
       status: appCount > currentQuota.app ? 'exception' : 'normal',
-      note: '当前账户下应用总数',
+      value: `${appCount.toLocaleString()} / ${currentQuota.app.toLocaleString()} 个`,
     },
     {
       key: 'bundle',
-      item: '热更包数量',
-      value: isVersionCountLoading
-        ? '统计中'
-        : `${maxVersionCount.toLocaleString()} / ${currentQuota.bundle.toLocaleString()} 个`,
+      label: '热更包数量',
+      limit: currentQuota.bundle,
+      loading: isVersionCountLoading,
+      note: isVersionCountLoading
+        ? '正在统计各应用热更包数量'
+        : '最高单应用使用量',
       percent: isVersionCountLoading
         ? 0
         : Math.min(100, (maxVersionCount / currentQuota.bundle) * 100),
       status: maxVersionCount > currentQuota.bundle ? 'exception' : 'normal',
-      note: isVersionCountLoading
-        ? '正在统计各应用热更包数量'
-        : `最高单应用使用量，总计 ${totalVersionCount.toLocaleString()} 个`,
+      value: isVersionCountLoading
+        ? '统计中'
+        : `${maxVersionCount.toLocaleString()} / ${currentQuota.bundle.toLocaleString()} 个`,
     },
-    {
-      key: 'pv',
-      item: '每日检查额度',
-      value:
-        usedChecks === undefined
-          ? `${currentQuota.pv.toLocaleString()} 次`
-          : `${usedChecks.toLocaleString()} / ${currentQuota.pv.toLocaleString()} 次`,
-      percent: usedCheckPercent,
-      status: isCheckQuotaExceeded ? 'exception' : 'normal',
-      note:
-        typeof remainingChecks === 'number'
-          ? `剩余 ${Math.max(0, remainingChecks).toLocaleString()} 次，按账户全部应用汇总`
-          : '客户端检查热更新时消耗，按账户全部应用汇总',
-    },
-  ] satisfies Array<{
-    key: string;
-    item: string;
-    note: string;
-    percent: number;
-    status: 'exception' | 'normal';
-    value: string;
-  }>;
-  const staticQuotaCards = [
     {
       key: 'package',
-      item: '原生包数量上限',
-      value: `${currentQuota.package} 个 / 应用`,
+      label: '原生包数量',
+      limit: currentQuota.package,
+      loading: isPackageCountLoading,
+      note: isPackageCountLoading
+        ? '正在统计各应用原生包数量'
+        : '最高单应用使用量',
+      percent: isPackageCountLoading
+        ? 0
+        : Math.min(100, (maxPackageCount / currentQuota.package) * 100),
+      status: maxPackageCount > currentQuota.package ? 'exception' : 'normal',
+      value: isPackageCountLoading
+        ? '统计中'
+        : `${maxPackageCount.toLocaleString()} / ${currentQuota.package.toLocaleString()} 个`,
     },
+  ];
+  const quotaSizeLimits = [
     {
-      key: 'packageSize',
-      item: '单个原生包大小',
+      label: '单个原生包大小',
       value: currentQuota.packageSize,
     },
     {
-      key: 'bundleSize',
-      item: '单个热更包大小',
+      label: '单个热更包大小',
       value: currentQuota.bundleSize,
     },
+    {
+      label: '检查额度上限',
+      value: `${currentQuota.pv.toLocaleString()} 次 / 日`,
+    },
   ];
+  const handleLogout = () => {
+    message.info('您已退出登录');
+    logout();
+  };
+
   return (
     <div className="body">
       <Descriptions
@@ -298,39 +303,14 @@ function UserPanel() {
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="额度详情">
-          <div className="grid gap-3 xl:grid-cols-3">
-            {quotaCards.map(({ key, item, value, percent, status, note }) => (
-              <div
-                key={key}
-                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs text-gray-500">{item}</div>
-                  {status === 'exception' && <Tag color="red">超额</Tag>}
-                </div>
-                <div className="mt-1 font-semibold">{value}</div>
-                <Progress
-                  className="mt-2"
-                  percent={percent}
-                  showInfo={false}
-                  size="small"
-                  status={status}
-                />
-                <div className="mt-2 text-gray-500 text-xs">{note}</div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            {staticQuotaCards.map(({ key, item, value }) => (
-              <div
-                key={key}
-                className="rounded-md border border-slate-200 bg-white px-3 py-2"
-              >
-                <div className="text-xs text-gray-500">{item}</div>
-                <div className="mt-1 font-medium">{value}</div>
-              </div>
-            ))}
-          </div>
+          <QuotaDetailsPanel
+            dailyQuota={currentQuota.pv}
+            last7dAvg={user.last7dAvg}
+            last7dCounts={user.last7dCounts}
+            remainingChecks={remainingChecks}
+            rows={quotaUsageRows}
+            sizeLimits={quotaSizeLimits}
+          />
           <div className="h-px my-4 w-full max-w-md bg-gray-300" />
           <div className="text-xm text-gray-500">
             如有定制需求（限高级版以上），请联系 QQ 客服 34731408
@@ -356,9 +336,225 @@ function UserPanel() {
         >
           使用网银转账
         </Button>
+        <Button
+          danger
+          icon={<LogoutOutlined />}
+          onClick={handleLogout}
+          className="w-full md:w-auto"
+        >
+          退出登录
+        </Button>
       </div>
     </div>
   );
+}
+
+type QuotaUsageRow = {
+  key: string;
+  label: string;
+  limit: number;
+  loading?: boolean;
+  note: string;
+  percent: number;
+  status: 'exception' | 'normal';
+  value: string;
+};
+
+function QuotaDetailsPanel({
+  dailyQuota,
+  last7dAvg,
+  last7dCounts,
+  remainingChecks,
+  rows,
+  sizeLimits,
+}: {
+  dailyQuota: number;
+  last7dAvg?: number;
+  last7dCounts?: number[];
+  remainingChecks?: number;
+  rows: QuotaUsageRow[];
+  sizeLimits: Array<{ label: string; value: string }>;
+}) {
+  const remainingPercent =
+    typeof remainingChecks === 'number'
+      ? Math.max(0, Math.min(100, (remainingChecks / dailyQuota) * 100))
+      : 0;
+  const status =
+    remainingChecks !== undefined && remainingChecks <= 0
+      ? 'exception'
+      : 'normal';
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="grid items-stretch gap-4 border-slate-100 border-b bg-gradient-to-br from-slate-50 to-white p-4 lg:grid-cols-2">
+        <div className="flex min-h-[150px] flex-col">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="font-medium text-slate-900">每日检查额度</div>
+              <div className="mt-0.5 text-slate-500 text-xs">
+                客户端检查热更新时消耗，按账户全部应用汇总。
+              </div>
+            </div>
+            {status === 'exception' && <Tag color="red">超额</Tag>}
+          </div>
+          <div className="mt-4">
+            <div>
+              <div className="text-[11px] text-gray-500">今日剩余额度</div>
+              <div className="mt-1 font-semibold text-2xl leading-none tabular-nums">
+                {remainingChecks === undefined
+                  ? dailyQuota.toLocaleString()
+                  : Math.max(0, remainingChecks).toLocaleString()}
+              </div>
+              <div className="mt-1 text-gray-500 text-xs">
+                上限 {dailyQuota.toLocaleString()} 次 / 日
+              </div>
+            </div>
+          </div>
+          <div className="mt-5">
+            <Progress
+              className="mb-0"
+              percent={remainingPercent}
+              showInfo={false}
+              size="small"
+              status={status}
+            />
+          </div>
+        </div>
+        <MiniQuotaBars
+          dailyQuota={dailyQuota}
+          title={`最近 7 天平均剩余额度 ${formatOptionalNumber(last7dAvg)}（${formatQuotaDateRangeLabel()}）`}
+          tooltipSuffix="次"
+          values={last7dCounts}
+        />
+      </div>
+
+      <div className="divide-y divide-slate-100">
+        {rows.map((row) => (
+          <div
+            className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(140px,0.9fr)_minmax(180px,1fr)_minmax(180px,1.2fr)] md:items-center"
+            key={row.key}
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-800">{row.label}</span>
+                {row.status === 'exception' && <Tag color="red">超额</Tag>}
+              </div>
+              <div className="mt-0.5 text-slate-500 text-xs">{row.note}</div>
+            </div>
+            <div className="font-semibold tabular-nums">{row.value}</div>
+            <Progress
+              percent={row.percent}
+              showInfo={false}
+              size="small"
+              status={row.status}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="border-slate-100 border-t bg-slate-50/70 px-4 py-3">
+        <div className="mb-2 font-medium text-slate-700 text-xs">规格限制</div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {sizeLimits.map((item) => (
+            <div key={item.label}>
+              <div className="text-[11px] text-slate-500">{item.label}</div>
+              <div className="mt-0.5 font-medium">{item.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniQuotaBars({
+  dailyQuota,
+  title,
+  tooltipSuffix,
+  values,
+}: {
+  dailyQuota: number;
+  title: string;
+  tooltipSuffix: string;
+  values?: number[];
+}) {
+  const bars = (values ?? [])
+    .slice(0, 7)
+    .reverse()
+    .map((value, index, array) => {
+      const daysAgo = array.length - index - 1;
+      return {
+        daysAgo,
+        dateLabel: formatQuotaDateLabel(daysAgo),
+        value,
+      };
+    });
+
+  return (
+    <div className="flex h-full min-h-[150px] flex-col rounded-lg border border-slate-200/70 bg-white/70 p-3">
+      <div className="mb-1 flex items-center justify-between text-[11px] text-gray-500">
+        <span>{title}</span>
+      </div>
+      {bars.length > 0 ? (
+        <div className="mt-2 flex flex-1 items-end gap-1.5">
+          {bars.map((bar) => {
+            const percent =
+              dailyQuota > 0
+                ? Math.max(
+                    bar.value > 0 ? 4 : 0,
+                    Math.min(100, (Math.max(0, bar.value) / dailyQuota) * 100),
+                  )
+                : 0;
+            return (
+              <div
+                className="flex h-full min-w-0 flex-1 flex-col items-center"
+                key={`${bar.daysAgo}-days-ago`}
+              >
+                <div className="flex min-h-0 w-full flex-1 items-end rounded bg-slate-100">
+                  <Tooltip
+                    title={`${bar.dateLabel}：${bar.value.toLocaleString()} ${tooltipSuffix}`}
+                  >
+                    <div
+                      className="w-full rounded bg-blue-500 transition-colors hover:bg-blue-600"
+                      style={{ height: `${percent}%` }}
+                    />
+                  </Tooltip>
+                </div>
+                <span className="mt-1 text-[10px] text-gray-400 tabular-nums">
+                  {bar.dateLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-2 flex flex-1 items-center justify-center rounded bg-white text-gray-400 text-xs">
+          暂无 7 天明细
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatOptionalNumber(value?: number) {
+  return typeof value === 'number' ? Math.max(0, value).toLocaleString() : '-';
+}
+
+function formatQuotaDateLabel(daysAgo: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return formatShortQuotaDate(date);
+}
+
+function formatQuotaDateRangeLabel() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 6);
+  return `${formatShortQuotaDate(start)} - ${formatShortQuotaDate(end)}`;
+}
+
+function formatShortQuotaDate(date: Date) {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 async function purchase(tier?: string) {

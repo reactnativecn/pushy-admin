@@ -16,6 +16,7 @@ export interface User {
   tierExpiresAt?: string;
   checkQuota?: number;
   last7dAvg?: number;
+  last7dCounts?: number[];
   quota?: Quota;
   admin?: boolean;
 }
