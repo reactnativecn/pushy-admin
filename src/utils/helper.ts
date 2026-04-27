@@ -26,31 +26,22 @@ export function promiseAny<T>(promises: Promise<T>[]) {
 }
 
 export const ping = async (url: string) => {
-  let pingFinished = false;
   return Promise.race([
     fetch(url, {
       method: 'HEAD',
     })
-      .then(({ status, statusText }) => {
-        pingFinished = true;
+      .then(({ status }) => {
         if (status === 200) {
-          console.log('ping success', url);
           return url;
         }
-        console.log('ping failed', url, status, statusText);
         throw Error('ping failed');
       })
-      .catch((e) => {
-        pingFinished = true;
-        console.log('ping error', url, e);
+      .catch(() => {
         throw Error('ping error');
       }),
     new Promise((_, reject) =>
       setTimeout(() => {
         reject(Error('ping timeout'));
-        if (!pingFinished) {
-          console.log('ping timeout', url);
-        }
       }, 2000),
     ),
   ]) as Promise<string | null>;
@@ -64,7 +55,6 @@ export const testUrls = async (urls?: string[]) => {
   if (ret) {
     return ret;
   }
-  console.log('all ping failed, use first url:', urls[0]);
   return urls[0];
 };
 
