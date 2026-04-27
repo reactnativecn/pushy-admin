@@ -1,4 +1,3 @@
-import { Alert } from 'antd';
 import { createHashRouter, Navigate, redirect } from 'react-router-dom';
 import { ErrorBoundary } from './components/error-boundary';
 import MainLayout from './components/main-layout';
@@ -101,7 +100,7 @@ export const router = createHashRouter([
       {
         path: 'apps',
         loader: needAuthLoader,
-        element: <Alert message="请选择应用" showIcon />,
+        lazy: () => import('./pages/apps'),
       },
       {
         path: 'apps/:id',

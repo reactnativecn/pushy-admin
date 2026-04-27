@@ -18,6 +18,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   type Content,
   createJSONEditor,
@@ -26,6 +27,8 @@ import {
 } from 'vanilla-jsoneditor';
 import { quotas } from '@/constants/quotas';
 import { adminApi } from '@/services/admin-api';
+import type { Tier } from '@/types';
+import { patchSearchParams } from '@/utils/helper';
 
 const { Title } = Typography;
 
@@ -46,6 +49,11 @@ const tierLabelMap = new Map(
 const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
 const expiryShortcutDays = [7, 30, 365] as const;
 
+const parsePositiveInt = (value: string | null, fallback: number) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 const getInitialQuotaValue = (record: AdminUser) => {
   if (record.quota) {
     return JSON.stringify(record.quota, null, 2);
@@ -54,7 +62,6 @@ const getInitialQuotaValue = (record: AdminUser) => {
   return record.tier === 'custom' ? defaultPremiumQuotaText : '';
 };
 
-// JSON Editor wrapper component for quota editing
 const JsonEditorWrapper = ({
   height = 200,
   value,
@@ -115,23 +122,55 @@ export const Component = () => {
   const queryClient = useQueryClient();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [form] = Form.useForm();
   const [quotaValue, setQuotaValue] = useState('');
 
-  // Debounce search
+  const searchQuery = searchParams.get('search')?.trim() ?? '';
+  const currentPage = parsePositiveInt(searchParams.get('page'), 1);
+  const pageSize = parsePositiveInt(
+    searchParams.get('pageSize'),
+    isMobile ? 10 : 20,
+  );
+  const [searchKeyword, setSearchKeyword] = useState(searchQuery);
+
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchKeyword), 300);
-    return () => clearTimeout(timer);
-  }, [searchKeyword]);
+    setSearchKeyword(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const trimmedKeyword = searchKeyword.trim();
+    if (trimmedKeyword === searchQuery) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      patchSearchParams(setSearchParams, {
+        search: trimmedKeyword || undefined,
+        page: '1',
+      });
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchKeyword, searchQuery, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminUsers', debouncedSearch],
-    queryFn: () => adminApi.searchUsers(debouncedSearch || undefined),
+    queryKey: ['adminUsers', searchQuery],
+    queryFn: () => adminApi.searchUsers(searchQuery || undefined),
   });
+
+  const total = data?.data.length ?? 0;
+  const maxPage = Math.max(1, Math.ceil(total / pageSize));
+
+  useEffect(() => {
+    if (currentPage > maxPage) {
+      patchSearchParams(setSearchParams, { page: String(maxPage) });
+    }
+  }, [currentPage, maxPage, setSearchParams]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminUser> }) =>
@@ -180,7 +219,6 @@ export const Component = () => {
           : null,
       };
 
-      // Parse quota if provided
       if (quotaValue.trim()) {
         try {
           updateData.quota = JSON.parse(quotaValue);
@@ -276,7 +314,7 @@ export const Component = () => {
       title: '操作',
       key: 'action',
       width: 80,
-      render: (_: unknown, record: AdminUser) => (
+      render: (_value, record) => (
         <Button
           type="link"
           icon={<EditOutlined />}
@@ -291,15 +329,20 @@ export const Component = () => {
   return (
     <div className="page-section">
       <Card>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
-          <Title level={4} className="m-0!">
-            用户管理
-          </Title>
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <Title level={4} className="m-0!">
+              用户管理
+            </Title>
+            <div className="text-sm text-gray-500">
+              当前搜索条件和分页会保留在 URL 中，方便排查问题时直接分享链接。
+            </div>
+          </div>
           <Input
             placeholder="搜索用户名或邮箱"
             prefix={<SearchOutlined />}
             value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
+            onChange={(event) => setSearchKeyword(event.target.value)}
             allowClear
             className="w-full md:w-72"
           />
@@ -311,11 +354,21 @@ export const Component = () => {
             columns={columns}
             rowKey="id"
             size={isMobile ? 'small' : 'middle'}
-            pagination={
-              isMobile
-                ? { pageSize: 10, simple: true }
-                : { pageSize: 20, showSizeChanger: true }
-            }
+            pagination={{
+              current: currentPage,
+              pageSize,
+              total,
+              simple: isMobile,
+              showQuickJumper: !isMobile,
+              showSizeChanger: !isMobile,
+              showTotal: isMobile ? undefined : (count) => `共 ${count} 个用户`,
+              onChange: (page, nextPageSize) => {
+                patchSearchParams(setSearchParams, {
+                  page: String(page),
+                  pageSize: String(nextPageSize),
+                });
+              },
+            }}
             scroll={{ x: 760 }}
           />
         </Spin>

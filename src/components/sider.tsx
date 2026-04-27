@@ -4,28 +4,27 @@ import {
   KeyOutlined,
   LineChartOutlined,
   PlusOutlined,
+  SearchOutlined,
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import {
   Card,
   Drawer,
-  Form,
   Input,
   Layout,
   Menu,
-  Modal,
-  message,
   Progress,
-  Select,
   Tag,
   Tooltip,
 } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { showCreateAppModal } from '@/components/create-app-modal';
 import { PRICING_LINK } from '@/constants/links';
 import { quotas } from '@/constants/quotas';
-import { rootRouterPath } from '@/router';
-import { api } from '@/services/api';
+import { rootRouterPath, router } from '@/router';
+import { getRecentAppIds, rememberRecentApp } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { ReactComponent as LogoH } from '../assets/logo-h.svg';
 import PlatformIcon from './platform-icon';
@@ -35,86 +34,27 @@ interface SiderMenuProps {
   onNavigate?: () => void;
 }
 
-function addApp() {
-  let name = '';
-  let platform = 'android';
-  Modal.confirm({
-    icon: null,
-    closable: true,
-    maskClosable: true,
-    content: (
-      <Form initialValues={{ platform }}>
-        <br />
-        <Form.Item label="应用名称" name="name">
-          <Input
-            placeholder="请输入应用名称"
-            onChange={({ target }) => (name = target.value)}
-          />
-        </Form.Item>
-        <Form.Item label="选择平台" name="platform">
-          <Select
-            onSelect={(value: string) => {
-              platform = value;
-            }}
-            options={[
-              {
-                value: 'android',
-                label: (
-                  <>
-                    <PlatformIcon platform="android" className="mr-2" /> Android
-                  </>
-                ),
-              },
-              {
-                value: 'ios',
-                label: (
-                  <>
-                    <PlatformIcon platform="ios" className="mr-2" /> iOS
-                  </>
-                ),
-              },
-              {
-                value: 'harmony',
-                label: (
-                  <>
-                    <PlatformIcon platform="harmony" className="mr-[10px]" />
-                    HarmonyOS
-                  </>
-                ),
-              },
-            ]}
-          />
-        </Form.Item>
-      </Form>
-    ),
-    onOk() {
-      if (!name) {
-        message.warning('请输入应用名称');
-        return false;
-      }
-      return api.createApp({ name, platform }).catch((error) => {
-        message.error((error as Error).message);
-      });
-    },
-  });
-}
-
 const style = {
   sider: { boxShadow: '2px 0 8px 0 rgb(29 35 41 / 5%)', zIndex: 2 },
 };
 
+const getSelectedKeys = (pathname: string) => {
+  if (pathname === rootRouterPath.apps) {
+    return ['apps:overview'];
+  }
+
+  const appMatch = pathname.match(/^\/apps\/([^/]+)/);
+  if (appMatch) {
+    return [`app:${appMatch[1]}`];
+  }
+
+  const key = pathname.replace(/^\//, '');
+  return [key || 'user'];
+};
+
 const useSelectedKeys = () => {
   const { pathname } = useLocation();
-  const initPath = pathname?.replace(/^\//, '')?.split('/');
-  let selectedKeys = initPath;
-  if (selectedKeys?.length === 0) {
-    if (pathname === '/') {
-      selectedKeys = ['/user'];
-    } else {
-      selectedKeys = initPath;
-    }
-  }
-  return selectedKeys;
+  return getSelectedKeys(pathname);
 };
 
 export default function Sider() {
@@ -173,23 +113,55 @@ const SiderContent = ({ selectedKeys, onNavigate }: SiderMenuProps) => (
 );
 
 const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
+  const { pathname } = useLocation();
   const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
   const { apps } = useAppList();
+  const [appSearch, setAppSearch] = useState('');
+  const [recentAppIds, setRecentAppIds] = useState<number[]>(() =>
+    getRecentAppIds(),
+  );
+
+  const currentAppId = useMemo(() => {
+    const match = pathname.match(/^\/apps\/(\d+)/);
+    return match ? Number(match[1]) : null;
+  }, [pathname]);
+
+  useEffect(() => {
+    if (currentAppId) {
+      setRecentAppIds(rememberRecentApp(currentAppId));
+    }
+  }, [currentAppId]);
+
   if (!user) {
     return null;
   }
+
   const quota = user.quota ?? quotas[user.tier as keyof typeof quotas];
   const pvQuota = quota?.pv;
   const consumedQuota = user.checkQuota;
   const percent =
     pvQuota && consumedQuota ? (consumedQuota / pvQuota) * 100 : undefined;
+  const normalizedAppSearch = appSearch.trim().toLowerCase();
+  const filteredApps = (apps ?? []).filter((app) => {
+    if (!normalizedAppSearch) {
+      return true;
+    }
+    return [app.name, app.appKey, app.platform]
+      .filter(Boolean)
+      .some((value) => value?.toLowerCase().includes(normalizedAppSearch));
+  });
+  const appMap = new Map((apps ?? []).map((app) => [app.id, app]));
+  const recentApps = recentAppIds
+    .map((id) => appMap.get(id))
+    .filter((app): app is NonNullable<typeof apps>[number] => Boolean(app));
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden">
       {percent && (
         <Card
           title={
             <div className="text-center py-1">
-              <span className="">{user.email}</span>
+              <span>{user.email}</span>
               <br />
               <span className="font-normal">今日剩余总查询热更次数</span>
             </div>
@@ -198,7 +170,7 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
           className="mb-4! mr-0! md:mr-2!"
         >
           <Progress
-            status={percent && percent > 40 ? 'normal' : 'exception'}
+            status={percent > 40 ? 'normal' : 'exception'}
             size={['100%', 30]}
             percent={percent}
             percentPosition={{ type: 'inner', align: 'center' }}
@@ -206,17 +178,17 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
               consumedQuota ? `${consumedQuota.toLocaleString()} 次` : ''
             }
           />
-          <div className="text-xs mt-2 text-center">
+          <div className="mt-2 text-center text-xs">
             7日平均剩余次数：{user.last7dAvg?.toLocaleString()} 次
           </div>
-          <div className="text-xs mt-2 text-center">
+          <div className="mt-2 text-center text-xs">
             <a target="_blank" href={PRICING_LINK} rel="noopener noreferrer">
               {quota?.title}
             </a>
             可用: {pvQuota?.toLocaleString()} 次/每日
-          </div>{' '}
+          </div>
           {user.tier !== 'free' && (
-            <div className="text-xs mt-2 text-center">
+            <div className="mt-2 text-center text-xs">
               有效期至：{displayExpireDay}
               {displayRemainingDays && (
                 <>
@@ -228,9 +200,34 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
           )}
         </Card>
       )}
+
+      <div className="px-3 pb-3">
+        <Input
+          allowClear
+          value={appSearch}
+          prefix={<SearchOutlined />}
+          placeholder="搜索应用"
+          onChange={(event) => setAppSearch(event.target.value)}
+        />
+        {recentApps.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {recentApps.map((app) => (
+              <Link key={app.id} to={rootRouterPath.versions(String(app.id))}>
+                <Tag color={currentAppId === app.id ? 'blue' : undefined}>
+                  <span className="inline-flex items-center gap-1">
+                    <PlatformIcon platform={app.platform} />
+                    {app.name}
+                  </span>
+                </Tag>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="overflow-y-auto">
         <Menu
-          defaultOpenKeys={['apps']}
+          defaultOpenKeys={['apps', 'admin']}
           selectedKeys={selectedKeys}
           mode="inline"
           onClick={() => onNavigate?.()}
@@ -260,46 +257,64 @@ const SiderMenu = ({ selectedKeys, onNavigate }: SiderMenuProps) => {
               icon: <AppstoreOutlined />,
               label: '应用管理',
               children: [
-                ...(apps?.map((i, index) => ({
-                  key: `${i.id}-${index}`,
-                  className: '!h-16',
-                  label: (
-                    <div className="flex flex-row items-center gap-4">
-                      <div className="flex flex-col justify-center">
-                        <PlatformIcon
-                          platform={i.platform}
-                          className="text-xl!"
-                        />
-                      </div>
-                      <Link
-                        to={`/apps/${i.id}`}
-                        className="flex flex-col h-16 justify-center"
-                      >
-                        <div className="flex flex-row items-center font-bold">
-                          {i.name}
-                          {i.status === 'paused' && (
-                            <Tag className="ml-2">暂停</Tag>
-                          )}
-                        </div>
-                        {i.checkCount && (
-                          <div className="text-xs text-gray-500 mb-2">
-                            <Tooltip
-                              mouseEnterDelay={1}
-                              title="今日此应用查询热更的次数"
-                            >
-                              <a>{i.checkCount.toLocaleString()} 次</a>
-                            </Tooltip>
+                {
+                  key: 'apps:overview',
+                  label: <Link to={rootRouterPath.apps}>应用列表</Link>,
+                },
+                ...(filteredApps.length > 0
+                  ? filteredApps.map((app) => ({
+                      key: `app:${app.id}`,
+                      className: '!h-16',
+                      label: (
+                        <Link
+                          to={rootRouterPath.versions(String(app.id))}
+                          className="flex h-16 flex-row items-center gap-4"
+                        >
+                          <div className="flex flex-col justify-center">
+                            <PlatformIcon
+                              platform={app.platform}
+                              className="text-xl!"
+                            />
                           </div>
-                        )}
-                      </Link>
-                    </div>
-                  ),
-                })) || []),
+                          <div className="flex min-w-0 flex-1 flex-col justify-center">
+                            <div className="flex flex-row items-center font-bold">
+                              <span className="truncate">{app.name}</span>
+                              {app.status === 'paused' && (
+                                <Tag className="ml-2">暂停</Tag>
+                              )}
+                            </div>
+                            {app.checkCount !== undefined && (
+                              <div className="mb-2 text-xs text-gray-500">
+                                <Tooltip
+                                  mouseEnterDelay={1}
+                                  title="今日此应用查询热更的次数"
+                                >
+                                  <span>
+                                    {app.checkCount.toLocaleString()} 次
+                                  </span>
+                                </Tooltip>
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      ),
+                    }))
+                  : [
+                      {
+                        key: 'apps:empty',
+                        disabled: true,
+                        label: appSearch ? '没有匹配的应用' : '还没有应用',
+                      },
+                    ]),
                 {
                   key: 'add-app',
                   icon: <PlusOutlined />,
                   label: '添加应用',
-                  onClick: addApp,
+                  onClick: () =>
+                    showCreateAppModal({
+                      onCreated: (id) =>
+                        router.navigate(rootRouterPath.versions(String(id))),
+                    }),
                 },
               ],
             },

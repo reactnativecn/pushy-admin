@@ -32,17 +32,24 @@ export const api = {
   getApp: (appId: number) => request<App>('get', `/app/${appId}`),
   deleteApp: (appId: number) =>
     request('delete', `/app/${appId}`).then(() => {
-      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
-        data: data?.filter((i) => i.id !== appId),
-      }));
+      queryClient.setQueryData(
+        ['appList'],
+        (old?: { data?: App[] } | undefined) => ({
+          data: old?.data?.filter((i) => i.id !== appId) ?? [],
+        }),
+      );
     }),
   createApp: (params: { name: string; platform: string }) =>
     request<{ id: number }>('post', '/app/create', params).then((response) => {
       if (!response) throw Error('Failed to create app');
       const { id } = response;
-      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
-        data: [...(data || []), { ...params, id }],
-      }));
+      queryClient.setQueryData(
+        ['appList'],
+        (old?: { data?: App[] } | undefined) => ({
+          data: [...(old?.data || []), { ...params, id }],
+        }),
+      );
+      return id;
     }),
   updateApp: (
     appId: number,
@@ -53,9 +60,14 @@ export const api = {
         ...old,
         ...params,
       }));
-      queryClient.setQueryData(['appList'], ({ data }: { data: App[] }) => ({
-        data: data?.map((i) => (i.id === appId ? { ...i, ...params } : i)),
-      }));
+      queryClient.setQueryData(
+        ['appList'],
+        (old?: { data?: App[] } | undefined) => ({
+          data:
+            old?.data?.map((i) => (i.id === appId ? { ...i, ...params } : i)) ??
+            [],
+        }),
+      );
     }),
   // package
   getPackages: (appId: number) =>
