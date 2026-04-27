@@ -18,13 +18,13 @@ function getSearchParam(name: string) {
 
 function resolveLoginFrom(loginFrom?: string | null) {
   if (!loginFrom?.startsWith('/') || loginFrom.startsWith('//')) {
-    return rootRouterPath.user;
+    return rootRouterPath.apps;
   }
   if (
     loginFrom === rootRouterPath.login ||
     loginFrom.startsWith(`${rootRouterPath.login}?`)
   ) {
-    return rootRouterPath.user;
+    return rootRouterPath.apps;
   }
   return loginFrom;
 }

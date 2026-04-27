@@ -16,6 +16,7 @@ export interface User {
   tierExpiresAt?: string;
   checkQuota?: number;
   last7dAvg?: number;
+  last7dCounts?: number[];
   quota?: Quota;
   admin?: boolean;
 }
@@ -126,10 +127,6 @@ export interface AppDetail extends App {
   appKey: string;
   appSecret: string;
   downloadUrl?: string;
-}
-
-export interface SiderMenuProps {
-  selectedKeys?: string[];
 }
 
 export interface ContentProps {

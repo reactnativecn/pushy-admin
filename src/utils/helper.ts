@@ -99,3 +99,37 @@ export const patchSearchParams = (
     return next;
   }, navigateOptions);
 };
+
+const RECENT_APP_STORAGE_KEY = 'pushy_recent_app_ids';
+const MAX_RECENT_APP_COUNT = 6;
+
+export const getRecentAppIds = () => {
+  if (typeof window === 'undefined') {
+    return [] as number[];
+  }
+
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(RECENT_APP_STORAGE_KEY) ?? '[]',
+    );
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter((value): value is number => Number.isInteger(value));
+  } catch {
+    return [];
+  }
+};
+
+export const rememberRecentApp = (appId: number) => {
+  if (typeof window === 'undefined' || !Number.isInteger(appId)) {
+    return [] as number[];
+  }
+
+  const next = [appId, ...getRecentAppIds().filter((id) => id !== appId)].slice(
+    0,
+    MAX_RECENT_APP_COUNT,
+  );
+  window.localStorage.setItem(RECENT_APP_STORAGE_KEY, JSON.stringify(next));
+  return next;
+};

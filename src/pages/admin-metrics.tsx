@@ -11,8 +11,10 @@ import {
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '@/services/api';
+import { patchSearchParams } from '@/utils/helper';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -32,6 +34,7 @@ interface MetricsResponse {
 }
 
 const TOTAL_SERIES_LABEL = 'total';
+const DEFAULT_RANGE_HOURS = 24;
 const modeLabels: Record<MetricMode, string> = {
   pv: '请求数',
   uv: '用户数',
@@ -41,7 +44,7 @@ const metricKeyOptions = [
   { label: 'rn', value: 'rn' },
   { label: 'os', value: 'os' },
   { label: 'rnu', value: 'rnu' },
-];
+] satisfies Array<{ label: string; value: MetricKeyPrefix }>;
 
 const getCategoryPrefix = (category: string) => {
   const separatorIndex = category.indexOf(':');
@@ -51,6 +54,7 @@ const getCategoryPrefix = (category: string) => {
 
 const getMetricsTotal = (metrics?: MetricsResponse) => {
   if (!metrics?.data || !metrics.dict) return 0;
+
   let total = 0;
   for (const bucket of metrics.data) {
     let bucketTotal = 0;
@@ -64,6 +68,7 @@ const getMetricsTotal = (metrics?: MetricsResponse) => {
     }
     total += bucketTotal;
   }
+
   return total;
 };
 
@@ -72,17 +77,40 @@ type ChartController = {
   on: (...args: unknown[]) => unknown;
 };
 
+const parseMode = (value: string | null): MetricMode =>
+  value === 'uv' ? 'uv' : 'pv';
+
+const parseKeyPrefix = (value: string | null): MetricKeyPrefix =>
+  metricKeyOptions.some((option) => option.value === value)
+    ? (value as MetricKeyPrefix)
+    : 'rn';
+
+const parseDateRange = (searchParams: URLSearchParams): [Dayjs, Dayjs] => {
+  const fallbackEnd = dayjs();
+  const fallbackStart = fallbackEnd.subtract(DEFAULT_RANGE_HOURS, 'hour');
+  const parsedStart = searchParams.get('start')
+    ? dayjs(searchParams.get('start'))
+    : fallbackStart;
+  const parsedEnd = searchParams.get('end')
+    ? dayjs(searchParams.get('end'))
+    : fallbackEnd;
+
+  const start = parsedStart.isValid() ? parsedStart : fallbackStart;
+  const end = parsedEnd.isValid() ? parsedEnd : fallbackEnd;
+  if (start.isAfter(end)) {
+    return [end.subtract(DEFAULT_RANGE_HOURS, 'hour'), end];
+  }
+  return [start, end];
+};
+
 export const Component = () => {
-  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
-    dayjs().subtract(24, 'hour'),
-    dayjs(),
-  ]);
-  const [mode, setMode] = useState<MetricMode>('pv');
-  const [selectedKeyPrefix, setSelectedKeyPrefix] =
-    useState<MetricKeyPrefix>('rn');
+  const [searchParams, setSearchParams] = useSearchParams();
   const legendValuesRef = useRef<string[]>([]);
-  const startDate = dateRange[0].toISOString();
-  const endDate = dateRange[1].toISOString();
+  const mode = parseMode(searchParams.get('mode'));
+  const selectedKeyPrefix = parseKeyPrefix(searchParams.get('prefix'));
+  const [rangeStart, rangeEnd] = parseDateRange(searchParams);
+  const startDate = rangeStart.toISOString();
+  const endDate = rangeEnd.toISOString();
 
   const { data: pvMetrics, isLoading: isLoadingPv } = useQuery({
     queryKey: ['globalMetrics', startDate, endDate, 'pv'],
@@ -92,7 +120,6 @@ export const Component = () => {
         end: endDate,
         mode: 'pv',
       }),
-    enabled: !!dateRange[0] && !!dateRange[1],
   });
 
   const { data: uvMetrics, isLoading: isLoadingUv } = useQuery({
@@ -103,28 +130,27 @@ export const Component = () => {
         end: endDate,
         mode: 'uv',
       }),
-    enabled: !!dateRange[0] && !!dateRange[1],
   });
 
   const metricsData = mode === 'pv' ? pvMetrics : uvMetrics;
   const isChartLoading = mode === 'pv' ? isLoadingPv : isLoadingUv;
 
-  // Transform data for chart
   const chartData = useMemo(() => {
     if (!metricsData?.data || !metricsData?.dict) return [];
+
     const points: ChartDataPoint[] = [];
     for (const bucket of metricsData.data) {
       for (const [dictIndex, count] of bucket.data) {
         const rawCategory = metricsData.dict[dictIndex] || '';
-        // Skip _total entry
         if (rawCategory === '_total') {
           continue;
         }
-        // Treat empty values as 'unknown' (legacy data compatibility)
+
         let category = rawCategory.replace('\u001f', ': ');
         if (rawCategory.endsWith('\u001f')) {
           category = rawCategory.replace('\u001f', ': unknown');
         }
+
         points.push({
           time: bucket.time,
           value: count,
@@ -132,6 +158,7 @@ export const Component = () => {
         });
       }
     }
+
     return points;
   }, [metricsData]);
 
@@ -161,6 +188,7 @@ export const Component = () => {
 
   const totalSeriesData = useMemo(() => {
     if (!prefixFilteredChartData.length) return [];
+
     const totalsByTime = new Map<string, number>();
     for (const point of prefixFilteredChartData) {
       totalsByTime.set(
@@ -168,6 +196,7 @@ export const Component = () => {
         (totalsByTime.get(point.time) || 0) + point.value,
       );
     }
+
     return Array.from(totalsByTime.entries())
       .map(([time, value]) => ({
         time,
@@ -203,13 +232,17 @@ export const Component = () => {
     if (!prefixFilteredChartData.length) {
       return { total: 0, categories: new Map<string, number>() };
     }
+
     let total = 0;
     const categories = new Map<string, number>();
     for (const point of prefixFilteredChartData) {
       total += point.value;
-      const existing = categories.get(point.category) || 0;
-      categories.set(point.category, existing + point.value);
+      categories.set(
+        point.category,
+        (categories.get(point.category) || 0) + point.value,
+      );
     }
+
     return { total, categories };
   }, [prefixFilteredChartData]);
 
@@ -219,20 +252,13 @@ export const Component = () => {
       .slice(0, 10);
   }, [displayTotals.categories]);
 
-  const handleDateChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
-    if (dates?.[0] && dates[1]) {
-      setDateRange([dates[0], dates[1]]);
-    }
-  };
-
-  // Line chart config
   const lineConfig = {
     interaction: {
       legendFilter: true,
       tooltip: { shared: true },
     },
     data: lineData,
-    xField: (d: ChartDataPoint) => new Date(d.time),
+    xField: (datum: ChartDataPoint) => new Date(datum.time),
     yField: 'value',
     colorField: 'category',
     shapeField: 'smooth',
@@ -270,24 +296,39 @@ export const Component = () => {
           });
         });
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error(error);
       }
     },
     height: 480,
   };
 
+  const handleDateChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
+    patchSearchParams(setSearchParams, {
+      start: dates?.[0] ? dates[0].toISOString() : undefined,
+      end: dates?.[1] ? dates[1].toISOString() : undefined,
+    });
+  };
+
   return (
     <div className="page-section">
       <Card>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-          <Title level={4} className="m-0!">
-            全局数据统计
-          </Title>
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <Title level={4} className="m-0!">
+              全局数据统计
+            </Title>
+            <div className="text-sm text-gray-500">
+              当前时间范围、指标模式和分类前缀都会写入 URL，方便回放同一视图。
+            </div>
+          </div>
           <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
             <Radio.Group
               value={mode}
-              onChange={(e) => setMode(e.target.value)}
+              onChange={(event) => {
+                patchSearchParams(setSearchParams, {
+                  mode: event.target.value as MetricMode,
+                });
+              }}
               className="w-full md:w-auto"
             >
               <Radio.Button value="pv">请求数</Radio.Button>
@@ -295,17 +336,18 @@ export const Component = () => {
             </Radio.Group>
             <Select
               placeholder="筛选 Key"
-              showSearch={{
-                optionFilterProp: 'label',
-              }}
+              showSearch
+              optionFilterProp="label"
               value={selectedKeyPrefix}
               options={metricKeyOptions}
-              onChange={(value) => setSelectedKeyPrefix(value)}
+              onChange={(value) => {
+                patchSearchParams(setSearchParams, { prefix: value });
+              }}
               className="w-full md:w-40"
             />
             <RangePicker
               showTime
-              value={dateRange}
+              value={[rangeStart, rangeEnd]}
               onChange={handleDateChange}
               className="w-full md:w-auto"
               presets={[
@@ -335,7 +377,7 @@ export const Component = () => {
         </div>
 
         <Spin spinning={isChartLoading}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card size="small">
               <Statistic
                 title="总请求数"
@@ -349,41 +391,24 @@ export const Component = () => {
               />
             </Card>
           </div>
-          {/* Summary statistics */}
-          {/* <div className="grid grid-cols-4 gap-4 mb-6">
-            <Card size="small">
-              <Statistic
-                title={`总${mode.toUpperCase()}`}
-                value={displayTotals.total}
-                styles={{ content: { color: '#1890ff' } }}
-              />
-            </Card>
-            {topCategories.slice(0, 3).map(([category, value]) => (
-              <Card size="small" key={category}>
-                <Statistic title={category} value={value} />
-              </Card>
-            ))}
-          </div> */}
 
-          {/* Chart */}
           <Card size="small" style={{ marginBottom: 20 }}>
             {lineData.length > 0 ? (
               <Line {...lineConfig} />
             ) : (
-              <div className="h-80 flex items-center justify-center text-gray-400">
+              <div className="flex h-80 items-center justify-center text-gray-400">
                 暂无数据
               </div>
             )}
           </Card>
 
-          {/* Category breakdown */}
           {topCategories.length > 0 && (
             <Card title="分类统计 (Top 10)" size="small">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
                 {topCategories.map(([category, value]) => (
-                  <div key={category} className="p-3 bg-gray-50 rounded">
+                  <div key={category} className="rounded bg-gray-50 p-3">
                     <div
-                      className="text-xs text-gray-500 truncate"
+                      className="truncate text-xs text-gray-500"
                       title={category}
                     >
                       {category}

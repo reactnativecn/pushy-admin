@@ -18,6 +18,7 @@ interface ChartDataPoint {
   category: string;
   attribute?: MetricAttribute;
   isTotal?: boolean;
+  sharePercent?: number;
 }
 
 type MetricAttribute = 'hash' | 'packageVersion_buildTime';
@@ -84,6 +85,14 @@ const attributeOptions = [
   { label: '热更包', value: 'hash' },
   { label: '原生包', value: 'packageVersion_buildTime' },
 ];
+
+const formatTooltipItem = (point: ChartDataPoint) => {
+  const countLabel = `${point.value.toLocaleString()} 次`;
+  if (point.isTotal || point.sharePercent === undefined) {
+    return countLabel;
+  }
+  return `${countLabel} (${point.sharePercent.toFixed(1)}%)`;
+};
 
 export const Component = () => {
   const [searchParams, setSearchParams] = useSearchParams({
@@ -189,9 +198,45 @@ export const Component = () => {
   }, [data]);
 
   const filteredChartData = useMemo(() => {
-    return chartData.filter(
+    const selectedPoints = chartData.filter(
       (point) => point.isTotal || point.attribute === selectedAttribute,
     );
+    const denominators = new Map<string, number>();
+    const fallbackDenominators = new Map<string, number>();
+
+    for (const point of selectedPoints) {
+      if (point.isTotal) {
+        denominators.set(
+          point.time,
+          (denominators.get(point.time) || 0) + point.value,
+        );
+      } else {
+        fallbackDenominators.set(
+          point.time,
+          (fallbackDenominators.get(point.time) || 0) + point.value,
+        );
+      }
+    }
+
+    for (const [time, value] of fallbackDenominators) {
+      if (!denominators.has(time)) {
+        denominators.set(time, value);
+      }
+    }
+
+    return selectedPoints.map((point) => {
+      if (point.isTotal) {
+        return point;
+      }
+      const denominator = denominators.get(point.time) || 0;
+      if (denominator <= 0) {
+        return point;
+      }
+      return {
+        ...point,
+        sharePercent: (point.value / denominator) * 100,
+      };
+    });
   }, [chartData, selectedAttribute]);
 
   const categoryTotals = useMemo(() => {
@@ -290,7 +335,13 @@ export const Component = () => {
       y: {},
     },
     tooltip: {
-      channel: 'y',
+      title: (point: ChartDataPoint) => dayjs(point.time).format('MM/DD HH:mm'),
+      items: [
+        (point: ChartDataPoint) => ({
+          name: point.category,
+          value: formatTooltipItem(point),
+        }),
+      ],
     },
     legend: {
       position: 'top',
@@ -444,8 +495,6 @@ export const Component = () => {
                       }}
                     >
                       {topCategories.map(([category, value], index) => {
-                        const sharePercent =
-                          totalRequests > 0 ? (value / totalRequests) * 100 : 0;
                         const relativePercent =
                           topCategoryMax > 0
                             ? (value / topCategoryMax) * 100
@@ -471,9 +520,6 @@ export const Component = () => {
                                 className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[11px] font-medium ${rankBadgeClass}`}
                               >
                                 TOP {index + 1}
-                              </span>
-                              <span className="text-[11px] text-gray-500 tabular-nums">
-                                {sharePercent.toFixed(1)}%
                               </span>
                             </div>
 
