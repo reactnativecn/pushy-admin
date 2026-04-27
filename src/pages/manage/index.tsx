@@ -1,4 +1,4 @@
-import { SettingFilled } from '@ant-design/icons';
+import { LineChartOutlined, SettingFilled } from '@ant-design/icons';
 import {
   Breadcrumb,
   Button,
@@ -14,11 +14,12 @@ import {
   Tag,
 } from 'antd';
 
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import './manage.css';
 
 import { useEffect } from 'react';
 import PlatformIcon from '@/components/platform-icon';
+import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { useApp } from '@/utils/hooks';
 import PackageList from './components/package-list';
@@ -98,6 +99,11 @@ export const Manage = () => {
   const params = useParams<{ id?: string }>();
   const id = Number(params.id!);
   const { app } = useApp(id);
+  const realtimeMetricsPath = app?.appKey
+    ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
+        appKey: app.appKey,
+      }).toString()}`
+    : undefined;
   const [form] = Form.useForm<App>();
   useEffect(() => {
     if (app) {
@@ -112,7 +118,7 @@ export const Manage = () => {
           <Breadcrumb
             items={[
               {
-                title: <Link to="/apps">应用列表</Link>,
+                title: '应用',
               },
               {
                 title: (
@@ -167,6 +173,18 @@ export const Manage = () => {
             }}
           >
             应用设置
+          </Button>
+          <Button
+            icon={<LineChartOutlined />}
+            className="w-full md:w-auto"
+            disabled={!realtimeMetricsPath}
+            onClick={() => {
+              if (realtimeMetricsPath) {
+                router.navigate(realtimeMetricsPath);
+              }
+            }}
+          >
+            实时数据
           </Button>
         </Space.Compact>
       </Row>

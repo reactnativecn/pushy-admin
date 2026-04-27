@@ -1,4 +1,5 @@
 import { AlipayCircleOutlined } from '@ant-design/icons';
+import { useQueries } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
 import {
   Button,
@@ -7,11 +8,13 @@ import {
   Grid,
   message,
   Popover,
+  Progress,
   Spin,
+  Tag,
 } from 'antd';
 import { type ReactNode, useState } from 'react';
 import { api } from '@/services/api';
-import { useUserInfo } from '@/utils/hooks';
+import { useAppList, useUserInfo } from '@/utils/hooks';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
 
@@ -126,8 +129,18 @@ const UpgradeDropdown = ({
 
 function UserPanel() {
   const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
+  const { apps } = useAppList();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
+  const appList = apps ?? [];
+  const versionCountQueries = useQueries({
+    queries: appList.map((app) => ({
+      queryKey: ['accountQuotaVersions', app.id],
+      queryFn: () => api.getVersions({ appId: app.id, limit: 1 }),
+      staleTime: 60_000,
+    })),
+  });
+
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -140,12 +153,80 @@ function UserPanel() {
   const currentQuota = quota || defaultQuota;
 
   const tierDisplay = currentQuota.title;
-  const quotaTableData = [
-    { key: 'app', item: '应用数量', value: `${currentQuota.app} 个` },
+  const appCount = appList.length;
+  const versionCounts = versionCountQueries.map((query) => query.data?.count);
+  const isVersionCountLoading = versionCountQueries.some(
+    (query) => query.isLoading,
+  );
+  const totalVersionCount = versionCounts.reduce<number>(
+    (sum, count) => sum + (count ?? 0),
+    0,
+  );
+  const maxVersionCount = Math.max(
+    0,
+    ...versionCounts.map((count) => count ?? 0),
+  );
+  const remainingChecks = user.checkQuota;
+  const usedChecks =
+    typeof remainingChecks === 'number'
+      ? Math.max(0, currentQuota.pv - remainingChecks)
+      : undefined;
+  const usedCheckPercent =
+    usedChecks === undefined
+      ? 0
+      : Math.min(100, (usedChecks / currentQuota.pv) * 100);
+  const isCheckQuotaExceeded =
+    typeof remainingChecks === 'number' && remainingChecks <= 0;
+  const quotaCards = [
+    {
+      key: 'app',
+      item: '应用数量',
+      value: `${appCount.toLocaleString()} / ${currentQuota.app.toLocaleString()} 个`,
+      percent: Math.min(100, (appCount / currentQuota.app) * 100),
+      status: appCount > currentQuota.app ? 'exception' : 'normal',
+      note: '当前账户下应用总数',
+    },
+    {
+      key: 'bundle',
+      item: '热更包数量',
+      value: isVersionCountLoading
+        ? '统计中'
+        : `${maxVersionCount.toLocaleString()} / ${currentQuota.bundle.toLocaleString()} 个`,
+      percent: isVersionCountLoading
+        ? 0
+        : Math.min(100, (maxVersionCount / currentQuota.bundle) * 100),
+      status: maxVersionCount > currentQuota.bundle ? 'exception' : 'normal',
+      note: isVersionCountLoading
+        ? '正在统计各应用热更包数量'
+        : `最高单应用使用量，总计 ${totalVersionCount.toLocaleString()} 个`,
+    },
+    {
+      key: 'pv',
+      item: '每日检查额度',
+      value:
+        usedChecks === undefined
+          ? `${currentQuota.pv.toLocaleString()} 次`
+          : `${usedChecks.toLocaleString()} / ${currentQuota.pv.toLocaleString()} 次`,
+      percent: usedCheckPercent,
+      status: isCheckQuotaExceeded ? 'exception' : 'normal',
+      note:
+        typeof remainingChecks === 'number'
+          ? `剩余 ${Math.max(0, remainingChecks).toLocaleString()} 次，按账户全部应用汇总`
+          : '客户端检查热更新时消耗，按账户全部应用汇总',
+    },
+  ] satisfies Array<{
+    key: string;
+    item: string;
+    note: string;
+    percent: number;
+    status: 'exception' | 'normal';
+    value: string;
+  }>;
+  const staticQuotaCards = [
     {
       key: 'package',
-      item: '每个应用原生包数量',
-      value: `${currentQuota.package} 个`,
+      item: '原生包数量上限',
+      value: `${currentQuota.package} 个 / 应用`,
     },
     {
       key: 'packageSize',
@@ -153,19 +234,9 @@ function UserPanel() {
       value: currentQuota.packageSize,
     },
     {
-      key: 'bundle',
-      item: '每个应用热更包数量',
-      value: `${currentQuota.bundle} 个`,
-    },
-    {
       key: 'bundleSize',
       item: '单个热更包大小',
       value: currentQuota.bundleSize,
-    },
-    {
-      key: 'pv',
-      item: '每日总查询次数',
-      value: `${currentQuota.pv.toLocaleString()} 次`,
     },
   ];
   return (
@@ -227,11 +298,33 @@ function UserPanel() {
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="额度详情">
-          <div className="grid gap-2 sm:grid-cols-2">
-            {quotaTableData.map(({ key, item, value }) => (
+          <div className="grid gap-3 xl:grid-cols-3">
+            {quotaCards.map(({ key, item, value, percent, status, note }) => (
               <div
                 key={key}
-                className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs text-gray-500">{item}</div>
+                  {status === 'exception' && <Tag color="red">超额</Tag>}
+                </div>
+                <div className="mt-1 font-semibold">{value}</div>
+                <Progress
+                  className="mt-2"
+                  percent={percent}
+                  showInfo={false}
+                  size="small"
+                  status={status}
+                />
+                <div className="mt-2 text-gray-500 text-xs">{note}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {staticQuotaCards.map(({ key, item, value }) => (
+              <div
+                key={key}
+                className="rounded-md border border-slate-200 bg-white px-3 py-2"
               >
                 <div className="text-xs text-gray-500">{item}</div>
                 <div className="mt-1 font-medium">{value}</div>

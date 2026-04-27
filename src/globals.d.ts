@@ -51,7 +51,6 @@ type Package = import('./types').Package;
 type Commit = import('./types').Commit;
 type Version = import('./types').Version;
 type AppDetail = import('./types').AppDetail;
-type SiderMenuProps = import('./types').SiderMenuProps;
 type ContentProps = import('./types').ContentProps;
 type VersionConfig = import('./types').VersionConfig;
 type BindingType = import('./types').BindingType;

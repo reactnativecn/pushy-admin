@@ -1,6 +1,7 @@
 import {
   CopyOutlined,
   EditOutlined,
+  LineChartOutlined,
   LinkOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
@@ -227,12 +228,21 @@ export const Component = () => {
     {
       title: '操作',
       key: 'action',
-      width: isMobile ? 96 : 140,
+      width: isMobile ? 136 : 220,
       render: (_value, record) => (
         <Space size={[0, 0]} wrap>
           <Link to={rootRouterPath.versions(String(record.id))}>
             <Button type="link" icon={<LinkOutlined />}>
               打开
+            </Button>
+          </Link>
+          <Link
+            to={`${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
+              appKey: record.appKey,
+            }).toString()}`}
+          >
+            <Button type="link" icon={<LineChartOutlined />}>
+              实时数据
             </Button>
           </Link>
           <Button
@@ -290,7 +300,7 @@ export const Component = () => {
                 });
               },
             }}
-            scroll={{ x: 820 }}
+            scroll={{ x: 900 }}
           />
         </Spin>
       </Card>

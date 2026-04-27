@@ -1,234 +1,208 @@
 import {
   AppstoreOutlined,
-  CopyOutlined,
-  LineChartOutlined,
   PlusOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Grid,
-  Input,
-  message,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Button, Card, Empty, Input, Spin, Tag, Typography } from 'antd';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { showCreateAppModal } from '@/components/create-app-modal';
 import PlatformIcon from '@/components/platform-icon';
 import { rootRouterPath, router } from '@/router';
-import type { App } from '@/types';
-import { getRecentAppIds, patchSearchParams } from '@/utils/helper';
+import { cn, rememberRecentApp } from '@/utils/helper';
 import { useAppList } from '@/utils/hooks';
 
-const { Text, Title } = Typography;
+const { Title } = Typography;
+
+type AppItem = NonNullable<ReturnType<typeof useAppList>['apps']>[number];
+
+const platformLabels: Record<AppItem['platform'], string> = {
+  android: 'Android',
+  ios: 'iOS',
+  harmony: 'HarmonyOS',
+};
+
+const formatAppKey = (appKey?: string) => {
+  if (!appKey) {
+    return '尚未生成 App Key';
+  }
+  if (appKey.length <= 16) {
+    return appKey;
+  }
+  return `${appKey.slice(0, 8)}...${appKey.slice(-6)}`;
+};
 
 export const Component = () => {
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
-  const { apps } = useAppList();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const keyword = searchParams.get('search')?.trim() ?? '';
-  const normalizedKeyword = keyword.toLowerCase();
+  const { apps: appList, isLoading } = useAppList();
+  const [query, setQuery] = useState('');
+  const apps = appList ?? [];
+  const normalizedQuery = query.trim().toLowerCase();
 
   const filteredApps = useMemo(() => {
-    const source = apps ?? [];
-    if (!normalizedKeyword) {
-      return source;
+    if (!normalizedQuery) {
+      return apps;
     }
-
-    return source.filter((app) =>
+    return apps.filter((app) =>
       [app.name, app.appKey, app.platform]
         .filter(Boolean)
-        .some((value) => value?.toLowerCase().includes(normalizedKeyword)),
+        .some((value) => value?.toLowerCase().includes(normalizedQuery)),
     );
-  }, [apps, normalizedKeyword]);
+  }, [apps, normalizedQuery]);
 
-  const recentApps = useMemo(() => {
-    if (!apps?.length) {
-      return [];
-    }
+  const pausedCount = useMemo(
+    () => apps.filter((app) => app.status === 'paused').length,
+    [apps],
+  );
+  const totalChecks = useMemo(
+    () =>
+      apps.reduce((sum, app) => {
+        return sum + (app.checkCount ?? 0);
+      }, 0),
+    [apps],
+  );
 
-    const appMap = new Map(apps.map((app) => [app.id, app]));
-    return getRecentAppIds()
-      .map((id) => appMap.get(id))
-      .filter((app): app is App => Boolean(app));
-  }, [apps]);
-
-  const columns: ColumnsType<App> = [
-    {
-      title: '应用',
-      key: 'name',
-      render: (_value, record) => (
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <PlatformIcon platform={record.platform} className="text-lg!" />
-            <span className="truncate font-medium">{record.name}</span>
-            {record.status === 'paused' && <Tag>暂停</Tag>}
-          </div>
-          <div className="mt-1 text-xs text-gray-500">{record.platform}</div>
-        </div>
-      ),
-    },
-    {
-      title: 'App Key',
-      dataIndex: 'appKey',
-      key: 'appKey',
-      responsive: ['lg'],
-      render: (appKey: string | undefined) =>
-        appKey ? (
-          <Space size={[4, 8]} wrap>
-            <span className="font-mono text-xs break-all">{appKey}</span>
-            <Button
-              type="text"
-              size="small"
-              icon={<CopyOutlined />}
-              onClick={(event) => {
-                event.stopPropagation();
-                navigator.clipboard.writeText(appKey);
-                message.success('已复制 App Key');
-              }}
-            />
-          </Space>
-        ) : (
-          '-'
-        ),
-    },
-    {
-      title: '今日查询',
-      dataIndex: 'checkCount',
-      key: 'checkCount',
-      responsive: ['md'],
-      width: 120,
-      render: (value: number | undefined) => value?.toLocaleString() ?? '-',
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: isMobile ? 96 : 180,
-      render: (_value, record) => (
-        <Space size={[0, 0]} wrap>
-          <Button
-            type="link"
-            onClick={(event) => {
-              event.stopPropagation();
-              router.navigate(rootRouterPath.versions(String(record.id)));
-            }}
-          >
-            管理
-          </Button>
-          {record.appKey && (
-            <Link
-              to={`${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
-                appKey: record.appKey,
-              }).toString()}`}
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              <Button type="link" icon={<LineChartOutlined />}>
-                数据
-              </Button>
-            </Link>
-          )}
-        </Space>
-      ),
-    },
-  ];
+  const createApp = () => {
+    showCreateAppModal({
+      onCreated: (id) => {
+        rememberRecentApp(id);
+        return router.navigate(rootRouterPath.versions(String(id)));
+      },
+    });
+  };
 
   return (
     <div className="page-section">
-      <Card>
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <Title level={4} className="m-0!">
-              应用列表
-            </Title>
-            <Text type="secondary">
-              统一查看、搜索并进入应用管理页，不再依赖侧栏滚动查找。
-            </Text>
+      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-blue-700 text-xs">
+            <AppstoreOutlined />
+            应用工作台
           </div>
-          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-            <Input
-              allowClear
-              prefix={<SearchOutlined />}
-              placeholder="搜索应用名 / App Key / 平台"
-              value={keyword}
-              onChange={(event) => {
-                patchSearchParams(setSearchParams, {
-                  search: event.target.value.trim() || undefined,
-                });
-              }}
-              className="w-full md:w-72"
-            />
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              className="w-full md:w-auto"
-              onClick={() => {
-                showCreateAppModal({
-                  onCreated: (id) =>
-                    router.navigate(rootRouterPath.versions(String(id))),
-                });
-              }}
-            >
-              添加应用
-            </Button>
+          <Title level={3} className="m-0!">
+            应用列表
+          </Title>
+          <div className="mt-1 text-gray-500">
+            选择一个应用进入版本、原生包和发布配置管理。
           </div>
         </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            allowClear
+            className="w-full sm:w-72"
+            prefix={<SearchOutlined />}
+            placeholder="搜索应用名称、App Key 或平台"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <Button type="primary" icon={<PlusOutlined />} onClick={createApp}>
+            添加应用
+          </Button>
+        </div>
+      </div>
 
-        {recentApps.length > 0 && (
-          <div className="mb-4">
-            <div className="mb-2 flex items-center gap-2 text-sm text-gray-500">
-              <AppstoreOutlined />
-              最近访问
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {recentApps.map((app) => (
-                <Link key={app.id} to={rootRouterPath.versions(String(app.id))}>
-                  <Tag className="cursor-pointer">
-                    <span className="inline-flex items-center gap-1">
-                      <PlatformIcon platform={app.platform} />
-                      {app.name}
-                    </span>
-                  </Tag>
-                </Link>
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <MetricCard label="应用总数" value={apps.length.toLocaleString()} />
+        <MetricCard label="暂停应用" value={pausedCount.toLocaleString()} />
+        <MetricCard label="累计检查" value={totalChecks.toLocaleString()} />
+      </div>
+
+      <Card className="shadow-sm">
+        <Spin spinning={isLoading}>
+          {filteredApps.length > 0 ? (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {filteredApps.map((app) => (
+                <AppCard app={app} key={app.id} />
               ))}
             </div>
-          </div>
-        )}
-
-        <Table
-          rowKey="id"
-          dataSource={filteredApps}
-          columns={columns}
-          size={isMobile ? 'small' : 'middle'}
-          pagination={
-            isMobile
-              ? { pageSize: 10, simple: true }
-              : { pageSize: 12, showSizeChanger: true }
-          }
-          locale={{
-            emptyText: keyword ? '没有匹配的应用' : '还没有应用，先创建一个',
-          }}
-          scroll={{ x: 720 }}
-          onRow={(record) => ({
-            className: 'cursor-pointer',
-            onClick: (event) => {
-              const target = event.target as HTMLElement;
-              if (target.closest('button,a')) {
-                return;
-              }
-              router.navigate(rootRouterPath.versions(String(record.id)));
-            },
-          })}
-        />
+          ) : (
+            <Empty
+              className="py-16"
+              description={query ? '没有匹配的应用' : '还没有应用'}
+            >
+              {!query && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={createApp}
+                >
+                  添加第一个应用
+                </Button>
+              )}
+            </Empty>
+          )}
+        </Spin>
       </Card>
     </div>
   );
 };
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="text-gray-500 text-xs">{label}</div>
+      <div className="mt-1 font-semibold text-2xl text-slate-900 tabular-nums">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function AppCard({ app }: { app: AppItem }) {
+  const appKeyLabel = formatAppKey(app.appKey);
+
+  return (
+    <Link
+      className="group block h-full no-underline"
+      to={rootRouterPath.versions(String(app.id))}
+      onClick={() => rememberRecentApp(app.id)}
+    >
+      <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100">
+              <PlatformIcon platform={app.platform} className="text-xl!" />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate font-semibold text-slate-900">
+                {app.name}
+              </div>
+              <div className="mt-0.5 text-gray-500 text-xs">
+                {platformLabels[app.platform]}
+              </div>
+            </div>
+          </div>
+          <Tag
+            className="m-0 shrink-0"
+            color={app.status === 'paused' ? 'orange' : 'green'}
+          >
+            {app.status === 'paused' ? '暂停' : '正常'}
+          </Tag>
+        </div>
+
+        <div className="mt-auto space-y-2">
+          <div className="rounded-xl bg-slate-50 px-3 py-2">
+            <div className="text-gray-500 text-xs">App Key</div>
+            <div
+              className={cn(
+                'mt-1 truncate font-mono text-xs',
+                app.appKey ? 'text-slate-700' : 'text-gray-400',
+              )}
+              title={app.appKey}
+            >
+              {appKeyLabel}
+            </div>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">检查次数</span>
+            <span className="font-medium text-slate-800 tabular-nums">
+              {(app.checkCount ?? 0).toLocaleString()}
+            </span>
+          </div>
+          <div className="pt-1 text-blue-600 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+            进入应用管理
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}

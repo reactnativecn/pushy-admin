@@ -128,10 +128,6 @@ export interface AppDetail extends App {
   downloadUrl?: string;
 }
 
-export interface SiderMenuProps {
-  selectedKeys?: string[];
-}
-
 export interface ContentProps {
   app: App;
 }

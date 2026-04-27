@@ -205,11 +205,11 @@ export const useUserInfo = () => {
 };
 
 export const useAppList = () => {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['appList'],
     queryFn: api.appList,
   });
-  return { apps: data?.data };
+  return { apps: data?.data, isLoading };
 };
 
 export const useApp = (appId: number) => {
