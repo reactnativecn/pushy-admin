@@ -26,6 +26,7 @@ interface ChartDataPoint {
   time: string;
   value: number;
   category: string;
+  sharePercent?: number;
 }
 
 interface MetricsResponse {
@@ -70,6 +71,17 @@ const getMetricsTotal = (metrics?: MetricsResponse) => {
   }
 
   return total;
+};
+
+const formatTooltipItem = (point: ChartDataPoint) => {
+  const countLabel = point.value.toLocaleString();
+  if (
+    point.category === TOTAL_SERIES_LABEL ||
+    point.sharePercent === undefined
+  ) {
+    return countLabel;
+  }
+  return `${countLabel} (${point.sharePercent.toFixed(1)}%)`;
 };
 
 type ChartController = {
@@ -177,9 +189,28 @@ export const Component = () => {
 
   const prefixFilteredChartData = useMemo(() => {
     if (!chartData.length) return [];
-    return chartData.filter(
+    const selectedPoints = chartData.filter(
       (point) => getCategoryPrefix(point.category) === selectedKeyPrefix,
     );
+
+    const totalsByTime = new Map<string, number>();
+    for (const point of selectedPoints) {
+      totalsByTime.set(
+        point.time,
+        (totalsByTime.get(point.time) || 0) + point.value,
+      );
+    }
+
+    return selectedPoints.map((point) => {
+      const denominator = totalsByTime.get(point.time) || 0;
+      if (denominator <= 0) {
+        return point;
+      }
+      return {
+        ...point,
+        sharePercent: (point.value / denominator) * 100,
+      };
+    });
   }, [chartData, selectedKeyPrefix]);
 
   const categoryTotals = useMemo(() => {
@@ -289,7 +320,13 @@ export const Component = () => {
       },
     },
     tooltip: {
-      channel: 'y',
+      title: (point: ChartDataPoint) => dayjs(point.time).format('MM/DD HH:mm'),
+      items: [
+        (point: ChartDataPoint) => ({
+          name: point.category,
+          value: formatTooltipItem(point),
+        }),
+      ],
     },
     legend: {
       position: 'top',
@@ -428,6 +465,13 @@ export const Component = () => {
                     </div>
                     <div className="text-lg font-semibold">
                       {value.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      占比{' '}
+                      {displayTotals.total > 0
+                        ? ((value / displayTotals.total) * 100).toFixed(1)
+                        : '0.0'}
+                      %
                     </div>
                   </div>
                 ))}
