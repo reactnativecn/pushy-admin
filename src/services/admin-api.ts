@@ -22,13 +22,27 @@ export const adminApi = {
   updateUser: (id: number, data: Partial<AdminUser>) =>
     request<AdminUser>('put', `/admin/users/${id}`, data),
   // admin app management
-  searchApps: (search?: string) =>
-    request<{ data: AdminApp[] }>(
+  searchApps: (
+    params?: string | { search?: string; limit?: number; offset?: number },
+  ) => {
+    const normalizedParams =
+      typeof params === 'string' ? { search: params } : params;
+    const queryParams = new URLSearchParams();
+    if (normalizedParams?.search) {
+      queryParams.set('search', normalizedParams.search);
+    }
+    if (normalizedParams?.limit) {
+      queryParams.set('limit', String(normalizedParams.limit));
+    }
+    if (normalizedParams?.offset) {
+      queryParams.set('offset', String(normalizedParams.offset));
+    }
+    const query = queryParams.toString();
+    return request<{ data: AdminApp[]; count: number }>(
       'get',
-      search
-        ? `/admin/apps?search=${encodeURIComponent(search)}`
-        : '/admin/apps',
-    ),
+      query ? `/admin/apps?${query}` : '/admin/apps',
+    );
+  },
   // admin version management
   searchVersions: (params?: { search?: string; appId?: number }) => {
     const queryParams = new URLSearchParams();

@@ -2,6 +2,8 @@ import {
   AppstoreOutlined,
   CommentOutlined,
   DownOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   KeyOutlined,
@@ -19,7 +21,14 @@ import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { rootRouterPath, router } from '@/router';
-import { cn, getRecentAppIds, rememberRecentApp } from '@/utils/helper';
+import {
+  cn,
+  getManageAppDrawerPlacement,
+  getRecentAppIds,
+  manageAppDrawerPlacementChangeEvent,
+  rememberRecentApp,
+  setManageAppDrawerPlacement,
+} from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { ReactComponent as LogoH } from '../assets/logo-h.svg';
 import { showCreateAppModal } from './create-app-modal';
@@ -246,6 +255,9 @@ function AppSwitcher({ compact }: { compact: boolean }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [recentAppIds, setRecentAppIds] = useState(() => getRecentAppIds());
+  const [appDrawerPlacement, setAppDrawerPlacementState] = useState(
+    getManageAppDrawerPlacement,
+  );
   const currentAppId = getCurrentAppId(pathname);
   const currentApp = apps.find((app) => app.id === currentAppId);
   const appMap = useMemo(() => {
@@ -278,6 +290,22 @@ function AppSwitcher({ compact }: { compact: boolean }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    const syncPlacement = () => {
+      setAppDrawerPlacementState(getManageAppDrawerPlacement());
+    };
+
+    window.addEventListener(manageAppDrawerPlacementChangeEvent, syncPlacement);
+    window.addEventListener('storage', syncPlacement);
+    return () => {
+      window.removeEventListener(
+        manageAppDrawerPlacementChangeEvent,
+        syncPlacement,
+      );
+      window.removeEventListener('storage', syncPlacement);
+    };
+  }, []);
+
   const navigateToApp = (appId: number) => {
     setRecentAppIds(rememberRecentApp(appId));
     setOpen(false);
@@ -294,17 +322,27 @@ function AppSwitcher({ compact }: { compact: boolean }) {
     });
   };
 
+  const isAppDrawerVisible = appDrawerPlacement !== 'hidden';
+  const toggleAppDrawer = () => {
+    const nextPlacement = isAppDrawerVisible ? 'hidden' : 'left';
+    setAppDrawerPlacementState(nextPlacement);
+    setManageAppDrawerPlacement(nextPlacement);
+  };
+
   const triggerLabel = currentApp?.name ?? '选择应用';
   const content = (
     <AppSwitcherContent
       currentAppId={currentAppId}
       filteredApps={filteredApps}
+      isAppDrawerVisible={isAppDrawerVisible}
       isSheet={compact}
       onCreateApp={createApp}
       onNavigateToApp={navigateToApp}
+      onToggleAppDrawer={toggleAppDrawer}
       query={query}
       recentApps={recentApps}
       setQuery={setQuery}
+      totalAppCount={apps.length}
     />
   );
   const trigger = (
@@ -371,23 +409,29 @@ function AppSwitcher({ compact }: { compact: boolean }) {
 interface AppSwitcherContentProps {
   currentAppId: number | null;
   filteredApps: AppItem[];
+  isAppDrawerVisible: boolean;
   isSheet?: boolean;
   onCreateApp: () => void;
   onNavigateToApp: (appId: number) => void;
+  onToggleAppDrawer: () => void;
   query: string;
   recentApps: AppItem[];
   setQuery: (query: string) => void;
+  totalAppCount: number;
 }
 
 function AppSwitcherContent({
   currentAppId,
   filteredApps,
+  isAppDrawerVisible,
   isSheet = false,
   onCreateApp,
   onNavigateToApp,
+  onToggleAppDrawer,
   query,
   recentApps,
   setQuery,
+  totalAppCount,
 }: AppSwitcherContentProps) {
   const hasSearch = query.trim().length > 0;
 
@@ -431,7 +475,9 @@ function AppSwitcherContent({
       </div>
       <div className="px-2 py-2">
         <div className="px-2 pb-1 font-medium text-gray-500 text-xs">
-          {hasSearch ? '搜索结果' : '全部应用'}
+          {hasSearch
+            ? `搜索结果（${filteredApps.length}/${totalAppCount}）`
+            : `全部应用（${totalAppCount}）`}
         </div>
         <div
           className={cn(
@@ -457,7 +503,19 @@ function AppSwitcherContent({
           )}
         </div>
       </div>
-      <div className="flex items-center justify-end border-gray-100 border-t p-2">
+      <div className="flex items-center justify-between gap-2 border-gray-100 border-t p-2">
+        {isSheet ? (
+          <span />
+        ) : (
+          <Button
+            icon={
+              isAppDrawerVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />
+            }
+            onClick={onToggleAppDrawer}
+          >
+            {isAppDrawerVisible ? '隐藏侧边栏' : '显示侧边栏'}
+          </Button>
+        )}
         <Button type="primary" icon={<PlusOutlined />} onClick={onCreateApp}>
           添加应用
         </Button>
@@ -489,28 +547,35 @@ function AppRow({
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-100">
         <PlatformIcon platform={app.platform} className="text-lg!" />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-medium">{app.name}</span>
-          {app.status === 'paused' && <Tag className="m-0">暂停</Tag>}
+      <span className="flex min-w-0 flex-1 items-center gap-3">
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="truncate font-medium">{app.name}</span>
+            {app.status === 'paused' && <Tag className="m-0">暂停</Tag>}
+          </span>
+          <span className="mt-0.5 flex min-w-0 items-center gap-2 text-gray-500 text-xs">
+            <span>{platformLabels[app.platform]}</span>
+            {appKeyLabel && (
+              <span className="truncate font-mono" title={app.appKey}>
+                AppKey: {appKeyLabel}
+              </span>
+            )}
+          </span>
         </span>
-        <span className="mt-0.5 flex min-w-0 items-center gap-2 text-gray-500 text-xs">
-          <span>{platformLabels[app.platform]}</span>
-          {appKeyLabel && (
-            <span className="truncate font-mono" title={app.appKey}>
-              AppKey: {appKeyLabel}
-            </span>
-          )}
-          {app.checkCount !== undefined && (
-            <span>{app.checkCount.toLocaleString()} 次</span>
-          )}
+        <span className="w-20 shrink-0 text-right">
+          <span className="block font-semibold text-slate-800 text-sm tabular-nums">
+            {(app.checkCount ?? 0).toLocaleString()}
+          </span>
+          <span className="block text-[10px] text-gray-500">检查次数</span>
         </span>
       </span>
-      {isActive && (
-        <Tag color="blue" className="m-0 shrink-0">
-          当前
-        </Tag>
-      )}
+      <span className="flex w-12 shrink-0 justify-end">
+        {isActive && (
+          <Tag color="blue" className="m-0 shrink-0">
+            当前
+          </Tag>
+        )}
+      </span>
     </button>
   );
 }

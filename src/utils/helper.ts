@@ -92,6 +92,75 @@ export const patchSearchParams = (
 
 const RECENT_APP_STORAGE_KEY = 'pushy_recent_app_ids';
 const MAX_RECENT_APP_COUNT = 6;
+const MANAGE_APP_DRAWER_PLACEMENT_STORAGE_KEY =
+  'pushy_manage_app_drawer_placement';
+const MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY =
+  'pushy_manage_app_drawer_collapsed';
+
+export type ManageAppDrawerPlacement = 'left' | 'right' | 'hidden';
+
+export const manageAppDrawerPlacementChangeEvent =
+  'manage-app-drawer-placement-change';
+export const manageAppDrawerCollapsedChangeEvent =
+  'manage-app-drawer-collapsed-change';
+
+export const getManageAppDrawerPlacement = (): ManageAppDrawerPlacement => {
+  if (typeof window === 'undefined') {
+    return 'left';
+  }
+
+  const stored = window.localStorage.getItem(
+    MANAGE_APP_DRAWER_PLACEMENT_STORAGE_KEY,
+  );
+  if (stored === 'right' || stored === 'hidden') {
+    return stored;
+  }
+  return 'left';
+};
+
+export const setManageAppDrawerPlacement = (
+  placement: ManageAppDrawerPlacement,
+) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(
+    MANAGE_APP_DRAWER_PLACEMENT_STORAGE_KEY,
+    placement,
+  );
+  window.dispatchEvent(
+    new CustomEvent(manageAppDrawerPlacementChangeEvent, {
+      detail: placement,
+    }),
+  );
+};
+
+export const getManageAppDrawerCollapsed = () => {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  return (
+    window.localStorage.getItem(MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY) !== '0'
+  );
+};
+
+export const setManageAppDrawerCollapsed = (collapsed: boolean) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(
+    MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY,
+    collapsed ? '1' : '0',
+  );
+  window.dispatchEvent(
+    new CustomEvent(manageAppDrawerCollapsedChangeEvent, {
+      detail: collapsed,
+    }),
+  );
+};
 
 export const getRecentAppIds = () => {
   if (typeof window === 'undefined') {

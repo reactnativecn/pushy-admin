@@ -75,11 +75,16 @@ export const Component = () => {
   }, [searchKeyword, searchQuery, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminApps', searchQuery],
-    queryFn: () => adminApi.searchApps(searchQuery || undefined),
+    queryKey: ['adminApps', searchQuery, currentPage, pageSize],
+    queryFn: () =>
+      adminApi.searchApps({
+        search: searchQuery || undefined,
+        limit: pageSize,
+        offset: (currentPage - 1) * pageSize,
+      }),
   });
 
-  const total = data?.data.length ?? 0;
+  const total = data?.count ?? data?.data.length ?? 0;
   const maxPage = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
@@ -188,6 +193,14 @@ export const Component = () => {
           {platform}
         </span>
       ),
+    },
+    {
+      title: '检查次数',
+      dataIndex: 'checkCount',
+      key: 'checkCount',
+      responsive: ['md'],
+      width: 100,
+      render: (value: number | undefined) => (value ?? 0).toLocaleString(),
     },
     {
       title: '用户ID',
@@ -300,7 +313,7 @@ export const Component = () => {
                 });
               },
             }}
-            scroll={{ x: 900 }}
+            scroll={{ x: 1000 }}
           />
         </Spin>
       </Card>
