@@ -85,9 +85,16 @@ const parseKeyPrefix = (value: string | null): MetricKeyPrefix =>
     ? (value as MetricKeyPrefix)
     : 'rn';
 
-const parseDateRange = (searchParams: URLSearchParams): [Dayjs, Dayjs] => {
-  const fallbackEnd = dayjs();
-  const fallbackStart = fallbackEnd.subtract(DEFAULT_RANGE_HOURS, 'hour');
+const createDefaultDateRange = (): [Dayjs, Dayjs] => {
+  const end = dayjs();
+  return [end.subtract(DEFAULT_RANGE_HOURS, 'hour'), end];
+};
+
+const parseDateRange = (
+  searchParams: URLSearchParams,
+  fallbackRange: [Dayjs, Dayjs],
+): [Dayjs, Dayjs] => {
+  const [fallbackStart, fallbackEnd] = fallbackRange;
   const parsedStart = searchParams.get('start')
     ? dayjs(searchParams.get('start'))
     : fallbackStart;
@@ -106,9 +113,15 @@ const parseDateRange = (searchParams: URLSearchParams): [Dayjs, Dayjs] => {
 export const Component = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const legendValuesRef = useRef<string[]>([]);
+  const defaultRangeRef = useRef<[Dayjs, Dayjs] | null>(null);
+  defaultRangeRef.current ??= createDefaultDateRange();
+
   const mode = parseMode(searchParams.get('mode'));
   const selectedKeyPrefix = parseKeyPrefix(searchParams.get('prefix'));
-  const [rangeStart, rangeEnd] = parseDateRange(searchParams);
+  const [rangeStart, rangeEnd] = parseDateRange(
+    searchParams,
+    defaultRangeRef.current,
+  );
   const startDate = rangeStart.toISOString();
   const endDate = rangeEnd.toISOString();
 
