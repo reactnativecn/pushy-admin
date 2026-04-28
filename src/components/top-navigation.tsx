@@ -314,6 +314,7 @@ function AppSwitcher({ compact }: { compact: boolean }) {
         compact ? 'max-w-[150px] flex-1 px-2' : 'w-72 lg:w-80',
       )}
       onClick={compact ? () => setOpen(true) : undefined}
+      aria-expanded={open}
       type="button"
     >
       <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -355,10 +356,12 @@ function AppSwitcher({ compact }: { compact: boolean }) {
     <Popover
       arrow={false}
       content={content}
+      mouseEnterDelay={0.08}
+      mouseLeaveDelay={0.18}
       open={open}
       onOpenChange={setOpen}
       placement="bottomLeft"
-      trigger="click"
+      trigger={['hover', 'click']}
     >
       {trigger}
     </Popover>
