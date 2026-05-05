@@ -29,7 +29,6 @@ export default function SetPassword() {
       <Form.Item
         hasFeedback
         name="newPwd"
-        // validateTrigger='onBlur'
         rules={[
           () => ({
             validator(_, value: string) {
@@ -50,7 +49,6 @@ export default function SetPassword() {
       <Form.Item
         hasFeedback
         name="pwd2"
-        // validateTrigger='onBlur'
         rules={[
           ({ getFieldValue }) => ({
             validator(_, value: string) {
