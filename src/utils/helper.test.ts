@@ -65,3 +65,38 @@ describe('isExpVersion', () => {
     expect(isExpVersion({ rollout: { '1.0.0': 110 } }, '1.0.0')).toBe(false);
   });
 });
+
+describe('isValidExternalUrl', () => {
+  const { isValidExternalUrl } = require('./helper');
+
+  test('should return true for valid https URLs with trusted domains', () => {
+    expect(isValidExternalUrl('https://react-native.cn/path')).toBe(true);
+    expect(isValidExternalUrl('https://sub.react-native.cn/path')).toBe(true);
+    expect(isValidExternalUrl('https://reactnative.cn/')).toBe(true);
+    expect(isValidExternalUrl('https://rnupdate.online/foo')).toBe(true);
+    expect(isValidExternalUrl('https://alipay.com/pay')).toBe(true);
+    expect(isValidExternalUrl('https://openapi.alipay.com/gateway.do')).toBe(
+      true,
+    );
+  });
+
+  test('should return false for http protocol', () => {
+    expect(isValidExternalUrl('http://react-native.cn/path')).toBe(false);
+    expect(isValidExternalUrl('http://alipay.com')).toBe(false);
+  });
+
+  test('should return false for untrusted domains', () => {
+    expect(isValidExternalUrl('https://evil.com/path')).toBe(false);
+    expect(isValidExternalUrl('https://google.com')).toBe(false);
+    expect(isValidExternalUrl('https://react-native.cnevil.com')).toBe(false);
+  });
+
+  test('should return false for malformed URLs', () => {
+    expect(isValidExternalUrl('not a url')).toBe(false);
+    expect(isValidExternalUrl('://bad-url')).toBe(false);
+  });
+
+  test('should return false for javascript uris', () => {
+    expect(isValidExternalUrl('javascript:alert(1)')).toBe(false);
+  });
+});
