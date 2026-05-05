@@ -8,6 +8,15 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { router } from './router';
 import { queryClient } from './utils/queryClient';
 
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // SW registration failed, app continues normally
+    });
+  });
+}
+
 const root = document.getElementById('main');
 if (root) {
   createRoot(root).render(
