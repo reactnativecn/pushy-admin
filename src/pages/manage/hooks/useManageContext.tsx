@@ -12,7 +12,6 @@ import {
 } from '@/utils/hooks';
 
 const noop = () => {};
-// const asyncNoop = () => Promise.resolve();
 
 export const defaultManageContext = {
   appId: 0,
