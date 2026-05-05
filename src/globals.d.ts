@@ -29,12 +29,19 @@ declare module 'bun:test' {
   export function expect<T>(actual: T): {
     toBe(expected: unknown): void;
     toBeNull(): void;
+    toBeInstanceOf(expected: unknown): void;
+    toEqual(expected: unknown): void;
+    toHaveBeenCalled(): void;
+    toHaveBeenCalledWith(...args: unknown[]): void;
+    rejects: any;
+    resolves: any;
   };
   export function beforeEach(fn: () => void | Promise<void>): void;
   export function afterEach(fn: () => void | Promise<void>): void;
   export function setSystemTime(time: Date | number | null): void;
   export const mock: {
     module(path: string, factory: () => any): void;
+    <T extends (...args: any[]) => any>(impl?: T): T & { mock: any };
   };
 }
 
