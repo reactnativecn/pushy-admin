@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { isExpVersion, isPasswordValid } from './helper';
+import { cn, isExpVersion, isPasswordValid } from './helper';
 
 describe('isPasswordValid', () => {
   test('should return true for valid passwords', () => {
@@ -63,5 +63,27 @@ describe('isExpVersion', () => {
 
   test('should return false when rollout is greater than 100', () => {
     expect(isExpVersion({ rollout: { '1.0.0': 110 } }, '1.0.0')).toBe(false);
+  });
+});
+
+describe('cn', () => {
+  test('should combine multiple valid strings', () => {
+    expect(cn('class1', 'class2', 'class3')).toBe('class1 class2 class3');
+  });
+
+  test('should ignore undefined values', () => {
+    expect(cn('class1', undefined, 'class2')).toBe('class1 class2');
+  });
+
+  test('should ignore empty strings', () => {
+    expect(cn('class1', '', 'class2')).toBe('class1 class2');
+  });
+
+  test('should return empty string when handling an empty input list', () => {
+    expect(cn()).toBe('');
+  });
+
+  test('should return empty string when all inputs are falsy', () => {
+    expect(cn('', undefined)).toBe('');
   });
 });
