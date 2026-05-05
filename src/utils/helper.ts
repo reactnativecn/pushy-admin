@@ -90,7 +90,7 @@ export const patchSearchParams = (
   }, navigateOptions);
 };
 
-const RECENT_APP_STORAGE_KEY = 'pushy_recent_app_ids';
+export const RECENT_APP_STORAGE_KEY = 'pushy_recent_app_ids';
 const MAX_RECENT_APP_COUNT = 6;
 const MANAGE_APP_DRAWER_PLACEMENT_STORAGE_KEY =
   'pushy_manage_app_drawer_placement';
