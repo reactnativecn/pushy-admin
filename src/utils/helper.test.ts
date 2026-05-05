@@ -65,3 +65,35 @@ describe('isExpVersion', () => {
     expect(isExpVersion({ rollout: { '1.0.0': 110 } }, '1.0.0')).toBe(false);
   });
 });
+
+import { afterEach } from 'bun:test';
+import { getRecentAppIds, RECENT_APP_STORAGE_KEY } from './helper';
+
+describe('getRecentAppIds', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  test('should return empty array when localStorage contains invalid JSON', () => {
+    window.localStorage.setItem(RECENT_APP_STORAGE_KEY, 'invalid json');
+    expect(getRecentAppIds()).toEqual([]);
+  });
+
+  test('should return empty array when localStorage contains non-array JSON', () => {
+    window.localStorage.setItem(RECENT_APP_STORAGE_KEY, '{"a": 1}');
+    expect(getRecentAppIds()).toEqual([]);
+  });
+
+  test('should return filtered array of integers when localStorage contains valid array', () => {
+    window.localStorage.setItem(RECENT_APP_STORAGE_KEY, '[1, "2", 3.5, 4]');
+    expect(getRecentAppIds()).toEqual([1, 4]);
+  });
+
+  test('should return empty array when window is undefined', () => {
+    const originalWindow = global.window;
+    // @ts-expect-error
+    delete global.window;
+    expect(getRecentAppIds()).toEqual([]);
+    global.window = originalWindow;
+  });
+});

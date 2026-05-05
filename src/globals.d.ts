@@ -29,6 +29,7 @@ declare module 'bun:test' {
   export function expect<T>(actual: T): {
     toBe(expected: unknown): void;
     toBeNull(): void;
+    toEqual(expected: unknown): void;
   };
   export function beforeEach(fn: () => void | Promise<void>): void;
   export function afterEach(fn: () => void | Promise<void>): void;
