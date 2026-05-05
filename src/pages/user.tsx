@@ -16,6 +16,7 @@ import {
 import { type ReactNode, useState } from 'react';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
+import { isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
@@ -559,8 +560,11 @@ function formatShortQuotaDate(date: Date) {
 
 async function purchase(tier?: string) {
   const orderResponse = await api.createOrder({ tier });
-  if (orderResponse?.payUrl) {
+  if (orderResponse?.payUrl && isValidExternalUrl(orderResponse.payUrl)) {
     window.location.href = orderResponse.payUrl;
+  } else if (orderResponse?.payUrl) {
+    console.error('Invalid payment URL:', orderResponse.payUrl);
+    message.error('支付链接无效');
   }
 }
 
