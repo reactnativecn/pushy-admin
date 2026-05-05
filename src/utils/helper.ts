@@ -192,3 +192,25 @@ export const rememberRecentApp = (appId: number) => {
   window.localStorage.setItem(RECENT_APP_STORAGE_KEY, JSON.stringify(next));
   return next;
 };
+
+export const isValidExternalUrl = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol !== 'https:') {
+      return false;
+    }
+    const trustedDomains = [
+      'react-native.cn',
+      'reactnative.cn',
+      'rnupdate.online',
+      'alipay.com',
+    ];
+    return trustedDomains.some(
+      (domain) =>
+        parsedUrl.hostname === domain ||
+        parsedUrl.hostname.endsWith(`.${domain}`),
+    );
+  } catch {
+    return false;
+  }
+};

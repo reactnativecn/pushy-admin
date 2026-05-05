@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > src/globals.d.ts
 declare module '*.svg' {
   import type { FunctionComponent, SVGProps } from 'react';
 
@@ -69,3 +70,4 @@ type BindingType = import('./types').BindingType;
 type Binding = import('./types').Binding;
 type AuditLog = import('./types').AuditLog;
 type ApiToken = import('./types').ApiToken;
+INNER_EOF

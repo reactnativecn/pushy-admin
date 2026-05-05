@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > src/utils/helper.test.ts
 import { afterEach, describe, expect, test } from 'bun:test';
 import {
   getRecentAppIds,
@@ -133,3 +134,4 @@ describe('isValidExternalUrl', () => {
     expect(isValidExternalUrl('javascript:alert(1)')).toBe(false);
   });
 });
+INNER_EOF
