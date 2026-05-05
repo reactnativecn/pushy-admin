@@ -17,5 +17,37 @@ mock.module('@/services/api', () => ({
 }));
 mock.module('@/services/request', () => ({
   getToken: () => '',
+  setToken: () => {},
+  RequestError: class extends Error {},
   default: {},
+}));
+mock.module('@/assets/logo-h.svg', () => ({
+  default: 'logo',
+  ReactComponent: () => null,
+}));
+mock.module('@/assets/logo.png', () => ({
+  default: 'logo.png',
+}));
+mock.module('react-router-dom', () => ({
+  createHashRouter: () => ({
+    state: { location: { search: '', pathname: '' } },
+    navigate: () => {},
+  }),
+  redirect: () => {},
+  useNavigate: () => {},
+  useRouteError: () => {},
+  isRouteErrorResponse: () => false,
+  Link: () => null,
+  NavLink: () => null,
+  Outlet: () => null,
+  useLocation: () => ({
+    pathname: '',
+    search: '',
+    hash: '',
+    state: null,
+    key: 'default',
+  }),
+  useSearchParams: () => [new URLSearchParams(), () => {}],
+  useLoaderData: () => null,
+  useActionData: () => null,
 }));

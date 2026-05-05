@@ -25,16 +25,27 @@ declare module 'bun:test' {
   type TestHandler = () => void | Promise<void>;
 
   export function describe(name: string, fn: TestHandler): void;
+  export function it(name: string, fn: TestHandler): void;
   export function test(name: string, fn: TestHandler): void;
   export function expect<T>(actual: T): {
     toBe(expected: unknown): void;
     toBeNull(): void;
+    toContain(expected: unknown): void;
+    toHaveBeenCalledWith(...args: unknown[]): void;
+    toHaveBeenCalled(): void;
+    not: {
+      toHaveBeenCalledWith(...args: unknown[]): void;
+      toHaveBeenCalled(): void;
+    };
   };
   export function beforeEach(fn: () => void | Promise<void>): void;
   export function afterEach(fn: () => void | Promise<void>): void;
   export function setSystemTime(time: Date | number | null): void;
   export const mock: {
     module(path: string, factory: () => any): void;
+    <T extends (...args: any[]) => any>(
+      fn?: T,
+    ): T & { mockClear(): void; mockImplementationOnce(fn: T): void };
   };
 }
 
