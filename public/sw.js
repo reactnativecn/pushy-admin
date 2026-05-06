@@ -1,14 +1,7 @@
-const CACHE_NAME = 'pushy-admin-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-];
+const CACHE_NAME = 'pushy-admin-v2';
 
-// Install: precache app shell
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+// Install: activate this worker immediately without precaching the app shell.
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -24,7 +17,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API, cache-first for static assets
+const isNavigationRequest = (request) =>
+  request.mode === 'navigate' ||
+  (request.headers.get('accept') || '').includes('text/html');
+
+// Fetch: keep HTML/API fresh; cache only fingerprinted static assets.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -32,23 +29,22 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Network-first for API calls
-  if (url.pathname.startsWith('/api')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  if (
+    url.origin !== self.location.origin ||
+    isNavigationRequest(request) ||
+    url.pathname === '/index.html' ||
+    url.pathname === '/sw.js' ||
+    url.pathname === '/manifest.json' ||
+    url.pathname.startsWith('/api')
+  ) {
+    event.respondWith(fetch(request));
     return;
   }
 
-  // Cache-first for static assets
+  if (!url.pathname.startsWith('/static/')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
