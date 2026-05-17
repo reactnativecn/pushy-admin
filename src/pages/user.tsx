@@ -1,4 +1,8 @@
-import { AlipayCircleOutlined, LogoutOutlined } from '@ant-design/icons';
+import {
+  AlipayCircleOutlined,
+  LogoutOutlined,
+  WechatOutlined,
+} from '@ant-design/icons';
 import { useQueries } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
 import {
@@ -6,9 +10,11 @@ import {
   Descriptions,
   Dropdown,
   Grid,
+  Modal,
   message,
   Popover,
   Progress,
+  QRCode,
   Spin,
   Tag,
   Tooltip,
@@ -18,6 +24,7 @@ import { api } from '@/services/api';
 import { logout } from '@/services/auth';
 import { isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
+import { queryClient } from '@/utils/queryClient';
 import { PRICING_LINK } from '../constants/links';
 import { quotas } from '../constants/quotas';
 
@@ -40,34 +47,48 @@ const InvoiceHint = (
 
 const PurchaseButton = ({
   tier,
+  channel,
   children,
 }: {
   tier: string;
+  channel: PaymentChannel;
   children: ReactNode;
 }) => {
   const [loading, setLoading] = useState(false);
   return (
     <Button
       // type='link'
-      className="mt-2 w-full justify-center sm:w-auto md:mt-0 md:ml-6"
-      icon={<AlipayCircleOutlined />}
+      className="w-full justify-center sm:w-auto"
+      icon={
+        channel === 'wechat' ? <WechatOutlined /> : <AlipayCircleOutlined />
+      }
       onClick={async () => {
         if (tier === 'custom') {
           return message.error('定制版用户付费请联系客服');
         }
         setLoading(true);
-        await purchase(tier);
+        try {
+          await purchase(tier, channel);
+        } finally {
+          setLoading(false);
+        }
       }}
       loading={loading}
     >
-      {loading ? '跳转至支付页面' : children}
+      {loading
+        ? channel === 'wechat'
+          ? '生成微信支付码'
+          : '跳转至支付页面'
+        : children}
     </Button>
   );
 };
 
 const UpgradeDropdown = ({
+  channel,
   currentQuota,
 }: {
+  channel: PaymentChannel;
   currentQuota: (typeof quotas)[keyof typeof quotas];
 }) => {
   const [loading, setLoading] = useState(false);
@@ -97,27 +118,37 @@ const UpgradeDropdown = ({
 
   const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
     setLoading(true);
-    await purchase(key);
+    try {
+      await purchase(key, channel);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const menuItems: MenuProps['items'] = upgradeOptions.map((option) => ({
     key: option.tier,
     label: option.title,
-    icon: <AlipayCircleOutlined />,
+    icon: channel === 'wechat' ? <WechatOutlined /> : <AlipayCircleOutlined />,
   }));
 
   const handleMainButtonClick = async () => {
     // 点击主按钮时，选择第一个可升级的版本
     if (upgradeOptions.length > 0) {
       setLoading(true);
-      await purchase(upgradeOptions[0].tier);
+      try {
+        await purchase(upgradeOptions[0].tier, channel);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   return (
     <Dropdown.Button
       className="shrink-0"
-      icon={<AlipayCircleOutlined />}
+      icon={
+        channel === 'wechat' ? <WechatOutlined /> : <AlipayCircleOutlined />
+      }
       loading={loading}
       menu={{
         items: menuItems,
@@ -125,7 +156,13 @@ const UpgradeDropdown = ({
       }}
       onClick={handleMainButtonClick}
     >
-      {loading ? '跳转至支付页面' : upgradeOptions[0]?.title || '升级服务'}
+      {loading
+        ? channel === 'wechat'
+          ? '生成微信支付码'
+          : '跳转至支付页面'
+        : `${channel === 'wechat' ? '微信' : '支付宝'}${
+            upgradeOptions[0]?.title || '升级服务'
+          }`}
     </Dropdown.Button>
   );
 };
@@ -266,7 +303,10 @@ function UserPanel() {
           <div className="flex items-center gap-4">
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
-              <UpgradeDropdown currentQuota={defaultQuota} />
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <UpgradeDropdown channel="alipay" currentQuota={defaultQuota} />
+                <UpgradeDropdown channel="wechat" currentQuota={defaultQuota} />
+              </div>
             )}
           </div>
         </Descriptions.Item>
@@ -287,7 +327,12 @@ function UserPanel() {
             )}
             {tier !== 'free' && (
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <PurchaseButton tier={tier}>续费</PurchaseButton>
+                <PurchaseButton channel="alipay" tier={tier}>
+                  支付宝续费
+                </PurchaseButton>
+                <PurchaseButton channel="wechat" tier={tier}>
+                  微信续费
+                </PurchaseButton>
               </div>
             )}
           </div>
@@ -558,14 +603,96 @@ function formatShortQuotaDate(date: Date) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
-async function purchase(tier?: string) {
-  const orderResponse = await api.createOrder({ tier });
-  if (orderResponse?.payUrl && isValidExternalUrl(orderResponse.payUrl)) {
-    window.location.href = orderResponse.payUrl;
-  } else if (orderResponse?.payUrl) {
-    console.error('Invalid payment URL:', orderResponse.payUrl);
+type PaymentChannel = 'alipay' | 'wechat';
+
+async function purchase(tier?: string, channel: PaymentChannel = 'alipay') {
+  const orderResponse = await api.createOrder({ tier, channel });
+  const payUrl = orderResponse?.payment?.payUrl || orderResponse?.payUrl;
+  const codeUrl = orderResponse?.payment?.codeUrl || orderResponse?.codeUrl;
+
+  if (orderResponse?.payment?.type === 'qrcode' && codeUrl) {
+    showWechatPaymentModal({
+      codeUrl,
+      orderNo: orderResponse.orderNo,
+    });
+    return;
+  }
+
+  if (orderResponse?.payment?.type === 'qrcode') {
+    message.error('微信支付码生成失败');
+    return;
+  }
+
+  if (payUrl && isValidExternalUrl(payUrl)) {
+    window.location.href = payUrl;
+  } else if (payUrl) {
+    console.error('Invalid payment URL:', payUrl);
     message.error('支付链接无效');
   }
+}
+
+function showWechatPaymentModal({
+  codeUrl,
+  orderNo,
+}: {
+  codeUrl: string;
+  orderNo?: string;
+}) {
+  let active = true;
+  let timer: number | undefined;
+
+  const modal = Modal.info({
+    title: '微信支付',
+    content: (
+      <div className="flex flex-col items-center gap-3 py-2">
+        <QRCode value={codeUrl} size={220} bordered={false} />
+        <div className="text-gray-500 text-sm">请使用微信扫码支付</div>
+      </div>
+    ),
+    okText: '关闭',
+    onOk: () => {
+      active = false;
+      if (timer) {
+        window.clearInterval(timer);
+      }
+    },
+  });
+
+  if (!orderNo) {
+    return;
+  }
+
+  const pollOrder = async () => {
+    if (!active) {
+      return;
+    }
+
+    const order = await api.getOrder(orderNo, { sync: true });
+    if (order?.status === 'done') {
+      active = false;
+      if (timer) {
+        window.clearInterval(timer);
+      }
+      modal.destroy();
+      message.success('支付成功，服务已生效');
+      queryClient.invalidateQueries({ queryKey: ['userInfo'] });
+    }
+  };
+
+  timer = window.setInterval(() => {
+    pollOrder().catch((error) => {
+      console.error('Failed to poll WeChat payment status:', error);
+    });
+  }, 3000);
+  window.setTimeout(
+    () => {
+      active = false;
+      if (timer) {
+        window.clearInterval(timer);
+      }
+    },
+    5 * 60 * 1000,
+  );
 }
 
 export const Component = UserPanel;

@@ -162,8 +162,30 @@ export const api = {
       );
     }),
   // order
-  createOrder: (params: { tier?: string }) =>
-    request<{ payUrl: string }>('post', '/orders', params),
+  createOrder: (params: { tier?: string; channel?: 'alipay' | 'wechat' }) =>
+    request<{
+      channel?: 'alipay' | 'wechat';
+      codeUrl?: string;
+      orderNo?: string;
+      payUrl?: string;
+      payment?: {
+        type: 'redirect' | 'qrcode';
+        payUrl?: string;
+        codeUrl?: string;
+      };
+    }>('post', '/orders', params),
+  getOrder: (orderNo: string, params?: { sync?: boolean }) =>
+    request<{
+      channel?: string | null;
+      orderNo: string;
+      payTime?: string | null;
+      status: 'pending' | 'done' | 'aborted';
+      tier: string;
+      type: string;
+    }>(
+      'get',
+      `/orders/${encodeURIComponent(orderNo)}${params?.sync ? '?sync=1' : ''}`,
+    ),
   // binding
   getBinding: (appId: number) =>
     request<{ data: Binding[] }>('get', `/app/${appId}/binding`),
