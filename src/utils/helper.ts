@@ -138,12 +138,19 @@ export const setManageAppDrawerPlacement = (
 
 export const getManageAppDrawerCollapsed = () => {
   if (typeof window === 'undefined') {
-    return true;
+    return false;
   }
 
-  return (
-    window.localStorage.getItem(MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY) !== '0'
+  const stored = window.localStorage.getItem(
+    MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY,
   );
+  if (stored === '1') {
+    return true;
+  }
+  if (stored === '0') {
+    return false;
+  }
+  return false;
 };
 
 export const setManageAppDrawerCollapsed = (collapsed: boolean) => {

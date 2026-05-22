@@ -6,15 +6,20 @@ import {
 import { Button, Card, Empty, Input, Spin, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  type AppDrawerItem,
+  AppDrawerLayout,
+  useAppWorkspaceList,
+} from '@/components/app-drawer';
+import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { showCreateAppModal } from '@/components/create-app-modal';
 import PlatformIcon from '@/components/platform-icon';
 import { rootRouterPath, router } from '@/router';
 import { cn, rememberRecentApp } from '@/utils/helper';
-import { useAppList } from '@/utils/hooks';
 
 const { Title } = Typography;
 
-type AppItem = NonNullable<ReturnType<typeof useAppList>['apps']>[number];
+type AppItem = AppDrawerItem;
 
 const platformLabels: Record<AppItem['platform'], string> = {
   android: 'Android',
@@ -22,7 +27,7 @@ const platformLabels: Record<AppItem['platform'], string> = {
   harmony: 'HarmonyOS',
 };
 
-const formatAppKey = (appKey?: string) => {
+const formatAppKey = (appKey?: string | null) => {
   if (!appKey) {
     return '尚未生成 App Key';
   }
@@ -33,9 +38,9 @@ const formatAppKey = (appKey?: string) => {
 };
 
 export const Component = () => {
-  const { apps: appList, isLoading } = useAppList();
+  const { apps, isLoading } = useAppWorkspaceList();
+  const { contextHolder, openAppSettings } = useAppSettingsModal();
   const [query, setQuery] = useState('');
-  const apps = appList ?? [];
   const normalizedQuery = query.trim().toLowerCase();
 
   const filteredApps = useMemo(() => {
@@ -70,8 +75,8 @@ export const Component = () => {
     });
   };
 
-  return (
-    <div className="page-section">
+  const content = (
+    <div className="min-w-0">
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-blue-700 text-xs">
@@ -134,6 +139,21 @@ export const Component = () => {
       </Card>
     </div>
   );
+
+  return (
+    <AppDrawerLayout
+      apps={apps}
+      isLoading={isLoading}
+      onSelect={(app) => {
+        rememberRecentApp(app.id);
+        router.navigate(rootRouterPath.versions(String(app.id)));
+      }}
+      onSettings={openAppSettings}
+    >
+      {contextHolder}
+      {content}
+    </AppDrawerLayout>
+  );
 };
 
 function MetricCard({ label, value }: { label: string; value: string }) {
@@ -187,7 +207,7 @@ function AppCard({ app }: { app: AppItem }) {
                 'mt-1 truncate font-mono text-xs',
                 app.appKey ? 'text-slate-700' : 'text-gray-400',
               )}
-              title={app.appKey}
+              title={app.appKey || undefined}
             >
               {appKeyLabel}
             </div>

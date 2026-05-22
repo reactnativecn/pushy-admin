@@ -1,18 +1,17 @@
 import { Line } from '@ant-design/charts';
 import { useQuery } from '@tanstack/react-query';
-import { Card, DatePicker, Input, Radio, Select, Spin, Typography } from 'antd';
+import { Card, DatePicker, Input, Radio, Spin } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { adminApi } from '@/services/admin-api';
+import { AppDetailHeader } from '@/components/app-detail-header';
+import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
+import { useAppSettingsModal } from '@/components/app-settings-modal';
+import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
-import type { App } from '@/types';
-import { patchSearchParams } from '@/utils/helper';
-import { useAppList, useUserInfo } from '@/utils/hooks';
+import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
 
-const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 interface ChartDataPoint {
@@ -89,26 +88,6 @@ const attributeOptions = [
   { label: '原生包', value: 'packageVersion_buildTime' },
 ];
 
-type MetricsAppOptionSource = {
-  id: number;
-  name: string;
-  platform: App['platform'];
-  appKey?: string | null;
-  checkCount?: number;
-};
-
-const formatCheckCount = (checkCount?: number) =>
-  `${(checkCount ?? 0).toLocaleString()} 次检查`;
-
-const formatAppOptionLabel = (app: MetricsAppOptionSource) => (
-  <span className="flex min-w-0 items-center justify-between gap-3">
-    <span className="truncate">{app.name}</span>
-    <span className="shrink-0 text-gray-500 text-xs tabular-nums">
-      {formatCheckCount(app.checkCount)}
-    </span>
-  </span>
-);
-
 const formatTooltipItem = (point: ChartDataPoint) => {
   const countLabel = `${point.value.toLocaleString()} 次`;
   if (point.isTotal || point.sharePercent === undefined) {
@@ -127,65 +106,50 @@ export const Component = () => {
   ]);
   const [manualAppKey, setManualAppKey] = useState('');
   const legendValuesRef = useRef<string[]>([]);
+  const { contextHolder, openAppSettings } = useAppSettingsModal();
 
-  const { apps } = useAppList();
-  const { user } = useUserInfo();
-  const isAdmin = user?.admin === true;
-  const { data: adminAppsData, isLoading: isLoadingAdminApps } = useQuery({
-    queryKey: ['adminApps', 'realtimeMetricsDropdown'],
-    queryFn: () => adminApi.searchApps({ limit: 1000 }),
-    enabled: isAdmin,
-  });
+  const {
+    apps: selectableApps,
+    isAdmin,
+    isLoading: isLoadingApps,
+  } = useAppWorkspaceList();
   const urlAppKey = searchParams.get('appKey') || undefined;
   const selectedAttribute: MetricAttribute =
     searchParams.get('attribute') === 'packageVersion_buildTime'
       ? 'packageVersion_buildTime'
       : 'hash';
 
-  const selectableApps = useMemo<MetricsAppOptionSource[]>(() => {
-    return isAdmin ? (adminAppsData?.data ?? []) : (apps ?? []);
-  }, [adminAppsData?.data, apps, isAdmin]);
-  const totalAppCount = isAdmin
-    ? (adminAppsData?.count ?? selectableApps.length)
-    : selectableApps.length;
-
-  const appOptions = useMemo(() => {
-    return selectableApps.reduce<
-      { label: ReactNode; value: string; searchText: string }[]
-    >((acc, app) => {
-      if (app.appKey) {
-        acc.push({
-          label: formatAppOptionLabel(app),
-          value: app.appKey as string,
-          searchText: `${app.name} ${app.appKey} ${app.platform} ${app.id}`,
-        });
-      }
-      return acc;
-    }, []);
-  }, [selectableApps]);
+  const selectableAppKeys = useMemo(
+    () =>
+      selectableApps
+        .map((app) => app.appKey)
+        .filter((appKey): appKey is string => Boolean(appKey)),
+    [selectableApps],
+  );
   const selectedAppKey = useMemo(() => {
     if (!urlAppKey) {
       return undefined;
     }
-    if (isAdmin || appOptions.some((opt) => opt.value === urlAppKey)) {
+    if (isAdmin || selectableAppKeys.includes(urlAppKey)) {
       return urlAppKey;
     }
     return undefined;
-  }, [appOptions, isAdmin, urlAppKey]);
+  }, [isAdmin, selectableAppKeys, urlAppKey]);
+  const selectedApp = useMemo(() => {
+    if (!selectedAppKey) {
+      return undefined;
+    }
+    return selectableApps.find((app) => app.appKey === selectedAppKey);
+  }, [selectableApps, selectedAppKey]);
 
   // Default to first app if no selection
   useEffect(() => {
-    if (!urlAppKey && appOptions.length > 0) {
+    if (!urlAppKey && selectableAppKeys.length > 0) {
       patchSearchParams(setSearchParams, {
-        appKey: appOptions[0].value,
+        appKey: selectableAppKeys[0],
       });
     }
-  }, [appOptions, setSearchParams, urlAppKey]);
-
-  // Update URL when selection changes
-  const handleAppChange = (appKey: string) => {
-    patchSearchParams(setSearchParams, { appKey });
-  };
+  }, [selectableAppKeys, setSearchParams, urlAppKey]);
 
   // Admin manual appKey input
   const handleManualAppKeySubmit = () => {
@@ -410,36 +374,40 @@ export const Component = () => {
   };
 
   return (
-    <div className="p-6">
+    <AppDrawerLayout
+      apps={selectableApps}
+      currentAppKey={selectedAppKey}
+      isLoading={isLoadingApps}
+      onSelect={(app) => {
+        if (!app.appKey) {
+          return;
+        }
+        rememberRecentApp(app.id);
+        patchSearchParams(setSearchParams, { appKey: app.appKey });
+      }}
+      onSettings={openAppSettings}
+    >
+      {contextHolder}
+      <AppDetailHeader
+        activeView="metrics"
+        app={selectedApp}
+        appNameFallback={selectedAppKey || '选择应用'}
+        managementDisabled={!selectedApp}
+        onManagementClick={() => {
+          if (!selectedApp) {
+            return;
+          }
+          rememberRecentApp(selectedApp.id);
+          router.navigate(rootRouterPath.versions(String(selectedApp.id)));
+        }}
+        onSettingsClick={
+          selectedApp ? () => openAppSettings(selectedApp) : undefined
+        }
+        sectionLabel="实时数据"
+      />
       <Card>
         <div className="mb-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <Title level={4} className="m-0!">
-              实时数据
-            </Title>
-            {selectedAppKey && (
-              <div className="max-w-[55%] truncate text-xs text-gray-500">
-                App Key: {selectedAppKey}
-              </div>
-            )}
-          </div>
-
           <div className="flex flex-wrap items-center gap-2">
-            <div className="w-full sm:w-56">
-              <Select
-                placeholder="选择应用"
-                showSearch
-                optionFilterProp="searchText"
-                value={selectedAppKey}
-                onChange={handleAppChange}
-                options={appOptions}
-                loading={isAdmin && isLoadingAdminApps}
-                style={{ width: '100%' }}
-              />
-            </div>
-            <div className="text-xs text-gray-500">
-              共 {totalAppCount.toLocaleString()} 个应用
-            </div>
             <Radio.Group
               value={selectedAttribute}
               onChange={(e) => {
@@ -607,6 +575,6 @@ export const Component = () => {
           </Card>
         </Spin>
       </Card>
-    </div>
+    </AppDrawerLayout>
   );
 };

@@ -6,6 +6,18 @@ interface ChunkError extends Error {
   __webpack_chunkName?: string;
 }
 
+const CHUNK_ERROR_RELOAD_KEY = 'pushy_chunk_error_reload_attempted';
+
+const isLocalHost = () => {
+  const { hostname } = window.location;
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname === '::1'
+  );
+};
+
 export function ErrorBoundary() {
   const error = useRouteError() as ChunkError;
   const navigate = useNavigate();
@@ -19,7 +31,17 @@ export function ErrorBoundary() {
       message.includes('ChunkLoadError'));
 
   useEffect(() => {
-    if (isChunkError) {
+    if (!isChunkError) {
+      window.sessionStorage.removeItem(CHUNK_ERROR_RELOAD_KEY);
+      return;
+    }
+
+    if (
+      process.env.NODE_ENV === 'production' &&
+      !isLocalHost() &&
+      !window.sessionStorage.getItem(CHUNK_ERROR_RELOAD_KEY)
+    ) {
+      window.sessionStorage.setItem(CHUNK_ERROR_RELOAD_KEY, '1');
       window.location.reload();
     }
   }, [isChunkError]);

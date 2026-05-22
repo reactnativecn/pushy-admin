@@ -17,10 +17,6 @@ a:hover {
   padding: 24px;
 }
 
-.page-section {
-  padding: 24px;
-}
-
 .reset-card {
   width: 100%;
   max-width: 640px;
@@ -59,10 +55,6 @@ a.ant-typography:hover .ant-typography {
 
 @media (max-width: 768px) {
   .ant-layout-content {
-    padding: 12px;
-  }
-
-  .page-section {
     padding: 12px;
   }
 

@@ -1,4 +1,6 @@
 const CACHE_NAME = 'pushy-admin-v2';
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1']);
+const IS_LOCAL_HOST = LOCAL_HOSTNAMES.has(self.location.hostname);
 
 // Install: activate this worker immediately without precaching the app shell.
 self.addEventListener('install', () => {
@@ -10,10 +12,15 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-      )
-    )
+        keys
+          .filter((k) => IS_LOCAL_HOST || k !== CACHE_NAME)
+          .map((k) => caches.delete(k)),
+      ),
+    ),
   );
+  if (IS_LOCAL_HOST) {
+    event.waitUntil(self.registration.unregister());
+  }
   self.clients.claim();
 });
 
@@ -28,6 +35,11 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests
   if (request.method !== 'GET') return;
+
+  if (IS_LOCAL_HOST) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   if (
     url.origin !== self.location.origin ||
@@ -55,6 +67,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       });
-    })
+    }),
   );
 });

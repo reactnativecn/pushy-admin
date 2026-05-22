@@ -2,7 +2,6 @@ import { CopyOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
-  Card,
   Checkbox,
   Form,
   Grid,
@@ -179,42 +178,40 @@ function ApiTokensPage() {
   ];
 
   return (
-    <div className="body">
-      <Card>
-        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-lg font-semibold">API Token 管理</div>
-            <Paragraph type="secondary" className="mb-0 mt-1">
-              API Token 可用于 CI/CD 流程或自动化脚本中调用{' '}
-              <a
-                target="_blank"
-                href="https://update.reactnative.cn/api/openapi"
-                rel="noopener noreferrer"
-              >
-                Pushy API
-              </a>
-              。每个用户最多可同时保留 10 个活跃的 Token。
-            </Paragraph>
-          </div>
-          <Button
-            type="primary"
-            icon={<KeyOutlined />}
-            onClick={() => setCreateModalVisible(true)}
-            className="w-full md:w-auto"
-          >
-            创建 Token
-          </Button>
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="text-lg font-semibold">API Token 管理</div>
+          <Paragraph type="secondary" className="mb-0 mt-1">
+            API Token 可用于 CI/CD 流程或自动化脚本中调用{' '}
+            <a
+              target="_blank"
+              href="https://update.reactnative.cn/api/openapi"
+              rel="noopener noreferrer"
+            >
+              Pushy API
+            </a>
+            。每个用户最多可同时保留 10 个活跃的 Token。
+          </Paragraph>
         </div>
-        <Table
-          columns={columns}
-          dataSource={data?.data}
-          loading={isLoading}
-          rowKey="id"
-          size={isMobile ? 'small' : 'middle'}
-          pagination={false}
-          scroll={{ x: 720 }}
-        />
-      </Card>
+        <Button
+          type="primary"
+          icon={<KeyOutlined />}
+          onClick={() => setCreateModalVisible(true)}
+          className="w-full md:w-auto"
+        >
+          创建 Token
+        </Button>
+      </div>
+      <Table
+        columns={columns}
+        dataSource={data?.data}
+        loading={isLoading}
+        rowKey="id"
+        size={isMobile ? 'small' : 'middle'}
+        pagination={false}
+        scroll={{ x: 720 }}
+      />
 
       <Modal
         title="创建 API Token"

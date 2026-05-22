@@ -546,7 +546,7 @@ export const AuditLogs = () => {
   ];
 
   return (
-    <div className="page-section">
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
       <div className="mb-4">
         <div className="mb-2 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -554,10 +554,7 @@ export const AuditLogs = () => {
               <FileTextOutlined />
               操作日志
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              日志功能从 2025 年 11 月 17 日开始测试，没有更早的数据。将仅保留
-              180 天内的数据。
-            </p>
+            <p className="mt-1 text-sm text-gray-500">仅保留 180 天内的数据</p>
           </div>
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
             <Input
