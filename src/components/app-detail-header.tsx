@@ -39,28 +39,43 @@ export function AppDetailHeader({
 }) {
   return (
     <div className="mb-4 grid grid-cols-1 items-center gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-      <Breadcrumb
-        className="min-w-0"
-        items={[
-          {
-            title: sectionLabel,
-          },
-          {
-            title: (
-              <span className="inline-flex max-w-full items-center gap-1">
-                <PlatformIcon platform={app?.platform} className="mr-1" />
-                <span className="max-w-[160px] truncate md:max-w-none">
-                  {app?.name || appNameFallback}
+      <div className="flex min-w-0 items-center justify-between gap-3 md:contents">
+        <Breadcrumb
+          className="min-w-0 md:col-start-1 md:row-start-1"
+          items={[
+            {
+              title: sectionLabel,
+            },
+            {
+              title: (
+                <span className="inline-flex max-w-full items-center gap-1">
+                  <PlatformIcon platform={app?.platform} className="mr-1" />
+                  <span className="max-w-[160px] truncate md:max-w-none">
+                    {app?.name || appNameFallback}
+                  </span>
+                  {app?.status === 'paused' && <Tag className="ml-2">暂停</Tag>}
                 </span>
-                {app?.status === 'paused' && <Tag className="ml-2">暂停</Tag>}
-              </span>
-            ),
-          },
-        ]}
-      />
+              ),
+            },
+          ]}
+        />
+
+        <div className="flex shrink-0 justify-end md:col-start-3 md:row-start-1">
+          {onSettingsClick && (
+            <Button
+              className="shrink-0 !h-9 !px-3 !text-sm md:!h-10 md:!px-4 md:!text-base"
+              icon={<SettingFilled />}
+              disabled={settingsDisabled}
+              onClick={onSettingsClick}
+            >
+              应用设置
+            </Button>
+          )}
+        </div>
+      </div>
 
       <div
-        className="flex w-full justify-center gap-2 md:w-auto"
+        className="flex w-full justify-center gap-2 md:col-start-2 md:row-start-1 md:w-auto"
         role="tablist"
       >
         <AppDetailTab
@@ -77,19 +92,6 @@ export function AppDetailHeader({
           label="实时数据"
           onClick={onMetricsClick}
         />
-      </div>
-
-      <div className="flex justify-end">
-        {onSettingsClick && (
-          <Button
-            icon={<SettingFilled />}
-            size="large"
-            disabled={settingsDisabled}
-            onClick={onSettingsClick}
-          >
-            应用设置
-          </Button>
-        )}
       </div>
     </div>
   );
