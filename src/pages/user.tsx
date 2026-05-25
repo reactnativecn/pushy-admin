@@ -271,23 +271,27 @@ function UserPanel() {
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex min-w-0 flex-col gap-1">
             {displayExpireDay ? (
-              <div className="flex min-w-0 flex-col">
-                {displayExpireDay}
-                {displayRemainingDays && (
-                  <>
-                    <br />
-                    <div>{displayRemainingDays}</div>
-                  </>
-                )}
-              </div>
+              <>
+                <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
+                  <span>{displayExpireDay}</span>
+                  {tier !== 'free' && (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                      <PurchaseButton tier={tier}>续费</PurchaseButton>
+                    </div>
+                  )}
+                </div>
+                {displayRemainingDays && <div>{displayRemainingDays}</div>}
+              </>
             ) : (
-              '无'
-            )}
-            {tier !== 'free' && (
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <PurchaseButton tier={tier}>续费</PurchaseButton>
+              <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
+                <span>无</span>
+                {tier !== 'free' && (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <PurchaseButton tier={tier}>续费</PurchaseButton>
+                  </div>
+                )}
               </div>
             )}
           </div>
