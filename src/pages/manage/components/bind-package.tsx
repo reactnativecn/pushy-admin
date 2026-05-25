@@ -284,7 +284,25 @@ const BindPackage = ({
     bindings,
     packageMap,
   } = useManageContext();
-  const availablePackages = allPackages;
+  const legacyBindings = allPackages
+    .filter((p) => p.versions?.id === versionId)
+    .map((p) => ({
+      packageId: p.id,
+      rollout: config?.rollout?.[p.name],
+    }));
+  const matchedBindings: {
+    id?: number;
+    packageId: number;
+    rollout: number | null | undefined;
+  }[] = legacyBindings.concat(
+    bindings.filter((b) => b.versionId === versionId),
+  );
+  const matchedPackageIds = new Set(
+    matchedBindings.map((binding) => binding.packageId),
+  );
+  const availablePackages = allPackages.filter(
+    (p) => !matchedPackageIds.has(p.id),
+  );
 
   const publishToPackage = (
     pkg: { id: number; name: string; deps?: Record<string, string> },
@@ -326,24 +344,6 @@ const BindPackage = ({
 
   const bindedPackages = (() => {
     const result = [];
-    const legacyBindings = [];
-    for (const p of allPackages) {
-      if (p.versions?.id === versionId) {
-        const legacyConfig = config?.rollout?.[p.name];
-        legacyBindings.push({
-          packageId: p.id,
-          rollout: legacyConfig,
-        });
-      }
-    }
-    const matchedBindings: {
-      id?: number;
-      packageId: number;
-      rollout: number | null | undefined;
-    }[] = legacyBindings.concat(
-      bindings.filter((b) => b.versionId === versionId),
-    );
-
     if (matchedBindings.length === 0 || allPackages.length === 0) return null;
 
     for (const binding of matchedBindings) {
