@@ -129,6 +129,22 @@ export const api = {
         }),
       );
     }),
+  deletePackages: ({
+    appId,
+    packageIds,
+  }: {
+    appId: number;
+    packageIds: number[];
+  }) =>
+    request('delete', `/app/${appId}/package`, { packageIds }).then(() => {
+      const packageIdSet = new Set(packageIds);
+      queryClient.setQueryData(
+        ['packages', appId],
+        ({ data }: { data: Package[] }) => ({
+          data: data?.filter((i) => !packageIdSet.has(i.id)),
+        }),
+      );
+    }),
   // version
   getVersions: ({
     appId,
@@ -180,6 +196,33 @@ export const api = {
             : undefined,
       );
     }),
+  deleteVersions: ({
+    appId,
+    versionIds,
+  }: {
+    appId: number;
+    versionIds: number[];
+  }) =>
+    request<{ count: number }>('delete', `/app/${appId}/version`, {
+      versionIds,
+    }).then((response) => {
+      const versionIdSet = new Set(versionIds);
+      const deletedCount = response?.count ?? versionIds.length;
+      queryClient.setQueriesData(
+        { queryKey: versionKeys.byApp(appId) },
+        (old?: { data: Version[]; count?: number }) =>
+          old
+            ? {
+                ...old,
+                data: old.data?.filter((i) => !versionIdSet.has(i.id)),
+                count: Math.max(
+                  (old.count ?? old.data.length) - deletedCount,
+                  0,
+                ),
+              }
+            : undefined,
+      );
+    }),
   // order
   createOrder: (params: { tier?: string }) =>
     request<{ payUrl: string }>('post', '/orders', params),
@@ -218,26 +261,6 @@ export const api = {
         (old?: { data: Binding[] }) =>
           old
             ? { ...old, data: old.data?.filter((i) => i.id !== bindingId) }
-            : undefined,
-      );
-    }),
-  deleteBindings: ({
-    appId,
-    bindingIds,
-  }: {
-    appId: number;
-    bindingIds: number[];
-  }) =>
-    request('delete', `/app/${appId}/binding`, { bindingIds }).then(() => {
-      const bindingIdSet = new Set(bindingIds);
-      queryClient.setQueriesData(
-        { queryKey: ['bindings', appId] },
-        (old?: { data: Binding[] }) =>
-          old
-            ? {
-                ...old,
-                data: old.data?.filter((i) => !bindingIdSet.has(i.id)),
-              }
             : undefined,
       );
     }),

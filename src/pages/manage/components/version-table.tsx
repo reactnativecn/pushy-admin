@@ -120,9 +120,7 @@ function removeSelectedVersions({
     maskClosable: true,
     okButtonProps: { danger: true },
     async onOk() {
-      await Promise.all(
-        selected.map((id) => api.deleteVersion({ appId, versionId: id })),
-      );
+      await api.deleteVersions({ appId, versionIds: selected });
     },
   });
 }
