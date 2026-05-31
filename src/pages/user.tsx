@@ -21,6 +21,7 @@ import {
   ANNUAL_BILLING_MONTHS,
   type BillingOption,
   DEFAULT_MONTHLY_PRICE_FACTOR,
+  getAnnualSavings,
   getBillingOptions,
   resolveMonthlyPriceFactor,
 } from '@/utils/billing';
@@ -72,12 +73,37 @@ function formatMoney(value: number) {
   return Number.isInteger(value) ? `￥${value}` : `￥${value.toFixed(2)}`;
 }
 
-function formatBillingOptionLabel(option: BillingOption, showAmount = true) {
+function formatDiscount(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function formatBillingOptionText(option: BillingOption, showAmount = true) {
   const amount = showAmount ? `，${formatMoney(option.amount)}` : '';
   if (option.billingCycle === 'year') {
     return `年付（${option.billingMonths}个月${amount}）`;
   }
   return `${option.billingMonths}个月${showAmount ? `（${formatMoney(option.amount)}）` : ''}`;
+}
+
+function BillingOptionLabel({
+  option,
+  showAmount,
+}: {
+  option: BillingOption;
+  showAmount: boolean;
+}) {
+  const savings = getAnnualSavings(option);
+
+  return (
+    <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
+      <span>{formatBillingOptionText(option, showAmount)}</span>
+      {savings.discount > 0 && (
+        <Tag color="gold" className="m-0">
+          约{formatDiscount(savings.discount)}折优惠
+        </Tag>
+      )}
+    </span>
+  );
 }
 
 function BillingMonthsSelect({
@@ -109,6 +135,12 @@ function BillingMonthsSelect({
   const selectedValue = options.some((option) => option.value === value)
     ? value
     : fallbackValue;
+  const selectedOption = options.find(
+    (option) => option.value === selectedValue,
+  );
+  const selectedSavings = selectedOption
+    ? getAnnualSavings(selectedOption)
+    : { amount: 0, percent: 0, discount: 0 };
 
   useEffect(() => {
     if (selectedValue !== value) {
@@ -121,17 +153,24 @@ function BillingMonthsSelect({
   }
 
   return (
-    <Select
-      aria-label="选择付费周期"
-      className="w-full sm:w-60"
-      disabled={disabled}
-      onChange={onChange}
-      options={options.map((option) => ({
-        label: formatBillingOptionLabel(option, showAmount),
-        value: option.value,
-      }))}
-      value={selectedValue}
-    />
+    <div className="flex w-full flex-col gap-1 sm:w-72">
+      <Select
+        aria-label="选择付费周期"
+        className="w-full"
+        disabled={disabled}
+        onChange={onChange}
+        options={options.map((option) => ({
+          label: <BillingOptionLabel option={option} showAmount={showAmount} />,
+          value: option.value,
+        }))}
+        value={selectedValue}
+      />
+      {selectedSavings.discount > 0 && (
+        <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600">
+          {`年付比按月购买节省 ${formatMoney(selectedSavings.amount)}，约${formatDiscount(selectedSavings.discount)}折优惠`}
+        </div>
+      )}
+    </div>
   );
 }
 

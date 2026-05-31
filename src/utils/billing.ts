@@ -18,8 +18,18 @@ export interface BillingOption extends BillingPlan {
   value: number;
 }
 
+export interface AnnualSavings {
+  amount: number;
+  percent: number;
+  discount: number;
+}
+
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function roundDiscount(value: number) {
+  return Math.round((value + Number.EPSILON) * 10) / 10;
 }
 
 function positiveFiniteNumber(value: unknown) {
@@ -87,6 +97,29 @@ export function resolveBillingPlan(
     monthlyPrice,
     monthlyPriceFactor: factor,
     switchedToAnnual,
+  };
+}
+
+export function getAnnualSavings(
+  plan: Pick<
+    BillingPlan,
+    'amount' | 'billingCycle' | 'billingMonths' | 'monthlyPrice'
+  >,
+): AnnualSavings {
+  if (plan.billingCycle !== 'year') {
+    return { amount: 0, percent: 0, discount: 0 };
+  }
+
+  const monthlyTotal = roundMoney(plan.monthlyPrice * plan.billingMonths);
+  const savingsAmount = roundMoney(monthlyTotal - plan.amount);
+  if (monthlyTotal <= 0 || savingsAmount <= 0) {
+    return { amount: 0, percent: 0, discount: 0 };
+  }
+
+  return {
+    amount: savingsAmount,
+    percent: Math.round((savingsAmount / monthlyTotal) * 100),
+    discount: roundDiscount((plan.amount / monthlyTotal) * 10),
   };
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   DEFAULT_MONTHLY_PRICE_FACTOR,
+  getAnnualSavings,
   getBillingOptions,
   resolveBillingPlan,
 } from './billing';
@@ -25,6 +26,26 @@ describe('resolveBillingPlan', () => {
     expect(plan.billingMonths).toBe(12);
     expect(plan.billingCycle).toBe('year');
     expect(plan.switchedToAnnual).toBe(true);
+  });
+});
+
+describe('getAnnualSavings', () => {
+  test('returns annual savings compared with paying monthly', () => {
+    const plan = resolveBillingPlan(800, 12, DEFAULT_MONTHLY_PRICE_FACTOR);
+    const savings = getAnnualSavings(plan);
+
+    expect(savings.amount).toBe(400);
+    expect(savings.percent).toBe(33);
+    expect(savings.discount).toBe(6.7);
+  });
+
+  test('does not show savings for monthly plans', () => {
+    const plan = resolveBillingPlan(800, 1, DEFAULT_MONTHLY_PRICE_FACTOR);
+    const savings = getAnnualSavings(plan);
+
+    expect(savings.amount).toBe(0);
+    expect(savings.percent).toBe(0);
+    expect(savings.discount).toBe(0);
   });
 });
 
