@@ -5,7 +5,6 @@ import type {
   Binding,
   Package,
   Quota,
-  Tier,
   User,
   Version,
 } from '@/types';
@@ -244,8 +243,6 @@ export const api = {
     request<{
       annualBillingMonths: number;
       monthlyPriceFactor: number;
-      products: Record<Tier, BillingProduct>;
-      quotas: Partial<Record<Tier, Quota>>;
       tiers: BillingTier[];
     }>('get', '/orders/billing', undefined, { suppressErrorToast: true }),
   createOrder: (params: { months?: number; tier: string }) =>
