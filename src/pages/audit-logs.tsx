@@ -99,6 +99,7 @@ const actionMap: Record<string, string> = {
   'PUT /app/{id}/version/{id}': '修改热更包设置',
   'DELETE /app/{id}/version/{id}': '删除热更包',
   'POST /app/{id}/binding': '创建/更新绑定',
+  'DELETE /app/{id}/binding': '批量删除绑定',
   'DELETE /app/{id}/binding/{id}': '删除绑定',
   'POST /api-token/create': '创建 API Key',
   'DELETE /api-token/{id}': '删除 API Key',
