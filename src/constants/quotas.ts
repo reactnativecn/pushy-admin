@@ -63,3 +63,46 @@ export const quotas = {
     pv: 100000000,
   },
 } as const;
+
+export const products = {
+  free: {
+    price: 0,
+    title: 'Pushy 热更新服务免费版',
+    summary: 'Pushy 热更新服务免费版',
+  },
+  standard: {
+    price: 800,
+    title: 'Pushy 热更新服务标准版',
+    summary: 'Pushy 热更新服务标准版一年期服务',
+  },
+  premium: {
+    price: 2400,
+    title: 'Pushy 热更新服务高级版',
+    summary: 'Pushy 热更新服务高级版一年期服务',
+  },
+  pro: {
+    price: 7200,
+    title: 'Pushy 热更新服务专业版',
+    summary: 'Pushy 热更新服务专业版一年期服务',
+  },
+  vip1: {
+    price: 30_000,
+    title: 'Pushy 热更新服务大客户 VIP1',
+    summary: 'Pushy 热更新服务大客户 VIP1 一年期服务',
+  },
+  vip2: {
+    price: 60_000,
+    title: 'Pushy 热更新服务大客户 VIP2',
+    summary: 'Pushy 热更新服务大客户 VIP2 一年期服务',
+  },
+  vip3: {
+    price: 120_000,
+    title: 'Pushy 热更新服务大客户 VIP3',
+    summary: 'Pushy 热更新服务大客户 VIP3 一年期服务',
+  },
+  custom: {
+    price: 0,
+    title: 'Pushy 热更新服务定制版',
+    summary: 'Pushy 热更新服务定制版一年期服务',
+  },
+} as const;

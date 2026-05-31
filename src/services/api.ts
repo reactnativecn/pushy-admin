@@ -4,6 +4,8 @@ import type {
   AuditLog,
   Binding,
   Package,
+  Quota,
+  Tier,
   User,
   Version,
 } from '@/types';
@@ -29,6 +31,20 @@ type UpsertBindingsParams = { appId: number } & (
       bindings: BindingRequest[];
     }
 );
+
+type BillingProduct = {
+  price: number;
+  title: string;
+  summary: string;
+};
+
+type BillingTier = {
+  key: string;
+  product: BillingProduct;
+  quota: Quota | null;
+  annualPrice: number;
+  monthlyPrice: number;
+};
 
 export const api = {
   login: (params: { email: string; pwd: string }) =>
@@ -224,8 +240,27 @@ export const api = {
       );
     }),
   // order
-  createOrder: (params: { tier?: string }) =>
-    request<{ payUrl: string }>('post', '/orders', params),
+  getOrderBillingConfig: () =>
+    request<{
+      annualBillingMonths: number;
+      monthlyPriceFactor: number;
+      products: Record<Tier, BillingProduct>;
+      quotas: Partial<Record<Tier, Quota>>;
+      tiers: BillingTier[];
+    }>('get', '/orders/billing', undefined, { suppressErrorToast: true }),
+  createOrder: (params: { months?: number; tier: string }) =>
+    request<{
+      amount?: number | string;
+      billing?: {
+        annualPrice: number;
+        billingCycle: 'month' | 'year';
+        billingMonths: number;
+        monthlyPrice: number;
+        requestedMonths: number;
+        switchedToAnnual: boolean;
+      };
+      payUrl: string;
+    }>('post', '/orders', params),
   // binding
   getBinding: (appId: number) =>
     request<{ data: Binding[] }>('get', `/app/${appId}/binding`),

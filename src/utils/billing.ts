@@ -1,0 +1,129 @@
+export const DEFAULT_MONTHLY_PRICE_FACTOR = 8;
+export const ANNUAL_BILLING_MONTHS = 12;
+
+export type BillingCycle = 'month' | 'year';
+
+export interface BillingPlan {
+  requestedMonths: number;
+  billingMonths: number;
+  billingCycle: BillingCycle;
+  amount: number;
+  annualPrice: number;
+  monthlyPrice: number;
+  monthlyPriceFactor: number;
+  switchedToAnnual: boolean;
+}
+
+export interface BillingOption extends BillingPlan {
+  value: number;
+}
+
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function positiveFiniteNumber(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return undefined;
+  }
+  return value;
+}
+
+export function resolveMonthlyPriceFactor(configuredFactor?: unknown) {
+  return positiveFiniteNumber(configuredFactor) || DEFAULT_MONTHLY_PRICE_FACTOR;
+}
+
+export function resolveMonthlyPrice(
+  annualPrice: number,
+  monthlyPriceFactor = DEFAULT_MONTHLY_PRICE_FACTOR,
+) {
+  return roundMoney(annualPrice / monthlyPriceFactor);
+}
+
+export function parseBillingMonths(value: unknown, fallback = 1) {
+  const months = Number(value);
+  if (!Number.isFinite(months) || months < 1) return fallback;
+  return Math.trunc(months);
+}
+
+export function resolveBillingPlan(
+  annualPriceValue: number,
+  requestedMonths = ANNUAL_BILLING_MONTHS,
+  monthlyPriceFactor = DEFAULT_MONTHLY_PRICE_FACTOR,
+): BillingPlan {
+  const months = parseBillingMonths(requestedMonths, 0);
+  if (months < 1) {
+    throw new Error('Billing months must be a positive integer');
+  }
+
+  const factor = resolveMonthlyPriceFactor(monthlyPriceFactor);
+  const annualPrice = roundMoney(annualPriceValue);
+  const monthlyPrice = resolveMonthlyPrice(annualPrice, factor);
+  const monthlyAmount = roundMoney(monthlyPrice * months);
+  const monthlyAmountCents = Math.round(monthlyAmount * 100);
+  const annualPriceCents = Math.round(annualPrice * 100);
+  const switchedToAnnual =
+    annualPriceCents > 0 && monthlyAmountCents >= annualPriceCents;
+
+  if (switchedToAnnual) {
+    return {
+      requestedMonths: months,
+      billingMonths: ANNUAL_BILLING_MONTHS,
+      billingCycle: 'year',
+      amount: annualPrice,
+      annualPrice,
+      monthlyPrice,
+      monthlyPriceFactor: factor,
+      switchedToAnnual,
+    };
+  }
+
+  return {
+    requestedMonths: months,
+    billingMonths: months,
+    billingCycle: 'month',
+    amount: monthlyAmount,
+    annualPrice,
+    monthlyPrice,
+    monthlyPriceFactor: factor,
+    switchedToAnnual,
+  };
+}
+
+export function getBillingOptions({
+  annualBillingMonths = ANNUAL_BILLING_MONTHS,
+  annualPrice,
+  monthlyPriceFactor,
+}: {
+  annualBillingMonths?: number;
+  annualPrice: number;
+  monthlyPriceFactor: number;
+}) {
+  const safeAnnualBillingMonths = parseBillingMonths(
+    annualBillingMonths,
+    ANNUAL_BILLING_MONTHS,
+  );
+  const options: BillingOption[] = [];
+
+  for (let months = 1; months < safeAnnualBillingMonths; months += 1) {
+    const plan = resolveBillingPlan(annualPrice, months, monthlyPriceFactor);
+    if (plan.billingCycle === 'month') {
+      options.push({
+        ...plan,
+        value: plan.billingMonths,
+      });
+    }
+  }
+
+  const annualPlan = resolveBillingPlan(
+    annualPrice,
+    safeAnnualBillingMonths,
+    monthlyPriceFactor,
+  );
+  options.push({
+    ...annualPlan,
+    value: annualPlan.billingMonths,
+  });
+
+  return options;
+}

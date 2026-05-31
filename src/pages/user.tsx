@@ -1,5 +1,5 @@
 import { AlipayCircleOutlined, LogoutOutlined } from '@ant-design/icons';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
 import {
   Button,
@@ -9,17 +9,25 @@ import {
   message,
   Popover,
   Progress,
+  Select,
   Spin,
   Tag,
   Tooltip,
 } from 'antd';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
+import {
+  ANNUAL_BILLING_MONTHS,
+  type BillingOption,
+  DEFAULT_MONTHLY_PRICE_FACTOR,
+  getBillingOptions,
+  resolveMonthlyPriceFactor,
+} from '@/utils/billing';
 import { isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { PRICING_LINK } from '../constants/links';
-import { quotas } from '../constants/quotas';
+import { products, quotas } from '../constants/quotas';
 
 const InvoiceHint = (
   <div>
@@ -38,39 +46,144 @@ const InvoiceHint = (
   </div>
 );
 
+function useOrderBillingConfig() {
+  const { data } = useQuery({
+    queryKey: ['orderBillingConfig'],
+    queryFn: async () => {
+      try {
+        return await api.getOrderBillingConfig();
+      } catch {
+        return undefined;
+      }
+    },
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+
+  return {
+    annualBillingMonths: data?.annualBillingMonths ?? ANNUAL_BILLING_MONTHS,
+    monthlyPriceFactor: resolveMonthlyPriceFactor(
+      data?.monthlyPriceFactor ?? DEFAULT_MONTHLY_PRICE_FACTOR,
+    ),
+  };
+}
+
+function formatMoney(value: number) {
+  return Number.isInteger(value) ? `￥${value}` : `￥${value.toFixed(2)}`;
+}
+
+function formatBillingOptionLabel(option: BillingOption, showAmount = true) {
+  const amount = showAmount ? `，${formatMoney(option.amount)}` : '';
+  if (option.billingCycle === 'year') {
+    return `年付（${option.billingMonths}个月${amount}）`;
+  }
+  return `${option.billingMonths}个月${showAmount ? `（${formatMoney(option.amount)}）` : ''}`;
+}
+
+function BillingMonthsSelect({
+  disabled,
+  onChange,
+  showAmount = true,
+  tier,
+  value,
+}: {
+  disabled?: boolean;
+  onChange: (months: number) => void;
+  showAmount?: boolean;
+  tier: keyof typeof products;
+  value: number;
+}) {
+  const billingConfig = useOrderBillingConfig();
+  const product = products[tier];
+  const options =
+    product.price > 0
+      ? getBillingOptions({
+          annualBillingMonths: billingConfig.annualBillingMonths,
+          annualPrice: product.price,
+          monthlyPriceFactor: billingConfig.monthlyPriceFactor,
+        })
+      : [];
+  const fallbackValue =
+    options.find((option) => option.billingCycle === 'year')?.value ??
+    billingConfig.annualBillingMonths;
+  const selectedValue = options.some((option) => option.value === value)
+    ? value
+    : fallbackValue;
+
+  useEffect(() => {
+    if (selectedValue !== value) {
+      onChange(selectedValue);
+    }
+  }, [onChange, selectedValue, value]);
+
+  if (options.length <= 1) {
+    return null;
+  }
+
+  return (
+    <Select
+      aria-label="选择付费周期"
+      className="w-full sm:w-60"
+      disabled={disabled}
+      onChange={onChange}
+      options={options.map((option) => ({
+        label: formatBillingOptionLabel(option, showAmount),
+        value: option.value,
+      }))}
+      value={selectedValue}
+    />
+  );
+}
+
 const PurchaseButton = ({
   tier,
   children,
 }: {
-  tier: string;
+  tier: keyof typeof products;
   children: ReactNode;
 }) => {
   const [loading, setLoading] = useState(false);
+  const [months, setMonths] = useState(ANNUAL_BILLING_MONTHS);
+
   return (
-    <Button
-      // type='link'
-      className="mt-2 w-full justify-center sm:w-auto md:mt-0 md:ml-6"
-      icon={<AlipayCircleOutlined />}
-      onClick={async () => {
-        if (tier === 'custom') {
-          return message.error('定制版用户付费请联系客服');
-        }
-        setLoading(true);
-        await purchase(tier);
-      }}
-      loading={loading}
-    >
-      {loading ? '跳转至支付页面' : children}
-    </Button>
+    <div className="mt-2 flex w-full flex-col gap-2 sm:w-auto sm:flex-row md:mt-0 md:ml-6">
+      <BillingMonthsSelect
+        disabled={loading}
+        onChange={setMonths}
+        tier={tier}
+        value={months}
+      />
+      <Button
+        className="w-full justify-center sm:w-auto"
+        icon={<AlipayCircleOutlined />}
+        loading={loading}
+        onClick={async () => {
+          if (tier === 'custom') {
+            return message.error('定制版用户付费请联系客服');
+          }
+          setLoading(true);
+          try {
+            await purchase(tier, months);
+          } finally {
+            setLoading(false);
+          }
+        }}
+      >
+        {loading ? '跳转至支付页面' : children}
+      </Button>
+    </div>
   );
 };
 
 const UpgradeDropdown = ({
   currentQuota,
+  currentTier,
 }: {
   currentQuota: (typeof quotas)[keyof typeof quotas];
+  currentTier: Tier;
 }) => {
   const [loading, setLoading] = useState(false);
+  const [months, setMonths] = useState(ANNUAL_BILLING_MONTHS);
 
   // 获取所有可升级的版本
   const getUpgradeOptions = () => {
@@ -97,7 +210,14 @@ const UpgradeDropdown = ({
 
   const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
     setLoading(true);
-    await purchase(key);
+    try {
+      await purchase(
+        key as keyof typeof products,
+        currentTier === 'free' ? months : undefined,
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const menuItems: MenuProps['items'] = upgradeOptions.map((option) => ({
@@ -110,23 +230,47 @@ const UpgradeDropdown = ({
     // 点击主按钮时，选择第一个可升级的版本
     if (upgradeOptions.length > 0) {
       setLoading(true);
-      await purchase(upgradeOptions[0].tier);
+      try {
+        await purchase(
+          upgradeOptions[0].tier as keyof typeof products,
+          currentTier === 'free' ? months : undefined,
+        );
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
+  const defaultTargetTier = upgradeOptions[0]?.tier as
+    | keyof typeof products
+    | undefined;
+  const shouldSelectBillingMonths =
+    currentTier === 'free' && defaultTargetTier !== undefined;
+
   return (
-    <Dropdown.Button
-      className="shrink-0"
-      icon={<AlipayCircleOutlined />}
-      loading={loading}
-      menu={{
-        items: menuItems,
-        onClick: handleMenuClick,
-      }}
-      onClick={handleMainButtonClick}
-    >
-      {loading ? '跳转至支付页面' : upgradeOptions[0]?.title || '升级服务'}
-    </Dropdown.Button>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      {shouldSelectBillingMonths && (
+        <BillingMonthsSelect
+          disabled={loading}
+          onChange={setMonths}
+          showAmount={false}
+          tier={defaultTargetTier}
+          value={months}
+        />
+      )}
+      <Dropdown.Button
+        className="shrink-0"
+        icon={<AlipayCircleOutlined />}
+        loading={loading}
+        menu={{
+          items: menuItems,
+          onClick: handleMenuClick,
+        }}
+        onClick={handleMainButtonClick}
+      >
+        {loading ? '跳转至支付页面' : upgradeOptions[0]?.title || '升级服务'}
+      </Dropdown.Button>
+    </div>
   );
 };
 
@@ -266,7 +410,7 @@ function UserPanel() {
           <div className="flex items-center gap-4">
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
-              <UpgradeDropdown currentQuota={defaultQuota} />
+              <UpgradeDropdown currentQuota={defaultQuota} currentTier={tier} />
             )}
           </div>
         </Descriptions.Item>
@@ -562,8 +706,8 @@ function formatShortQuotaDate(date: Date) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
-async function purchase(tier?: string) {
-  const orderResponse = await api.createOrder({ tier });
+async function purchase(tier: keyof typeof products, months?: number) {
+  const orderResponse = await api.createOrder({ months, tier });
   if (orderResponse?.payUrl && isValidExternalUrl(orderResponse.payUrl)) {
     window.location.href = orderResponse.payUrl;
   } else if (orderResponse?.payUrl) {
