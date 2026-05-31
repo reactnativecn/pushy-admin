@@ -36,6 +36,17 @@ type DepChangeSummary = {
 
 type DepChangeFilters = Record<DepChangeType, boolean>;
 
+type PublishPackage = {
+  id: number;
+  name: string;
+  deps?: Record<string, string>;
+};
+
+type DepsChangePackage = {
+  pkg: PublishPackage;
+  changes: DepChangeRow[];
+};
+
 function getDepsChangeSummary(changes: DepChangeRow[]): DepChangeSummary {
   return changes.reduce(
     (acc, item) => {
@@ -304,23 +315,60 @@ const BindPackage = ({
     (p) => !matchedPackageIds.has(p.id),
   );
 
-  const publishToPackage = (
-    pkg: { id: number; name: string; deps?: Record<string, string> },
-    rollout?: number,
-  ) => {
-    const publish = () =>
-      api.upsertBinding({
+  const publishToPackages = (pkgs: PublishPackage[], rollout?: number) => {
+    if (pkgs.length === 0) {
+      return;
+    }
+
+    const publish = () => {
+      if (pkgs.length === 1) {
+        return api.upsertBinding({
+          appId,
+          packageId: pkgs[0].id,
+          versionId,
+          rollout,
+        });
+      }
+
+      return api.upsertBindings({
         appId,
-        packageId: pkg.id,
+        packageIds: pkgs.map((pkg) => pkg.id),
         versionId,
         rollout,
       });
+    };
 
-    const changes = getDepsChanges(pkg.deps, versionDeps);
-    if (!changes || changes.length === 0) {
+    const depsChangedPackages = pkgs.reduce<DepsChangePackage[]>((acc, pkg) => {
+      const changes = getDepsChanges(pkg.deps, versionDeps);
+      if (changes?.length) {
+        acc.push({ pkg, changes });
+      }
+      return acc;
+    }, []);
+    if (depsChangedPackages.length === 0) {
       void publish();
       return;
     }
+
+    const content =
+      depsChangedPackages.length === 1 ? (
+        <DepsChangeConfirmContent
+          packageName={depsChangedPackages[0].pkg.name}
+          versionDisplayName={versionName || versionId}
+          changes={depsChangedPackages[0].changes}
+        />
+      ) : (
+        <div className="max-h-96 space-y-6 overflow-y-auto pr-2">
+          {depsChangedPackages.map(({ pkg, changes }) => (
+            <DepsChangeConfirmContent
+              key={pkg.id}
+              packageName={pkg.name}
+              versionDisplayName={versionName || versionId}
+              changes={changes}
+            />
+          ))}
+        </div>
+      );
 
     Modal.confirm({
       title: '检测到依赖变化，确认继续发布？',
@@ -329,18 +377,68 @@ const BindPackage = ({
       okText: '继续发布',
       cancelText: '取消',
       width: 820,
-      content: (
-        <DepsChangeConfirmContent
-          packageName={pkg.name}
-          versionDisplayName={versionName || versionId}
-          changes={changes}
-        />
-      ),
+      content,
       async onOk() {
         await publish();
       },
     });
   };
+
+  const publishToPackage = (pkg: PublishPackage, rollout?: number) =>
+    publishToPackages([pkg], rollout);
+
+  const publishMenuItems: MenuProps['items'] = [];
+  if (availablePackages.length > 1) {
+    publishMenuItems.push(
+      {
+        key: 'all',
+        label: '全部可用原生包',
+        children: [
+          {
+            key: 'all-full',
+            label: '全量',
+            icon: <CloudDownloadOutlined />,
+            onClick: () => publishToPackages(availablePackages),
+          },
+          {
+            key: 'all-gray',
+            label: '灰度',
+            icon: <ExperimentOutlined />,
+            children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
+              key: `all-gray-${percentage}`,
+              label: `${percentage}%`,
+              onClick: () => publishToPackages(availablePackages, percentage),
+            })),
+          },
+        ],
+      },
+      { type: 'divider' },
+    );
+  }
+  publishMenuItems.push(
+    ...availablePackages.map((p) => ({
+      key: `pkg-${p.id}`,
+      label: p.name,
+      children: [
+        {
+          key: `pkg-${p.id}-full`,
+          label: '全量',
+          icon: <CloudDownloadOutlined />,
+          onClick: () => publishToPackage(p),
+        },
+        {
+          key: `pkg-${p.id}-gray`,
+          label: '灰度',
+          icon: <ExperimentOutlined />,
+          children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
+            key: `pkg-${p.id}-gray-${percentage}`,
+            label: `${percentage}%`,
+            onClick: () => publishToPackage(p, percentage),
+          })),
+        },
+      ],
+    })),
+  );
 
   const bindedPackages = (() => {
     const result = [];
@@ -432,28 +530,7 @@ const BindPackage = ({
       {availablePackages.length !== 0 && (
         <Dropdown
           menu={{
-            items: availablePackages.map((p) => ({
-              key: `pkg-${p.id}`,
-              label: p.name,
-              children: [
-                {
-                  key: `pkg-${p.id}-full`,
-                  label: '全量',
-                  icon: <CloudDownloadOutlined />,
-                  onClick: () => publishToPackage(p),
-                },
-                {
-                  key: `pkg-${p.id}-gray`,
-                  label: '灰度',
-                  icon: <ExperimentOutlined />,
-                  children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
-                    key: `pkg-${p.id}-gray-${percentage}`,
-                    label: `${percentage}%`,
-                    onClick: () => publishToPackage(p, percentage),
-                  })),
-                },
-              ],
-            })),
+            items: publishMenuItems,
           }}
           className="ant-typography-edit"
         >

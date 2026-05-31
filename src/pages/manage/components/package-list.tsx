@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import {
   Button,
+  Checkbox,
   Col,
   Form,
   Input,
@@ -18,6 +19,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
@@ -32,7 +34,27 @@ const PackageList = ({
   dataSource?: Package[];
   loading?: boolean;
 }) => {
-  const { app, packageTimestampWarnings } = useManageContext();
+  const { app, appId, packageTimestampWarnings } = useManageContext();
+  const [selectedPackageIds, setSelectedPackageIds] = useState<number[]>([]);
+  const selectedPackageIdSet = useMemo(
+    () => new Set(selectedPackageIds),
+    [selectedPackageIds],
+  );
+  const visiblePackageIds = useMemo(
+    () => dataSource?.map((item) => item.id) ?? [],
+    [dataSource],
+  );
+  const selectedPackages = useMemo(
+    () => dataSource?.filter((item) => selectedPackageIdSet.has(item.id)) ?? [],
+    [dataSource, selectedPackageIdSet],
+  );
+  const selectedVisibleCount = visiblePackageIds.filter((id) =>
+    selectedPackageIdSet.has(id),
+  ).length;
+  const allVisibleSelected =
+    visiblePackageIds.length > 0 &&
+    selectedVisibleCount === visiblePackageIds.length;
+  const hasSelectedVisiblePackages = selectedPackages.length > 0;
   const realtimeMetricsPath = app?.appKey
     ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
         appKey: app.appKey,
@@ -40,23 +62,105 @@ const PackageList = ({
       }).toString()}`
     : undefined;
 
+  const togglePackageSelection = (packageId: number, checked: boolean) => {
+    setSelectedPackageIds((prev) => {
+      if (checked) {
+        return [...new Set([...prev, packageId])];
+      }
+      return prev.filter((id) => id !== packageId);
+    });
+  };
+
+  const toggleAllVisiblePackages = (checked: boolean) => {
+    setSelectedPackageIds((prev) => {
+      if (checked) {
+        return [...new Set([...prev, ...visiblePackageIds])];
+      }
+      return prev.filter((id) => !visiblePackageIds.includes(id));
+    });
+  };
+
   return (
-    <List
-      loading={loading}
-      className="packages"
-      size="small"
-      dataSource={dataSource}
-      renderItem={(item) => (
-        <Item
-          item={item}
-          warningTimestamps={packageTimestampWarnings.get(item.id) ?? []}
-          realtimeMetricsPath={realtimeMetricsPath}
-        />
+    <>
+      {visiblePackageIds.length > 0 && (
+        <div className="mb-2 flex items-center gap-2 px-2">
+          <Checkbox
+            checked={allVisibleSelected}
+            indeterminate={selectedVisibleCount > 0 && !allVisibleSelected}
+            onChange={({ target }) => {
+              toggleAllVisiblePackages(target.checked);
+            }}
+          />
+          {hasSelectedVisiblePackages && (
+            <Button
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                removeSelectedPackages(selectedPackages, appId, () => {
+                  setSelectedPackageIds((prev) =>
+                    prev.filter(
+                      (id) => !selectedPackages.some((item) => item.id === id),
+                    ),
+                  );
+                })
+              }
+            >
+              删除
+            </Button>
+          )}
+        </div>
       )}
-    />
+      <List
+        loading={loading}
+        className="packages"
+        size="small"
+        dataSource={dataSource}
+        renderItem={(item) => (
+          <Item
+            item={item}
+            selected={selectedPackageIdSet.has(item.id)}
+            onSelectedChange={(checked) =>
+              togglePackageSelection(item.id, checked)
+            }
+            warningTimestamps={packageTimestampWarnings.get(item.id) ?? []}
+            realtimeMetricsPath={realtimeMetricsPath}
+          />
+        )}
+      />
+    </>
   );
 };
 export default PackageList;
+
+function removeSelectedPackages(
+  items: Package[],
+  appId: number,
+  onSuccess: () => void,
+) {
+  if (items.length === 0) {
+    return;
+  }
+  Modal.confirm({
+    title: '删除所选原生包：',
+    content: (
+      <div className="max-h-48 overflow-y-auto">
+        {items.map((item) => (
+          <div key={item.id}>{item.name}</div>
+        ))}
+      </div>
+    ),
+    maskClosable: true,
+    okButtonProps: { danger: true },
+    async onOk() {
+      await api.deletePackages({
+        appId,
+        packageIds: items.map((item) => item.id),
+      });
+      onSuccess();
+    },
+  });
+}
 
 function remove(item: Package, appId: number) {
   Modal.confirm({
@@ -140,10 +244,14 @@ const TimestampWarning = ({
 
 const Item = ({
   item,
+  selected,
+  onSelectedChange,
   warningTimestamps,
   realtimeMetricsPath,
 }: {
   item: Package;
+  selected: boolean;
+  onSelectedChange: (checked: boolean) => void;
   warningTimestamps: string[];
   realtimeMetricsPath?: string;
 }) => {
@@ -155,6 +263,11 @@ const Item = ({
         <List.Item.Meta
           title={
             <Row align="middle">
+              <Checkbox
+                className="mr-2"
+                checked={selected}
+                onChange={({ target }) => onSelectedChange(target.checked)}
+              />
               <Col flex={1}>
                 <div className="flex flex-wrap items-center">
                   <span>{item.name}</span>
