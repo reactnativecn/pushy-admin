@@ -79,7 +79,7 @@ const PackageFilterControl = ({
           );
         }}
       />
-      <Dropdown menu={{ items }} trigger={['click']}>
+      <Dropdown menu={{ items }} trigger={['hover']}>
         <button
           className="inline-flex h-10 cursor-pointer items-center gap-1 border-0 border-b-2 border-solid border-blue-500 bg-transparent px-1 text-sm font-medium text-blue-600"
           type="button"
