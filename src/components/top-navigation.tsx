@@ -376,7 +376,7 @@ function AppSwitcher({ compact }: { compact: boolean }) {
   const trigger = (
     <button
       className={cn(
-        'flex h-16 min-w-0 items-center border-0 border-slate-200 border-x bg-slate-50 px-4 text-left transition-colors hover:bg-white',
+        'flex h-16 min-w-0 cursor-pointer items-center border-0 border-slate-200 border-x bg-slate-50 px-4 text-left transition-colors hover:bg-white',
         compact ? 'max-w-[150px] flex-1 px-2' : 'w-72 lg:w-80',
       )}
       onClick={compact ? () => setOpen(true) : undefined}
@@ -492,7 +492,7 @@ function AppSwitcherContent({
             {recentApps.map((app) => (
               <button
                 className={cn(
-                  'inline-flex max-w-[180px] items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-gray-600 text-xs transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600',
+                  'inline-flex max-w-[180px] cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-gray-600 text-xs transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600',
                   app.id === currentAppId
                     ? 'border-blue-200 bg-blue-50 text-blue-600'
                     : undefined,
@@ -581,12 +581,12 @@ function AppRow({
   return (
     <div
       className={cn(
-        'group flex w-full items-center rounded-lg transition-colors hover:bg-gray-50',
+        'group flex w-full cursor-pointer items-center rounded-lg transition-colors hover:bg-gray-50',
         isActive ? 'bg-blue-50' : undefined,
       )}
     >
       <button
-        className="flex min-w-0 flex-1 items-center gap-3 border-0 bg-transparent px-3 py-3 text-left"
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 border-0 bg-transparent px-3 py-3 text-left"
         onClick={() => onSelect(app.id)}
         type="button"
       >
@@ -628,7 +628,7 @@ function AppRow({
       </button>
       <button
         aria-label={`打开 ${app.name} 应用设置`}
-        className="mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-0 bg-transparent text-slate-400 transition-colors hover:bg-white hover:text-blue-600"
+        className="mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 transition-colors hover:bg-white hover:text-blue-600"
         onClick={() => onSettings(app)}
         title="应用设置"
         type="button"

@@ -1,5 +1,7 @@
-import { Grid, Layout, Tabs } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
+import { Checkbox, Dropdown, Grid, Layout, type MenuProps, Tabs } from 'antd';
 
+import { type Dispatch, type SetStateAction, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import './manage.css';
 
@@ -13,24 +15,131 @@ import PackageList from './components/package-list';
 import VersionTable from './components/version-table';
 import { ManageProvider, useManageContext } from './hooks/useManageContext';
 
-const ManageDashBoard = () => {
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
-  const { packages, unusedPackages, packagesLoading } = useManageContext();
-  const packageTabItems = [
+type PackageFilter = 'all' | 'unused';
+
+function toggleAllVisiblePackages(
+  checked: boolean,
+  packageIds: number[],
+  setSelectedPackageIds: Dispatch<SetStateAction<number[]>>,
+) {
+  setSelectedPackageIds((prev) => {
+    if (checked) {
+      return [...new Set([...prev, ...packageIds])];
+    }
+    return prev.filter((id) => !packageIds.includes(id));
+  });
+}
+
+const PackageFilterControl = ({
+  filter,
+  setFilter,
+  dataSource,
+  selectedPackageIds,
+  setSelectedPackageIds,
+}: {
+  filter: PackageFilter;
+  setFilter: (filter: PackageFilter) => void;
+  dataSource: Package[];
+  selectedPackageIds: number[];
+  setSelectedPackageIds: Dispatch<SetStateAction<number[]>>;
+}) => {
+  const filterLabel = filter === 'all' ? '全部' : '未使用';
+  const items: MenuProps['items'] = [
     {
       key: 'all',
       label: '全部',
-      children: <PackageList dataSource={packages} loading={packagesLoading} />,
+      onClick: () => setFilter('all'),
     },
     {
       key: 'unused',
       label: '未使用',
-      children: (
-        <PackageList dataSource={unusedPackages} loading={packagesLoading} />
-      ),
+      onClick: () => setFilter('unused'),
     },
   ];
+  const packageIds = dataSource.map((item) => item.id);
+  const selectedPackageIdSet = new Set(selectedPackageIds);
+  const selectedVisibleCount = packageIds.filter((id) =>
+    selectedPackageIdSet.has(id),
+  ).length;
+  const allVisibleSelected =
+    packageIds.length > 0 && selectedVisibleCount === packageIds.length;
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Checkbox
+        aria-label={`${filterLabel}全选`}
+        checked={allVisibleSelected}
+        disabled={packageIds.length === 0}
+        indeterminate={selectedVisibleCount > 0 && !allVisibleSelected}
+        onChange={({ target }) => {
+          toggleAllVisiblePackages(
+            target.checked,
+            packageIds,
+            setSelectedPackageIds,
+          );
+        }}
+      />
+      <Dropdown menu={{ items }} trigger={['click']}>
+        <button
+          className="inline-flex h-10 cursor-pointer items-center gap-1 border-0 border-b-2 border-solid border-blue-500 bg-transparent px-1 text-sm font-medium text-blue-600"
+          type="button"
+        >
+          <span>{filterLabel}</span>
+          <DownOutlined className="text-xs" />
+        </button>
+      </Dropdown>
+    </span>
+  );
+};
+
+const ManageDashBoard = () => {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+  const { packages, unusedPackages, packagesLoading, bindingsLoading } =
+    useManageContext();
+  const [packageFilter, setPackageFilter] = useState<PackageFilter>('all');
+  const [selectedAllPackageIds, setSelectedAllPackageIds] = useState<number[]>(
+    [],
+  );
+  const [selectedUnusedPackageIds, setSelectedUnusedPackageIds] = useState<
+    number[]
+  >([]);
+  const changePackageFilter = (nextFilter: PackageFilter) => {
+    setPackageFilter(nextFilter);
+    if (nextFilter === 'unused') {
+      setSelectedUnusedPackageIds([]);
+    } else {
+      setSelectedAllPackageIds([]);
+    }
+  };
+  const isUnusedPackageFilter = packageFilter === 'unused';
+  const packageDataSource = isUnusedPackageFilter ? unusedPackages : packages;
+  const selectedPackageIds = isUnusedPackageFilter
+    ? selectedUnusedPackageIds
+    : selectedAllPackageIds;
+  const setSelectedPackageIds = isUnusedPackageFilter
+    ? setSelectedUnusedPackageIds
+    : setSelectedAllPackageIds;
+  const packageList = (
+    <>
+      <div className="mb-2 flex items-center">
+        <PackageFilterControl
+          filter={packageFilter}
+          setFilter={changePackageFilter}
+          dataSource={packageDataSource}
+          selectedPackageIds={selectedPackageIds}
+          setSelectedPackageIds={setSelectedPackageIds}
+        />
+      </div>
+      <PackageList
+        key={packageFilter}
+        dataSource={packageDataSource}
+        loading={packagesLoading || (isUnusedPackageFilter && bindingsLoading)}
+        selectedPackageIds={selectedPackageIds}
+        setSelectedPackageIds={setSelectedPackageIds}
+      />
+    </>
+  );
 
   if (isMobile) {
     return (
@@ -47,13 +156,7 @@ const ManageDashBoard = () => {
             key: 'packages',
             label: '原生包',
             children: (
-              <div className="rounded-lg bg-white px-4 pb-4 pt-1">
-                <Tabs
-                  defaultActiveKey="all"
-                  size="small"
-                  items={packageTabItems}
-                />
-              </div>
+              <div className="rounded-lg bg-white p-4">{packageList}</div>
             ),
           },
         ]}
@@ -66,11 +169,11 @@ const ManageDashBoard = () => {
       <Layout.Sider
         theme="light"
         className="manage-sider h-full rounded-lg p-4 pt-0"
-        width={240}
+        width={280}
         style={{ marginRight: 16, maxWidth: '100%' }}
       >
         <div className="py-4">原生包</div>
-        <Tabs size="middle" items={packageTabItems} />
+        {packageList}
       </Layout.Sider>
       <Layout.Content className="p-0! manage-content" style={{ minWidth: 0 }}>
         <VersionTable />

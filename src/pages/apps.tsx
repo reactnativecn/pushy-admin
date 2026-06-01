@@ -172,7 +172,7 @@ function AppCard({ app }: { app: AppItem }) {
 
   return (
     <Link
-      className="group block h-full no-underline"
+      className="group block h-full cursor-pointer no-underline"
       to={rootRouterPath.versions(String(app.id))}
       onClick={() => rememberRecentApp(app.id)}
     >

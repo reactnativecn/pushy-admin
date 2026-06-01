@@ -225,21 +225,16 @@ export const usePackages = (appId: number) => {
     queryKey: ['packages', appId],
     queryFn: () => api.getPackages(appId),
   });
-  const { unusedPackages, packageMap, packages } = useMemo(() => {
+  const { packageMap, packages } = useMemo(() => {
     const packages = data?.data ?? [];
-    const unusedPackages = [];
     const packageMap = new Map();
     for (const p of packages) {
-      if (p.versions === null) {
-        unusedPackages.push(p);
-      }
       packageMap.set(p.id, p);
     }
-    return { unusedPackages, packageMap, packages };
+    return { packageMap, packages };
   }, [data?.data]);
   return {
     packages,
-    unusedPackages,
     packageMap,
     isLoading,
   };
