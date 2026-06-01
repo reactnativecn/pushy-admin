@@ -23,30 +23,52 @@ import { DepsTable } from './deps-table';
 import JsonEditor from './json-editor';
 import PublishFeatureTable from './publish-feature-table';
 
+const DEEP_LINK_EXAMPLE = 'pushy://';
+
+function getDeepLinkError(deepLink: string) {
+  if (!deepLink) {
+    return '请输入 App 已注册的 URL Scheme，例如 pushy://';
+  }
+  if (/^https?:\/\//i.test(deepLink)) {
+    return '这里不是网页地址，请填写 App 的自定义 Scheme，例如 pushy://';
+  }
+  if (/[?#]/.test(deepLink) || !deepLink.endsWith('://')) {
+    return '这里只填写 Scheme 前缀，格式为 scheme://，不要带路径、参数或版本信息';
+  }
+  if (!/^[a-z][a-z0-9+.-]*:\/\/$/i.test(deepLink)) {
+    return 'Scheme 需以字母开头，只能包含字母、数字、+、-、.';
+  }
+  return '';
+}
+
 const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   const { appId, deepLink, setDeepLink } = useManageContext();
   const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
+  const normalizedDeepLink = deepLink.trim();
+  const deepLinkError = enableDeepLink
+    ? getDeepLinkError(normalizedDeepLink)
+    : '';
 
-  const isDeepLinkValid = enableDeepLink && deepLink.endsWith('://');
+  const isDeepLinkValid = enableDeepLink && !deepLinkError;
 
   useEffect(() => {
     if (isDeepLinkValid) {
-      window.localStorage.setItem(`${appId}_deeplink`, deepLink);
+      window.localStorage.setItem(`${appId}_deeplink`, normalizedDeepLink);
     }
-  }, [appId, deepLink, isDeepLinkValid]);
+  }, [appId, isDeepLinkValid, normalizedDeepLink]);
 
   const codePayload = {
     type: '__rnPushyVersionHash',
     data: hash,
   };
   const codeValue = isDeepLinkValid
-    ? `${deepLink}?${new URLSearchParams(codePayload).toString()}`
+    ? `${normalizedDeepLink}?${new URLSearchParams(codePayload).toString()}`
     : JSON.stringify(codePayload);
   return (
     <Popover
       className="ant-typography-edit"
       content={
-        <div>
+        <div className="w-72 sm:w-80">
           <div className="text-center my-2 mx-auto">
             测试二维码 <br />
             <a
@@ -63,31 +85,57 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
           </div>
           <div className="text-center my-2 mx-auto">{name}</div>
           {/* <div style={{ textAlign: 'center', margin: '0 auto' }}>{hash}</div> */}
-          <div>
+          <div className="space-y-2">
+            <Typography.Text type="secondary" className="block text-xs">
+              {isDeepLinkValid
+                ? '二维码会拉起 App 并传入热更包 Hash'
+                : enableDeepLink
+                  ? 'Deep Link 格式未通过，当前二维码仍为普通 JSON'
+                  : '未使用 Deep Link 时，二维码内容为普通 JSON'}
+            </Typography.Text>
             <Input.TextArea
               readOnly
               autoSize
               value={codeValue}
               className="mb-2!"
             />
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-2">
               <Checkbox
-                className="mr-0 sm:mr-4"
                 checked={enableDeepLink}
                 onChange={({ target }) => {
                   setEnableDeepLink(target.checked);
                 }}
               >
-                使用 Deep Link：
+                用 Deep Link 打开 App
               </Checkbox>
-              <Input
-                placeholder="例如 pushy://"
-                className="flex-1"
-                value={deepLink}
-                onChange={({ target }) => {
-                  setDeepLink(target.value);
-                }}
-              />
+              {enableDeepLink ? (
+                <div className="space-y-1">
+                  <Typography.Text type="secondary" className="block text-xs">
+                    填 App 原生注册的 URL Scheme，只填前缀，不填路径或参数。
+                  </Typography.Text>
+                  <Input
+                    allowClear
+                    placeholder={`例如 ${DEEP_LINK_EXAMPLE}`}
+                    status={deepLinkError ? 'error' : undefined}
+                    value={deepLink}
+                    onBlur={() => {
+                      setDeepLink(normalizedDeepLink);
+                    }}
+                    onChange={({ target }) => {
+                      setDeepLink(target.value);
+                    }}
+                  />
+                  {deepLinkError ? (
+                    <Typography.Text type="danger" className="block text-xs">
+                      {deepLinkError}
+                    </Typography.Text>
+                  ) : (
+                    <Typography.Text type="secondary" className="block text-xs">
+                      生成示例：{normalizedDeepLink}?type=...
+                    </Typography.Text>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
