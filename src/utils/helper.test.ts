@@ -1,5 +1,12 @@
-import { describe, expect, test } from 'bun:test';
-import { isExpVersion, isPasswordValid } from './helper';
+import { describe, expect, test, mock } from 'bun:test';
+import {
+  MAX_RECENT_APP_COUNT,
+  RECENT_APP_STORAGE_KEY,
+  getRecentAppIds,
+  isExpVersion,
+  isPasswordValid,
+  rememberRecentApp,
+} from './helper';
 
 describe('isPasswordValid', () => {
   test('should return true for valid passwords', () => {
@@ -98,5 +105,113 @@ describe('isValidExternalUrl', () => {
 
   test('should return false for javascript uris', () => {
     expect(isValidExternalUrl('javascript:alert(1)')).toBe(false);
+  });
+});
+
+describe('RecentAppIds', () => {
+  const originalWindow = (global as any).window;
+
+  test('getRecentAppIds should return empty array when window is undefined', () => {
+    (global as any).window = undefined;
+    expect(getRecentAppIds()).toEqual([]);
+    (global as any).window = originalWindow;
+  });
+
+  test('getRecentAppIds should return parsed array from localStorage', () => {
+    const mockStorage = {
+      getItem: mock(() => JSON.stringify([1, 2, 3])),
+    };
+    (global as any).window = { localStorage: mockStorage };
+
+    expect(getRecentAppIds()).toEqual([1, 2, 3]);
+    expect(mockStorage.getItem).toHaveBeenCalledWith(RECENT_APP_STORAGE_KEY);
+
+    (global as any).window = originalWindow;
+  });
+
+  test('getRecentAppIds should return empty array on invalid JSON', () => {
+    const mockStorage = {
+      getItem: mock(() => 'invalid json'),
+    };
+    (global as any).window = { localStorage: mockStorage };
+
+    expect(getRecentAppIds()).toEqual([]);
+
+    (global as any).window = originalWindow;
+  });
+
+  test('getRecentAppIds should return empty array when parsed value is not an array', () => {
+    const mockStorage = {
+      getItem: mock(() => JSON.stringify({ a: 1 })),
+    };
+    (global as any).window = { localStorage: mockStorage };
+
+    expect(getRecentAppIds()).toEqual([]);
+
+    (global as any).window = originalWindow;
+  });
+
+  test('getRecentAppIds should filter out non-integer values', () => {
+    const mockStorage = {
+      getItem: mock(() => JSON.stringify([1, '2', 3.5, 4])),
+    };
+    (global as any).window = { localStorage: mockStorage };
+
+    expect(getRecentAppIds()).toEqual([1, 4]);
+
+    (global as any).window = originalWindow;
+  });
+
+  test('rememberRecentApp should add appId to the front and limit count', () => {
+    let storage: Record<string, string> = {
+      [RECENT_APP_STORAGE_KEY]: JSON.stringify([2, 1]),
+    };
+    const mockStorage = {
+      getItem: mock((key: string) => storage[key] ?? null),
+      setItem: mock((key: string, value: string) => {
+        storage[key] = value;
+      }),
+    };
+    (global as any).window = {
+      localStorage: mockStorage,
+    };
+
+    const result = rememberRecentApp(3);
+    expect(result).toEqual([3, 2, 1]);
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      RECENT_APP_STORAGE_KEY,
+      JSON.stringify([3, 2, 1]),
+    );
+
+    // Test deduplication
+    const result2 = rememberRecentApp(2);
+    expect(result2).toEqual([2, 3, 1]);
+
+    // Test limit
+    storage[RECENT_APP_STORAGE_KEY] = JSON.stringify([1, 2, 3, 4, 5, 6]);
+    const result3 = rememberRecentApp(7);
+    expect(result3.length).toBe(MAX_RECENT_APP_COUNT);
+    expect(result3).toEqual([7, 1, 2, 3, 4, 5]);
+
+    (global as any).window = originalWindow;
+  });
+
+  test('rememberRecentApp should return empty array when window is undefined', () => {
+    (global as any).window = undefined;
+    expect(rememberRecentApp(1)).toEqual([]);
+    (global as any).window = originalWindow;
+  });
+
+  test('rememberRecentApp should return empty array when appId is not an integer', () => {
+    const mockStorage = {
+      getItem: mock(() => JSON.stringify([])),
+      setItem: mock(() => {}),
+    };
+    (global as any).window = { localStorage: mockStorage };
+
+    expect(rememberRecentApp(1.5)).toEqual([]);
+    expect(mockStorage.setItem).not.toHaveBeenCalled();
+
+    (global as any).window = originalWindow;
   });
 });
