@@ -2,6 +2,11 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Alert, Progress, Tag, Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { quotas } from '@/constants/quotas';
+import {
+  CHECK_QUOTA_LOW_RATIO,
+  getCheckQuotaWarningState,
+} from '@/utils/check-quota-warning';
+import { cn } from '@/utils/helper';
 import { useUserInfo } from '@/utils/hooks';
 
 const { Text } = Typography;
@@ -17,14 +22,11 @@ const useDailyCheckQuotaState = () => {
     : undefined;
   const dailyQuota = quota?.pv;
   const remaining = user?.checkQuota;
-  const hasData = !!dailyQuota && typeof remaining === 'number';
+  const warningState = getCheckQuotaWarningState({
+    dailyQuota,
+    remaining,
+  });
 
-  const remainingRatio = hasData ? remaining / dailyQuota : 0;
-  const percent = Math.max(0, Math.min(100, remainingRatio * 100));
-  const isExceeded = hasData && remaining <= 0;
-  const isLow = !isExceeded && remainingRatio <= 0.2;
-  const status: 'exception' | 'normal' =
-    isExceeded || isLow ? 'exception' : 'normal';
   const tooltip = (
     <div className="text-xs">
       {user && (
@@ -43,14 +45,16 @@ const useDailyCheckQuotaState = () => {
           </div>
         </>
       )}
-      {hasData && (
+      {warningState.hasData && (
         <>
           <div>
-            今日剩余额度：{Math.max(0, remaining).toLocaleString()} /{' '}
-            {dailyQuota.toLocaleString()} 次
+            今日剩余额度：{warningState.remaining.toLocaleString()} /{' '}
+            {warningState.dailyQuota.toLocaleString()} 次
           </div>
-          {remaining < 0 && (
-            <div>已超出：{Math.abs(remaining).toLocaleString()} 次</div>
+          {warningState.remaining < 0 && (
+            <div className="font-medium text-red-200">
+              已超出：{Math.abs(warningState.remaining).toLocaleString()} 次
+            </div>
           )}
         </>
       )}
@@ -61,11 +65,7 @@ const useDailyCheckQuotaState = () => {
   );
 
   return {
-    hasData,
-    isExceeded,
-    isLow,
-    percent,
-    status,
+    ...warningState,
     tooltip,
     user,
   };
@@ -98,25 +98,61 @@ export function DailyCheckQuotaUserTrigger({
   const warningIcon = (quotaState.isExceeded || quotaState.isLow) && (
     <WarningOutlined
       className={`shrink-0 ${
-        quotaState.isExceeded ? 'text-red-500' : 'text-amber-500'
+        quotaState.isExceeded ? 'animate-pulse text-red-600' : 'text-amber-500'
       }`}
     />
   );
+  const warningFrameClass = quotaState.isExceeded
+    ? 'rounded-lg bg-red-50 ring-1 ring-red-300 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]'
+    : quotaState.isLow
+      ? 'rounded-lg bg-amber-50 ring-1 ring-amber-300 shadow-[0_0_0_3px_rgba(245,158,11,0.12)]'
+      : undefined;
+  const compactWarningFrameClass = cn(
+    warningFrameClass,
+    quotaState.isWarning ? 'px-1.5' : undefined,
+  );
+  const wideWarningFrameClass = cn(
+    warningFrameClass,
+    quotaState.isWarning ? 'px-2 py-1' : undefined,
+  );
+  const nameClass = quotaState.isExceeded
+    ? 'text-red-700'
+    : quotaState.isLow
+      ? 'text-amber-700'
+      : compact
+        ? 'text-slate-600'
+        : 'text-slate-800';
   const progress = quotaState.hasData && (
     <Progress
       className="mt-0.5"
       percent={quotaState.percent}
       showInfo={false}
       size="small"
-      status={quotaState.status}
+      status={quotaState.progressStatus}
       strokeColor={strokeColor}
-      trailColor="#e5e7eb"
+      trailColor={
+        quotaState.isExceeded
+          ? '#fecaca'
+          : quotaState.isLow
+            ? '#fde68a'
+            : '#e5e7eb'
+      }
     />
   );
   const content = compact ? (
-    <span className="flex h-10 w-16 min-w-0 flex-col justify-center text-left">
+    <span
+      className={cn(
+        'flex h-10 w-16 min-w-0 flex-col justify-center text-left',
+        compactWarningFrameClass,
+      )}
+    >
       <span className="flex min-w-0 items-center gap-1">
-        <span className="truncate font-medium text-[11px] text-slate-600 leading-4">
+        <span
+          className={cn(
+            'truncate font-medium text-[11px] leading-4',
+            nameClass,
+          )}
+        >
           {userName}
         </span>
         {warningIcon}
@@ -124,9 +160,19 @@ export function DailyCheckQuotaUserTrigger({
       {progress}
     </span>
   ) : (
-    <span className="flex min-w-0 items-center gap-2.5 text-left">
+    <span
+      className={cn(
+        'flex min-w-0 items-center gap-2.5 text-left',
+        wideWarningFrameClass,
+      )}
+    >
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium text-slate-800 text-sm leading-5">
+        <span
+          className={cn(
+            'block truncate font-medium text-sm leading-5',
+            nameClass,
+          )}
+        >
           {userName}
         </span>
         {showPlanDetails && user && (
@@ -163,19 +209,58 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
   }
 
   const message = quotaState.isExceeded
-    ? '今日检查额度已用尽，请升级套餐或等待每日额度重置。'
+    ? quotaState.remaining < 0
+      ? `今日检查额度已超出 ${Math.abs(quotaState.remaining).toLocaleString()} 次，客户端检查可能返回空数据。`
+      : '今日检查额度已用尽，请升级套餐或等待每日额度重置。'
     : quotaState.isLow
-      ? '今日检查额度偏低，继续发布或大量客户端查询时需要留意。'
+      ? `今日检查额度只剩 ${quotaState.remaining.toLocaleString()} 次，低于 ${Math.round(
+          CHECK_QUOTA_LOW_RATIO * 100,
+        )}%，请留意客户端检查频率。`
       : '今日检查额度状态正常。';
+  const panelClassName = quotaState.isExceeded
+    ? 'border-red-300 bg-red-50 shadow-[0_0_0_3px_rgba(239,68,68,0.10)]'
+    : quotaState.isLow
+      ? 'border-amber-300 bg-amber-50 shadow-[0_0_0_3px_rgba(245,158,11,0.12)]'
+      : 'border-slate-200 bg-slate-50';
+  const remainingClassName = quotaState.isExceeded
+    ? 'text-red-700'
+    : quotaState.isLow
+      ? 'text-amber-700'
+      : 'text-slate-900';
+  const quotaTag =
+    quotaState.isExceeded && quotaState.remaining < 0
+      ? '已超额'
+      : quotaState.isExceeded
+        ? '已用尽'
+        : quotaState.isLow
+          ? '偏低'
+          : '正常';
+  const progressStrokeColor = quotaState.isExceeded
+    ? '#ef4444'
+    : quotaState.isLow
+      ? '#f59e0b'
+      : '#2563eb';
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className={cn('rounded-lg border p-4', panelClassName)}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="font-medium">每日检查额度</div>
-            <div className="text-gray-500 text-sm">
-              客户端检查热更新时消耗，按账户下所有应用合并计算，每日重置。
+          <div className="flex items-start gap-2">
+            {quotaState.isWarning && (
+              <WarningOutlined
+                className={cn(
+                  'mt-0.5 shrink-0 text-lg',
+                  quotaState.isExceeded
+                    ? 'animate-pulse text-red-600'
+                    : 'text-amber-500',
+                )}
+              />
+            )}
+            <div>
+              <div className="font-medium">每日检查额度</div>
+              <div className="text-gray-500 text-sm">
+                客户端检查热更新时消耗，按账户下所有应用合并计算，每日重置。
+              </div>
             </div>
           </div>
           <Tag
@@ -186,25 +271,56 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
                   ? 'orange'
                   : 'green'
             }
+            className="m-0"
           >
-            {quotaState.isExceeded
-              ? '已用尽'
-              : quotaState.isLow
-                ? '偏低'
-                : '正常'}
+            {quotaTag}
           </Tag>
+        </div>
+        <div className="mb-3 grid gap-2 rounded-md bg-white/75 p-3 sm:grid-cols-3">
+          <div>
+            <div className="text-[11px] text-gray-500">今日剩余额度</div>
+            <div
+              className={cn(
+                'mt-0.5 font-semibold text-lg tabular-nums',
+                remainingClassName,
+              )}
+            >
+              {quotaState.remaining.toLocaleString()}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] text-gray-500">每日上限</div>
+            <div className="mt-0.5 font-medium text-slate-700 tabular-nums">
+              {quotaState.dailyQuota.toLocaleString()} 次
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] text-gray-500">状态</div>
+            <div className="text-gray-500 text-sm">
+              {quotaState.remaining < 0
+                ? `已超出 ${Math.abs(quotaState.remaining).toLocaleString()} 次`
+                : `${quotaState.percent.toFixed(0)}% 剩余`}
+            </div>
+          </div>
         </div>
         <Tooltip title={quotaState.tooltip}>
           <Progress
             percent={quotaState.percent}
             showInfo={false}
-            status={quotaState.status}
+            status={quotaState.progressStatus}
+            strokeColor={progressStrokeColor}
             strokeLinecap="round"
+            trailColor={
+              quotaState.isExceeded
+                ? '#fecaca'
+                : quotaState.isLow
+                  ? '#fde68a'
+                  : undefined
+            }
           />
         </Tooltip>
         <div className="mt-2 text-gray-500 text-xs">
-          页面不直接展示具体次数；鼠标悬停进度条可查看剩余额度、套餐上限和 7
-          日平均。
+          鼠标悬停进度条可查看套餐、到期时间和最近 7 日平均剩余额度。
         </div>
       </div>
       {(quotaState.isExceeded || quotaState.isLow) && (

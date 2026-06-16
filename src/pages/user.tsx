@@ -1,4 +1,8 @@
-import { AlipayCircleOutlined, LogoutOutlined } from '@ant-design/icons';
+import {
+  AlipayCircleOutlined,
+  LogoutOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
 import {
@@ -25,7 +29,11 @@ import {
   getBillingOptions,
   resolveMonthlyPriceFactor,
 } from '@/utils/billing';
-import { isValidExternalUrl } from '@/utils/helper';
+import {
+  CHECK_QUOTA_LOW_RATIO,
+  getCheckQuotaWarningState,
+} from '@/utils/check-quota-warning';
+import { cn, isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { PRICING_LINK } from '../constants/links';
 import { products, quotas } from '../constants/quotas';
@@ -563,39 +571,105 @@ function QuotaDetailsPanel({
   rows: QuotaUsageRow[];
   sizeLimits: Array<{ label: string; value: string }>;
 }) {
-  const remainingPercent =
-    typeof remainingChecks === 'number'
-      ? Math.max(0, Math.min(100, (remainingChecks / dailyQuota) * 100))
-      : 0;
-  const status =
-    remainingChecks !== undefined && remainingChecks <= 0
-      ? 'exception'
-      : 'normal';
+  const quotaWarning = getCheckQuotaWarningState({
+    dailyQuota,
+    remaining: remainingChecks,
+  });
+  const remainingPercent = quotaWarning.percent;
+  const status = quotaWarning.progressStatus;
+  const displayRemaining =
+    typeof remainingChecks === 'number' ? remainingChecks : dailyQuota;
+  const panelClassName = quotaWarning.isExceeded
+    ? 'border-red-300 shadow-[0_0_0_3px_rgba(239,68,68,0.10)]'
+    : quotaWarning.isLow
+      ? 'border-amber-300 shadow-[0_0_0_3px_rgba(245,158,11,0.12)]'
+      : 'border-slate-200';
+  const headerClassName = quotaWarning.isExceeded
+    ? 'border-red-100 bg-red-50'
+    : quotaWarning.isLow
+      ? 'border-amber-100 bg-amber-50'
+      : 'border-slate-100 bg-gradient-to-br from-slate-50 to-white';
+  const remainingClassName = quotaWarning.isExceeded
+    ? 'text-red-700'
+    : quotaWarning.isLow
+      ? 'text-amber-700'
+      : 'text-slate-900';
+  const warningTag =
+    quotaWarning.isExceeded && displayRemaining < 0
+      ? '已超额'
+      : quotaWarning.isExceeded
+        ? '已用尽'
+        : quotaWarning.isLow
+          ? '偏低'
+          : undefined;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="grid items-stretch gap-4 border-slate-100 border-b bg-gradient-to-br from-slate-50 to-white p-4 lg:grid-cols-2">
+    <div
+      className={cn(
+        'overflow-hidden rounded-xl border bg-white',
+        panelClassName,
+      )}
+    >
+      <div
+        className={cn(
+          'grid items-stretch gap-4 border-b p-4 lg:grid-cols-2',
+          headerClassName,
+        )}
+      >
         <div className="flex min-h-[150px] flex-col">
           <div className="flex items-center justify-between gap-2">
-            <div>
-              <div className="font-medium text-slate-900">每日检查额度</div>
-              <div className="mt-0.5 text-slate-500 text-xs">
-                客户端检查热更新时消耗，按账户全部应用汇总。
+            <div className="flex items-start gap-2">
+              {quotaWarning.isWarning && (
+                <WarningOutlined
+                  className={cn(
+                    'mt-0.5 shrink-0 text-lg',
+                    quotaWarning.isExceeded
+                      ? 'animate-pulse text-red-600'
+                      : 'text-amber-500',
+                  )}
+                />
+              )}
+              <div>
+                <div className="font-medium text-slate-900">每日检查额度</div>
+                <div className="mt-0.5 text-slate-500 text-xs">
+                  客户端检查热更新时消耗，按账户全部应用汇总。
+                </div>
               </div>
             </div>
-            {status === 'exception' && <Tag color="red">超额</Tag>}
+            {warningTag && (
+              <Tag
+                color={quotaWarning.isExceeded ? 'red' : 'orange'}
+                className="m-0"
+              >
+                {warningTag}
+              </Tag>
+            )}
           </div>
           <div className="mt-4">
             <div>
               <div className="text-[11px] text-gray-500">今日剩余额度</div>
-              <div className="mt-1 font-semibold text-2xl leading-none tabular-nums">
-                {remainingChecks === undefined
-                  ? dailyQuota.toLocaleString()
-                  : Math.max(0, remainingChecks).toLocaleString()}
+              <div
+                className={cn(
+                  'mt-1 font-semibold text-2xl leading-none tabular-nums',
+                  remainingClassName,
+                )}
+              >
+                {displayRemaining.toLocaleString()}
               </div>
               <div className="mt-1 text-gray-500 text-xs">
                 上限 {dailyQuota.toLocaleString()} 次 / 日
               </div>
+              {quotaWarning.isExceeded && displayRemaining < 0 && (
+                <div className="mt-1 font-medium text-red-600 text-xs">
+                  已超出 {Math.abs(displayRemaining).toLocaleString()} 次
+                </div>
+              )}
+              {quotaWarning.isLow && (
+                <div className="mt-1 font-medium text-amber-700 text-xs">
+                  低于 {Math.round(CHECK_QUOTA_LOW_RATIO * 100)}
+                  %，请留意检查频率
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-5">
@@ -605,6 +679,20 @@ function QuotaDetailsPanel({
               showInfo={false}
               size="small"
               status={status}
+              strokeColor={
+                quotaWarning.isExceeded
+                  ? '#ef4444'
+                  : quotaWarning.isLow
+                    ? '#f59e0b'
+                    : undefined
+              }
+              trailColor={
+                quotaWarning.isExceeded
+                  ? '#fecaca'
+                  : quotaWarning.isLow
+                    ? '#fde68a'
+                    : undefined
+              }
             />
           </div>
         </div>
@@ -686,13 +774,22 @@ function MiniQuotaBars({
       {bars.length > 0 ? (
         <div className="mt-2 flex flex-1 items-end gap-1.5">
           {bars.map((bar) => {
+            const quotaWarning = getCheckQuotaWarningState({
+              dailyQuota,
+              remaining: bar.value,
+            });
             const percent =
               dailyQuota > 0
                 ? Math.max(
-                    bar.value > 0 ? 4 : 0,
+                    bar.value <= 0 ? 6 : 4,
                     Math.min(100, (Math.max(0, bar.value) / dailyQuota) * 100),
                   )
                 : 0;
+            const barClassName = quotaWarning.isExceeded
+              ? 'bg-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.24)] hover:bg-red-600'
+              : quotaWarning.isLow
+                ? 'bg-amber-500 hover:bg-amber-600'
+                : 'bg-blue-500 hover:bg-blue-600';
             return (
               <div
                 className="flex h-full min-w-0 flex-1 flex-col items-center"
@@ -703,7 +800,10 @@ function MiniQuotaBars({
                     title={`${bar.dateLabel}：${bar.value.toLocaleString()} ${tooltipSuffix}`}
                   >
                     <div
-                      className="w-full rounded bg-blue-500 transition-colors hover:bg-blue-600"
+                      className={cn(
+                        'w-full rounded transition-colors',
+                        barClassName,
+                      )}
                       style={{ height: `${percent}%` }}
                     />
                   </Tooltip>
@@ -725,7 +825,7 @@ function MiniQuotaBars({
 }
 
 function formatOptionalNumber(value?: number) {
-  return typeof value === 'number' ? Math.max(0, value).toLocaleString() : '-';
+  return typeof value === 'number' ? value.toLocaleString() : '-';
 }
 
 function formatQuotaDateLabel(daysAgo: number) {
