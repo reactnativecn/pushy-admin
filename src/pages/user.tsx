@@ -4,11 +4,9 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import type { MenuProps } from 'antd';
 import {
   Button,
   Descriptions,
-  Dropdown,
   Grid,
   message,
   Popover,
@@ -18,7 +16,7 @@ import {
   Tag,
   Tooltip,
 } from 'antd';
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
 import {
@@ -39,6 +37,21 @@ import { cn, isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { PRICING_LINK } from '../constants/links';
 import { products, quotas } from '../constants/quotas';
+
+type ProductTier = keyof typeof products;
+type PurchasableTier = Exclude<ProductTier, 'free' | 'custom'>;
+
+const purchasableTiers: Array<{
+  label: string;
+  tier: PurchasableTier;
+}> = [
+  { label: '标准版', tier: 'standard' },
+  { label: '高级版', tier: 'premium' },
+  { label: '专业版', tier: 'pro' },
+  { label: '大客户VIP1版', tier: 'vip1' },
+  { label: '大客户VIP2版', tier: 'vip2' },
+  { label: '大客户VIP3版', tier: 'vip3' },
+];
 
 const InvoiceHint = (
   <div>
@@ -195,18 +208,25 @@ function BillingMonthsSelect({
   );
 }
 
-const PurchaseButton = ({
-  tier,
-  children,
-}: {
-  tier: keyof typeof products;
-  children: ReactNode;
-}) => {
+const PurchaseButton = ({ tier }: { tier: ProductTier }) => {
   const [loading, setLoading] = useState(false);
   const [months, setMonths] = useState(ANNUAL_BILLING_MONTHS);
+  const tierOptions = [
+    {
+      label: products[tier]?.title ?? tier,
+      value: tier,
+    },
+  ];
 
   return (
-    <div className="mt-2 flex w-full flex-col gap-2 sm:w-auto sm:flex-row md:mt-0 md:ml-6">
+    <div className="mt-2 grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_auto] sm:items-start md:mt-0 md:ml-6">
+      <Select
+        aria-label="选择服务版本"
+        className="w-full"
+        disabled={loading}
+        options={tierOptions}
+        value={tier}
+      />
       <BillingMonthsSelect
         disabled={loading}
         onChange={setMonths}
@@ -229,13 +249,13 @@ const PurchaseButton = ({
           }
         }}
       >
-        {loading ? '跳转至支付页面' : children}
+        {loading ? '跳转至支付页面' : '购买'}
       </Button>
     </div>
   );
 };
 
-const UpgradeDropdown = ({
+const UpgradePurchaseControls = ({
   currentQuota,
   currentTier,
   tierExpiresAt,
@@ -248,34 +268,25 @@ const UpgradeDropdown = ({
   const [months, setMonths] = useState(ANNUAL_BILLING_MONTHS);
   const billingConfig = useOrderBillingConfig();
 
-  // 获取所有可升级的版本
-  const getUpgradeOptions = () => {
-    const allTiers = [
-      { key: 'standard', title: '升级标准版', tier: 'standard' },
-      { key: 'premium', title: '升级高级版', tier: 'premium' },
-      { key: 'pro', title: '升级专业版', tier: 'pro' },
-      { key: 'vip1', title: '升级大客户VIP1版', tier: 'vip1' },
-      { key: 'vip2', title: '升级大客户VIP2版', tier: 'vip2' },
-      { key: 'vip3', title: '升级大客户VIP3版', tier: 'vip3' },
-    ];
-
-    return allTiers.filter(
-      (option) =>
-        currentQuota.pv < quotas[option.tier as keyof typeof quotas].pv,
-    );
-  };
-
-  const upgradeOptions = getUpgradeOptions();
+  const upgradeOptions = purchasableTiers.filter(
+    (option) => currentQuota.pv < quotas[option.tier].pv,
+  );
+  const [targetTier, setTargetTier] = useState<PurchasableTier | undefined>(
+    upgradeOptions[0]?.tier,
+  );
 
   if (upgradeOptions.length === 0) {
     return null; // 没有可升级的版本
   }
 
-  const getUpgradePriceText = (targetTier: keyof typeof products) => {
-    const targetAnnualPrice = getConfiguredProductPrice(
-      targetTier,
-      billingConfig,
-    );
+  const selectedTier = upgradeOptions.some(
+    (option) => option.tier === targetTier,
+  )
+    ? targetTier
+    : upgradeOptions[0]?.tier;
+
+  const getUpgradePriceText = (tier: ProductTier) => {
+    const targetAnnualPrice = getConfiguredProductPrice(tier, billingConfig);
 
     if (currentTier === 'free') {
       const plan = resolveBillingPlan(
@@ -302,80 +313,62 @@ const UpgradeDropdown = ({
     return amount === null ? '按订单结算' : `补差价 ${formatMoney(amount)}`;
   };
 
-  const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
+  const handlePurchaseClick = async () => {
+    if (!selectedTier) return;
+
     setLoading(true);
     try {
-      await purchase(
-        key as keyof typeof products,
-        currentTier === 'free' ? months : undefined,
-      );
+      await purchase(selectedTier, currentTier === 'free' ? months : undefined);
     } finally {
       setLoading(false);
     }
   };
 
-  const menuItems: MenuProps['items'] = upgradeOptions.map((option) => ({
-    key: option.tier,
-    label: (
-      <span className="flex flex-col leading-tight">
-        <span>{option.title}</span>
-        <span className="mt-0.5 text-gray-500 text-xs">
-          {getUpgradePriceText(option.tier as keyof typeof products)}
-        </span>
-      </span>
-    ),
-    icon: <AlipayCircleOutlined />,
+  const targetTierOptions = upgradeOptions.map((option) => ({
+    label: option.label,
+    value: option.tier,
   }));
-
-  const handleMainButtonClick = async () => {
-    // 点击主按钮时，选择第一个可升级的版本
-    if (upgradeOptions.length > 0) {
-      setLoading(true);
-      try {
-        await purchase(
-          upgradeOptions[0].tier as keyof typeof products,
-          currentTier === 'free' ? months : undefined,
-        );
-      } finally {
-        setLoading(false);
+  const upgradePriceOption = selectedTier
+    ? {
+        label: getUpgradePriceText(selectedTier),
+        value: selectedTier,
       }
-    }
-  };
-
-  const defaultTargetTier = upgradeOptions[0]?.tier as
-    | keyof typeof products
-    | undefined;
-  const shouldSelectBillingMonths =
-    currentTier === 'free' && defaultTargetTier !== undefined;
-  const defaultUpgradePriceText = defaultTargetTier
-    ? getUpgradePriceText(defaultTargetTier)
     : undefined;
-  const defaultUpgradeTitle = upgradeOptions[0]?.title
-    ? `${upgradeOptions[0].title}${defaultUpgradePriceText ? `（${defaultUpgradePriceText}）` : ''}`
-    : '升级服务';
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-      {shouldSelectBillingMonths && (
+    <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_auto] sm:items-start">
+      <Select
+        aria-label="选择升级版本"
+        className="w-full"
+        disabled={loading}
+        onChange={setTargetTier}
+        options={targetTierOptions}
+        value={selectedTier}
+      />
+      {currentTier === 'free' && selectedTier ? (
         <BillingMonthsSelect
           disabled={loading}
           onChange={setMonths}
-          tier={defaultTargetTier}
+          tier={selectedTier}
           value={months}
         />
+      ) : (
+        <Select
+          aria-label="选择付款金额"
+          className="w-full"
+          disabled={loading}
+          options={upgradePriceOption ? [upgradePriceOption] : []}
+          value={upgradePriceOption?.value}
+        />
       )}
-      <Dropdown.Button
-        className="shrink-0"
+      <Button
+        className="w-full justify-center sm:w-auto"
         icon={<AlipayCircleOutlined />}
         loading={loading}
-        menu={{
-          items: menuItems,
-          onClick: handleMenuClick,
-        }}
-        onClick={handleMainButtonClick}
+        onClick={handlePurchaseClick}
       >
-        {loading ? '跳转至支付页面' : defaultUpgradeTitle}
-      </Dropdown.Button>
+        {loading ? '跳转至支付页面' : '购买'}
+      </Button>
     </div>
   );
 };
@@ -516,7 +509,7 @@ function UserPanel() {
           <div className="flex items-center gap-4">
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
-              <UpgradeDropdown
+              <UpgradePurchaseControls
                 currentQuota={defaultQuota}
                 currentTier={tier}
                 tierExpiresAt={user.tierExpiresAt}
@@ -532,7 +525,7 @@ function UserPanel() {
                   <span>{displayExpireDay}</span>
                   {tier !== 'free' && (
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                      <PurchaseButton tier={tier}>续费</PurchaseButton>
+                      <PurchaseButton tier={tier} />
                     </div>
                   )}
                 </div>
@@ -543,7 +536,7 @@ function UserPanel() {
                 <span>无</span>
                 {tier !== 'free' && (
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                    <PurchaseButton tier={tier}>续费</PurchaseButton>
+                    <PurchaseButton tier={tier} />
                   </div>
                 )}
               </div>
