@@ -27,7 +27,9 @@ import {
   DEFAULT_MONTHLY_PRICE_FACTOR,
   getAnnualSavings,
   getBillingOptions,
+  resolveBillingPlan,
   resolveMonthlyPriceFactor,
+  resolveProratedUpgradeAmount,
 } from '@/utils/billing';
 import {
   CHECK_QUOTA_LOW_RATIO,
@@ -68,12 +70,16 @@ function useOrderBillingConfig() {
     retry: false,
     staleTime: 5 * 60_000,
   });
+  const productPrices = Object.fromEntries(
+    data?.tiers?.map((tier) => [tier.key, tier.annualPrice]) ?? [],
+  ) as Partial<Record<keyof typeof products, number>>;
 
   return {
     annualBillingMonths: data?.annualBillingMonths ?? ANNUAL_BILLING_MONTHS,
     monthlyPriceFactor: resolveMonthlyPriceFactor(
       data?.monthlyPriceFactor ?? DEFAULT_MONTHLY_PRICE_FACTOR,
     ),
+    productPrices,
   };
 }
 
@@ -91,6 +97,13 @@ function formatBillingOptionText(option: BillingOption, showAmount = true) {
     return `年付（${option.billingMonths}个月${amount}）`;
   }
   return `${option.billingMonths}个月${showAmount ? `（${formatMoney(option.amount)}）` : ''}`;
+}
+
+function getConfiguredProductPrice(
+  tier: keyof typeof products,
+  billingConfig: ReturnType<typeof useOrderBillingConfig>,
+) {
+  return billingConfig.productPrices[tier] ?? products[tier].price;
 }
 
 function BillingOptionLabel({
@@ -128,12 +141,12 @@ function BillingMonthsSelect({
   value: number;
 }) {
   const billingConfig = useOrderBillingConfig();
-  const product = products[tier];
+  const annualPrice = getConfiguredProductPrice(tier, billingConfig);
   const options =
-    product.price > 0
+    annualPrice > 0
       ? getBillingOptions({
           annualBillingMonths: billingConfig.annualBillingMonths,
-          annualPrice: product.price,
+          annualPrice,
           monthlyPriceFactor: billingConfig.monthlyPriceFactor,
         })
       : [];
@@ -225,12 +238,15 @@ const PurchaseButton = ({
 const UpgradeDropdown = ({
   currentQuota,
   currentTier,
+  tierExpiresAt,
 }: {
   currentQuota: (typeof quotas)[keyof typeof quotas];
   currentTier: Tier;
+  tierExpiresAt?: string;
 }) => {
   const [loading, setLoading] = useState(false);
   const [months, setMonths] = useState(ANNUAL_BILLING_MONTHS);
+  const billingConfig = useOrderBillingConfig();
 
   // 获取所有可升级的版本
   const getUpgradeOptions = () => {
@@ -255,6 +271,37 @@ const UpgradeDropdown = ({
     return null; // 没有可升级的版本
   }
 
+  const getUpgradePriceText = (targetTier: keyof typeof products) => {
+    const targetAnnualPrice = getConfiguredProductPrice(
+      targetTier,
+      billingConfig,
+    );
+
+    if (currentTier === 'free') {
+      const plan = resolveBillingPlan(
+        targetAnnualPrice,
+        months,
+        billingConfig.monthlyPriceFactor,
+      );
+      return formatMoney(plan.amount);
+    }
+
+    const currentAnnualPrice =
+      currentTier in products
+        ? getConfiguredProductPrice(
+            currentTier as keyof typeof products,
+            billingConfig,
+          )
+        : undefined;
+    const amount = resolveProratedUpgradeAmount({
+      currentAnnualPrice,
+      expiresAt: tierExpiresAt,
+      targetAnnualPrice,
+    });
+
+    return amount === null ? '按订单结算' : `补差价 ${formatMoney(amount)}`;
+  };
+
   const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
     setLoading(true);
     try {
@@ -269,7 +316,14 @@ const UpgradeDropdown = ({
 
   const menuItems: MenuProps['items'] = upgradeOptions.map((option) => ({
     key: option.tier,
-    label: option.title,
+    label: (
+      <span className="flex flex-col leading-tight">
+        <span>{option.title}</span>
+        <span className="mt-0.5 text-gray-500 text-xs">
+          {getUpgradePriceText(option.tier as keyof typeof products)}
+        </span>
+      </span>
+    ),
     icon: <AlipayCircleOutlined />,
   }));
 
@@ -293,6 +347,12 @@ const UpgradeDropdown = ({
     | undefined;
   const shouldSelectBillingMonths =
     currentTier === 'free' && defaultTargetTier !== undefined;
+  const defaultUpgradePriceText = defaultTargetTier
+    ? getUpgradePriceText(defaultTargetTier)
+    : undefined;
+  const defaultUpgradeTitle = upgradeOptions[0]?.title
+    ? `${upgradeOptions[0].title}${defaultUpgradePriceText ? `（${defaultUpgradePriceText}）` : ''}`
+    : '升级服务';
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -300,7 +360,6 @@ const UpgradeDropdown = ({
         <BillingMonthsSelect
           disabled={loading}
           onChange={setMonths}
-          showAmount={false}
           tier={defaultTargetTier}
           value={months}
         />
@@ -315,7 +374,7 @@ const UpgradeDropdown = ({
         }}
         onClick={handleMainButtonClick}
       >
-        {loading ? '跳转至支付页面' : upgradeOptions[0]?.title || '升级服务'}
+        {loading ? '跳转至支付页面' : defaultUpgradeTitle}
       </Dropdown.Button>
     </div>
   );
@@ -457,7 +516,11 @@ function UserPanel() {
           <div className="flex items-center gap-4">
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
-              <UpgradeDropdown currentQuota={defaultQuota} currentTier={tier} />
+              <UpgradeDropdown
+                currentQuota={defaultQuota}
+                currentTier={tier}
+                tierExpiresAt={user.tierExpiresAt}
+              />
             )}
           </div>
         </Descriptions.Item>

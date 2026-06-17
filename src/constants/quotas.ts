@@ -71,7 +71,7 @@ export const products = {
     summary: 'Pushy 热更新服务免费版',
   },
   standard: {
-    price: 800,
+    price: 960,
     title: 'Pushy 热更新服务标准版',
     summary: 'Pushy 热更新服务标准版一年期服务',
   },

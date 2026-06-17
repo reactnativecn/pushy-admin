@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import dayjs from 'dayjs';
 import {
   DEFAULT_MONTHLY_PRICE_FACTOR,
   getAnnualSavings,
@@ -7,6 +8,7 @@ import {
   resolveBillingPlan,
   resolveMonthlyPrice,
   resolveMonthlyPriceFactor,
+  resolveProratedUpgradeAmount,
 } from './billing';
 
 // ─── resolveMonthlyPriceFactor ──────────────────────────────────────
@@ -41,9 +43,7 @@ describe('resolveMonthlyPriceFactor', () => {
   });
 
   test('returns default factor for string', () => {
-    expect(resolveMonthlyPriceFactor('abc')).toBe(
-      DEFAULT_MONTHLY_PRICE_FACTOR,
-    );
+    expect(resolveMonthlyPriceFactor('abc')).toBe(DEFAULT_MONTHLY_PRICE_FACTOR);
   });
 
   test('returns custom factor for valid positive number', () => {
@@ -357,5 +357,38 @@ describe('getBillingOptions', () => {
       expect(typeof opt.switchedToAnnual).toBe('boolean');
       expect(typeof opt.value).toBe('number');
     }
+  });
+});
+
+describe('resolveProratedUpgradeAmount', () => {
+  test('calculates the upgrade price for remaining service days', () => {
+    expect(
+      resolveProratedUpgradeAmount({
+        currentAnnualPrice: 960,
+        targetAnnualPrice: 2400,
+        expiresAt: dayjs('2026-01-30').toDate(),
+        now: dayjs('2026-01-01'),
+      }),
+    ).toBe(118.36);
+  });
+
+  test('rejects expired or non-upgrade amounts', () => {
+    expect(
+      resolveProratedUpgradeAmount({
+        currentAnnualPrice: 960,
+        targetAnnualPrice: 2400,
+        expiresAt: dayjs('2025-12-31').toDate(),
+        now: dayjs('2026-01-01'),
+      }),
+    ).toBeNull();
+
+    expect(
+      resolveProratedUpgradeAmount({
+        currentAnnualPrice: 2400,
+        targetAnnualPrice: 960,
+        expiresAt: dayjs('2026-01-30').toDate(),
+        now: dayjs('2026-01-01'),
+      }),
+    ).toBeNull();
   });
 });
