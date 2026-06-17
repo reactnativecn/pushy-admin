@@ -52,6 +52,7 @@ const purchasableTiers: Array<{
   { label: '大客户VIP2版', tier: 'vip2' },
   { label: '大客户VIP3版', tier: 'vip3' },
 ];
+const purchaseButtonClassName = 'w-full justify-center sm:w-[160px]';
 
 const InvoiceHint = (
   <div>
@@ -236,7 +237,7 @@ const PurchaseButton = ({ tier }: { tier: ProductTier }) => {
   ];
 
   return (
-    <div className="mt-2 grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_auto] sm:items-start md:mt-0 md:ml-6">
+    <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_160px] sm:items-start">
       <Select
         aria-label="选择服务版本"
         className="w-full"
@@ -251,7 +252,7 @@ const PurchaseButton = ({ tier }: { tier: ProductTier }) => {
         value={months}
       />
       <Button
-        className="w-full justify-center sm:w-auto"
+        className={purchaseButtonClassName}
         icon={<AlipayCircleOutlined />}
         loading={loading}
         onClick={async () => {
@@ -353,7 +354,7 @@ const UpgradePurchaseControls = ({
     : undefined;
 
   return (
-    <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_auto] sm:items-start">
+    <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_160px] sm:items-start">
       <Select
         aria-label="选择升级版本"
         className="w-full"
@@ -379,7 +380,7 @@ const UpgradePurchaseControls = ({
         />
       )}
       <Button
-        className="w-full justify-center sm:w-auto"
+        className={purchaseButtonClassName}
         icon={<AlipayCircleOutlined />}
         loading={loading}
         onClick={handlePurchaseClick}
@@ -523,7 +524,7 @@ function UserPanel() {
           <span className="break-all">{email}</span>
         </Descriptions.Item>
         <Descriptions.Item label="服务版本">
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 flex-col gap-3">
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
               <UpgradePurchaseControls
@@ -650,6 +651,16 @@ function QuotaDetailsPanel({
   tierExpiresAt?: string;
 }) {
   const billingConfig = useOrderBillingConfig();
+  const addonQuota = billingConfig.checkUpdateAddon?.quota ?? 100_000;
+  const baseTier =
+    quota?.base && quota.base in quotas
+      ? quota.base
+      : tier !== 'custom' && tier in quotas
+        ? (tier as keyof typeof quotas)
+        : undefined;
+  const packageQuota = baseTier ? quotas[baseTier].pv : dailyQuota;
+  const packageIncludedQuota = Math.min(dailyQuota, packageQuota);
+  const packageExtraQuota = Math.max(0, dailyQuota - packageIncludedQuota);
   const quotaWarning = getCheckQuotaWarningState({
     dailyQuota,
     remaining: remainingChecks,
@@ -738,6 +749,20 @@ function QuotaDetailsPanel({
               <div className="mt-1 text-gray-500 text-xs">
                 上限 {dailyQuota.toLocaleString()} 次 / 日
               </div>
+              <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                <div className="rounded border border-slate-200 bg-white/70 px-3 py-2">
+                  <div className="text-slate-500">套餐内</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 tabular-nums">
+                    {packageIncludedQuota.toLocaleString()} 次 / 日
+                  </div>
+                </div>
+                <div className="rounded border border-slate-200 bg-white/70 px-3 py-2">
+                  <div className="text-slate-500">套餐外</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 tabular-nums">
+                    {packageExtraQuota.toLocaleString()} 次 / 日
+                  </div>
+                </div>
+              </div>
               {quotaWarning.isExceeded && displayRemaining < 0 && (
                 <div className="mt-1 font-medium text-red-600 text-xs">
                   已超出 {Math.abs(displayRemaining).toLocaleString()} 次
@@ -774,6 +799,17 @@ function QuotaDetailsPanel({
               }
             />
           </div>
+          <CheckUpdateAddonPurchase
+            addonQuota={addonQuota}
+            billingConfig={billingConfig}
+            currentAnnualPrice={resolveCurrentAnnualPrice(
+              tier,
+              quota,
+              billingConfig,
+            )}
+            tier={tier}
+            tierExpiresAt={tierExpiresAt}
+          />
         </div>
         <MiniQuotaBars
           dailyQuota={dailyQuota}
@@ -818,33 +854,25 @@ function QuotaDetailsPanel({
           ))}
         </div>
       </div>
-
-      <CheckUpdateAddonPurchase
-        currentAnnualPrice={resolveCurrentAnnualPrice(
-          tier,
-          quota,
-          billingConfig,
-        )}
-        tier={tier}
-        tierExpiresAt={tierExpiresAt}
-      />
     </div>
   );
 }
 
 function CheckUpdateAddonPurchase({
+  addonQuota,
+  billingConfig,
   currentAnnualPrice,
   tier,
   tierExpiresAt,
 }: {
+  addonQuota: number;
+  billingConfig: ReturnType<typeof useOrderBillingConfig>;
   currentAnnualPrice?: number;
   tier: Tier;
   tierExpiresAt?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [units, setUnits] = useState(1);
-  const billingConfig = useOrderBillingConfig();
-  const addonQuota = billingConfig.checkUpdateAddon?.quota ?? 100_000;
   const monthlyUnitPrice =
     billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
   const annualUnitPrice =
@@ -871,7 +899,7 @@ function CheckUpdateAddonPurchase({
   const unitOptions = Array.from({ length: 10 }, (_, index) => {
     const value = index + 1;
     return {
-      label: `${value} 份（+${(addonQuota * value).toLocaleString()} 次 / 日）`,
+      label: `+${(addonQuota * value).toLocaleString()} 次 / 日`,
       value,
     };
   });
@@ -881,15 +909,18 @@ function CheckUpdateAddonPurchase({
   };
 
   return (
-    <div className="border-slate-100 border-t bg-white px-4 py-4">
-      <div className="mb-3">
-        <div className="font-medium text-slate-900">单独购买检查额度</div>
+    <div className="mt-4 border-slate-200 border-t pt-4">
+      <div className="mb-2">
+        <div className="font-medium text-slate-900 text-sm">
+          单独购买检查额度
+        </div>
         <div className="mt-0.5 text-slate-500 text-xs">
-          每 1 份增加 {addonQuota.toLocaleString()} 次 /
-          日，购买后自动转为定制版。
+          每增加 {addonQuota.toLocaleString()} 次 / 日，每月额外收费{' '}
+          {formatMoney(monthlyUnitPrice)}
+          ，购买后自动转为定制版。
         </div>
       </div>
-      <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(220px,260px)_minmax(180px,220px)_auto] sm:items-start">
+      <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(220px,260px)_minmax(180px,220px)_160px] sm:items-start">
         <Select
           aria-label="选择检查额度数量"
           className="w-full"
@@ -906,7 +937,7 @@ function CheckUpdateAddonPurchase({
           value={amountOption.value}
         />
         <Button
-          className="w-full justify-center sm:w-auto"
+          className={purchaseButtonClassName}
           disabled={needsActivePaidService}
           icon={<AlipayCircleOutlined />}
           loading={loading}

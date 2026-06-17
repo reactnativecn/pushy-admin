@@ -68,6 +68,8 @@ export interface Quota {
   packageSize: string;
   bundle: number;
   bundleSize: string;
+  checkUpdateAddonUnits?: number;
+  monthlyRenewalPrice?: number;
   pv: number;
   price?: number;
 }
