@@ -89,6 +89,7 @@ function useOrderBillingConfig() {
 
   return {
     annualBillingMonths: data?.annualBillingMonths ?? ANNUAL_BILLING_MONTHS,
+    checkUpdateAddon: data?.checkUpdateAddon,
     monthlyPriceFactor: resolveMonthlyPriceFactor(
       data?.monthlyPriceFactor ?? DEFAULT_MONTHLY_PRICE_FACTOR,
     ),
@@ -117,6 +118,22 @@ function getConfiguredProductPrice(
   billingConfig: ReturnType<typeof useOrderBillingConfig>,
 ) {
   return billingConfig.productPrices[tier] ?? products[tier].price;
+}
+
+function resolveCurrentAnnualPrice(
+  tier: Tier,
+  quota: Quota | undefined,
+  billingConfig: ReturnType<typeof useOrderBillingConfig>,
+) {
+  if (tier === 'custom') {
+    return quota?.price;
+  }
+
+  if (tier in products) {
+    return getConfiguredProductPrice(tier as ProductTier, billingConfig);
+  }
+
+  return undefined;
 }
 
 function BillingOptionLabel({
@@ -559,14 +576,13 @@ function UserPanel() {
             dailyQuota={currentQuota.pv}
             last7dAvg={user.last7dAvg}
             last7dCounts={user.last7dCounts}
+            quota={quota}
             remainingChecks={remainingChecks}
             rows={quotaUsageRows}
             sizeLimits={quotaSizeLimits}
+            tier={tier}
+            tierExpiresAt={user.tierExpiresAt}
           />
-          <div className="h-px my-4 w-full max-w-md bg-gray-300" />
-          <div className="text-xm text-gray-500">
-            如有定制需求（限高级版以上），请联系 QQ 客服 34731408
-          </div>
         </Descriptions.Item>
       </Descriptions>
       <br />
@@ -616,17 +632,24 @@ function QuotaDetailsPanel({
   dailyQuota,
   last7dAvg,
   last7dCounts,
+  quota,
   remainingChecks,
   rows,
   sizeLimits,
+  tier,
+  tierExpiresAt,
 }: {
   dailyQuota: number;
   last7dAvg?: number;
   last7dCounts?: number[];
+  quota?: Quota;
   remainingChecks?: number;
   rows: QuotaUsageRow[];
   sizeLimits: Array<{ label: string; value: string }>;
+  tier: Tier;
+  tierExpiresAt?: string;
 }) {
+  const billingConfig = useOrderBillingConfig();
   const quotaWarning = getCheckQuotaWarningState({
     dailyQuota,
     remaining: remainingChecks,
@@ -795,6 +818,110 @@ function QuotaDetailsPanel({
           ))}
         </div>
       </div>
+
+      <CheckUpdateAddonPurchase
+        currentAnnualPrice={resolveCurrentAnnualPrice(
+          tier,
+          quota,
+          billingConfig,
+        )}
+        tier={tier}
+        tierExpiresAt={tierExpiresAt}
+      />
+    </div>
+  );
+}
+
+function CheckUpdateAddonPurchase({
+  currentAnnualPrice,
+  tier,
+  tierExpiresAt,
+}: {
+  currentAnnualPrice?: number;
+  tier: Tier;
+  tierExpiresAt?: string;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [units, setUnits] = useState(1);
+  const billingConfig = useOrderBillingConfig();
+  const addonQuota = billingConfig.checkUpdateAddon?.quota ?? 100_000;
+  const monthlyUnitPrice =
+    billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
+  const annualUnitPrice =
+    billingConfig.checkUpdateAddon?.annualPrice ??
+    monthlyUnitPrice * ANNUAL_BILLING_MONTHS;
+  const isExistingPaidService = tier !== 'free' && !!tierExpiresAt;
+  const targetAnnualPrice = (currentAnnualPrice ?? 0) + annualUnitPrice * units;
+  const proratedAmount =
+    isExistingPaidService && currentAnnualPrice
+      ? resolveProratedUpgradeAmount({
+          currentAnnualPrice,
+          expiresAt: tierExpiresAt,
+          targetAnnualPrice,
+        })
+      : null;
+  const needsActivePaidService =
+    isExistingPaidService && proratedAmount === null;
+  const amountText =
+    proratedAmount !== null
+      ? `补差价 ${formatMoney(proratedAmount)}`
+      : needsActivePaidService
+        ? '请先续费套餐'
+        : `${formatMoney(annualUnitPrice * units)} / 年`;
+  const unitOptions = Array.from({ length: 10 }, (_, index) => {
+    const value = index + 1;
+    return {
+      label: `${value} 份（+${(addonQuota * value).toLocaleString()} 次 / 日）`,
+      value,
+    };
+  });
+  const amountOption = {
+    label: amountText,
+    value: units,
+  };
+
+  return (
+    <div className="border-slate-100 border-t bg-white px-4 py-4">
+      <div className="mb-3">
+        <div className="font-medium text-slate-900">单独购买检查额度</div>
+        <div className="mt-0.5 text-slate-500 text-xs">
+          每 1 份增加 {addonQuota.toLocaleString()} 次 /
+          日，购买后自动转为定制版。
+        </div>
+      </div>
+      <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(220px,260px)_minmax(180px,220px)_auto] sm:items-start">
+        <Select
+          aria-label="选择检查额度数量"
+          className="w-full"
+          disabled={loading}
+          onChange={setUnits}
+          options={unitOptions}
+          value={units}
+        />
+        <Select
+          aria-label="选择检查额度金额"
+          className="w-full"
+          disabled={loading || needsActivePaidService}
+          options={[amountOption]}
+          value={amountOption.value}
+        />
+        <Button
+          className="w-full justify-center sm:w-auto"
+          disabled={needsActivePaidService}
+          icon={<AlipayCircleOutlined />}
+          loading={loading}
+          onClick={async () => {
+            setLoading(true);
+            try {
+              await purchaseCheckUpdateAddon(units);
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
+          {loading ? '跳转至支付页面' : '购买'}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -903,6 +1030,16 @@ function formatShortQuotaDate(date: Date) {
 
 async function purchase(tier: keyof typeof products, months?: number) {
   const orderResponse = await api.createOrder({ months, tier });
+  if (orderResponse?.payUrl && isValidExternalUrl(orderResponse.payUrl)) {
+    window.location.href = orderResponse.payUrl;
+  } else if (orderResponse?.payUrl) {
+    console.error('Invalid payment URL:', orderResponse.payUrl);
+    message.error('支付链接无效');
+  }
+}
+
+async function purchaseCheckUpdateAddon(units: number) {
+  const orderResponse = await api.createOrder({ checkUpdateAddonUnits: units });
   if (orderResponse?.payUrl && isValidExternalUrl(orderResponse.payUrl)) {
     window.location.href = orderResponse.payUrl;
   } else if (orderResponse?.payUrl) {

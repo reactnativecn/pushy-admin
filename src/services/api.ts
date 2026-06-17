@@ -45,6 +45,15 @@ type BillingTier = {
   monthlyPrice: number;
 };
 
+type CheckUpdateAddon = {
+  annualPrice: number;
+  monthlyUnitPrice: number;
+  quota: number;
+  summary: string;
+  targetTier: string;
+  title: string;
+};
+
 export const api = {
   login: (params: { email: string; pwd: string }) =>
     request<{ token: string }>('post', '/user/login', params, {
@@ -242,10 +251,15 @@ export const api = {
   getOrderBillingConfig: () =>
     request<{
       annualBillingMonths: number;
+      checkUpdateAddon?: CheckUpdateAddon;
       monthlyPriceFactor: number;
       tiers: BillingTier[];
     }>('get', '/orders/billing', undefined, { suppressErrorToast: true }),
-  createOrder: (params: { months?: number; tier: string }) =>
+  createOrder: (params: {
+    checkUpdateAddonUnits?: number;
+    months?: number;
+    tier?: string;
+  }) =>
     request<{
       amount?: number | string;
       billing?: {
