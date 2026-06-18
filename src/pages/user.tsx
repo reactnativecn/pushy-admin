@@ -17,6 +17,7 @@ import {
   Tag,
   Tooltip,
 } from 'antd';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
@@ -26,7 +27,6 @@ import {
   resolveBillingPlan,
   resolveMonthlyPriceFactor,
   resolveProratedAdditiveAmount,
-  resolveProratedUpgradeAmount,
 } from '@/utils/billing';
 import {
   CHECK_QUOTA_LOW_RATIO,
@@ -116,10 +116,78 @@ function roundMoneyValue(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+function getRemainingBillableDays(expiresAt?: string, now?: string) {
+  if (!expiresAt) {
+    return null;
+  }
+  const days = dayjs(expiresAt).add(1, 'day').diff(dayjs(now), 'day');
+  return days > 0 ? days : null;
+}
+
+function formatExpireDate(expiresAt?: string) {
+  return expiresAt ? dayjs(expiresAt).format('YYYY年MM月DD日') : '当前到期日';
+}
+
+function getUpgradeProrationDetail({
+  currentAnnualPrice,
+  expiresAt,
+  now,
+  targetAnnualPrice,
+}: {
+  currentAnnualPrice?: number;
+  expiresAt?: string;
+  now?: string;
+  targetAnnualPrice: number;
+}) {
+  if (
+    !currentAnnualPrice ||
+    currentAnnualPrice <= 0 ||
+    currentAnnualPrice >= targetAnnualPrice
+  ) {
+    return null;
+  }
+  const days = getRemainingBillableDays(expiresAt, now);
+  if (!days) {
+    return null;
+  }
+  const annualDelta = roundMoneyValue(targetAnnualPrice - currentAnnualPrice);
+  const amount = roundMoneyValue((annualDelta / 365) * days);
+
+  return {
+    amount,
+    annualDelta,
+    days,
+    formula: `(${formatMoney(annualDelta)} ÷ 365) × ${days} 天 = ${formatMoney(amount)}`,
+  };
+}
+
+function getQuotaDetailItems(tier: PurchasableTier) {
+  const quota = quotas[tier];
+  return [
+    {
+      label: '检查/日',
+      value: quota.pv.toLocaleString(),
+    },
+    {
+      label: '应用',
+      value: quota.app.toLocaleString(),
+    },
+    {
+      label: '热更',
+      value: quota.bundle.toLocaleString(),
+    },
+  ];
+}
+
 type PurchaseMenuOption = {
   amountText: string;
   description?: string;
+  details?: Array<{
+    label: string;
+    value: string;
+  }>;
   disabled?: boolean;
+  formula?: string;
   key: string;
   onClick?: () => Promise<void>;
   tag?: string;
@@ -131,17 +199,22 @@ function PurchaseActionPopover({
   emptyText = '暂无可购买项目',
   hint,
   loading,
+  title,
   options,
 }: {
   buttonLabel: string;
   emptyText?: string;
   hint: string;
   loading: boolean;
+  title?: string;
   options: PurchaseMenuOption[];
 }) {
   const content = (
     <div className="w-[340px] max-w-[calc(100vw-32px)]">
-      <div className="px-2 pb-2 text-slate-500 text-xs leading-relaxed">
+      {title && (
+        <div className="px-2 font-semibold text-slate-900 text-sm">{title}</div>
+      )}
+      <div className="px-2 pt-1 pb-2 text-slate-500 text-xs leading-relaxed">
         {hint}
       </div>
       <div className="flex flex-col gap-1">
@@ -195,6 +268,35 @@ function PurchaseActionPopover({
                       {option.tag}
                     </Tag>
                   )}
+                </div>
+              )}
+              {option.details && (
+                <div className="mt-2 grid grid-cols-3 gap-1.5">
+                  {option.details.map((detail) => (
+                    <div
+                      className="rounded bg-slate-50 px-2 py-1"
+                      key={detail.label}
+                    >
+                      <div className="text-[10px] text-slate-400">
+                        {detail.label}
+                      </div>
+                      <div
+                        className={cn(
+                          'mt-0.5 truncate font-semibold text-sm tabular-nums',
+                          option.disabled || loading
+                            ? 'text-slate-400'
+                            : 'text-blue-700',
+                        )}
+                      >
+                        {detail.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {option.formula && (
+                <div className="mt-2 rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-500 tabular-nums">
+                  {option.formula}
                 </div>
               )}
             </button>
@@ -269,7 +371,7 @@ const RenewalPurchaseButton = ({
   quota?: Quota;
   tier: Tier;
 }) => {
-  const [loadingPlan, setLoadingPlan] = useState<'month' | 'year' | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const billingConfig = useOrderBillingConfig();
   const prices = getRenewalPrices({ billingConfig, quota, tier });
 
@@ -278,24 +380,36 @@ const RenewalPurchaseButton = ({
   }
 
   const renewalOptions: PurchaseMenuOption[] = prices
-    ? [
-        {
-          amountText: formatMoney(prices.monthlyPrice),
-          description: '续费 1 个月，到期日顺延',
-          key: 'month',
-          onClick: async () => {
-            setLoadingPlan('month');
-            try {
-              await purchase(tier, 1);
-            } finally {
-              setLoadingPlan(null);
-            }
-          },
-          title: '月付',
-        },
-        {
+    ? (() => {
+        const options: PurchaseMenuOption[] = [];
+        for (
+          let months = 1;
+          months < billingConfig.annualBillingMonths;
+          months += 1
+        ) {
+          const amount = roundMoneyValue(prices.monthlyPrice * months);
+          if (amount >= prices.annualPrice) {
+            break;
+          }
+          options.push({
+            amountText: formatMoney(amount),
+            description: `到期日顺延 ${months} 个月`,
+            key: `month-${months}`,
+            onClick: async () => {
+              setLoadingPlan(`month-${months}`);
+              try {
+                await purchase(tier, months);
+              } finally {
+                setLoadingPlan(null);
+              }
+            },
+            title: months === 1 ? '月付' : `月付 ${months} 个月`,
+          });
+        }
+
+        options.push({
           amountText: formatMoney(prices.annualPrice),
-          description: `续费 ${billingConfig.annualBillingMonths} 个月，到期日顺延`,
+          description: `到期日顺延 ${billingConfig.annualBillingMonths} 个月`,
           key: 'year',
           onClick: async () => {
             setLoadingPlan('year');
@@ -318,8 +432,10 @@ const RenewalPurchaseButton = ({
                 )}折优惠`
               : undefined,
           title: '年付',
-        },
-      ]
+        });
+
+        return options;
+      })()
     : [
         {
           amountText: '按订单结算',
@@ -333,8 +449,9 @@ const RenewalPurchaseButton = ({
   return (
     <PurchaseActionPopover
       buttonLabel={loadingPlan ? '跳转中' : '续费'}
-      hint="续费会在当前到期日后顺延对应时长。"
+      hint="续费会在当前到期日后顺延对应时长，月付累计达到年付价后直接选择年付。"
       loading={loadingPlan !== null}
+      title="续费"
       options={renewalOptions}
     />
   );
@@ -362,46 +479,57 @@ const UpgradePurchaseControls = ({
     return null; // 没有可升级的版本
   }
 
-  const getUpgradePriceText = (tier: PurchasableTier) => {
-    const targetAnnualPrice = getConfiguredProductPrice(tier, billingConfig);
-
-    if (currentTier === 'free') {
-      const plan = resolveBillingPlan(
-        targetAnnualPrice,
-        billingConfig.annualBillingMonths,
-        billingConfig.monthlyPriceFactor,
-      );
-      return `年付 ${formatMoney(plan.amount)}`;
-    }
-
-    const currentAnnualPrice =
-      currentTier in products
-        ? getConfiguredProductPrice(
-            currentTier as keyof typeof products,
-            billingConfig,
-          )
-        : undefined;
-    const amount = resolveProratedUpgradeAmount({
-      currentAnnualPrice,
-      expiresAt: tierExpiresAt,
-      now: serverTime,
-      targetAnnualPrice,
-    });
-
-    return amount === null ? '按订单结算' : `补差价 ${formatMoney(amount)}`;
-  };
+  const currentAnnualPrice =
+    currentTier in products
+      ? getConfiguredProductPrice(
+          currentTier as keyof typeof products,
+          billingConfig,
+        )
+      : undefined;
+  const remainingDays = getRemainingBillableDays(tierExpiresAt, serverTime);
+  const title =
+    currentTier === 'free'
+      ? '升级购买'
+      : `升级（有效期不变：至 ${formatExpireDate(tierExpiresAt)}，${remainingDays ?? '-'} 天）`;
+  const hint =
+    currentTier === 'free'
+      ? '选择目标版本后按年付开通服务。'
+      : '补差价按目标版本与当前版本的年费差额逐天折算。';
 
   const menuOptions: PurchaseMenuOption[] = upgradeOptions.map((option) => {
-    const amountText = getUpgradePriceText(option.tier);
-    const disabled = currentTier !== 'free' && amountText === '按订单结算';
+    const targetAnnualPrice = getConfiguredProductPrice(
+      option.tier,
+      billingConfig,
+    );
+    const annualPlan = resolveBillingPlan(
+      targetAnnualPrice,
+      billingConfig.annualBillingMonths,
+      billingConfig.monthlyPriceFactor,
+    );
+    const proration =
+      currentTier === 'free'
+        ? null
+        : getUpgradeProrationDetail({
+            currentAnnualPrice,
+            expiresAt: tierExpiresAt,
+            now: serverTime,
+            targetAnnualPrice,
+          });
+    const amountText =
+      currentTier === 'free'
+        ? `年付 ${formatMoney(annualPlan.amount)}`
+        : proration
+          ? `补差价 ${formatMoney(proration.amount)}`
+          : '按订单结算';
+    const disabled = currentTier !== 'free' && !proration;
 
     return {
       amountText,
       description:
-        currentTier === 'free'
-          ? '购买后从支付日起开通服务'
-          : '保持当前有效期不变',
+        currentTier === 'free' ? '购买后从支付日起开通服务' : undefined,
+      details: getQuotaDetailItems(option.tier),
       disabled,
+      formula: proration?.formula,
       key: option.tier,
       onClick: async () => {
         setLoadingTier(option.tier);
@@ -423,8 +551,9 @@ const UpgradePurchaseControls = ({
   return (
     <PurchaseActionPopover
       buttonLabel={loadingTier ? '跳转中' : '升级'}
-      hint="升级会保持当前有效期不变，只支付升级到目标版本在剩余有效期内的补差价。"
+      hint={hint}
       loading={loadingTier !== null}
+      title={title}
       options={menuOptions}
     />
   );
