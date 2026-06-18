@@ -290,7 +290,7 @@ function PurchaseActionPopover({
                 'w-full rounded border border-transparent px-3 py-2 text-left transition',
                 option.disabled || loading
                   ? 'cursor-not-allowed text-slate-400'
-                  : 'hover:border-blue-200 hover:bg-blue-50',
+                  : 'cursor-pointer hover:border-blue-200 hover:bg-blue-50',
               )}
               disabled={option.disabled || loading}
               key={option.key}
