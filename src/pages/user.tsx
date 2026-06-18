@@ -1,5 +1,6 @@
 import {
   AlipayCircleOutlined,
+  DownOutlined,
   LogoutOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
@@ -16,15 +17,12 @@ import {
   Tag,
   Tooltip,
 } from 'antd';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
 import {
   ANNUAL_BILLING_MONTHS,
-  type BillingOption,
   DEFAULT_MONTHLY_PRICE_FACTOR,
-  getAnnualSavings,
-  getBillingOptions,
   resolveBillingPlan,
   resolveMonthlyPriceFactor,
   resolveProratedAdditiveAmount,
@@ -107,14 +105,6 @@ function formatDiscount(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-function formatBillingOptionText(option: BillingOption, showAmount = true) {
-  const amount = showAmount ? `，${formatMoney(option.amount)}` : '';
-  if (option.billingCycle === 'year') {
-    return `年付（${option.billingMonths}个月${amount}）`;
-  }
-  return `${option.billingMonths}个月${showAmount ? `（${formatMoney(option.amount)}）` : ''}`;
-}
-
 function getConfiguredProductPrice(
   tier: keyof typeof products,
   billingConfig: ReturnType<typeof useOrderBillingConfig>,
@@ -122,139 +112,231 @@ function getConfiguredProductPrice(
   return billingConfig.productPrices[tier] ?? products[tier].price;
 }
 
-function BillingOptionLabel({
-  option,
-  showAmount,
+function roundMoneyValue(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+type PurchaseMenuOption = {
+  amountText: string;
+  description?: string;
+  disabled?: boolean;
+  key: string;
+  onClick?: () => Promise<void>;
+  tag?: string;
+  title: string;
+};
+
+function PurchaseActionPopover({
+  buttonLabel,
+  emptyText = '暂无可购买项目',
+  hint,
+  loading,
+  options,
 }: {
-  option: BillingOption;
-  showAmount: boolean;
+  buttonLabel: string;
+  emptyText?: string;
+  hint: string;
+  loading: boolean;
+  options: PurchaseMenuOption[];
 }) {
-  const savings = getAnnualSavings(option);
+  const content = (
+    <div className="w-[340px] max-w-[calc(100vw-32px)]">
+      <div className="px-2 pb-2 text-slate-500 text-xs leading-relaxed">
+        {hint}
+      </div>
+      <div className="flex flex-col gap-1">
+        {options.length > 0 ? (
+          options.map((option) => (
+            <button
+              className={cn(
+                'w-full rounded border border-transparent px-3 py-2 text-left transition',
+                option.disabled || loading
+                  ? 'cursor-not-allowed text-slate-400'
+                  : 'hover:border-blue-200 hover:bg-blue-50',
+              )}
+              disabled={option.disabled || loading}
+              key={option.key}
+              onClick={async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                await option.onClick?.();
+              }}
+              type="button"
+            >
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <span
+                  className={cn(
+                    'font-medium',
+                    option.disabled || loading
+                      ? 'text-slate-400'
+                      : 'text-slate-900',
+                  )}
+                >
+                  {option.title}
+                </span>
+                <span
+                  className={cn(
+                    'shrink-0 font-semibold',
+                    option.disabled || loading
+                      ? 'text-slate-400'
+                      : 'text-slate-900',
+                  )}
+                >
+                  {option.amountText}
+                </span>
+              </div>
+              {(option.description || option.tag) && (
+                <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
+                  {option.description && (
+                    <span className="text-slate-500">{option.description}</span>
+                  )}
+                  {option.tag && (
+                    <Tag color="gold" className="m-0">
+                      {option.tag}
+                    </Tag>
+                  )}
+                </div>
+              )}
+            </button>
+          ))
+        ) : (
+          <div className="px-2 py-3 text-center text-slate-500 text-xs">
+            {emptyText}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
-      <span>{formatBillingOptionText(option, showAmount)}</span>
-      {savings.discount > 0 && (
-        <Tag color="gold" className="m-0">
-          约{formatDiscount(savings.discount)}折优惠
-        </Tag>
-      )}
-    </span>
+    <Popover
+      content={content}
+      placement="bottomLeft"
+      trigger={['hover', 'click']}
+    >
+      <Button className={purchaseButtonClassName} loading={loading}>
+        <span className="inline-flex items-center gap-2">
+          {buttonLabel}
+          <DownOutlined className="text-[10px]" />
+        </span>
+      </Button>
+    </Popover>
   );
 }
 
-function BillingMonthsSelect({
-  disabled,
-  onChange,
-  showAmount = true,
+function getRenewalPrices({
+  billingConfig,
+  quota,
   tier,
-  value,
 }: {
-  disabled?: boolean;
-  onChange: (months: number) => void;
-  showAmount?: boolean;
-  tier: keyof typeof products;
-  value: number;
+  billingConfig: ReturnType<typeof useOrderBillingConfig>;
+  quota?: Quota;
+  tier: Tier;
 }) {
-  const billingConfig = useOrderBillingConfig();
-  const annualPrice = getConfiguredProductPrice(tier, billingConfig);
-  const options =
-    annualPrice > 0
-      ? getBillingOptions({
-          annualBillingMonths: billingConfig.annualBillingMonths,
-          annualPrice,
-          monthlyPriceFactor: billingConfig.monthlyPriceFactor,
-        })
-      : [];
-  const fallbackValue =
-    options.find((option) => option.billingCycle === 'year')?.value ??
-    billingConfig.annualBillingMonths;
-  const selectedValue = options.some((option) => option.value === value)
-    ? value
-    : fallbackValue;
-  const selectedOption = options.find(
-    (option) => option.value === selectedValue,
-  );
-  const selectedSavings = selectedOption
-    ? getAnnualSavings(selectedOption)
-    : { amount: 0, percent: 0, discount: 0 };
-
-  useEffect(() => {
-    if (selectedValue !== value) {
-      onChange(selectedValue);
-    }
-  }, [onChange, selectedValue, value]);
-
-  if (options.length <= 1) {
+  if (tier === 'free') {
+    return null;
+  }
+  const annualPrice =
+    tier === 'custom'
+      ? quota?.price
+      : tier in products
+        ? getConfiguredProductPrice(tier as ProductTier, billingConfig)
+        : undefined;
+  if (!annualPrice || annualPrice <= 0) {
     return null;
   }
 
-  return (
-    <div className="flex w-full flex-col gap-1 sm:w-72">
-      <Select
-        aria-label="选择付费周期"
-        className="w-full"
-        disabled={disabled}
-        onChange={onChange}
-        options={options.map((option) => ({
-          label: <BillingOptionLabel option={option} showAmount={showAmount} />,
-          value: option.value,
-        }))}
-        value={selectedValue}
-      />
-      {selectedSavings.discount > 0 && (
-        <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600">
-          {`年付比按月购买节省 ${formatMoney(selectedSavings.amount)}，约${formatDiscount(selectedSavings.discount)}折优惠`}
-        </div>
-      )}
-    </div>
+  const monthlyPlan = resolveBillingPlan(
+    annualPrice,
+    1,
+    billingConfig.monthlyPriceFactor,
   );
+  const monthlyPrice =
+    tier === 'custom' && quota?.monthlyRenewalPrice
+      ? quota.monthlyRenewalPrice
+      : monthlyPlan.amount;
+
+  return {
+    annualPrice: roundMoneyValue(annualPrice),
+    monthlyPrice: roundMoneyValue(monthlyPrice),
+  };
 }
 
-const PurchaseButton = ({ tier }: { tier: ProductTier }) => {
-  const [loading, setLoading] = useState(false);
-  const [months, setMonths] = useState(ANNUAL_BILLING_MONTHS);
-  const tierOptions = [
-    {
-      label: products[tier]?.title ?? tier,
-      value: tier,
-    },
-  ];
+const RenewalPurchaseButton = ({
+  quota,
+  tier,
+}: {
+  quota?: Quota;
+  tier: Tier;
+}) => {
+  const [loadingPlan, setLoadingPlan] = useState<'month' | 'year' | null>(null);
+  const billingConfig = useOrderBillingConfig();
+  const prices = getRenewalPrices({ billingConfig, quota, tier });
+
+  if (tier === 'free') {
+    return null;
+  }
+
+  const renewalOptions: PurchaseMenuOption[] = prices
+    ? [
+        {
+          amountText: formatMoney(prices.monthlyPrice),
+          description: '续费 1 个月，到期日顺延',
+          key: 'month',
+          onClick: async () => {
+            setLoadingPlan('month');
+            try {
+              await purchase(tier, 1);
+            } finally {
+              setLoadingPlan(null);
+            }
+          },
+          title: '月付',
+        },
+        {
+          amountText: formatMoney(prices.annualPrice),
+          description: `续费 ${billingConfig.annualBillingMonths} 个月，到期日顺延`,
+          key: 'year',
+          onClick: async () => {
+            setLoadingPlan('year');
+            try {
+              await purchase(tier, billingConfig.annualBillingMonths);
+            } finally {
+              setLoadingPlan(null);
+            }
+          },
+          tag:
+            prices.monthlyPrice * billingConfig.annualBillingMonths >
+            prices.annualPrice
+              ? `约${formatDiscount(
+                  roundMoneyValue(
+                    (prices.annualPrice /
+                      (prices.monthlyPrice *
+                        billingConfig.annualBillingMonths)) *
+                      10,
+                  ),
+                )}折优惠`
+              : undefined,
+          title: '年付',
+        },
+      ]
+    : [
+        {
+          amountText: '按订单结算',
+          description: '当前版本暂未返回可续费价格',
+          disabled: true,
+          key: 'unavailable',
+          title: '续费',
+        },
+      ];
 
   return (
-    <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_160px] sm:items-start">
-      <Select
-        aria-label="选择服务版本"
-        className="w-full"
-        disabled={loading}
-        options={tierOptions}
-        value={tier}
-      />
-      <BillingMonthsSelect
-        disabled={loading}
-        onChange={setMonths}
-        tier={tier}
-        value={months}
-      />
-      <Button
-        className={purchaseButtonClassName}
-        icon={<AlipayCircleOutlined />}
-        loading={loading}
-        onClick={async () => {
-          if (tier === 'custom') {
-            return message.error('定制版用户付费请联系客服');
-          }
-          setLoading(true);
-          try {
-            await purchase(tier, months);
-          } finally {
-            setLoading(false);
-          }
-        }}
-      >
-        {loading ? '跳转至支付页面' : '购买'}
-      </Button>
-    </div>
+    <PurchaseActionPopover
+      buttonLabel={loadingPlan ? '跳转中' : '续费'}
+      hint="续费会在当前到期日后顺延对应时长。"
+      loading={loadingPlan !== null}
+      options={renewalOptions}
+    />
   );
 };
 
@@ -269,37 +351,27 @@ const UpgradePurchaseControls = ({
   serverTime?: string;
   tierExpiresAt?: string;
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [months, setMonths] = useState(ANNUAL_BILLING_MONTHS);
+  const [loadingTier, setLoadingTier] = useState<PurchasableTier | null>(null);
   const billingConfig = useOrderBillingConfig();
 
   const upgradeOptions = purchasableTiers.filter(
     (option) => currentQuota.pv < quotas[option.tier].pv,
-  );
-  const [targetTier, setTargetTier] = useState<PurchasableTier | undefined>(
-    upgradeOptions[0]?.tier,
   );
 
   if (upgradeOptions.length === 0) {
     return null; // 没有可升级的版本
   }
 
-  const selectedTier = upgradeOptions.some(
-    (option) => option.tier === targetTier,
-  )
-    ? targetTier
-    : upgradeOptions[0]?.tier;
-
-  const getUpgradePriceText = (tier: ProductTier) => {
+  const getUpgradePriceText = (tier: PurchasableTier) => {
     const targetAnnualPrice = getConfiguredProductPrice(tier, billingConfig);
 
     if (currentTier === 'free') {
       const plan = resolveBillingPlan(
         targetAnnualPrice,
-        months,
+        billingConfig.annualBillingMonths,
         billingConfig.monthlyPriceFactor,
       );
-      return formatMoney(plan.amount);
+      return `年付 ${formatMoney(plan.amount)}`;
     }
 
     const currentAnnualPrice =
@@ -319,63 +391,42 @@ const UpgradePurchaseControls = ({
     return amount === null ? '按订单结算' : `补差价 ${formatMoney(amount)}`;
   };
 
-  const handlePurchaseClick = async () => {
-    if (!selectedTier) return;
+  const menuOptions: PurchaseMenuOption[] = upgradeOptions.map((option) => {
+    const amountText = getUpgradePriceText(option.tier);
+    const disabled = currentTier !== 'free' && amountText === '按订单结算';
 
-    setLoading(true);
-    try {
-      await purchase(selectedTier, currentTier === 'free' ? months : undefined);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const targetTierOptions = upgradeOptions.map((option) => ({
-    label: option.label,
-    value: option.tier,
-  }));
-  const upgradePriceOption = selectedTier
-    ? {
-        label: getUpgradePriceText(selectedTier),
-        value: selectedTier,
-      }
-    : undefined;
+    return {
+      amountText,
+      description:
+        currentTier === 'free'
+          ? '购买后从支付日起开通服务'
+          : '保持当前有效期不变',
+      disabled,
+      key: option.tier,
+      onClick: async () => {
+        setLoadingTier(option.tier);
+        try {
+          await purchase(
+            option.tier,
+            currentTier === 'free'
+              ? billingConfig.annualBillingMonths
+              : undefined,
+          );
+        } finally {
+          setLoadingTier(null);
+        }
+      },
+      title: option.label,
+    };
+  });
 
   return (
-    <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(160px,180px)_minmax(220px,288px)_160px] sm:items-start">
-      <Select
-        aria-label="选择升级版本"
-        className="w-full"
-        disabled={loading}
-        onChange={setTargetTier}
-        options={targetTierOptions}
-        value={selectedTier}
-      />
-      {currentTier === 'free' && selectedTier ? (
-        <BillingMonthsSelect
-          disabled={loading}
-          onChange={setMonths}
-          tier={selectedTier}
-          value={months}
-        />
-      ) : (
-        <Select
-          aria-label="选择付款金额"
-          className="w-full"
-          disabled={loading}
-          options={upgradePriceOption ? [upgradePriceOption] : []}
-          value={upgradePriceOption?.value}
-        />
-      )}
-      <Button
-        className={purchaseButtonClassName}
-        icon={<AlipayCircleOutlined />}
-        loading={loading}
-        onClick={handlePurchaseClick}
-      >
-        {loading ? '跳转至支付页面' : '购买'}
-      </Button>
-    </div>
+    <PurchaseActionPopover
+      buttonLabel={loadingTier ? '跳转中' : '升级'}
+      hint="升级会保持当前有效期不变，只支付升级到目标版本在剩余有效期内的补差价。"
+      loading={loadingTier !== null}
+      options={menuOptions}
+    />
   );
 };
 
@@ -512,7 +563,7 @@ function UserPanel() {
           <span className="break-all">{email}</span>
         </Descriptions.Item>
         <Descriptions.Item label="服务版本">
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(160px,180px)_160px] sm:items-center">
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
               <UpgradePurchaseControls
@@ -525,25 +576,22 @@ function UserPanel() {
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
-          <div className="flex min-w-0 flex-col gap-3">
-            {displayExpireDay ? (
-              <>
-                <div>
+          <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(160px,180px)_160px] sm:items-start">
+            <div>
+              {displayExpireDay ? (
+                <>
                   <div>{displayExpireDay}</div>
                   {displayRemainingDays && (
                     <div className="mt-1 text-gray-500 text-sm">
                       {displayRemainingDays}
                     </div>
                   )}
-                </div>
-                {tier !== 'free' && <PurchaseButton tier={tier} />}
-              </>
-            ) : (
-              <>
+                </>
+              ) : (
                 <div>无</div>
-                {tier !== 'free' && <PurchaseButton tier={tier} />}
-              </>
-            )}
+              )}
+            </div>
+            <RenewalPurchaseButton quota={quota} tier={tier} />
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="购买说明">
