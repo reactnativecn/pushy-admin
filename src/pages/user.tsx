@@ -250,6 +250,7 @@ function PurchaseActionPopover({
   loading,
   title,
   titleNote,
+  widthClassName = 'w-[340px]',
   options,
 }: {
   buttonLabel: string;
@@ -258,10 +259,16 @@ function PurchaseActionPopover({
   loading: boolean;
   title?: string;
   titleNote?: string;
+  widthClassName?: string;
   options: PurchaseMenuOption[];
 }) {
   const content = (
-    <div className="max-h-[70vh] w-[340px] max-w-[calc(100vw-32px)] overflow-y-auto pr-1">
+    <div
+      className={cn(
+        'max-h-[70vh] max-w-[calc(100vw-32px)] overflow-y-auto pr-1',
+        widthClassName,
+      )}
+    >
       {title && (
         <div className="px-2">
           <div className="font-semibold text-slate-900 text-sm">{title}</div>
@@ -639,6 +646,7 @@ const UpgradePurchaseControls = ({
       hint={hint}
       loading={loadingTier !== null}
       title={title}
+      widthClassName="w-[560px]"
       options={menuOptions}
     />
   );
