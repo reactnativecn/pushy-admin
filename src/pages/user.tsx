@@ -1131,7 +1131,6 @@ function CheckUpdateAddonPurchase({
     (_, index) => {
       const units = index + 1;
       const annualAmount = annualUnitPrice * units;
-      const monthlyAmount = monthlyUnitPrice * units;
       const proration = isExistingPaidService
         ? getAdditiveProrationDetail({
             annualAmount,
@@ -1147,23 +1146,7 @@ function CheckUpdateAddonPurchase({
           : disabled
             ? '请先续费套餐'
             : `${formatMoney(annualAmount)} / 年`,
-        description: '购买后自动转为定制版',
-        details: [
-          {
-            label: '增加/日',
-            value: (addonQuota * units).toLocaleString(),
-          },
-          {
-            label: '月费',
-            value: formatMoney(monthlyAmount),
-          },
-          {
-            label: '年费',
-            value: formatMoney(annualAmount),
-          },
-        ],
         disabled,
-        formula: proration?.formula,
         key: String(units),
         onClick: async () => {
           setLoadingUnits(units);
@@ -1184,19 +1167,22 @@ function CheckUpdateAddonPurchase({
         <div className="font-medium text-slate-900 text-sm">检查额度加购</div>
         <div className="mt-0.5 text-slate-500 text-xs">
           每增加 {addonQuota.toLocaleString()} 次 / 日，每月额外收费{' '}
-          {formatMoney(monthlyUnitPrice)}
-          ，购买后自动转为定制版。
+          {formatMoney(monthlyUnitPrice)}。
         </div>
       </div>
       <PurchaseActionPopover
         buttonLabel={loadingUnits ? '跳转中' : '加购检查额度'}
         hint={
           isExistingPaidService
-            ? '加购会保持当前有效期不变，按剩余天数补差价。'
-            : '选择加购额度后按年付开通，购买后自动转为定制版。'
+            ? `按剩余天数补差价。收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
+            : `收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
         }
         loading={loadingUnits !== null}
-        title="加购检查额度"
+        title={
+          isExistingPaidService
+            ? `加购检查额度（当前有效期不变：至 ${formatExpireDate(tierExpiresAt)}）`
+            : '加购检查额度'
+        }
         options={menuOptions}
       />
     </div>
