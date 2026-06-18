@@ -1,5 +1,4 @@
 import {
-  AlipayCircleOutlined,
   DownOutlined,
   LogoutOutlined,
   WarningOutlined,
@@ -12,7 +11,6 @@ import {
   message,
   Popover,
   Progress,
-  Select,
   Spin,
   Tag,
   Tooltip,
@@ -161,6 +159,34 @@ function getUpgradeProrationDetail({
   };
 }
 
+function getAdditiveProrationDetail({
+  annualAmount,
+  expiresAt,
+  now,
+}: {
+  annualAmount: number;
+  expiresAt?: string;
+  now?: string;
+}) {
+  const amount = resolveProratedAdditiveAmount({
+    annualAmount,
+    expiresAt,
+    now,
+  });
+  const days = getRemainingBillableDays(expiresAt, now);
+  if (amount === null || !days) {
+    return null;
+  }
+  const roundedAnnualAmount = roundMoneyValue(annualAmount);
+
+  return {
+    amount,
+    annualAmount: roundedAnnualAmount,
+    days,
+    formula: `(${formatMoney(roundedAnnualAmount)} ÷ 365) × ${days} 天 = ${formatMoney(amount)}`,
+  };
+}
+
 function getQuotaDetailItems(tier: PurchasableTier) {
   const quota = quotas[tier];
   return [
@@ -210,7 +236,7 @@ function PurchaseActionPopover({
   options: PurchaseMenuOption[];
 }) {
   const content = (
-    <div className="w-[340px] max-w-[calc(100vw-32px)]">
+    <div className="max-h-[70vh] w-[340px] max-w-[calc(100vw-32px)] overflow-y-auto pr-1">
       {title && (
         <div className="px-2 font-semibold text-slate-900 text-sm">{title}</div>
       )}
@@ -912,21 +938,9 @@ function QuotaDetailsPanel({
                 {displayRemaining.toLocaleString()}
               </div>
               <div className="mt-1 text-gray-500 text-xs">
-                上限 {dailyQuota.toLocaleString()} 次 / 日
-              </div>
-              <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                <div className="rounded border border-slate-200 bg-white/70 px-3 py-2">
-                  <div className="text-slate-500">套餐内</div>
-                  <div className="mt-0.5 font-semibold text-slate-900 tabular-nums">
-                    {packageIncludedQuota.toLocaleString()} 次 / 日
-                  </div>
-                </div>
-                <div className="rounded border border-slate-200 bg-white/70 px-3 py-2">
-                  <div className="text-slate-500">套餐外</div>
-                  <div className="mt-0.5 font-semibold text-slate-900 tabular-nums">
-                    {packageExtraQuota.toLocaleString()} 次 / 日
-                  </div>
-                </div>
+                上限 {dailyQuota.toLocaleString()} 次 / 日（套餐内{' '}
+                {packageIncludedQuota.toLocaleString()} 次 + 加购{' '}
+                {packageExtraQuota.toLocaleString()} 次）
               </div>
               {quotaWarning.isExceeded && displayRemaining < 0 && (
                 <div className="mt-1 font-medium text-red-600 text-xs">
@@ -1032,86 +1046,86 @@ function CheckUpdateAddonPurchase({
   tier: Tier;
   tierExpiresAt?: string;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [units, setUnits] = useState(1);
+  const [loadingUnits, setLoadingUnits] = useState<number | null>(null);
   const monthlyUnitPrice =
     billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
   const annualUnitPrice =
     billingConfig.checkUpdateAddon?.annualPrice ??
     monthlyUnitPrice * ANNUAL_BILLING_MONTHS;
   const isExistingPaidService = tier !== 'free' && !!tierExpiresAt;
-  const proratedAmount = isExistingPaidService
-    ? resolveProratedAdditiveAmount({
-        annualAmount: annualUnitPrice * units,
-        expiresAt: tierExpiresAt,
-        now: serverTime,
-      })
-    : null;
-  const needsActivePaidService =
-    isExistingPaidService && proratedAmount === null;
-  const amountText =
-    proratedAmount !== null
-      ? `补差价 ${formatMoney(proratedAmount)}`
-      : needsActivePaidService
-        ? '请先续费套餐'
-        : `${formatMoney(annualUnitPrice * units)} / 年`;
-  const unitOptions = Array.from({ length: 10 }, (_, index) => {
-    const value = index + 1;
-    return {
-      label: `+${(addonQuota * value).toLocaleString()} 次 / 日`,
-      value,
-    };
-  });
-  const amountOption = {
-    label: amountText,
-    value: units,
-  };
+  const menuOptions: PurchaseMenuOption[] = Array.from(
+    { length: 10 },
+    (_, index) => {
+      const units = index + 1;
+      const annualAmount = annualUnitPrice * units;
+      const monthlyAmount = monthlyUnitPrice * units;
+      const proration = isExistingPaidService
+        ? getAdditiveProrationDetail({
+            annualAmount,
+            expiresAt: tierExpiresAt,
+            now: serverTime,
+          })
+        : null;
+      const disabled = isExistingPaidService && !proration;
+
+      return {
+        amountText: proration
+          ? `补差价 ${formatMoney(proration.amount)}`
+          : disabled
+            ? '请先续费套餐'
+            : `${formatMoney(annualAmount)} / 年`,
+        description: '购买后自动转为定制版',
+        details: [
+          {
+            label: '增加/日',
+            value: (addonQuota * units).toLocaleString(),
+          },
+          {
+            label: '月费',
+            value: formatMoney(monthlyAmount),
+          },
+          {
+            label: '年费',
+            value: formatMoney(annualAmount),
+          },
+        ],
+        disabled,
+        formula: proration?.formula,
+        key: String(units),
+        onClick: async () => {
+          setLoadingUnits(units);
+          try {
+            await purchaseCheckUpdateAddon(units);
+          } finally {
+            setLoadingUnits(null);
+          }
+        },
+        title: `+${(addonQuota * units).toLocaleString()} 次 / 日`,
+      };
+    },
+  );
 
   return (
-    <div className="mt-4 border-slate-200 border-t pt-4">
-      <div className="mb-2">
-        <div className="font-medium text-slate-900 text-sm">
-          单独购买检查额度
-        </div>
+    <div className="mt-4 flex flex-col gap-3 border-slate-200 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div className="font-medium text-slate-900 text-sm">检查额度加购</div>
         <div className="mt-0.5 text-slate-500 text-xs">
           每增加 {addonQuota.toLocaleString()} 次 / 日，每月额外收费{' '}
           {formatMoney(monthlyUnitPrice)}
           ，购买后自动转为定制版。
         </div>
       </div>
-      <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[minmax(220px,260px)_minmax(180px,220px)_160px] sm:items-start">
-        <Select
-          aria-label="选择检查额度数量"
-          className="w-full"
-          disabled={loading}
-          onChange={setUnits}
-          options={unitOptions}
-          value={units}
-        />
-        <Select
-          aria-label="选择检查额度金额"
-          className="w-full"
-          disabled={loading || needsActivePaidService}
-          options={[amountOption]}
-          value={amountOption.value}
-        />
-        <Button
-          className={purchaseButtonClassName}
-          disabled={needsActivePaidService}
-          icon={<AlipayCircleOutlined />}
-          loading={loading}
-          onClick={async () => {
-            setLoading(true);
-            try {
-              await purchaseCheckUpdateAddon(units);
-            } finally {
-              setLoading(false);
-            }
-          }}
-        >
-          {loading ? '跳转至支付页面' : '购买'}
-        </Button>
-      </div>
+      <PurchaseActionPopover
+        buttonLabel={loadingUnits ? '跳转中' : '加购检查额度'}
+        hint={
+          isExistingPaidService
+            ? '加购会保持当前有效期不变，按剩余天数补差价。'
+            : '选择加购额度后按年付开通，购买后自动转为定制版。'
+        }
+        loading={loadingUnits !== null}
+        title="加购检查额度"
+        options={menuOptions}
+      />
     </div>
   );
 }
