@@ -126,6 +126,21 @@ function formatExpireDate(expiresAt?: string) {
   return expiresAt ? dayjs(expiresAt).format('YYYY年MM月DD日') : '当前到期日';
 }
 
+function formatRenewedExpireDate({
+  expiresAt,
+  months,
+  now,
+}: {
+  expiresAt?: string;
+  months: number;
+  now?: string;
+}) {
+  const currentExpireDay = expiresAt ? dayjs(expiresAt) : null;
+  const nowDay = dayjs(now);
+  const baseDay = currentExpireDay?.isAfter(nowDay) ? currentExpireDay : nowDay;
+  return baseDay.add(months, 'month').format('YYYY年MM月DD日');
+}
+
 function getUpgradeProrationDetail({
   currentAnnualPrice,
   expiresAt,
@@ -405,10 +420,14 @@ function getRenewalPrices({
 
 const RenewalPurchaseButton = ({
   quota,
+  serverTime,
   tier,
+  tierExpiresAt,
 }: {
   quota?: Quota;
+  serverTime?: string;
   tier: Tier;
+  tierExpiresAt?: string;
 }) => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const billingConfig = useOrderBillingConfig();
@@ -432,7 +451,11 @@ const RenewalPurchaseButton = ({
           }
           options.push({
             amountText: formatMoney(amount),
-            description: `到期日顺延 ${months} 个月`,
+            description: `续费后到期日 ${formatRenewedExpireDate({
+              expiresAt: tierExpiresAt,
+              months,
+              now: serverTime,
+            })}`,
             key: `month-${months}`,
             onClick: async () => {
               setLoadingPlan(`month-${months}`);
@@ -442,13 +465,17 @@ const RenewalPurchaseButton = ({
                 setLoadingPlan(null);
               }
             },
-            title: months === 1 ? '月付' : `月付 ${months} 个月`,
+            title: `${months} 个月`,
           });
         }
 
         options.push({
           amountText: formatMoney(prices.annualPrice),
-          description: `到期日顺延 ${billingConfig.annualBillingMonths} 个月`,
+          description: `续费后到期日 ${formatRenewedExpireDate({
+            expiresAt: tierExpiresAt,
+            months: billingConfig.annualBillingMonths,
+            now: serverTime,
+          })}`,
           key: 'year',
           onClick: async () => {
             setLoadingPlan('year');
@@ -470,7 +497,7 @@ const RenewalPurchaseButton = ({
                   ),
                 )}折优惠`
               : undefined,
-          title: '年付',
+          title: `${billingConfig.annualBillingMonths} 个月（年付）`,
         });
 
         return options;
@@ -488,7 +515,7 @@ const RenewalPurchaseButton = ({
   return (
     <PurchaseActionPopover
       buttonLabel={loadingPlan ? '跳转中' : '续费'}
-      hint="续费会在当前到期日后顺延对应时长，月付累计达到年付价后直接选择年付。"
+      hint="选择续费时长；月付累计达到年付价后直接选择年付。"
       loading={loadingPlan !== null}
       title="续费"
       options={renewalOptions}
@@ -758,7 +785,12 @@ function UserPanel() {
                 <div>无</div>
               )}
             </div>
-            <RenewalPurchaseButton quota={quota} tier={tier} />
+            <RenewalPurchaseButton
+              quota={quota}
+              serverTime={user.serverTime}
+              tier={tier}
+              tierExpiresAt={user.tierExpiresAt}
+            />
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="购买说明">
