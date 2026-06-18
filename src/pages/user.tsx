@@ -150,12 +150,12 @@ function getUpgradeProrationDetail({
   }
   const annualDelta = roundMoneyValue(targetAnnualPrice - currentAnnualPrice);
   const amount = roundMoneyValue((annualDelta / 365) * days);
+  const dailyAmount = roundMoneyValue(annualDelta / 365);
 
   return {
     amount,
-    annualDelta,
+    dailyAmount,
     days,
-    formula: `(${formatMoney(annualDelta)} ÷ 365) × ${days} 天 = ${formatMoney(amount)}`,
   };
 }
 
@@ -187,20 +187,28 @@ function getAdditiveProrationDetail({
   };
 }
 
+function formatWan(value: number) {
+  return `${value / 10_000}万`;
+}
+
 function getQuotaDetailItems(tier: PurchasableTier) {
   const quota = quotas[tier];
   return [
     {
-      label: '检查/日',
-      value: quota.pv.toLocaleString(),
+      label: '检查次数每日',
+      value: formatWan(quota.pv),
     },
     {
-      label: '应用',
-      value: quota.app.toLocaleString(),
+      label: '应用个数',
+      value: `${quota.app.toLocaleString()} 个`,
     },
     {
-      label: '热更',
-      value: quota.bundle.toLocaleString(),
+      label: '原生包数',
+      value: `${quota.package.toLocaleString()} 个`,
+    },
+    {
+      label: '热更包数',
+      value: `${quota.bundle.toLocaleString()} 个`,
     },
   ];
 }
@@ -275,7 +283,7 @@ function PurchaseActionPopover({
                 </span>
                 <span
                   className={cn(
-                    'shrink-0 font-semibold',
+                    'min-w-0 text-right font-semibold',
                     option.disabled || loading
                       ? 'text-slate-400'
                       : 'text-slate-900',
@@ -297,7 +305,12 @@ function PurchaseActionPopover({
                 </div>
               )}
               {option.details && (
-                <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <div
+                  className={cn(
+                    'mt-2 grid gap-1.5',
+                    option.details.length >= 4 ? 'grid-cols-4' : 'grid-cols-3',
+                  )}
+                >
                   {option.details.map((detail) => (
                     <div
                       className="rounded bg-slate-50 px-2 py-1"
@@ -545,7 +558,7 @@ const UpgradePurchaseControls = ({
       currentTier === 'free'
         ? `年付 ${formatMoney(annualPlan.amount)}`
         : proration
-          ? `补差价 ${formatMoney(proration.amount)}`
+          ? `补差价 ${formatMoney(proration.dailyAmount)} × ${proration.days} 天 = ${formatMoney(proration.amount)}`
           : '按订单结算';
     const disabled = currentTier !== 'free' && !proration;
 
@@ -555,7 +568,6 @@ const UpgradePurchaseControls = ({
         currentTier === 'free' ? '购买后从支付日起开通服务' : undefined,
       details: getQuotaDetailItems(option.tier),
       disabled,
-      formula: proration?.formula,
       key: option.tier,
       onClick: async () => {
         setLoadingTier(option.tier);
