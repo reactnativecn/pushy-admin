@@ -255,7 +255,7 @@ function PurchaseActionPopover({
 }: {
   buttonLabel: string;
   emptyText?: string;
-  hint: string;
+  hint?: string;
   loading: boolean;
   title?: string;
   titleNote?: string;
@@ -277,9 +277,11 @@ function PurchaseActionPopover({
           )}
         </div>
       )}
-      <div className="px-2 pt-1 pb-2 text-slate-500 text-xs leading-relaxed">
-        {hint}
-      </div>
+      {hint && (
+        <div className="px-2 pt-1 pb-2 text-slate-500 text-xs leading-relaxed">
+          {hint}
+        </div>
+      )}
       <div className="flex flex-col gap-1">
         {options.length > 0 ? (
           options.map((option) => (
@@ -537,7 +539,6 @@ const RenewalPurchaseButton = ({
   return (
     <PurchaseActionPopover
       buttonLabel={loadingPlan ? '跳转中' : '续费'}
-      hint="选择续费时长；月付累计达到年付价后直接选择年付。"
       loading={loadingPlan !== null}
       title="续费"
       titleNote={
