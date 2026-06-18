@@ -249,6 +249,7 @@ function PurchaseActionPopover({
   hint,
   loading,
   title,
+  titleNote,
   options,
 }: {
   buttonLabel: string;
@@ -256,12 +257,18 @@ function PurchaseActionPopover({
   hint: string;
   loading: boolean;
   title?: string;
+  titleNote?: string;
   options: PurchaseMenuOption[];
 }) {
   const content = (
     <div className="max-h-[70vh] w-[340px] max-w-[calc(100vw-32px)] overflow-y-auto pr-1">
       {title && (
-        <div className="px-2 font-semibold text-slate-900 text-sm">{title}</div>
+        <div className="px-2">
+          <div className="font-semibold text-slate-900 text-sm">{title}</div>
+          {titleNote && (
+            <div className="mt-0.5 text-slate-500 text-xs">{titleNote}</div>
+          )}
+        </div>
       )}
       <div className="px-2 pt-1 pb-2 text-slate-500 text-xs leading-relaxed">
         {hint}
@@ -432,6 +439,14 @@ const RenewalPurchaseButton = ({
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const billingConfig = useOrderBillingConfig();
   const prices = getRenewalPrices({ billingConfig, quota, tier });
+  const addonUnits =
+    typeof quota?.checkUpdateAddonUnits === 'number' &&
+    quota.checkUpdateAddonUnits > 0
+      ? quota.checkUpdateAddonUnits
+      : 0;
+  const addonMonthlyPrice = roundMoneyValue(
+    addonUnits * (billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100),
+  );
 
   if (tier === 'free') {
     return null;
@@ -518,6 +533,11 @@ const RenewalPurchaseButton = ({
       hint="选择续费时长；月付累计达到年付价后直接选择年付。"
       loading={loadingPlan !== null}
       title="续费"
+      titleNote={
+        addonUnits > 0
+          ? `当前价格含加购费用每月 ${formatMoney(addonMonthlyPrice)}`
+          : undefined
+      }
       options={renewalOptions}
     />
   );
