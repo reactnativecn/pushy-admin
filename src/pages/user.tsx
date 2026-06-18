@@ -19,12 +19,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
-import {
-  ANNUAL_BILLING_MONTHS,
-  DEFAULT_MONTHLY_PRICE_FACTOR,
-  resolveBillingPlan,
-  resolveMonthlyPriceFactor,
-} from '@/utils/billing';
+import { ANNUAL_BILLING_MONTHS } from '@/utils/billing';
 import {
   CHECK_QUOTA_LOW_RATIO,
   getCheckQuotaWarningState,
@@ -32,10 +27,11 @@ import {
 import { cn, isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
 import { PRICING_LINK } from '../constants/links';
-import { products, quotas } from '../constants/quotas';
+import { type products, quotas } from '../constants/quotas';
 
 type ProductTier = keyof typeof products;
 type PurchasableTier = Exclude<ProductTier, 'free' | 'custom'>;
+type OrderQuotes = NonNullable<Awaited<ReturnType<typeof api.getOrderQuotes>>>;
 
 const purchasableTiers: Array<{
   label: string;
@@ -80,17 +76,9 @@ function useOrderBillingConfig() {
     retry: false,
     staleTime: 5 * 60_000,
   });
-  const productPrices = Object.fromEntries(
-    data?.tiers?.map((tier) => [tier.key, tier.annualPrice]) ?? [],
-  ) as Partial<Record<keyof typeof products, number>>;
-
   return {
     annualBillingMonths: data?.annualBillingMonths ?? ANNUAL_BILLING_MONTHS,
     checkUpdateAddon: data?.checkUpdateAddon,
-    monthlyPriceFactor: resolveMonthlyPriceFactor(
-      data?.monthlyPriceFactor ?? DEFAULT_MONTHLY_PRICE_FACTOR,
-    ),
-    productPrices,
   };
 }
 
@@ -100,17 +88,6 @@ function formatMoney(value: number) {
 
 function formatDiscount(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
-}
-
-function getConfiguredProductPrice(
-  tier: keyof typeof products,
-  billingConfig: ReturnType<typeof useOrderBillingConfig>,
-) {
-  return billingConfig.productPrices[tier] ?? products[tier].price;
-}
-
-function roundMoneyValue(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 function getRemainingBillableDays(expiresAt?: string, now?: string) {
@@ -142,6 +119,14 @@ function formatRenewedExpireDate({
 
 function formatWan(value: number) {
   return `${value / 10_000}万`;
+}
+
+function isPurchasableTier(tier?: string): tier is PurchasableTier {
+  return !!tier && purchasableTiers.some((option) => option.tier === tier);
+}
+
+function getPurchasableTierLabel(tier: PurchasableTier) {
+  return purchasableTiers.find((option) => option.tier === tier)?.label ?? tier;
 }
 
 function getQuotaDetailItems(tier: PurchasableTier) {
@@ -334,140 +319,69 @@ function PurchaseActionPopover({
   );
 }
 
-function getRenewalPrices({
-  billingConfig,
-  quota,
-  tier,
-}: {
-  billingConfig: ReturnType<typeof useOrderBillingConfig>;
-  quota?: Quota;
-  tier: Tier;
-}) {
-  if (tier === 'free') {
-    return null;
-  }
-  const annualPrice =
-    tier === 'custom'
-      ? quota?.price
-      : tier in products
-        ? getConfiguredProductPrice(tier as ProductTier, billingConfig)
-        : undefined;
-  if (!annualPrice || annualPrice <= 0) {
-    return null;
-  }
-
-  const monthlyPlan = resolveBillingPlan(
-    annualPrice,
-    1,
-    billingConfig.monthlyPriceFactor,
-  );
-  const monthlyPrice =
-    tier === 'custom' && quota?.monthlyRenewalPrice
-      ? quota.monthlyRenewalPrice
-      : monthlyPlan.amount;
-
-  return {
-    annualPrice: roundMoneyValue(annualPrice),
-    monthlyPrice: roundMoneyValue(monthlyPrice),
-  };
-}
-
 const RenewalPurchaseButton = ({
-  quota,
+  quotes,
+  quotesLoading,
   serverTime,
   tier,
   tierExpiresAt,
 }: {
-  quota?: Quota;
+  quotes?: OrderQuotes;
+  quotesLoading: boolean;
   serverTime?: string;
   tier: Tier;
   tierExpiresAt?: string;
 }) => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const billingConfig = useOrderBillingConfig();
-  const prices = getRenewalPrices({ billingConfig, quota, tier });
-  const addonUnits =
-    typeof quota?.checkUpdateAddonUnits === 'number' &&
-    quota.checkUpdateAddonUnits > 0
-      ? quota.checkUpdateAddonUnits
-      : 0;
-  const addonMonthlyPrice = roundMoneyValue(
-    addonUnits * (billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100),
-  );
+  const addonUnits = quotes?.current.checkUpdateAddonUnits ?? 0;
+  const addonMonthlyPrice = quotes?.current.checkUpdateAddonMonthlyPrice ?? 0;
 
   if (tier === 'free') {
     return null;
   }
 
-  const renewalOptions: PurchaseMenuOption[] = prices
-    ? (() => {
-        const options: PurchaseMenuOption[] = [];
-        for (
-          let months = 1;
-          months < billingConfig.annualBillingMonths;
-          months += 1
-        ) {
-          const amount = roundMoneyValue(prices.monthlyPrice * months);
-          if (amount >= prices.annualPrice) {
-            break;
-          }
-          options.push({
-            amountText: formatMoney(amount),
-            description: `续费后到期日 ${formatRenewedExpireDate({
-              expiresAt: tierExpiresAt,
-              months,
-              now: serverTime,
-            })}`,
-            key: `month-${months}`,
-            onClick: async () => {
-              setLoadingPlan(`month-${months}`);
-              try {
-                await purchase(tier, months);
-              } finally {
-                setLoadingPlan(null);
-              }
-            },
-            title: `${months} 个月`,
-          });
-        }
+  const renewalOptions: PurchaseMenuOption[] = quotes?.renewals.length
+    ? quotes.renewals.map((option) => {
+        const billing = option.quote.billing;
+        const months =
+          option.months ?? billing?.requestedMonths ?? ANNUAL_BILLING_MONTHS;
+        const isAnnual = billing?.billingCycle === 'year';
+        const monthlyTotal =
+          billing && isAnnual
+            ? billing.monthlyPrice * billing.billingMonths
+            : 0;
 
-        options.push({
-          amountText: formatMoney(prices.annualPrice),
+        return {
+          amountText: formatMoney(option.quote.amount),
           description: `续费后到期日 ${formatRenewedExpireDate({
             expiresAt: tierExpiresAt,
-            months: billingConfig.annualBillingMonths,
+            months,
             now: serverTime,
           })}`,
-          key: 'year',
+          key: option.key,
           onClick: async () => {
-            setLoadingPlan('year');
+            setLoadingPlan(option.key);
             try {
-              await purchase(tier, billingConfig.annualBillingMonths);
+              await purchase(tier, months);
             } finally {
               setLoadingPlan(null);
             }
           },
           tag:
-            prices.monthlyPrice * billingConfig.annualBillingMonths >
-            prices.annualPrice
+            billing && isAnnual && monthlyTotal > billing.annualPrice
               ? `约${formatDiscount(
-                  roundMoneyValue(
-                    (prices.annualPrice /
-                      (prices.monthlyPrice *
-                        billingConfig.annualBillingMonths)) *
-                      10,
-                  ),
+                  (billing.annualPrice / monthlyTotal) * 10,
                 )}折优惠`
               : undefined,
-          title: `${billingConfig.annualBillingMonths} 个月（年付）`,
-        });
-
-        return options;
-      })()
+          title: isAnnual ? `${months} 个月（年付）` : `${months} 个月`,
+        };
+      })
     : [
         {
-          amountText: '按订单结算',
-          description: '当前版本暂未返回可续费价格',
+          amountText: quotesLoading ? '报价中' : '按订单结算',
+          description: quotesLoading
+            ? '正在获取续费报价'
+            : '当前版本暂未返回可续费价格',
           disabled: true,
           key: 'unavailable',
           title: '续费',
@@ -490,43 +404,20 @@ const RenewalPurchaseButton = ({
 };
 
 const UpgradePurchaseControls = ({
-  currentQuota,
   currentTier,
+  quotes,
+  quotesLoading,
   serverTime,
   tierExpiresAt,
 }: {
-  currentQuota: (typeof quotas)[keyof typeof quotas];
   currentTier: Tier;
+  quotes?: OrderQuotes;
+  quotesLoading: boolean;
   serverTime?: string;
   tierExpiresAt?: string;
 }) => {
   const [loadingTier, setLoadingTier] = useState<PurchasableTier | null>(null);
-  const billingConfig = useOrderBillingConfig();
-
-  const upgradeOptions = purchasableTiers.filter(
-    (option) => currentQuota.pv < quotas[option.tier].pv,
-  );
-  const quoteQueries = useQueries({
-    queries: upgradeOptions.map((option) => ({
-      queryKey: [
-        'orderQuote',
-        'upgrade',
-        currentTier,
-        tierExpiresAt,
-        option.tier,
-      ],
-      queryFn: () =>
-        api.getOrderQuote({
-          months:
-            currentTier === 'free'
-              ? billingConfig.annualBillingMonths
-              : undefined,
-          tier: option.tier,
-        }),
-      retry: false,
-      staleTime: 30_000,
-    })),
-  });
+  const upgradeOptions = quotes?.upgrades ?? [];
 
   if (upgradeOptions.length === 0) {
     return null; // 没有可升级的版本
@@ -542,50 +433,38 @@ const UpgradePurchaseControls = ({
       ? '选择目标版本后按年付开通服务。'
       : '补差价由后端按剩余有效期报价，未超过优惠阈值按月费差额折算，超过后按年费优惠折算。';
 
-  const menuOptions: PurchaseMenuOption[] = upgradeOptions.map(
-    (option, index) => {
-      const quoteQuery = quoteQueries[index];
-      const quote = quoteQuery?.data;
-      const proration = quote?.proration;
-      const amountText =
-        currentTier === 'free'
-          ? quote
-            ? `年付 ${formatMoney(quote.amount)}`
-            : quoteQuery?.isLoading
-              ? '报价中'
-              : '按订单结算'
-          : proration
-            ? `补差价 ${formatMoney(proration.dailyAmount)} × ${proration.days} 天 = ${formatMoney(proration.amount)}`
-            : quoteQuery?.isLoading
-              ? '报价中'
-              : '按订单结算';
-      const disabled =
-        quoteQuery?.isLoading || (currentTier === 'free' ? !quote : !proration);
+  const menuOptions: PurchaseMenuOption[] = upgradeOptions.map((option) => {
+    const quote = option.quote;
+    const proration = quote.proration;
+    const tier = isPurchasableTier(option.tier) ? option.tier : undefined;
+    const amountText =
+      currentTier === 'free'
+        ? `年付 ${formatMoney(quote.amount)}`
+        : proration
+          ? `补差价 ${formatMoney(proration.dailyAmount)} × ${proration.days} 天 = ${formatMoney(proration.amount)}`
+          : '按订单结算';
+    const disabled =
+      quotesLoading || !tier || (currentTier !== 'free' && !proration);
 
-      return {
-        amountText,
-        description:
-          currentTier === 'free' ? '购买后从支付日起开通服务' : undefined,
-        details: getQuotaDetailItems(option.tier),
-        disabled,
-        key: option.tier,
-        onClick: async () => {
-          setLoadingTier(option.tier);
-          try {
-            await purchase(
-              option.tier,
-              currentTier === 'free'
-                ? billingConfig.annualBillingMonths
-                : undefined,
-            );
-          } finally {
-            setLoadingTier(null);
-          }
-        },
-        title: option.label,
-      };
-    },
-  );
+    return {
+      amountText,
+      description:
+        currentTier === 'free' ? '购买后从支付日起开通服务' : undefined,
+      details: tier ? getQuotaDetailItems(tier) : undefined,
+      disabled,
+      key: option.key,
+      onClick: async () => {
+        if (!tier) return;
+        setLoadingTier(tier);
+        try {
+          await purchase(tier, option.months);
+        } finally {
+          setLoadingTier(null);
+        }
+      },
+      title: tier ? getPurchasableTierLabel(tier) : option.key,
+    };
+  });
 
   return (
     <PurchaseActionPopover
@@ -618,6 +497,21 @@ function UserPanel() {
       queryFn: () => api.getPackages(app.id),
       staleTime: 60_000,
     })),
+  });
+  const orderQuotesQuery = useQuery({
+    queryKey: [
+      'orderQuotes',
+      user?.tier,
+      user?.tierExpiresAt,
+      user?.quota?.pv,
+      user?.quota?.price,
+      user?.quota?.monthlyRenewalPrice,
+      user?.quota?.checkUpdateAddonUnits,
+    ],
+    queryFn: () => api.getOrderQuotes(),
+    enabled: !!user,
+    retry: false,
+    staleTime: 30_000,
   });
 
   if (!user) {
@@ -736,8 +630,9 @@ function UserPanel() {
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
               <UpgradePurchaseControls
-                currentQuota={defaultQuota}
                 currentTier={tier}
+                quotes={orderQuotesQuery.data}
+                quotesLoading={orderQuotesQuery.isLoading}
                 serverTime={user.serverTime}
                 tierExpiresAt={user.tierExpiresAt}
               />
@@ -761,7 +656,8 @@ function UserPanel() {
               )}
             </div>
             <RenewalPurchaseButton
-              quota={quota}
+              quotes={orderQuotesQuery.data}
+              quotesLoading={orderQuotesQuery.isLoading}
               serverTime={user.serverTime}
               tier={tier}
               tierExpiresAt={user.tierExpiresAt}
@@ -787,6 +683,8 @@ function UserPanel() {
             quota={quota}
             remainingChecks={remainingChecks}
             rows={quotaUsageRows}
+            quotes={orderQuotesQuery.data}
+            quotesLoading={orderQuotesQuery.isLoading}
             sizeLimits={quotaSizeLimits}
             tier={tier}
             tierExpiresAt={user.tierExpiresAt}
@@ -841,6 +739,8 @@ function QuotaDetailsPanel({
   last7dAvg,
   last7dCounts,
   quota,
+  quotes,
+  quotesLoading,
   remainingChecks,
   rows,
   sizeLimits,
@@ -851,6 +751,8 @@ function QuotaDetailsPanel({
   last7dAvg?: number;
   last7dCounts?: number[];
   quota?: Quota;
+  quotes?: OrderQuotes;
+  quotesLoading: boolean;
   remainingChecks?: number;
   rows: QuotaUsageRow[];
   sizeLimits: Array<{ label: string; value: string }>;
@@ -997,6 +899,8 @@ function QuotaDetailsPanel({
           <CheckUpdateAddonPurchase
             addonQuota={addonQuota}
             billingConfig={billingConfig}
+            quotes={quotes}
+            quotesLoading={quotesLoading}
             tier={tier}
             tierExpiresAt={tierExpiresAt}
           />
@@ -1051,11 +955,15 @@ function QuotaDetailsPanel({
 function CheckUpdateAddonPurchase({
   addonQuota,
   billingConfig,
+  quotes,
+  quotesLoading,
   tier,
   tierExpiresAt,
 }: {
   addonQuota: number;
   billingConfig: ReturnType<typeof useOrderBillingConfig>;
+  quotes?: OrderQuotes;
+  quotesLoading: boolean;
   tier: Tier;
   tierExpiresAt?: string;
 }) {
@@ -1063,44 +971,39 @@ function CheckUpdateAddonPurchase({
   const monthlyUnitPrice =
     billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
   const isExistingPaidService = tier !== 'free' && !!tierExpiresAt;
-  const addonUnitOptions = Array.from({ length: 10 }, (_, index) => index + 1);
-  const quoteQueries = useQueries({
-    queries: addonUnitOptions.map((units) => ({
-      queryKey: ['orderQuote', 'checkUpdateAddon', tier, tierExpiresAt, units],
-      queryFn: () => api.getOrderQuote({ checkUpdateAddonUnits: units }),
-      retry: false,
-      staleTime: 30_000,
-    })),
-  });
-  const menuOptions: PurchaseMenuOption[] = addonUnitOptions.map(
-    (units, index) => {
-      const quoteQuery = quoteQueries[index];
-      const quote = quoteQuery?.data;
-      const proration = quote?.proration;
-      const disabled = quoteQuery?.isLoading || !quote;
+  const menuOptions: PurchaseMenuOption[] = quotes?.checkUpdateAddons.length
+    ? quotes.checkUpdateAddons.map((option) => {
+        const units = option.checkUpdateAddonUnits ?? Number(option.key);
+        const quote = option.quote;
+        const proration = quote.proration;
+        const disabled = quotesLoading || !quote;
 
-      return {
-        amountText: proration
-          ? `补差价 ${formatMoney(proration.amount)}`
-          : quote
-            ? `${formatMoney(quote.amount)} / 年`
-            : quoteQuery?.isLoading
-              ? '报价中'
-              : '按订单结算',
-        disabled,
-        key: String(units),
-        onClick: async () => {
-          setLoadingUnits(units);
-          try {
-            await purchaseCheckUpdateAddon(units);
-          } finally {
-            setLoadingUnits(null);
-          }
+        return {
+          amountText: proration
+            ? `补差价 ${formatMoney(proration.amount)}`
+            : `${formatMoney(quote.amount)} / 年`,
+          disabled,
+          key: option.key,
+          onClick: async () => {
+            setLoadingUnits(units);
+            try {
+              await purchaseCheckUpdateAddon(units);
+            } finally {
+              setLoadingUnits(null);
+            }
+          },
+          title: `+${(addonQuota * units).toLocaleString()} 次 / 日`,
+        };
+      })
+    : [
+        {
+          amountText: quotesLoading ? '报价中' : '按订单结算',
+          description: quotesLoading ? '正在获取加购报价' : undefined,
+          disabled: true,
+          key: 'unavailable',
+          title: '加购检查额度',
         },
-        title: `+${(addonQuota * units).toLocaleString()} 次 / 日`,
-      };
-    },
-  );
+      ];
 
   return (
     <div className="mt-4 flex flex-col gap-3 border-slate-200 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">

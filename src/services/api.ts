@@ -78,6 +78,24 @@ type OrderQuote = {
   type: 'buy' | 'upgrade';
 };
 
+type OrderQuoteOption = {
+  checkUpdateAddonUnits?: number;
+  key: string;
+  months?: number;
+  quote: OrderQuote;
+  tier?: string;
+};
+
+type OrderQuotes = {
+  checkUpdateAddons: OrderQuoteOption[];
+  current: {
+    checkUpdateAddonMonthlyPrice: number;
+    checkUpdateAddonUnits: number;
+  };
+  renewals: OrderQuoteOption[];
+  upgrades: OrderQuoteOption[];
+};
+
 export const api = {
   login: (params: { email: string; pwd: string }) =>
     request<{ token: string }>('post', '/user/login', params, {
@@ -296,12 +314,8 @@ export const api = {
       };
       payUrl: string;
     }>('post', '/orders', params),
-  getOrderQuote: (params: {
-    checkUpdateAddonUnits?: number;
-    months?: number;
-    tier?: string;
-  }) =>
-    request<OrderQuote>('post', '/orders/quote', params, {
+  getOrderQuotes: () =>
+    request<OrderQuotes>('get', '/orders/quote', undefined, {
       suppressErrorToast: true,
     }),
   // binding
