@@ -54,6 +54,30 @@ type CheckUpdateAddon = {
   title: string;
 };
 
+type OrderQuote = {
+  amount: number;
+  billing?: {
+    annualPrice: number;
+    billingCycle: 'month' | 'year';
+    billingMonths: number;
+    monthlyPrice: number;
+    requestedMonths: number;
+    switchedToAnnual: boolean;
+  };
+  proration?: {
+    amount: number;
+    annualAmount?: number;
+    annualDelta?: number;
+    dailyAmount: number;
+    days: number;
+    mode: 'month' | 'year';
+    monthlyDelta?: number;
+    thresholdMonths?: number;
+  };
+  tier: string;
+  type: 'buy' | 'upgrade';
+};
+
 export const api = {
   login: (params: { email: string; pwd: string }) =>
     request<{ token: string }>('post', '/user/login', params, {
@@ -272,6 +296,14 @@ export const api = {
       };
       payUrl: string;
     }>('post', '/orders', params),
+  getOrderQuote: (params: {
+    checkUpdateAddonUnits?: number;
+    months?: number;
+    tier?: string;
+  }) =>
+    request<OrderQuote>('post', '/orders/quote', params, {
+      suppressErrorToast: true,
+    }),
   // binding
   getBinding: (appId: number) =>
     request<{ data: Binding[] }>('get', `/app/${appId}/binding`),

@@ -1,5 +1,3 @@
-import dayjs, { type ConfigType } from 'dayjs';
-
 export const DEFAULT_MONTHLY_PRICE_FACTOR = 8;
 export const ANNUAL_BILLING_MONTHS = 12;
 
@@ -24,19 +22,6 @@ export interface AnnualSavings {
   amount: number;
   percent: number;
   discount: number;
-}
-
-export interface ProratedUpgradeParams {
-  currentAnnualPrice?: number | null;
-  expiresAt?: ConfigType | null;
-  now?: ConfigType;
-  targetAnnualPrice: number;
-}
-
-export interface ProratedAdditiveParams {
-  annualAmount?: number | null;
-  expiresAt?: ConfigType | null;
-  now?: ConfigType;
 }
 
 function roundMoney(value: number) {
@@ -113,48 +98,6 @@ export function resolveBillingPlan(
     monthlyPriceFactor: factor,
     switchedToAnnual,
   };
-}
-
-export function resolveProratedUpgradeAmount({
-  currentAnnualPrice,
-  expiresAt,
-  now,
-  targetAnnualPrice,
-}: ProratedUpgradeParams) {
-  const currentPrice = positiveFiniteNumber(currentAnnualPrice);
-  const targetPrice = positiveFiniteNumber(targetAnnualPrice);
-  if (!currentPrice || !targetPrice || currentPrice >= targetPrice) {
-    return null;
-  }
-
-  if (!expiresAt) {
-    return null;
-  }
-
-  const deltaDays = dayjs(expiresAt).add(1, 'day').diff(dayjs(now), 'day');
-  if (deltaDays <= 0) {
-    return null;
-  }
-
-  return roundMoney(((targetPrice - currentPrice) / 365) * deltaDays);
-}
-
-export function resolveProratedAdditiveAmount({
-  annualAmount,
-  expiresAt,
-  now,
-}: ProratedAdditiveParams) {
-  const amount = positiveFiniteNumber(annualAmount);
-  if (!amount || !expiresAt) {
-    return null;
-  }
-
-  const deltaDays = dayjs(expiresAt).add(1, 'day').diff(dayjs(now), 'day');
-  if (deltaDays <= 0) {
-    return null;
-  }
-
-  return roundMoney((amount / 365) * deltaDays);
 }
 
 export function getAnnualSavings(

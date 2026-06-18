@@ -24,7 +24,6 @@ import {
   DEFAULT_MONTHLY_PRICE_FACTOR,
   resolveBillingPlan,
   resolveMonthlyPriceFactor,
-  resolveProratedAdditiveAmount,
 } from '@/utils/billing';
 import {
   CHECK_QUOTA_LOW_RATIO,
@@ -139,67 +138,6 @@ function formatRenewedExpireDate({
   const nowDay = dayjs(now);
   const baseDay = currentExpireDay?.isAfter(nowDay) ? currentExpireDay : nowDay;
   return baseDay.add(months, 'month').format('YYYY年MM月DD日');
-}
-
-function getUpgradeProrationDetail({
-  currentAnnualPrice,
-  expiresAt,
-  now,
-  targetAnnualPrice,
-}: {
-  currentAnnualPrice?: number;
-  expiresAt?: string;
-  now?: string;
-  targetAnnualPrice: number;
-}) {
-  if (
-    !currentAnnualPrice ||
-    currentAnnualPrice <= 0 ||
-    currentAnnualPrice >= targetAnnualPrice
-  ) {
-    return null;
-  }
-  const days = getRemainingBillableDays(expiresAt, now);
-  if (!days) {
-    return null;
-  }
-  const annualDelta = roundMoneyValue(targetAnnualPrice - currentAnnualPrice);
-  const amount = roundMoneyValue((annualDelta / 365) * days);
-  const dailyAmount = roundMoneyValue(annualDelta / 365);
-
-  return {
-    amount,
-    dailyAmount,
-    days,
-  };
-}
-
-function getAdditiveProrationDetail({
-  annualAmount,
-  expiresAt,
-  now,
-}: {
-  annualAmount: number;
-  expiresAt?: string;
-  now?: string;
-}) {
-  const amount = resolveProratedAdditiveAmount({
-    annualAmount,
-    expiresAt,
-    now,
-  });
-  const days = getRemainingBillableDays(expiresAt, now);
-  if (amount === null || !days) {
-    return null;
-  }
-  const roundedAnnualAmount = roundMoneyValue(annualAmount);
-
-  return {
-    amount,
-    annualAmount: roundedAnnualAmount,
-    days,
-    formula: `(${formatMoney(roundedAnnualAmount)} ÷ 365) × ${days} 天 = ${formatMoney(amount)}`,
-  };
 }
 
 function formatWan(value: number) {
@@ -568,18 +506,32 @@ const UpgradePurchaseControls = ({
   const upgradeOptions = purchasableTiers.filter(
     (option) => currentQuota.pv < quotas[option.tier].pv,
   );
+  const quoteQueries = useQueries({
+    queries: upgradeOptions.map((option) => ({
+      queryKey: [
+        'orderQuote',
+        'upgrade',
+        currentTier,
+        tierExpiresAt,
+        option.tier,
+      ],
+      queryFn: () =>
+        api.getOrderQuote({
+          months:
+            currentTier === 'free'
+              ? billingConfig.annualBillingMonths
+              : undefined,
+          tier: option.tier,
+        }),
+      retry: false,
+      staleTime: 30_000,
+    })),
+  });
 
   if (upgradeOptions.length === 0) {
     return null; // 没有可升级的版本
   }
 
-  const currentAnnualPrice =
-    currentTier in products
-      ? getConfiguredProductPrice(
-          currentTier as keyof typeof products,
-          billingConfig,
-        )
-      : undefined;
   const remainingDays = getRemainingBillableDays(tierExpiresAt, serverTime);
   const title =
     currentTier === 'free'
@@ -588,58 +540,52 @@ const UpgradePurchaseControls = ({
   const hint =
     currentTier === 'free'
       ? '选择目标版本后按年付开通服务。'
-      : '补差价按目标版本与当前版本的年费差额逐天折算。';
+      : '补差价由后端按剩余有效期报价，未超过优惠阈值按月费差额折算，超过后按年费优惠折算。';
 
-  const menuOptions: PurchaseMenuOption[] = upgradeOptions.map((option) => {
-    const targetAnnualPrice = getConfiguredProductPrice(
-      option.tier,
-      billingConfig,
-    );
-    const annualPlan = resolveBillingPlan(
-      targetAnnualPrice,
-      billingConfig.annualBillingMonths,
-      billingConfig.monthlyPriceFactor,
-    );
-    const proration =
-      currentTier === 'free'
-        ? null
-        : getUpgradeProrationDetail({
-            currentAnnualPrice,
-            expiresAt: tierExpiresAt,
-            now: serverTime,
-            targetAnnualPrice,
-          });
-    const amountText =
-      currentTier === 'free'
-        ? `年付 ${formatMoney(annualPlan.amount)}`
-        : proration
-          ? `补差价 ${formatMoney(proration.dailyAmount)} × ${proration.days} 天 = ${formatMoney(proration.amount)}`
-          : '按订单结算';
-    const disabled = currentTier !== 'free' && !proration;
+  const menuOptions: PurchaseMenuOption[] = upgradeOptions.map(
+    (option, index) => {
+      const quoteQuery = quoteQueries[index];
+      const quote = quoteQuery?.data;
+      const proration = quote?.proration;
+      const amountText =
+        currentTier === 'free'
+          ? quote
+            ? `年付 ${formatMoney(quote.amount)}`
+            : quoteQuery?.isLoading
+              ? '报价中'
+              : '按订单结算'
+          : proration
+            ? `补差价 ${formatMoney(proration.dailyAmount)} × ${proration.days} 天 = ${formatMoney(proration.amount)}`
+            : quoteQuery?.isLoading
+              ? '报价中'
+              : '按订单结算';
+      const disabled =
+        quoteQuery?.isLoading || (currentTier === 'free' ? !quote : !proration);
 
-    return {
-      amountText,
-      description:
-        currentTier === 'free' ? '购买后从支付日起开通服务' : undefined,
-      details: getQuotaDetailItems(option.tier),
-      disabled,
-      key: option.tier,
-      onClick: async () => {
-        setLoadingTier(option.tier);
-        try {
-          await purchase(
-            option.tier,
-            currentTier === 'free'
-              ? billingConfig.annualBillingMonths
-              : undefined,
-          );
-        } finally {
-          setLoadingTier(null);
-        }
-      },
-      title: option.label,
-    };
-  });
+      return {
+        amountText,
+        description:
+          currentTier === 'free' ? '购买后从支付日起开通服务' : undefined,
+        details: getQuotaDetailItems(option.tier),
+        disabled,
+        key: option.tier,
+        onClick: async () => {
+          setLoadingTier(option.tier);
+          try {
+            await purchase(
+              option.tier,
+              currentTier === 'free'
+                ? billingConfig.annualBillingMonths
+                : undefined,
+            );
+          } finally {
+            setLoadingTier(null);
+          }
+        },
+        title: option.label,
+      };
+    },
+  );
 
   return (
     <PurchaseActionPopover
@@ -841,7 +787,6 @@ function UserPanel() {
             quota={quota}
             remainingChecks={remainingChecks}
             rows={quotaUsageRows}
-            serverTime={user.serverTime}
             sizeLimits={quotaSizeLimits}
             tier={tier}
             tierExpiresAt={user.tierExpiresAt}
@@ -898,7 +843,6 @@ function QuotaDetailsPanel({
   quota,
   remainingChecks,
   rows,
-  serverTime,
   sizeLimits,
   tier,
   tierExpiresAt,
@@ -909,7 +853,6 @@ function QuotaDetailsPanel({
   quota?: Quota;
   remainingChecks?: number;
   rows: QuotaUsageRow[];
-  serverTime?: string;
   sizeLimits: Array<{ label: string; value: string }>;
   tier: Tier;
   tierExpiresAt?: string;
@@ -1054,7 +997,6 @@ function QuotaDetailsPanel({
           <CheckUpdateAddonPurchase
             addonQuota={addonQuota}
             billingConfig={billingConfig}
-            serverTime={serverTime}
             tier={tier}
             tierExpiresAt={tierExpiresAt}
           />
@@ -1109,43 +1051,42 @@ function QuotaDetailsPanel({
 function CheckUpdateAddonPurchase({
   addonQuota,
   billingConfig,
-  serverTime,
   tier,
   tierExpiresAt,
 }: {
   addonQuota: number;
   billingConfig: ReturnType<typeof useOrderBillingConfig>;
-  serverTime?: string;
   tier: Tier;
   tierExpiresAt?: string;
 }) {
   const [loadingUnits, setLoadingUnits] = useState<number | null>(null);
   const monthlyUnitPrice =
     billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
-  const annualUnitPrice =
-    billingConfig.checkUpdateAddon?.annualPrice ??
-    monthlyUnitPrice * ANNUAL_BILLING_MONTHS;
   const isExistingPaidService = tier !== 'free' && !!tierExpiresAt;
-  const menuOptions: PurchaseMenuOption[] = Array.from(
-    { length: 10 },
-    (_, index) => {
-      const units = index + 1;
-      const annualAmount = annualUnitPrice * units;
-      const proration = isExistingPaidService
-        ? getAdditiveProrationDetail({
-            annualAmount,
-            expiresAt: tierExpiresAt,
-            now: serverTime,
-          })
-        : null;
-      const disabled = isExistingPaidService && !proration;
+  const addonUnitOptions = Array.from({ length: 10 }, (_, index) => index + 1);
+  const quoteQueries = useQueries({
+    queries: addonUnitOptions.map((units) => ({
+      queryKey: ['orderQuote', 'checkUpdateAddon', tier, tierExpiresAt, units],
+      queryFn: () => api.getOrderQuote({ checkUpdateAddonUnits: units }),
+      retry: false,
+      staleTime: 30_000,
+    })),
+  });
+  const menuOptions: PurchaseMenuOption[] = addonUnitOptions.map(
+    (units, index) => {
+      const quoteQuery = quoteQueries[index];
+      const quote = quoteQuery?.data;
+      const proration = quote?.proration;
+      const disabled = quoteQuery?.isLoading || !quote;
 
       return {
         amountText: proration
           ? `补差价 ${formatMoney(proration.amount)}`
-          : disabled
-            ? '请先续费套餐'
-            : `${formatMoney(annualAmount)} / 年`,
+          : quote
+            ? `${formatMoney(quote.amount)} / 年`
+            : quoteQuery?.isLoading
+              ? '报价中'
+              : '按订单结算',
         disabled,
         key: String(units),
         onClick: async () => {
