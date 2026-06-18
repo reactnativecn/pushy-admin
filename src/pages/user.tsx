@@ -27,6 +27,7 @@ import {
   getBillingOptions,
   resolveBillingPlan,
   resolveMonthlyPriceFactor,
+  resolveProratedAdditiveAmount,
   resolveProratedUpgradeAmount,
 } from '@/utils/billing';
 import {
@@ -119,22 +120,6 @@ function getConfiguredProductPrice(
   billingConfig: ReturnType<typeof useOrderBillingConfig>,
 ) {
   return billingConfig.productPrices[tier] ?? products[tier].price;
-}
-
-function resolveCurrentAnnualPrice(
-  tier: Tier,
-  quota: Quota | undefined,
-  billingConfig: ReturnType<typeof useOrderBillingConfig>,
-) {
-  if (tier === 'custom') {
-    return quota?.price;
-  }
-
-  if (tier in products) {
-    return getConfiguredProductPrice(tier as ProductTier, billingConfig);
-  }
-
-  return undefined;
 }
 
 function BillingOptionLabel({
@@ -276,10 +261,12 @@ const PurchaseButton = ({ tier }: { tier: ProductTier }) => {
 const UpgradePurchaseControls = ({
   currentQuota,
   currentTier,
+  serverTime,
   tierExpiresAt,
 }: {
   currentQuota: (typeof quotas)[keyof typeof quotas];
   currentTier: Tier;
+  serverTime?: string;
   tierExpiresAt?: string;
 }) => {
   const [loading, setLoading] = useState(false);
@@ -325,6 +312,7 @@ const UpgradePurchaseControls = ({
     const amount = resolveProratedUpgradeAmount({
       currentAnnualPrice,
       expiresAt: tierExpiresAt,
+      now: serverTime,
       targetAnnualPrice,
     });
 
@@ -530,34 +518,31 @@ function UserPanel() {
               <UpgradePurchaseControls
                 currentQuota={defaultQuota}
                 currentTier={tier}
+                serverTime={user.serverTime}
                 tierExpiresAt={user.tierExpiresAt}
               />
             )}
           </div>
         </Descriptions.Item>
         <Descriptions.Item label="服务有效期至">
-          <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-3">
             {displayExpireDay ? (
               <>
-                <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
-                  <span>{displayExpireDay}</span>
-                  {tier !== 'free' && (
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                      <PurchaseButton tier={tier} />
+                <div>
+                  <div>{displayExpireDay}</div>
+                  {displayRemainingDays && (
+                    <div className="mt-1 text-gray-500 text-sm">
+                      {displayRemainingDays}
                     </div>
                   )}
                 </div>
-                {displayRemainingDays && <div>{displayRemainingDays}</div>}
+                {tier !== 'free' && <PurchaseButton tier={tier} />}
               </>
             ) : (
-              <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
-                <span>无</span>
-                {tier !== 'free' && (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                    <PurchaseButton tier={tier} />
-                  </div>
-                )}
-              </div>
+              <>
+                <div>无</div>
+                {tier !== 'free' && <PurchaseButton tier={tier} />}
+              </>
             )}
           </div>
         </Descriptions.Item>
@@ -580,6 +565,7 @@ function UserPanel() {
             quota={quota}
             remainingChecks={remainingChecks}
             rows={quotaUsageRows}
+            serverTime={user.serverTime}
             sizeLimits={quotaSizeLimits}
             tier={tier}
             tierExpiresAt={user.tierExpiresAt}
@@ -636,6 +622,7 @@ function QuotaDetailsPanel({
   quota,
   remainingChecks,
   rows,
+  serverTime,
   sizeLimits,
   tier,
   tierExpiresAt,
@@ -646,6 +633,7 @@ function QuotaDetailsPanel({
   quota?: Quota;
   remainingChecks?: number;
   rows: QuotaUsageRow[];
+  serverTime?: string;
   sizeLimits: Array<{ label: string; value: string }>;
   tier: Tier;
   tierExpiresAt?: string;
@@ -802,11 +790,7 @@ function QuotaDetailsPanel({
           <CheckUpdateAddonPurchase
             addonQuota={addonQuota}
             billingConfig={billingConfig}
-            currentAnnualPrice={resolveCurrentAnnualPrice(
-              tier,
-              quota,
-              billingConfig,
-            )}
+            serverTime={serverTime}
             tier={tier}
             tierExpiresAt={tierExpiresAt}
           />
@@ -861,13 +845,13 @@ function QuotaDetailsPanel({
 function CheckUpdateAddonPurchase({
   addonQuota,
   billingConfig,
-  currentAnnualPrice,
+  serverTime,
   tier,
   tierExpiresAt,
 }: {
   addonQuota: number;
   billingConfig: ReturnType<typeof useOrderBillingConfig>;
-  currentAnnualPrice?: number;
+  serverTime?: string;
   tier: Tier;
   tierExpiresAt?: string;
 }) {
@@ -879,15 +863,13 @@ function CheckUpdateAddonPurchase({
     billingConfig.checkUpdateAddon?.annualPrice ??
     monthlyUnitPrice * ANNUAL_BILLING_MONTHS;
   const isExistingPaidService = tier !== 'free' && !!tierExpiresAt;
-  const targetAnnualPrice = (currentAnnualPrice ?? 0) + annualUnitPrice * units;
-  const proratedAmount =
-    isExistingPaidService && currentAnnualPrice
-      ? resolveProratedUpgradeAmount({
-          currentAnnualPrice,
-          expiresAt: tierExpiresAt,
-          targetAnnualPrice,
-        })
-      : null;
+  const proratedAmount = isExistingPaidService
+    ? resolveProratedAdditiveAmount({
+        annualAmount: annualUnitPrice * units,
+        expiresAt: tierExpiresAt,
+        now: serverTime,
+      })
+    : null;
   const needsActivePaidService =
     isExistingPaidService && proratedAmount === null;
   const amountText =

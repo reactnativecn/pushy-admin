@@ -8,6 +8,7 @@ import {
   resolveBillingPlan,
   resolveMonthlyPrice,
   resolveMonthlyPriceFactor,
+  resolveProratedAdditiveAmount,
   resolveProratedUpgradeAmount,
 } from './billing';
 
@@ -357,6 +358,36 @@ describe('getBillingOptions', () => {
       expect(typeof opt.switchedToAnnual).toBe('boolean');
       expect(typeof opt.value).toBe('number');
     }
+  });
+});
+
+describe('resolveProratedAdditiveAmount', () => {
+  test('calculates the additive price for remaining service days', () => {
+    expect(
+      resolveProratedAdditiveAmount({
+        annualAmount: 1200,
+        expiresAt: dayjs('2026-01-30').toDate(),
+        now: dayjs('2026-01-01'),
+      }),
+    ).toBe(98.63);
+  });
+
+  test('rejects expired or invalid additive amounts', () => {
+    expect(
+      resolveProratedAdditiveAmount({
+        annualAmount: 1200,
+        expiresAt: dayjs('2025-12-31').toDate(),
+        now: dayjs('2026-01-01'),
+      }),
+    ).toBeNull();
+
+    expect(
+      resolveProratedAdditiveAmount({
+        annualAmount: 0,
+        expiresAt: dayjs('2026-01-30').toDate(),
+        now: dayjs('2026-01-01'),
+      }),
+    ).toBeNull();
   });
 });
 

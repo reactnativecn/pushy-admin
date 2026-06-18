@@ -18,6 +18,7 @@ export interface User {
   last7dAvg?: number;
   last7dCounts?: number[];
   quota?: Quota;
+  serverTime?: string;
   admin?: boolean;
 }
 

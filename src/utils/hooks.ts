@@ -189,9 +189,8 @@ export const useUserInfo = () => {
   const displayExpireDay = data?.tierExpiresAt
     ? expireDay.format('YYYY年MM月DD日')
     : '无';
-  const remainingDays = data?.tierExpiresAt
-    ? expireDay.diff(dayjs(), 'day')
-    : null;
+  const now = data?.serverTime ? dayjs(data.serverTime) : dayjs();
+  const remainingDays = data?.tierExpiresAt ? expireDay.diff(now, 'day') : null;
   const isExpiringSoon = remainingDays !== null && remainingDays <= 90;
   const displayRemainingDays = isExpiringSoon
     ? `(剩余 ${remainingDays} 天，之后转为免费版)`

@@ -33,6 +33,12 @@ export interface ProratedUpgradeParams {
   targetAnnualPrice: number;
 }
 
+export interface ProratedAdditiveParams {
+  annualAmount?: number | null;
+  expiresAt?: ConfigType | null;
+  now?: ConfigType;
+}
+
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
@@ -131,6 +137,24 @@ export function resolveProratedUpgradeAmount({
   }
 
   return roundMoney(((targetPrice - currentPrice) / 365) * deltaDays);
+}
+
+export function resolveProratedAdditiveAmount({
+  annualAmount,
+  expiresAt,
+  now,
+}: ProratedAdditiveParams) {
+  const amount = positiveFiniteNumber(annualAmount);
+  if (!amount || !expiresAt) {
+    return null;
+  }
+
+  const deltaDays = dayjs(expiresAt).add(1, 'day').diff(dayjs(now), 'day');
+  if (deltaDays <= 0) {
+    return null;
+  }
+
+  return roundMoney((amount / 365) * deltaDays);
 }
 
 export function getAnnualSavings(
