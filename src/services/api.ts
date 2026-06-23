@@ -96,6 +96,56 @@ type OrderQuotes = {
   upgrades: OrderQuoteOption[];
 };
 
+export type InternalMetricCounter = {
+  labels: Record<string, string>;
+  name: string;
+  value: number;
+};
+
+export type InternalMetricDuration = {
+  avgMs: number;
+  buckets: Record<string, number>;
+  count: number;
+  labels: Record<string, string>;
+  maxMs: number;
+  minMs: number;
+  name: string;
+  p50Ms: number | null;
+  p95Ms: number | null;
+  p99Ms: number | null;
+  totalMs: number;
+};
+
+export type InternalMetricsBucket = {
+  counters: InternalMetricCounter[];
+  durations: InternalMetricDuration[];
+  end: string;
+  start: string;
+};
+
+export type InternalMetricsResponse = {
+  buckets?: InternalMetricsBucket[];
+  config: {
+    bucketCount: number;
+    bucketMs: number;
+    durationBucketsMs: number[];
+  };
+  counters: InternalMetricCounter[];
+  durations: InternalMetricDuration[];
+  generatedAt: string;
+  process: {
+    memory: {
+      arrayBuffers: number;
+      external: number;
+      heapTotal: number;
+      heapUsed: number;
+      rss: number;
+    };
+    pid: number;
+    uptimeSeconds: number;
+  };
+};
+
 export const api = {
   login: (params: { email: string; pwd: string }) =>
     request<{ token: string }>('post', '/user/login', params, {
@@ -391,6 +441,8 @@ export const api = {
       'get',
       `/metrics/app?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
     ),
+  getInternalMetrics: () =>
+    request<InternalMetricsResponse>('get', '/metrics/internal'),
   // API Token
   createApiToken: (params: {
     name: string;

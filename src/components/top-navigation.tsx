@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   CommentOutlined,
+  DashboardOutlined,
   DownOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
@@ -137,6 +138,15 @@ export default function TopNavigation({
                       key: 'admin-metrics',
                       label: (
                         <Link to={rootRouterPath.adminMetrics}>全局统计</Link>
+                      ),
+                    },
+                    {
+                      key: 'admin-service-status',
+                      icon: <DashboardOutlined />,
+                      label: (
+                        <Link to={rootRouterPath.adminServiceStatus}>
+                          服务状态
+                        </Link>
                       ),
                     },
                   ],
@@ -673,6 +683,9 @@ function getSelectedKeys(pathname: string) {
   }
   if (pathname === rootRouterPath.adminMetrics) {
     return ['admin-metrics'];
+  }
+  if (pathname === rootRouterPath.adminServiceStatus) {
+    return ['admin-service-status'];
   }
   return [];
 }
