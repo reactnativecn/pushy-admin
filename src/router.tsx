@@ -5,7 +5,8 @@ import { getToken } from './services/request';
 // import './utils/notice';
 
 export const rootRouterPath = {
-  apps: '/',
+  home: '/',
+  apps: '/apps',
   user: '/user',
   versions: (id: string) => `/apps/${id}`,
   resetPassword: (step: string) => `/reset-password/${step}`,
@@ -42,13 +43,13 @@ export const needAuthLoader = ({ request }: { request: Request }) => {
 
 function resolveAuthenticatedRedirect(loginFrom?: string | null) {
   if (!loginFrom?.startsWith('/') || loginFrom.startsWith('//')) {
-    return rootRouterPath.apps;
+    return rootRouterPath.home;
   }
   if (
     loginFrom === rootRouterPath.login ||
     loginFrom.startsWith(`${rootRouterPath.login}?`)
   ) {
-    return rootRouterPath.apps;
+    return rootRouterPath.home;
   }
   return loginFrom;
 }
@@ -72,7 +73,7 @@ export const router = createHashRouter([
       {
         index: true,
         loader: needAuthLoader,
-        lazy: () => import('./pages/apps'),
+        lazy: () => import('./pages/home'),
       },
       {
         path: 'apps',

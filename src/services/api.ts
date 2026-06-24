@@ -441,8 +441,14 @@ export const api = {
       'get',
       `/metrics/app?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
     ),
-  getInternalMetrics: () =>
-    request<InternalMetricsResponse>('get', '/metrics/internal'),
+  getInternalMetrics: (params?: {
+    baseUrl?: string;
+    suppressErrorToast?: boolean;
+  }) =>
+    request<InternalMetricsResponse>('get', '/metrics/internal', undefined, {
+      baseUrl: params?.baseUrl,
+      suppressErrorToast: params?.suppressErrorToast,
+    }),
   // API Token
   createApiToken: (params: {
     name: string;

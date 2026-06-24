@@ -16,7 +16,8 @@ const mockRouterObj = {
 
 mock.module('@/router', () => ({
   rootRouterPath: {
-    apps: '/',
+    apps: '/apps',
+    home: '/',
     inactivated: '/inactivated',
     login: '/login',
   },

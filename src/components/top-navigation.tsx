@@ -89,11 +89,55 @@ export default function TopNavigation({
   const { user } = useUserInfo();
   const { pathname } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [appDrawerPlacement, setAppDrawerPlacementState] = useState(
+    getManageAppDrawerPlacement,
+  );
   const selectedKeys = useMemo(() => getSelectedKeys(pathname), [pathname]);
+  const shouldShowAppsTopTab =
+    showAuthenticatedChrome &&
+    user &&
+    !isMobile &&
+    appDrawerPlacement !== 'hidden';
+
+  useEffect(() => {
+    const syncPlacement = () => {
+      setAppDrawerPlacementState(getManageAppDrawerPlacement());
+    };
+
+    window.addEventListener(manageAppDrawerPlacementChangeEvent, syncPlacement);
+    window.addEventListener('storage', syncPlacement);
+    return () => {
+      window.removeEventListener(
+        manageAppDrawerPlacementChangeEvent,
+        syncPlacement,
+      );
+      window.removeEventListener('storage', syncPlacement);
+    };
+  }, []);
 
   const authenticatedItems: MenuItems =
     showAuthenticatedChrome && user
       ? [
+          ...(shouldShowAppsTopTab
+            ? [
+                {
+                  key: 'apps',
+                  icon: <AppstoreOutlined />,
+                  label: <Link to={rootRouterPath.apps}>应用列表</Link>,
+                },
+              ]
+            : []),
+          ...(user.admin
+            ? [
+                {
+                  key: 'admin-service-status',
+                  icon: <DashboardOutlined />,
+                  label: (
+                    <Link to={rootRouterPath.adminServiceStatus}>服务状态</Link>
+                  ),
+                },
+              ]
+            : []),
           {
             key: 'audit-logs',
             icon: <FileTextOutlined />,
@@ -140,15 +184,6 @@ export default function TopNavigation({
                         <Link to={rootRouterPath.adminMetrics}>全局统计</Link>
                       ),
                     },
-                    {
-                      key: 'admin-service-status',
-                      icon: <DashboardOutlined />,
-                      label: (
-                        <Link to={rootRouterPath.adminServiceStatus}>
-                          服务状态
-                        </Link>
-                      ),
-                    },
                   ],
                 },
               ]
@@ -174,7 +209,10 @@ export default function TopNavigation({
 
   return (
     <div className="flex min-h-16 w-full min-w-0 items-center gap-1.5 md:gap-3">
-      <Link to="/" className="flex shrink-0 items-center no-underline">
+      <Link
+        to={rootRouterPath.home}
+        className="flex shrink-0 items-center no-underline"
+      >
         <LogoH className="h-7 w-auto max-w-[88px] sm:max-w-[130px] md:max-w-[150px]" />
       </Link>
       {showAuthenticatedChrome && user && <AppSwitcher compact={isMobile} />}
@@ -660,6 +698,9 @@ function formatAppKey(appKey?: string | null) {
 }
 
 function getSelectedKeys(pathname: string) {
+  if (pathname === rootRouterPath.home || pathname === rootRouterPath.apps) {
+    return ['apps'];
+  }
   if (pathname === rootRouterPath.user) {
     return ['user'];
   }

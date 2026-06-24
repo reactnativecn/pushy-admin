@@ -9,12 +9,13 @@ import {
   Spin,
   Statistic,
   Table,
+  Tabs,
   Tag,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   api,
   type InternalMetricCounter,
@@ -52,6 +53,48 @@ type EndpointRow = {
   path: string;
   total: number;
 };
+
+const SERVICE_STATUS_TARGETS = [
+  {
+    key: 'jd1',
+    label: 'jd1',
+    host: '1.rnupdate.online',
+    baseUrl: 'https://1.rnupdate.online/api',
+  },
+  {
+    key: 'jd2',
+    label: 'jd2',
+    host: '2.rnupdate.online',
+    baseUrl: 'https://2.rnupdate.online/api',
+  },
+  {
+    key: 'jd3',
+    label: 'jd3',
+    host: '3.rnupdate.online',
+    baseUrl: 'https://3.rnupdate.online/api',
+  },
+  {
+    key: 'jd4',
+    label: 'jd4',
+    host: '4.rnupdate.online',
+    baseUrl: 'https://4.rnupdate.online/api',
+  },
+  {
+    key: 's1',
+    label: 's1',
+    host: 's1.reactnative.cn',
+    baseUrl: 'https://s1.reactnative.cn/api',
+  },
+  {
+    key: 'p',
+    label: 'p',
+    host: 'p.reactnative.cn',
+    baseUrl: 'https://p.reactnative.cn/api',
+  },
+] as const;
+
+type ServiceStatusTarget = (typeof SERVICE_STATUS_TARGETS)[number];
+type ServiceStatusTargetKey = ServiceStatusTarget['key'];
 
 const counterLabels: Record<string, string> = {
   'api.request.error': '5xx',
@@ -449,15 +492,19 @@ const endpointColumns: ColumnsType<EndpointRow> = [
   },
 ];
 
-export const Component = () => {
+function ServiceStatusPanel({ target }: { target: ServiceStatusTarget }) {
   const {
     data: snapshot,
     error,
     isFetching,
     refetch,
   } = useQuery({
-    queryFn: () => api.getInternalMetrics(),
-    queryKey: ['internalMetrics'],
+    queryFn: () =>
+      api.getInternalMetrics({
+        baseUrl: target.baseUrl,
+        suppressErrorToast: true,
+      }),
+    queryKey: ['internalMetrics', target.key],
     refetchInterval: 30_000,
   });
 
@@ -505,13 +552,14 @@ export const Component = () => {
       : 0;
 
   return (
-    <div className="page-section">
+    <>
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Title level={4} className="m-0!">
-            服务状态
+          <Title level={5} className="m-0!">
+            {target.label}
           </Title>
           <div className="mt-1 flex flex-wrap gap-2">
+            <Tag>{target.host}</Tag>
             {snapshot?.generatedAt && (
               <Tag>
                 {dayjs(snapshot.generatedAt).format('YYYY-MM-DD HH:mm:ss')}
@@ -638,6 +686,42 @@ export const Component = () => {
           />
         </Card>
       </Spin>
+    </>
+  );
+}
+
+export const Component = () => {
+  const [activeTargetKey, setActiveTargetKey] =
+    useState<ServiceStatusTargetKey>(SERVICE_STATUS_TARGETS[0].key);
+  const activeTarget =
+    SERVICE_STATUS_TARGETS.find((target) => target.key === activeTargetKey) ??
+    SERVICE_STATUS_TARGETS[0];
+
+  return (
+    <div className="page-section">
+      <div className="mb-4">
+        <Title level={4} className="m-0!">
+          服务状态
+        </Title>
+        <Text type="secondary">按节点查看内部指标和运行状态。</Text>
+      </div>
+      <Tabs
+        activeKey={activeTarget.key}
+        className="mb-4"
+        items={SERVICE_STATUS_TARGETS.map((target) => ({
+          key: target.key,
+          label: (
+            <span className="inline-flex items-center gap-2">
+              <span>{target.label}</span>
+              <span className="hidden text-xs text-slate-400 md:inline">
+                {target.host}
+              </span>
+            </span>
+          ),
+        }))}
+        onChange={(key) => setActiveTargetKey(key as ServiceStatusTargetKey)}
+      />
+      <ServiceStatusPanel key={activeTarget.key} target={activeTarget} />
     </div>
   );
 };
