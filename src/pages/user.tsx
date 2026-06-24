@@ -45,6 +45,13 @@ const purchasableTiers: Array<{
   { label: '大客户VIP3版', tier: 'vip3' },
 ];
 const purchaseButtonClassName = 'w-full justify-center sm:w-[160px]';
+const checkUpdateAddonEligibleTiers = new Set<Tier>([
+  'premium',
+  'pro',
+  'vip1',
+  'vip2',
+  'vip3',
+]);
 
 const InvoiceHint = (
   <div>
@@ -150,6 +157,32 @@ function getQuotaDetailItems(tier: PurchasableTier) {
     },
   ];
 }
+
+function canPurchaseCheckUpdateAddon({
+  dailyQuota,
+  quota,
+  tier,
+  tierExpiresAt,
+}: {
+  dailyQuota: number;
+  quota?: Quota;
+  tier: Tier;
+  tierExpiresAt?: string;
+}) {
+  if (tier === 'free' || !tierExpiresAt) {
+    return false;
+  }
+  if (tier === 'custom') {
+    if (quota?.base) {
+      return checkUpdateAddonEligibleTiers.has(quota.base);
+    }
+    return dailyQuota >= quotas.premium.pv;
+  }
+  return checkUpdateAddonEligibleTiers.has(tier);
+}
+
+const defaultCheckUpdateAddonEligibilityHint =
+  '仅高级版及以上可加购检查额度，当前版本可先升级后再加购。';
 
 type PurchaseMenuOption = {
   amountText: string;
@@ -899,6 +932,8 @@ function QuotaDetailsPanel({
           <CheckUpdateAddonPurchase
             addonQuota={addonQuota}
             billingConfig={billingConfig}
+            dailyQuota={dailyQuota}
+            quota={quota}
             quotes={quotes}
             quotesLoading={quotesLoading}
             tier={tier}
@@ -955,6 +990,8 @@ function QuotaDetailsPanel({
 function CheckUpdateAddonPurchase({
   addonQuota,
   billingConfig,
+  dailyQuota,
+  quota,
   quotes,
   quotesLoading,
   tier,
@@ -962,6 +999,8 @@ function CheckUpdateAddonPurchase({
 }: {
   addonQuota: number;
   billingConfig: ReturnType<typeof useOrderBillingConfig>;
+  dailyQuota: number;
+  quota?: Quota;
   quotes?: OrderQuotes;
   quotesLoading: boolean;
   tier: Tier;
@@ -970,7 +1009,16 @@ function CheckUpdateAddonPurchase({
   const [loadingUnits, setLoadingUnits] = useState<number | null>(null);
   const monthlyUnitPrice =
     billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
+  const eligibilityHint =
+    billingConfig.checkUpdateAddon?.eligibilityMessage ??
+    defaultCheckUpdateAddonEligibilityHint;
   const isExistingPaidService = tier !== 'free' && !!tierExpiresAt;
+  const canPurchaseAddon = canPurchaseCheckUpdateAddon({
+    dailyQuota,
+    quota,
+    tier,
+    tierExpiresAt,
+  });
   const menuOptions: PurchaseMenuOption[] = quotes?.checkUpdateAddons.length
     ? quotes.checkUpdateAddons.map((option) => {
         const units = option.checkUpdateAddonUnits ?? Number(option.key);
@@ -1010,25 +1058,36 @@ function CheckUpdateAddonPurchase({
       <div>
         <div className="font-medium text-slate-900 text-sm">检查额度加购</div>
         <div className="mt-0.5 text-slate-500 text-xs">
-          每增加 {addonQuota.toLocaleString()} 次 / 日，每月额外收费{' '}
-          {formatMoney(monthlyUnitPrice)}。
+          {canPurchaseAddon
+            ? `每增加 ${addonQuota.toLocaleString()} 次 / 日，每月额外收费 ${formatMoney(monthlyUnitPrice)}。`
+            : eligibilityHint}
         </div>
       </div>
-      <PurchaseActionPopover
-        buttonLabel={loadingUnits ? '跳转中' : '加购检查额度'}
-        hint={
-          isExistingPaidService
-            ? `按剩余天数补差价。收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
-            : `收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
-        }
-        loading={loadingUnits !== null}
-        title={
-          isExistingPaidService
-            ? `加购检查额度（当前有效期不变：至 ${formatExpireDate(tierExpiresAt)}）`
-            : '加购检查额度'
-        }
-        options={menuOptions}
-      />
+      {canPurchaseAddon ? (
+        <PurchaseActionPopover
+          buttonLabel={loadingUnits ? '跳转中' : '加购检查额度'}
+          hint={
+            isExistingPaidService
+              ? `按剩余天数补差价。收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
+              : `收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
+          }
+          loading={loadingUnits !== null}
+          title={
+            isExistingPaidService
+              ? `加购检查额度（当前有效期不变：至 ${formatExpireDate(tierExpiresAt)}）`
+              : '加购检查额度'
+          }
+          options={menuOptions}
+        />
+      ) : (
+        <Tooltip title={eligibilityHint}>
+          <span>
+            <Button className={purchaseButtonClassName} disabled>
+              加购检查额度
+            </Button>
+          </span>
+        </Tooltip>
+      )}
     </div>
   );
 }

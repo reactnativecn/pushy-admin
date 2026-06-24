@@ -47,6 +47,8 @@ type BillingTier = {
 
 type CheckUpdateAddon = {
   annualPrice: number;
+  eligibilityMessage?: string;
+  minTier?: string;
   monthlyUnitPrice: number;
   quota: number;
   summary: string;
