@@ -1,4 +1,5 @@
 import { createHashRouter, redirect } from 'react-router-dom';
+import { AdminRoute } from './components/admin-route';
 import { ErrorBoundary } from './components/error-boundary';
 import MainLayout from './components/main-layout';
 import { getToken } from './services/request';
@@ -128,27 +129,29 @@ export const router = createHashRouter([
       {
         path: 'admin-config',
         loader: needAuthLoader,
-        lazy: () => import('./pages/admin-config'),
+        element: <AdminRoute load={() => import('./pages/admin-config')} />,
       },
       {
         path: 'admin-users',
         loader: needAuthLoader,
-        lazy: () => import('./pages/admin-users'),
+        element: <AdminRoute load={() => import('./pages/admin-users')} />,
       },
       {
         path: 'admin-apps',
         loader: needAuthLoader,
-        lazy: () => import('./pages/admin-apps'),
+        element: <AdminRoute load={() => import('./pages/admin-apps')} />,
       },
       {
         path: 'admin-metrics',
         loader: needAuthLoader,
-        lazy: () => import('./pages/admin-metrics'),
+        element: <AdminRoute load={() => import('./pages/admin-metrics')} />,
       },
       {
         path: 'admin-service-status',
         loader: needAuthLoader,
-        lazy: () => import('./pages/admin-service-status'),
+        element: (
+          <AdminRoute load={() => import('./pages/admin-service-status')} />
+        ),
       },
       {
         path: 'api-tokens',

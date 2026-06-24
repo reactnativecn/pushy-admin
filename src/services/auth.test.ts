@@ -69,6 +69,7 @@ mock.module('react-router-dom', () => ({
   }),
   redirect: () => {},
   useNavigate: () => {}, // mock useNavigate because it failed on export earlier
+  Navigate: () => null,
 }));
 
 // Mock main-layout because it imports logo which causes the SVG error

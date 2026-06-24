@@ -39,6 +39,7 @@ mock.module('react-router-dom', () => ({
   isRouteErrorResponse: () => false,
   Link: () => null,
   NavLink: () => null,
+  Navigate: () => null,
   Outlet: () => null,
   useLocation: () => ({
     pathname: '',
