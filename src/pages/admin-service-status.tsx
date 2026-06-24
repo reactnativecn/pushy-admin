@@ -1,6 +1,6 @@
 import { Line } from '@ant-design/charts';
 import { ReloadOutlined } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import {
   Button,
   Card,
@@ -9,7 +9,6 @@ import {
   Spin,
   Statistic,
   Table,
-  Tabs,
   Tag,
   Typography,
 } from 'antd';
@@ -22,6 +21,7 @@ import {
   type InternalMetricDuration,
   type InternalMetricsResponse,
 } from '@/services/api';
+import { cn } from '@/utils/helper';
 
 const { Text, Title } = Typography;
 
@@ -52,6 +52,12 @@ type EndpointRow = {
   p95Ms: number | null;
   path: string;
   total: number;
+};
+
+type ServiceStatusSummary = {
+  delayText: string;
+  hitText: string;
+  requestText: string;
 };
 
 const SERVICE_STATUS_TARGETS = [
@@ -371,6 +377,39 @@ function buildEndpointRows(snapshot?: InternalMetricsResponse): EndpointRow[] {
   return [...totals.values()].sort((left, right) => right.total - left.total);
 }
 
+function buildServiceStatusSummary(
+  snapshot?: InternalMetricsResponse,
+): ServiceStatusSummary {
+  if (!snapshot) {
+    return {
+      delayText: '-',
+      hitText: '-',
+      requestText: '-',
+    };
+  }
+
+  const totalRequests = sumCounters(snapshot.counters, 'api.request.total');
+  const totalErrors = sumCounters(snapshot.counters, 'api.request.error');
+  const apiDuration = aggregateDurations(
+    snapshot.durations,
+    snapshot.config,
+    (entry) => entry.name === 'api.request.duration',
+  );
+  const l1Hits = sumCounters(snapshot.counters, 'cache.l1.hit');
+  const redisHits = sumCounters(snapshot.counters, 'cache.redis.hit');
+  const staleHits = sumCounters(snapshot.counters, 'cache.stale.hit');
+  const handlerMisses = sumCounters(snapshot.counters, 'cache.handler.miss');
+  const cacheServed = l1Hits + redisHits + staleHits;
+  const cacheTotal = cacheServed + handlerMisses;
+  const cacheHitRate = cacheTotal > 0 ? cacheServed / cacheTotal : 0;
+
+  return {
+    delayText: formatMs(getAverageMs(apiDuration)),
+    hitText: formatPercent(cacheHitRate),
+    requestText: `${formatCount(totalRequests)}/${formatCount(totalErrors)}`,
+  };
+}
+
 function createLineConfig(
   data: SeriesPoint[],
   yTitle: string,
@@ -492,22 +531,19 @@ const endpointColumns: ColumnsType<EndpointRow> = [
   },
 ];
 
-function ServiceStatusPanel({ target }: { target: ServiceStatusTarget }) {
-  const {
-    data: snapshot,
-    error,
-    isFetching,
-    refetch,
-  } = useQuery({
-    queryFn: () =>
-      api.getInternalMetrics({
-        baseUrl: target.baseUrl,
-        suppressErrorToast: true,
-      }),
-    queryKey: ['internalMetrics', target.key],
-    refetchInterval: 30_000,
-  });
-
+function ServiceStatusPanel({
+  error,
+  isFetching,
+  refetch,
+  snapshot,
+  target,
+}: {
+  error: unknown;
+  isFetching: boolean;
+  refetch: () => unknown;
+  snapshot?: InternalMetricsResponse;
+  target: ServiceStatusTarget;
+}) {
   const apiDuration = useMemo(
     () =>
       aggregateDurations(
@@ -579,7 +615,7 @@ function ServiceStatusPanel({ target }: { target: ServiceStatusTarget }) {
 
       {error && (
         <Card className="mb-4">
-          <Text type="danger">{(error as Error).message}</Text>
+          <Text type="danger">{(error as Error).message || '请求失败'}</Text>
         </Card>
       )}
 
@@ -690,12 +726,132 @@ function ServiceStatusPanel({ target }: { target: ServiceStatusTarget }) {
   );
 }
 
+function ServiceTargetSidebar({
+  activeKey,
+  items,
+  onChange,
+}: {
+  activeKey: ServiceStatusTargetKey;
+  items: Array<{
+    hasData: boolean;
+    isError: boolean;
+    isFetching: boolean;
+    summary: ServiceStatusSummary;
+    target: ServiceStatusTarget;
+  }>;
+  onChange: (key: ServiceStatusTargetKey) => void;
+}) {
+  return (
+    <aside className="min-w-0">
+      <div className="space-y-2 lg:sticky lg:top-6">
+        {items.map(({ hasData, isError, isFetching, summary, target }) => {
+          const isActive = target.key === activeKey;
+          const statusTitle = isError
+            ? '请求失败'
+            : isFetching && !hasData
+              ? '加载中'
+              : '正常';
+
+          return (
+            <button
+              aria-pressed={isActive}
+              className={cn(
+                'w-full cursor-pointer rounded-lg border bg-white p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md',
+                isActive
+                  ? 'border-blue-500 bg-blue-50 shadow-none'
+                  : 'border-slate-200',
+              )}
+              key={target.key}
+              onClick={() => onChange(target.key)}
+              type="button"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <span
+                  className={cn(
+                    'shrink-0 font-semibold text-base',
+                    isActive ? 'text-blue-700' : 'text-slate-900',
+                  )}
+                >
+                  {target.label}
+                </span>
+                <span
+                  className="min-w-0 flex-1 truncate text-slate-500 text-xs"
+                  title={target.host}
+                >
+                  {target.host}
+                </span>
+                <span
+                  className={cn(
+                    'h-2.5 w-2.5 shrink-0 rounded-full',
+                    isError
+                      ? 'bg-red-500'
+                      : isFetching && !hasData
+                        ? 'bg-blue-400'
+                        : 'bg-emerald-500',
+                  )}
+                  title={statusTitle}
+                />
+              </span>
+              <span className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                <span className="min-w-0">
+                  <span className="block text-slate-400">请求/错</span>
+                  <span className="block truncate font-medium text-slate-700 tabular-nums">
+                    {summary.requestText}
+                  </span>
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-slate-400">延时</span>
+                  <span className="block truncate font-medium text-slate-700 tabular-nums">
+                    {summary.delayText}
+                  </span>
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-slate-400">命中</span>
+                  <span className="block truncate font-medium text-slate-700 tabular-nums">
+                    {summary.hitText}
+                  </span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
+
 export const Component = () => {
   const [activeTargetKey, setActiveTargetKey] =
     useState<ServiceStatusTargetKey>(SERVICE_STATUS_TARGETS[0].key);
-  const activeTarget =
-    SERVICE_STATUS_TARGETS.find((target) => target.key === activeTargetKey) ??
-    SERVICE_STATUS_TARGETS[0];
+  const targetQueries = useQueries({
+    queries: SERVICE_STATUS_TARGETS.map((target) => ({
+      queryFn: () =>
+        api.getInternalMetrics({
+          baseUrl: target.baseUrl,
+          suppressErrorToast: true,
+        }),
+      queryKey: ['internalMetrics', target.key],
+      refetchInterval: 30_000,
+    })),
+  });
+  const activeTargetIndex = Math.max(
+    SERVICE_STATUS_TARGETS.findIndex(
+      (target) => target.key === activeTargetKey,
+    ),
+    0,
+  );
+  const activeTarget = SERVICE_STATUS_TARGETS[activeTargetIndex];
+  const activeQuery = targetQueries[activeTargetIndex];
+  const targetItems = SERVICE_STATUS_TARGETS.map((target, index) => {
+    const query = targetQueries[index];
+    return {
+      hasData: Boolean(query?.data),
+      isError: Boolean(query?.error),
+      isFetching: query?.isFetching ?? false,
+      summary: buildServiceStatusSummary(query?.data),
+      target,
+    };
+  });
 
   return (
     <div className="page-section">
@@ -705,23 +861,23 @@ export const Component = () => {
         </Title>
         <Text type="secondary">按节点查看内部指标和运行状态。</Text>
       </div>
-      <Tabs
-        activeKey={activeTarget.key}
-        className="mb-4"
-        items={SERVICE_STATUS_TARGETS.map((target) => ({
-          key: target.key,
-          label: (
-            <span className="inline-flex items-center gap-2">
-              <span>{target.label}</span>
-              <span className="hidden text-xs text-slate-400 md:inline">
-                {target.host}
-              </span>
-            </span>
-          ),
-        }))}
-        onChange={(key) => setActiveTargetKey(key as ServiceStatusTargetKey)}
-      />
-      <ServiceStatusPanel key={activeTarget.key} target={activeTarget} />
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <ServiceTargetSidebar
+          activeKey={activeTarget.key}
+          items={targetItems}
+          onChange={setActiveTargetKey}
+        />
+        <div className="min-w-0">
+          <ServiceStatusPanel
+            error={activeQuery?.error}
+            isFetching={activeQuery?.isFetching ?? false}
+            key={activeTarget.key}
+            refetch={() => activeQuery?.refetch()}
+            snapshot={activeQuery?.data}
+            target={activeTarget}
+          />
+        </div>
+      </div>
     </div>
   );
 };

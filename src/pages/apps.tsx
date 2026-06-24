@@ -1,8 +1,4 @@
-import {
-  AppstoreOutlined,
-  PlusOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Card, Empty, Input, Spin, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -79,10 +75,6 @@ export const Component = () => {
     <div className="min-w-0">
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-blue-700 text-xs">
-            <AppstoreOutlined />
-            应用工作台
-          </div>
           <Title level={3} className="m-0!">
             应用列表
           </Title>
