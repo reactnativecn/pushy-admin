@@ -814,6 +814,13 @@ function ServiceStatusPanel({
               <Text type="secondary">
                 最近 {formatCount(api5xxEventsQuery.data.total)} / 容量{' '}
                 {formatCount(api5xxEventsQuery.data.capacity)}
+                {api5xxEventsQuery.data.log ? (
+                  <>
+                    {' '}
+                    / 过滤 {formatCount(api5xxEventsQuery.data.log.ignored)} /
+                    日志 {formatBytes(api5xxEventsQuery.data.log.readBytes)}
+                  </>
+                ) : null}
               </Text>
             ) : null
           }

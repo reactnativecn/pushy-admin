@@ -169,6 +169,12 @@ export type InternalApi5xxEventsResponse = {
   generatedAt: string;
   hasMore: boolean;
   limit: number;
+  log?: {
+    ignored: number;
+    parseErrors: number;
+    paths: string[];
+    readBytes: number;
+  };
   offset: number;
   total: number;
 };
