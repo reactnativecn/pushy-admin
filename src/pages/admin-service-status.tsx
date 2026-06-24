@@ -1,6 +1,6 @@
 import { Line } from '@ant-design/charts';
 import { ReloadOutlined } from '@ant-design/icons';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   Button,
   Card,
@@ -17,14 +17,16 @@ import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import {
   api,
+  type InternalErrorLogEntry,
   type InternalMetricCounter,
   type InternalMetricDuration,
   type InternalMetricsResponse,
 } from '@/services/api';
 import { cn } from '@/utils/helper';
 
-const { Text, Title } = Typography;
+const { Paragraph, Text, Title } = Typography;
 
+const ERROR_LOG_PAGE_SIZE = 20;
 const DEFAULT_DURATION_BUCKETS_MS = [
   10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000,
 ];
@@ -531,6 +533,34 @@ const endpointColumns: ColumnsType<EndpointRow> = [
   },
 ];
 
+const errorLogColumns: ColumnsType<InternalErrorLogEntry> = [
+  {
+    dataIndex: 'time',
+    render: (time: string | undefined) =>
+      time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-',
+    title: '时间',
+    width: 180,
+  },
+  {
+    align: 'right',
+    dataIndex: 'index',
+    title: '行',
+    width: 80,
+  },
+  {
+    dataIndex: 'line',
+    render: (line: string, entry) => (
+      <Paragraph className="m-0! whitespace-pre-wrap break-all font-mono text-xs">
+        {line}
+        {entry.lineTruncated ? (
+          <Text type="secondary"> line truncated</Text>
+        ) : null}
+      </Paragraph>
+    ),
+    title: '内容',
+  },
+];
+
 function ServiceStatusPanel({
   error,
   isFetching,
@@ -544,6 +574,19 @@ function ServiceStatusPanel({
   snapshot?: InternalMetricsResponse;
   target: ServiceStatusTarget;
 }) {
+  const [errorLogPage, setErrorLogPage] = useState(1);
+  const errorLogOffset = (errorLogPage - 1) * ERROR_LOG_PAGE_SIZE;
+  const errorLogsQuery = useQuery({
+    queryFn: () =>
+      api.getInternalErrorLogs({
+        baseUrl: target.baseUrl,
+        limit: ERROR_LOG_PAGE_SIZE,
+        offset: errorLogOffset,
+        suppressErrorToast: true,
+      }),
+    queryKey: ['internalErrorLogs', target.key, errorLogOffset],
+    refetchInterval: 30_000,
+  });
   const apiDuration = useMemo(
     () =>
       aggregateDurations(
@@ -606,8 +649,11 @@ function ServiceStatusPanel({
         </div>
         <Button
           icon={<ReloadOutlined />}
-          loading={isFetching}
-          onClick={() => refetch()}
+          loading={isFetching || errorLogsQuery.isFetching}
+          onClick={() => {
+            refetch();
+            errorLogsQuery.refetch();
+          }}
         >
           刷新
         </Button>
@@ -711,13 +757,60 @@ function ServiceStatusPanel({
           />
         </div>
 
-        <Card title="Top API 路径">
+        <Card className="mb-4" title="Top API 路径">
           <Table
             columns={endpointColumns}
             dataSource={endpointRows.slice(0, 12)}
             pagination={false}
             rowKey="key"
             scroll={{ x: 760 }}
+            size="small"
+          />
+        </Card>
+
+        <Card
+          extra={
+            errorLogsQuery.data ? (
+              <Text type="secondary">
+                {errorLogsQuery.data.logFile}
+                {errorLogsQuery.data.truncated
+                  ? ` · 最近 ${formatBytes(errorLogsQuery.data.windowBytes)}`
+                  : ''}
+              </Text>
+            ) : null
+          }
+          title="错误日志"
+        >
+          {errorLogsQuery.error && (
+            <div className="mb-3">
+              <Text type="danger">
+                {(errorLogsQuery.error as Error).message || '请求失败'}
+              </Text>
+            </div>
+          )}
+          {errorLogsQuery.data?.message && (
+            <div className="mb-3">
+              <Text type="secondary">{errorLogsQuery.data.message}</Text>
+            </div>
+          )}
+          <Table
+            columns={errorLogColumns}
+            dataSource={errorLogsQuery.data?.data ?? []}
+            loading={errorLogsQuery.isFetching}
+            locale={{
+              emptyText: errorLogsQuery.error ? '请求失败' : '暂无错误日志',
+            }}
+            pagination={{
+              current: errorLogPage,
+              hideOnSinglePage: false,
+              onChange: setErrorLogPage,
+              pageSize: ERROR_LOG_PAGE_SIZE,
+              showSizeChanger: false,
+              showTotal: (total) => `共 ${formatCount(total)} 行`,
+              total: errorLogsQuery.data?.total ?? 0,
+            }}
+            rowKey="index"
+            scroll={{ x: 900 }}
             size="small"
           />
         </Card>

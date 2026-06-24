@@ -146,6 +146,28 @@ export type InternalMetricsResponse = {
   };
 };
 
+export type InternalErrorLogEntry = {
+  index: number;
+  line: string;
+  lineTruncated?: boolean;
+  time?: string;
+};
+
+export type InternalErrorLogsResponse = {
+  data: InternalErrorLogEntry[];
+  fileExists: boolean;
+  fileSizeBytes: number;
+  generatedAt: string;
+  hasMore: boolean;
+  limit: number;
+  logFile: string;
+  message?: string;
+  offset: number;
+  total: number;
+  truncated: boolean;
+  windowBytes: number;
+};
+
 export const api = {
   login: (params: { email: string; pwd: string }) =>
     request<{ token: string }>('post', '/user/login', params, {
@@ -449,6 +471,29 @@ export const api = {
       baseUrl: params?.baseUrl,
       suppressErrorToast: params?.suppressErrorToast,
     }),
+  getInternalErrorLogs: (params?: {
+    baseUrl?: string;
+    limit?: number;
+    offset?: number;
+    suppressErrorToast?: boolean;
+  }) => {
+    const query: Record<string, number> = {};
+    if (params?.offset !== undefined) {
+      query.offset = params.offset;
+    }
+    if (params?.limit !== undefined) {
+      query.limit = params.limit;
+    }
+    return request<InternalErrorLogsResponse>(
+      'get',
+      '/metrics/internal/error-logs',
+      Object.keys(query).length > 0 ? query : undefined,
+      {
+        baseUrl: params?.baseUrl,
+        suppressErrorToast: params?.suppressErrorToast,
+      },
+    );
+  },
   // API Token
   createApiToken: (params: {
     name: string;
