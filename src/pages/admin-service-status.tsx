@@ -17,7 +17,7 @@ import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import {
   api,
-  type InternalErrorLogEntry,
+  type InternalApi5xxEvent,
   type InternalMetricCounter,
   type InternalMetricDuration,
   type InternalMetricsResponse,
@@ -26,7 +26,7 @@ import { cn } from '@/utils/helper';
 
 const { Paragraph, Text, Title } = Typography;
 
-const ERROR_LOG_PAGE_SIZE = 20;
+const API_5XX_EVENT_PAGE_SIZE = 20;
 const DEFAULT_DURATION_BUCKETS_MS = [
   10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000,
 ];
@@ -533,31 +533,70 @@ const endpointColumns: ColumnsType<EndpointRow> = [
   },
 ];
 
-const errorLogColumns: ColumnsType<InternalErrorLogEntry> = [
+const api5xxEventColumns: ColumnsType<InternalApi5xxEvent> = [
   {
     dataIndex: 'time',
-    render: (time: string | undefined) =>
-      time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-',
+    render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm:ss'),
     title: '时间',
     width: 180,
   },
   {
-    align: 'right',
-    dataIndex: 'index',
-    title: '行',
-    width: 80,
+    dataIndex: 'statusCode',
+    render: (statusCode: number) => <Tag color="red">{statusCode}</Tag>,
+    title: '状态',
+    width: 90,
   },
   {
-    dataIndex: 'line',
-    render: (line: string, entry) => (
-      <Paragraph className="m-0! whitespace-pre-wrap break-all font-mono text-xs">
-        {line}
-        {entry.lineTruncated ? (
-          <Text type="secondary"> line truncated</Text>
-        ) : null}
-      </Paragraph>
+    dataIndex: 'method',
+    render: (method: string) => <Tag>{method}</Tag>,
+    title: '方法',
+    width: 90,
+  },
+  {
+    dataIndex: 'path',
+    render: (value: string) => (
+      <Text className="font-mono text-xs" copyable>
+        {value}
+      </Text>
     ),
-    title: '内容',
+    title: '路径',
+    width: 260,
+  },
+  {
+    align: 'right',
+    dataIndex: 'durationMs',
+    render: (value: number) => formatMs(value),
+    title: '耗时',
+    width: 100,
+  },
+  {
+    dataIndex: 'requestId',
+    render: (value: string | undefined) =>
+      value ? (
+        <Text className="font-mono text-xs" copyable>
+          {value}
+        </Text>
+      ) : (
+        '-'
+      ),
+    title: 'Request ID',
+    width: 180,
+  },
+  {
+    dataIndex: 'message',
+    render: (_: string | undefined, entry) => (
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap gap-1">
+          {entry.errorCode && <Tag>{entry.errorCode}</Tag>}
+          {entry.errorName && <Tag>{entry.errorName}</Tag>}
+          <Tag>PID {entry.pid}</Tag>
+        </div>
+        <Paragraph className="m-0! whitespace-pre-wrap break-all text-xs">
+          {entry.message || '-'}
+        </Paragraph>
+      </div>
+    ),
+    title: '错误',
   },
 ];
 
@@ -574,17 +613,17 @@ function ServiceStatusPanel({
   snapshot?: InternalMetricsResponse;
   target: ServiceStatusTarget;
 }) {
-  const [errorLogPage, setErrorLogPage] = useState(1);
-  const errorLogOffset = (errorLogPage - 1) * ERROR_LOG_PAGE_SIZE;
-  const errorLogsQuery = useQuery({
+  const [api5xxEventPage, setApi5xxEventPage] = useState(1);
+  const api5xxEventOffset = (api5xxEventPage - 1) * API_5XX_EVENT_PAGE_SIZE;
+  const api5xxEventsQuery = useQuery({
     queryFn: () =>
-      api.getInternalErrorLogs({
+      api.getInternalApi5xxEvents({
         baseUrl: target.baseUrl,
-        limit: ERROR_LOG_PAGE_SIZE,
-        offset: errorLogOffset,
+        limit: API_5XX_EVENT_PAGE_SIZE,
+        offset: api5xxEventOffset,
         suppressErrorToast: true,
       }),
-    queryKey: ['internalErrorLogs', target.key, errorLogOffset],
+    queryKey: ['internalApi5xxEvents', target.key, api5xxEventOffset],
     refetchInterval: 30_000,
   });
   const apiDuration = useMemo(
@@ -649,10 +688,10 @@ function ServiceStatusPanel({
         </div>
         <Button
           icon={<ReloadOutlined />}
-          loading={isFetching || errorLogsQuery.isFetching}
+          loading={isFetching || api5xxEventsQuery.isFetching}
           onClick={() => {
             refetch();
-            errorLogsQuery.refetch();
+            api5xxEventsQuery.refetch();
           }}
         >
           刷新
@@ -769,48 +808,42 @@ function ServiceStatusPanel({
         </Card>
 
         <Card
+          className="mb-4"
           extra={
-            errorLogsQuery.data ? (
+            api5xxEventsQuery.data ? (
               <Text type="secondary">
-                {errorLogsQuery.data.logFile}
-                {errorLogsQuery.data.truncated
-                  ? ` · 最近 ${formatBytes(errorLogsQuery.data.windowBytes)}`
-                  : ''}
+                最近 {formatCount(api5xxEventsQuery.data.total)} / 容量{' '}
+                {formatCount(api5xxEventsQuery.data.capacity)}
               </Text>
             ) : null
           }
-          title="错误日志"
+          title="5xx 事件"
         >
-          {errorLogsQuery.error && (
+          {api5xxEventsQuery.error && (
             <div className="mb-3">
               <Text type="danger">
-                {(errorLogsQuery.error as Error).message || '请求失败'}
+                {(api5xxEventsQuery.error as Error).message || '请求失败'}
               </Text>
             </div>
           )}
-          {errorLogsQuery.data?.message && (
-            <div className="mb-3">
-              <Text type="secondary">{errorLogsQuery.data.message}</Text>
-            </div>
-          )}
           <Table
-            columns={errorLogColumns}
-            dataSource={errorLogsQuery.data?.data ?? []}
-            loading={errorLogsQuery.isFetching}
+            columns={api5xxEventColumns}
+            dataSource={api5xxEventsQuery.data?.data ?? []}
+            loading={api5xxEventsQuery.isFetching}
             locale={{
-              emptyText: errorLogsQuery.error ? '请求失败' : '暂无错误日志',
+              emptyText: api5xxEventsQuery.error ? '请求失败' : '暂无 5xx 事件',
             }}
             pagination={{
-              current: errorLogPage,
+              current: api5xxEventPage,
               hideOnSinglePage: false,
-              onChange: setErrorLogPage,
-              pageSize: ERROR_LOG_PAGE_SIZE,
+              onChange: setApi5xxEventPage,
+              pageSize: API_5XX_EVENT_PAGE_SIZE,
               showSizeChanger: false,
-              showTotal: (total) => `共 ${formatCount(total)} 行`,
-              total: errorLogsQuery.data?.total ?? 0,
+              showTotal: (total) => `共 ${formatCount(total)} 条`,
+              total: api5xxEventsQuery.data?.total ?? 0,
             }}
-            rowKey="index"
-            scroll={{ x: 900 }}
+            rowKey="id"
+            scroll={{ x: 1100 }}
             size="small"
           />
         </Card>

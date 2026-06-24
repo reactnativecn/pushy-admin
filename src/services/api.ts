@@ -148,26 +148,29 @@ export type InternalMetricsResponse = {
   };
 };
 
-export type InternalErrorLogEntry = {
-  index: number;
-  line: string;
-  lineTruncated?: boolean;
-  time?: string;
+export type InternalApi5xxEvent = {
+  durationMs: number;
+  errorCode?: string;
+  errorName?: string;
+  hostname: string;
+  id: number;
+  message?: string;
+  method: string;
+  path: string;
+  pid: number;
+  requestId?: string;
+  statusCode: number;
+  time: string;
 };
 
-export type InternalErrorLogsResponse = {
-  data: InternalErrorLogEntry[];
-  fileExists: boolean;
-  fileSizeBytes: number;
+export type InternalApi5xxEventsResponse = {
+  capacity: number;
+  data: InternalApi5xxEvent[];
   generatedAt: string;
   hasMore: boolean;
   limit: number;
-  logFile: string;
-  message?: string;
   offset: number;
   total: number;
-  truncated: boolean;
-  windowBytes: number;
 };
 
 export const api = {
@@ -473,7 +476,7 @@ export const api = {
       baseUrl: params?.baseUrl,
       suppressErrorToast: params?.suppressErrorToast,
     }),
-  getInternalErrorLogs: (params?: {
+  getInternalApi5xxEvents: (params?: {
     baseUrl?: string;
     limit?: number;
     offset?: number;
@@ -486,9 +489,9 @@ export const api = {
     if (params?.limit !== undefined) {
       query.limit = params.limit;
     }
-    return request<InternalErrorLogsResponse>(
+    return request<InternalApi5xxEventsResponse>(
       'get',
-      '/metrics/internal/error-logs',
+      '/metrics/internal/5xx-events',
       Object.keys(query).length > 0 ? query : undefined,
       {
         baseUrl: params?.baseUrl,
