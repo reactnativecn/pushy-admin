@@ -1,13 +1,15 @@
 import { Button, Result } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 export default function Success() {
+  const { t } = useTranslation();
   return (
     <Result
       status="success"
-      title="密码设置成功，请重新登录"
+      title={t('reset_password.password_updated')}
       extra={[
         <Button key="login" type="primary" href="/#/login">
-          登录
+          {t('reset_password.login_button')}
         </Button>,
       ]}
     />

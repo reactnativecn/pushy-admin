@@ -23,6 +23,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
@@ -36,6 +37,7 @@ const parsePositiveInt = (value: string | null, fallback: number) => {
 };
 
 export const Component = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -97,7 +99,7 @@ export const Component = () => {
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminApp> }) =>
       adminApi.updateApp(id, data),
     onSuccess: () => {
-      message.success('应用信息已更新');
+      message.success(t('admin_apps.app_updated'));
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['adminApps'] });
     },
@@ -143,20 +145,20 @@ export const Component = () => {
 
   const columns: ColumnsType<AdminApp> = [
     {
-      title: 'ID',
+      title: t('admin_apps.col_id'),
       dataIndex: 'id',
       key: 'id',
       responsive: ['md'],
       width: 60,
     },
     {
-      title: '名称',
+      title: t('admin_apps.col_name'),
       dataIndex: 'name',
       key: 'name',
       width: 150,
     },
     {
-      title: 'App Key',
+      title: t('admin_apps.col_app_key'),
       dataIndex: 'appKey',
       key: 'appKey',
       width: 220,
@@ -169,14 +171,14 @@ export const Component = () => {
             icon={<CopyOutlined />}
             onClick={() => {
               navigator.clipboard.writeText(key);
-              message.success('已复制');
+              message.success(t('admin_apps.copied'));
             }}
           />
         </Space>
       ),
     },
     {
-      title: '平台',
+      title: t('admin_apps.col_platform'),
       dataIndex: 'platform',
       key: 'platform',
       width: 80,
@@ -195,7 +197,7 @@ export const Component = () => {
       ),
     },
     {
-      title: '检查次数',
+      title: t('admin_apps.col_checks'),
       dataIndex: 'checkCount',
       key: 'checkCount',
       responsive: ['md'],
@@ -203,14 +205,14 @@ export const Component = () => {
       render: (value: number | undefined) => (value ?? 0).toLocaleString(),
     },
     {
-      title: '用户ID',
+      title: t('admin_apps.col_user_id'),
       dataIndex: 'userId',
       key: 'userId',
       responsive: ['lg'],
       width: 80,
     },
     {
-      title: '状态',
+      title: t('admin_apps.col_status'),
       dataIndex: 'status',
       key: 'status',
       responsive: ['md'],
@@ -218,19 +220,19 @@ export const Component = () => {
       render: (status: string | null) => status || '-',
     },
     {
-      title: '忽略构建时间',
+      title: t('admin_apps.col_ignore_build_time'),
       dataIndex: 'ignoreBuildTime',
       key: 'ignoreBuildTime',
       responsive: ['lg'],
       width: 120,
       render: (value: string | null) => (
         <span className={value === 'enabled' ? 'text-green-600' : ''}>
-          {value === 'enabled' ? '是' : value === 'disabled' ? '否' : '-'}
+          {value === 'enabled' ? t('admin_apps.ignore_build_yes') : value === 'disabled' ? t('admin_apps.ignore_build_no') : '-'}
         </span>
       ),
     },
     {
-      title: '创建时间',
+      title: t('admin_apps.col_created'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       responsive: ['lg'],
@@ -239,14 +241,14 @@ export const Component = () => {
         date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
     },
     {
-      title: '操作',
+      title: t('admin_apps.col_actions'),
       key: 'action',
       width: isMobile ? 136 : 220,
       render: (_value, record) => (
         <Space size={[0, 0]} wrap>
           <Link to={rootRouterPath.versions(String(record.id))}>
             <Button type="link" icon={<LinkOutlined />}>
-              打开
+              {t('admin_apps.open')}
             </Button>
           </Link>
           <Link
@@ -255,7 +257,7 @@ export const Component = () => {
             }).toString()}`}
           >
             <Button type="link" icon={<LineChartOutlined />}>
-              实时数据
+              {t('admin_apps.metrics')}
             </Button>
           </Link>
           <Button
@@ -263,7 +265,7 @@ export const Component = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            编辑
+            {t('admin_apps.edit')}
           </Button>
         </Space>
       ),
@@ -276,14 +278,14 @@ export const Component = () => {
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <Title level={4} className="m-0!">
-              应用管理
+              {t('admin_apps.title')}
             </Title>
             <div className="text-sm text-gray-500">
-              搜索条件会保留在 URL 中，刷新后仍然能回到同一视图。
+              {t('admin_apps.description')}
             </div>
           </div>
           <Input
-            placeholder="搜索应用名称或 App Key"
+            placeholder={t('admin_apps.search_placeholder')}
             prefix={<SearchOutlined />}
             value={searchKeyword}
             onChange={(event) => setSearchKeyword(event.target.value)}
@@ -305,7 +307,7 @@ export const Component = () => {
               simple: isMobile,
               showQuickJumper: !isMobile,
               showSizeChanger: !isMobile,
-              showTotal: isMobile ? undefined : (count) => `共 ${count} 个应用`,
+              showTotal: isMobile ? undefined : (count) => t('admin_apps.apps_count', { count }),
               onChange: (page, nextPageSize) => {
                 patchSearchParams(setSearchParams, {
                   page: String(page),
@@ -319,13 +321,13 @@ export const Component = () => {
       </Card>
 
       <Modal
-        title={`编辑应用: ${editingApp?.name}`}
+        title={t('admin_apps.edit_title', { name: editingApp?.name ?? '' })}
         open={isModalOpen}
         width={isMobile ? 'calc(100vw - 32px)' : 600}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>
-            取消
+            {t('admin_apps.cancel')}
           </Button>,
           <Button
             key="save"
@@ -333,7 +335,7 @@ export const Component = () => {
             loading={updateMutation.isPending}
             onClick={handleSave}
           >
-            保存
+            {t('admin_apps.save')}
           </Button>,
         ]}
       >
@@ -341,16 +343,16 @@ export const Component = () => {
           <Space className="w-full" direction="vertical" size="middle">
             <Form.Item
               name="name"
-              label="名称"
+              label={t('admin_apps.form_name')}
               className="mb-0!"
               rules={[{ required: true }]}
             >
               <Input />
             </Form.Item>
-            <Form.Item name="appKey" label="App Key" className="mb-0!">
-              <Input placeholder="留空保持不变" />
+            <Form.Item name="appKey" label={t('admin_apps.col_app_key')} className="mb-0!">
+              <Input placeholder={t('admin_apps.placeholder_keep')} />
             </Form.Item>
-            <Form.Item name="platform" label="平台" className="mb-0!">
+            <Form.Item name="platform" label={t('admin_apps.form_platform')} className="mb-0!">
               <Select
                 options={[
                   { value: 'ios', label: 'iOS' },
@@ -359,25 +361,25 @@ export const Component = () => {
                 ]}
               />
             </Form.Item>
-            <Form.Item name="userId" label="用户ID" className="mb-0!">
-              <Input type="number" placeholder="留空表示无归属" />
+            <Form.Item name="userId" label={t('admin_apps.form_user_id')} className="mb-0!">
+              <Input type="number" placeholder={t('admin_apps.placeholder_no_owner')} />
             </Form.Item>
-            <Form.Item name="downloadUrl" label="下载链接" className="mb-0!">
-              <Input placeholder="应用商店链接" />
+            <Form.Item name="downloadUrl" label={t('admin_apps.form_download_url')} className="mb-0!">
+              <Input placeholder={t('admin_apps.placeholder_store')} />
             </Form.Item>
-            <Form.Item name="status" label="状态" className="mb-0!">
-              <Input placeholder="自定义状态" />
+            <Form.Item name="status" label={t('admin_apps.form_status')} className="mb-0!">
+              <Input placeholder={t('admin_apps.placeholder_status')} />
             </Form.Item>
             <Form.Item
               name="ignoreBuildTime"
-              label="忽略构建时间"
+              label={t('admin_apps.form_ignore_build_time')}
               className="mb-0!"
             >
               <Select
                 allowClear
                 options={[
-                  { value: 'enabled', label: '启用' },
-                  { value: 'disabled', label: '禁用' },
+                  { value: 'enabled', label: t('admin_apps.ignore_build_enabled') },
+                  { value: 'disabled', label: t('admin_apps.ignore_build_disabled') },
                 ]}
               />
             </Form.Item>

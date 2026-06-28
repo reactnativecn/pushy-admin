@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons';
 import { Breadcrumb, Button, Tag } from 'antd';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/helper';
 import PlatformIcon from './platform-icon';
 
@@ -17,7 +18,7 @@ export interface AppDetailHeaderApp {
 export function AppDetailHeader({
   activeView,
   app,
-  appNameFallback = '选择应用',
+  appNameFallback,
   managementDisabled,
   metricsDisabled,
   onManagementClick,
@@ -37,6 +38,9 @@ export function AppDetailHeader({
   sectionLabel: string;
   settingsDisabled?: boolean;
 }) {
+  const { t } = useTranslation();
+  const fallbackName = appNameFallback ?? t('app_detail_header.select_app');
+
   return (
     <div className="mb-4 grid grid-cols-1 items-center gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
       <div className="flex min-w-0 items-center justify-between gap-3 md:contents">
@@ -51,9 +55,11 @@ export function AppDetailHeader({
                 <span className="inline-flex max-w-full items-center gap-1">
                   <PlatformIcon platform={app?.platform} className="mr-1" />
                   <span className="max-w-[160px] truncate md:max-w-none">
-                    {app?.name || appNameFallback}
+                    {app?.name || fallbackName}
                   </span>
-                  {app?.status === 'paused' && <Tag className="ml-2">暂停</Tag>}
+                  {app?.status === 'paused' && (
+                    <Tag className="ml-2">{t('app_detail_header.paused')}</Tag>
+                  )}
                 </span>
               ),
             },
@@ -68,7 +74,7 @@ export function AppDetailHeader({
               disabled={settingsDisabled}
               onClick={onSettingsClick}
             >
-              应用设置
+              {t('app_detail_header.app_settings')}
             </Button>
           )}
         </div>
@@ -82,14 +88,14 @@ export function AppDetailHeader({
           active={activeView === 'management'}
           disabled={managementDisabled}
           icon={<AppstoreOutlined />}
-          label="应用发布"
+          label={t('app_detail_header.tab_releases')}
           onClick={onManagementClick}
         />
         <AppDetailTab
           active={activeView === 'metrics'}
           disabled={metricsDisabled}
           icon={<LineChartOutlined />}
-          label="实时数据"
+          label={t('app_detail_header.tab_metrics')}
           onClick={onMetricsClick}
         />
       </div>

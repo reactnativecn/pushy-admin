@@ -17,6 +17,8 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
 import { ANNUAL_BILLING_MONTHS } from '@/utils/billing';
@@ -33,17 +35,29 @@ type ProductTier = keyof typeof products;
 type PurchasableTier = Exclude<ProductTier, 'free' | 'custom'>;
 type OrderQuotes = NonNullable<Awaited<ReturnType<typeof api.getOrderQuotes>>>;
 
-const purchasableTiers: Array<{
+const PURCHASABLE_TIER_KEYS: PurchasableTier[] = [
+  'standard',
+  'premium',
+  'pro',
+  'vip1',
+  'vip2',
+  'vip3',
+];
+
+const getPurchasableTiers = (
+  t: (key: string) => string,
+): Array<{
   label: string;
   tier: PurchasableTier;
-}> = [
-  { label: '标准版', tier: 'standard' },
-  { label: '高级版', tier: 'premium' },
-  { label: '专业版', tier: 'pro' },
-  { label: '大客户VIP1版', tier: 'vip1' },
-  { label: '大客户VIP2版', tier: 'vip2' },
-  { label: '大客户VIP3版', tier: 'vip3' },
+}> => [
+  { label: t('user.purchasable_tiers.standard'), tier: 'standard' },
+  { label: t('user.purchasable_tiers.premium'), tier: 'premium' },
+  { label: t('user.purchasable_tiers.pro'), tier: 'pro' },
+  { label: t('user.purchasable_tiers.vip1'), tier: 'vip1' },
+  { label: t('user.purchasable_tiers.vip2'), tier: 'vip2' },
+  { label: t('user.purchasable_tiers.vip3'), tier: 'vip3' },
 ];
+
 const purchaseButtonClassName = 'w-full justify-center sm:w-[160px]';
 const checkUpdateAddonEligibleTiers = new Set<Tier>([
   'premium',
@@ -53,20 +67,17 @@ const checkUpdateAddonEligibleTiers = new Set<Tier>([
   'vip3',
 ]);
 
-const InvoiceHint = (
+const getInvoiceHint = (t: (key: string) => string) => (
   <div>
     <p>
-      请发送邮件至 <a href="mailto:hi@charmlot.com">hi@charmlot.com</a>
-      ，并写明：
+      {t('user.invoice_hint_before_email')}
+      <a href="mailto:hi@charmlot.com">hi@charmlot.com</a>
+      {t('user.invoice_hint_after_email')}
     </p>
     <p>
-      <strong>
-        公司名称、税号、注册邮箱、接收发票邮箱（不写则发送到注册邮箱），附带支付截图。
-      </strong>
+      <strong>{t('user.invoice_company')}</strong>
     </p>
-    <p>
-      我们默认会回复普通电子发票到接收邮箱(请同时留意垃圾邮件)，类目为软件服务。
-    </p>
+    <p>{t('user.invoice_default')}</p>
   </div>
 );
 
@@ -105,55 +116,71 @@ function getRemainingBillableDays(expiresAt?: string, now?: string) {
   return days > 0 ? days : null;
 }
 
-function formatExpireDate(expiresAt?: string) {
-  return expiresAt ? dayjs(expiresAt).format('YYYY年MM月DD日') : '当前到期日';
+function formatExpireDate(
+  expiresAt: string | undefined,
+  t: (key: string) => string,
+) {
+  return expiresAt
+    ? dayjs(expiresAt).format(t('user.date_format'))
+    : t('user.current_expire');
 }
 
-function formatRenewedExpireDate({
-  expiresAt,
-  months,
-  now,
-}: {
-  expiresAt?: string;
-  months: number;
-  now?: string;
-}) {
+function formatRenewedExpireDate(
+  {
+    expiresAt,
+    months,
+    now,
+  }: {
+    expiresAt?: string;
+    months: number;
+    now?: string;
+  },
+  t: (key: string) => string,
+) {
   const currentExpireDay = expiresAt ? dayjs(expiresAt) : null;
   const nowDay = dayjs(now);
   const baseDay = currentExpireDay?.isAfter(nowDay) ? currentExpireDay : nowDay;
-  return baseDay.add(months, 'month').format('YYYY年MM月DD日');
+  return baseDay.add(months, 'month').format(t('user.date_format'));
 }
 
-function formatWan(value: number) {
-  return `${value / 10_000}万`;
+function formatWan(value: number, t: (key: string) => string) {
+  return `${value / 10_000}${t('user.wan_unit')}`;
 }
 
 function isPurchasableTier(tier?: string): tier is PurchasableTier {
-  return !!tier && purchasableTiers.some((option) => option.tier === tier);
+  return !!tier && PURCHASABLE_TIER_KEYS.includes(tier as PurchasableTier);
 }
 
-function getPurchasableTierLabel(tier: PurchasableTier) {
-  return purchasableTiers.find((option) => option.tier === tier)?.label ?? tier;
+function getPurchasableTierLabel(
+  tier: PurchasableTier,
+  t: (key: string) => string,
+) {
+  return (
+    getPurchasableTiers(t).find((option) => option.tier === tier)?.label ?? tier
+  );
 }
 
-function getQuotaDetailItems(tier: PurchasableTier) {
+function getQuotaDetailItems(
+  tier: PurchasableTier,
+  t: (key: string) => string,
+) {
   const quota = quotas[tier];
   return [
     {
-      label: '检查次数每日',
-      value: formatWan(quota.pv),
+      label: t('user.check_quota_daily'),
+      value: formatWan(quota.pv, t),
     },
     {
-      label: '应用个数',
-      value: `${quota.app.toLocaleString()} 个`,
+      label: t('user.app_count'),
+      value: `${quota.app.toLocaleString()} ${t('user.count_unit')}`,
     },
     {
-      label: '原生包数',
-      value: `${quota.package.toLocaleString()} 个`,
+      label: t('user.native_pkg_count'),
+      value: `${quota.package.toLocaleString()} ${t('user.count_unit')}`,
     },
     {
-      label: '热更包数',
-      value: `${quota.bundle.toLocaleString()} 个`,
+      label: t('user.hotfix_count'),
+      value: `${quota.bundle.toLocaleString()} ${t('user.count_unit')}`,
     },
   ];
 }
@@ -181,8 +208,9 @@ function canPurchaseCheckUpdateAddon({
   return checkUpdateAddonEligibleTiers.has(tier);
 }
 
-const defaultCheckUpdateAddonEligibilityHint =
-  '仅高级版及以上可加购检查额度，当前版本可先升级后再加购。';
+const getDefaultCheckUpdateAddonEligibilityHint = (
+  t: (key: string) => string,
+) => t('user.addon_eligible_hint');
 
 type PurchaseMenuOption = {
   amountText: string;
@@ -201,7 +229,7 @@ type PurchaseMenuOption = {
 
 function PurchaseActionPopover({
   buttonLabel,
-  emptyText = '暂无可购买项目',
+  emptyText,
   hint,
   loading,
   title,
@@ -218,6 +246,9 @@ function PurchaseActionPopover({
   widthClassName?: string;
   options: PurchaseMenuOption[];
 }) {
+  const { t } = useTranslation();
+  const resolvedEmptyText = emptyText ?? t('user.addon_empty');
+
   const content = (
     <div
       className={cn(
@@ -329,7 +360,7 @@ function PurchaseActionPopover({
           ))
         ) : (
           <div className="px-2 py-3 text-center text-slate-500 text-xs">
-            {emptyText}
+            {resolvedEmptyText}
           </div>
         )}
       </div>
@@ -365,6 +396,7 @@ const RenewalPurchaseButton = ({
   tier: Tier;
   tierExpiresAt?: string;
 }) => {
+  const { t } = useTranslation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const addonUnits = quotes?.current.checkUpdateAddonUnits ?? 0;
   const addonMonthlyPrice = quotes?.current.checkUpdateAddonMonthlyPrice ?? 0;
@@ -386,11 +418,14 @@ const RenewalPurchaseButton = ({
 
         return {
           amountText: formatMoney(option.quote.amount),
-          description: `续费后到期日 ${formatRenewedExpireDate({
-            expiresAt: tierExpiresAt,
-            months,
-            now: serverTime,
-          })}`,
+          description: `${t('user.renew_after_expire')} ${formatRenewedExpireDate(
+            {
+              expiresAt: tierExpiresAt,
+              months,
+              now: serverTime,
+            },
+            t,
+          )}`,
           key: option.key,
           onClick: async () => {
             setLoadingPlan(option.key);
@@ -402,33 +437,41 @@ const RenewalPurchaseButton = ({
           },
           tag:
             billing && isAnnual && monthlyTotal > billing.annualPrice
-              ? `约${formatDiscount(
-                  (billing.annualPrice / monthlyTotal) * 10,
-                )}折优惠`
+              ? t('user.about_discount', {
+                  discount: formatDiscount(
+                    (billing.annualPrice / monthlyTotal) * 10,
+                  ),
+                })
               : undefined,
-          title: isAnnual ? `${months} 个月（年付）` : `${months} 个月`,
+          title: isAnnual
+            ? `${months} ${t('user.annual_billing')}`
+            : `${months} ${t('user.price_month')}`,
         };
       })
     : [
         {
-          amountText: quotesLoading ? '报价中' : '按订单结算',
+          amountText: quotesLoading
+            ? t('user.quoting')
+            : t('user.order_settle'),
           description: quotesLoading
-            ? '正在获取续费报价'
-            : '当前版本暂未返回可续费价格',
+            ? t('user.fetching_renewal_quote')
+            : t('user.renewal_unavailable'),
           disabled: true,
           key: 'unavailable',
-          title: '续费',
+          title: t('user.renew'),
         },
       ];
 
   return (
     <PurchaseActionPopover
-      buttonLabel={loadingPlan ? '跳转中' : '续费'}
+      buttonLabel={loadingPlan ? t('user.jumping') : t('user.renew')}
       loading={loadingPlan !== null}
-      title="续费"
+      title={t('user.renew')}
       titleNote={
         addonUnits > 0
-          ? `当前价格含加购费用每月 ${formatMoney(addonMonthlyPrice)}`
+          ? t('user.addon_price_monthly', {
+              price: formatMoney(addonMonthlyPrice),
+            })
           : undefined
       }
       options={renewalOptions}
@@ -449,22 +492,26 @@ const UpgradePurchaseControls = ({
   serverTime?: string;
   tierExpiresAt?: string;
 }) => {
+  const { t } = useTranslation();
   const [loadingTier, setLoadingTier] = useState<PurchasableTier | null>(null);
   const upgradeOptions = quotes?.upgrades ?? [];
 
   if (upgradeOptions.length === 0) {
-    return null; // 没有可升级的版本
+    return null;
   }
 
   const remainingDays = getRemainingBillableDays(tierExpiresAt, serverTime);
   const title =
     currentTier === 'free'
-      ? '升级购买'
-      : `升级（有效期不变：至 ${formatExpireDate(tierExpiresAt)}，${remainingDays ?? '-'} 天）`;
+      ? t('user.upgrade_purchase')
+      : t('user.upgrade_title_with_expire', {
+          date: formatExpireDate(tierExpiresAt, t),
+          days: remainingDays ?? '-',
+        });
   const hint =
     currentTier === 'free'
-      ? '选择目标版本后按年付开通服务。'
-      : '补差价由后端按剩余有效期报价，未超过优惠阈值按月费差额折算，超过后按年费优惠折算。';
+      ? t('user.upgrade_hint_free')
+      : t('user.upgrade_hint_paid');
 
   const menuOptions: PurchaseMenuOption[] = upgradeOptions.map((option) => {
     const quote = option.quote;
@@ -472,18 +519,22 @@ const UpgradePurchaseControls = ({
     const tier = isPurchasableTier(option.tier) ? option.tier : undefined;
     const amountText =
       currentTier === 'free'
-        ? `年付 ${formatMoney(quote.amount)}`
+        ? `${t('user.annual_pay')} ${formatMoney(quote.amount)}`
         : proration
-          ? `补差价 ${formatMoney(proration.dailyAmount)} × ${proration.days} 天 = ${formatMoney(proration.amount)}`
-          : '按订单结算';
+          ? t('user.upgrade_proration_text', {
+              dailyAmount: formatMoney(proration.dailyAmount),
+              days: proration.days,
+              amount: formatMoney(proration.amount),
+            })
+          : t('user.order_settle');
     const disabled =
       quotesLoading || !tier || (currentTier !== 'free' && !proration);
 
     return {
       amountText,
       description:
-        currentTier === 'free' ? '购买后从支付日起开通服务' : undefined,
-      details: tier ? getQuotaDetailItems(tier) : undefined,
+        currentTier === 'free' ? t('user.purchase_after_pay') : undefined,
+      details: tier ? getQuotaDetailItems(tier, t) : undefined,
       disabled,
       key: option.key,
       onClick: async () => {
@@ -495,13 +546,13 @@ const UpgradePurchaseControls = ({
           setLoadingTier(null);
         }
       },
-      title: tier ? getPurchasableTierLabel(tier) : option.key,
+      title: tier ? getPurchasableTierLabel(tier, t) : option.key,
     };
   });
 
   return (
     <PurchaseActionPopover
-      buttonLabel={loadingTier ? '跳转中' : '升级'}
+      buttonLabel={loadingTier ? t('user.jumping') : t('user.upgrade_button')}
       hint={hint}
       loading={loadingTier !== null}
       title={title}
@@ -512,6 +563,7 @@ const UpgradePurchaseControls = ({
 };
 
 function UserPanel() {
+  const { t } = useTranslation();
   const { user, displayExpireDay, displayRemainingDays } = useUserInfo();
   const { apps } = useAppList();
   const screens = Grid.useBreakpoint();
@@ -582,69 +634,69 @@ function UserPanel() {
   const quotaUsageRows: QuotaUsageRow[] = [
     {
       key: 'app',
-      label: '应用数量',
+      label: t('user.app_count_label'),
       limit: currentQuota.app,
-      note: '当前账户下应用总数',
+      note: t('user.app_count_note'),
       percent: Math.min(100, (appCount / currentQuota.app) * 100),
       status: appCount > currentQuota.app ? 'exception' : 'normal',
-      value: `${appCount.toLocaleString()} / ${currentQuota.app.toLocaleString()} 个`,
+      value: `${appCount.toLocaleString()} / ${currentQuota.app.toLocaleString()} ${t('user.count_unit')}`,
     },
     {
       key: 'bundle',
-      label: '热更包数量',
+      label: t('user.hotfix_count_label'),
       limit: currentQuota.bundle,
       loading: isVersionCountLoading,
       note: isVersionCountLoading
-        ? '正在统计各应用热更包数量'
-        : '最高单应用使用量',
+        ? t('user.counting_hotfix')
+        : t('user.max_single_app'),
       percent: isVersionCountLoading
         ? 0
         : Math.min(100, (maxVersionCount / currentQuota.bundle) * 100),
       status: maxVersionCount > currentQuota.bundle ? 'exception' : 'normal',
       value: isVersionCountLoading
-        ? '统计中'
-        : `${maxVersionCount.toLocaleString()} / ${currentQuota.bundle.toLocaleString()} 个`,
+        ? t('user.counting')
+        : `${maxVersionCount.toLocaleString()} / ${currentQuota.bundle.toLocaleString()} ${t('user.count_unit')}`,
     },
     {
       key: 'package',
-      label: '原生包数量',
+      label: t('user.native_pkg_count_label'),
       limit: currentQuota.package,
       loading: isPackageCountLoading,
       note: isPackageCountLoading
-        ? '正在统计各应用原生包数量'
-        : '最高单应用使用量',
+        ? t('user.counting_native')
+        : t('user.max_single_app'),
       percent: isPackageCountLoading
         ? 0
         : Math.min(100, (maxPackageCount / currentQuota.package) * 100),
       status: maxPackageCount > currentQuota.package ? 'exception' : 'normal',
       value: isPackageCountLoading
-        ? '统计中'
-        : `${maxPackageCount.toLocaleString()} / ${currentQuota.package.toLocaleString()} 个`,
+        ? t('user.counting')
+        : `${maxPackageCount.toLocaleString()} / ${currentQuota.package.toLocaleString()} ${t('user.count_unit')}`,
     },
   ];
   const quotaSizeLimits = [
     {
-      label: '单个原生包大小',
+      label: t('user.single_native_size'),
       value: currentQuota.packageSize,
     },
     {
-      label: '单个热更包大小',
+      label: t('user.single_hotfix_size'),
       value: currentQuota.bundleSize,
     },
     {
-      label: '检查额度上限',
-      value: `${currentQuota.pv.toLocaleString()} 次 / 日`,
+      label: t('user.check_quota_limit'),
+      value: `${currentQuota.pv.toLocaleString()} ${t('user.per_day')}`,
     },
   ];
   const handleLogout = () => {
-    message.info('您已退出登录');
+    message.info(t('user.logged_out'));
     logout();
   };
 
   return (
     <div className="body">
       <Descriptions
-        title="账户信息"
+        title={t('user.account_info')}
         column={1}
         layout={isMobile ? 'vertical' : 'horizontal'}
         size={isMobile ? 'small' : undefined}
@@ -654,11 +706,11 @@ function UserPanel() {
         }}
         bordered
       >
-        <Descriptions.Item label="用户名">{name}</Descriptions.Item>
-        <Descriptions.Item label="邮箱">
+        <Descriptions.Item label={t('user.username')}>{name}</Descriptions.Item>
+        <Descriptions.Item label={t('user.email')}>
           <span className="break-all">{email}</span>
         </Descriptions.Item>
-        <Descriptions.Item label="服务版本">
+        <Descriptions.Item label={t('user.service_version')}>
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(160px,180px)_160px] sm:items-center">
             <span className="shrink-0 whitespace-nowrap">{tierDisplay}</span>
             {!quota && defaultQuota && (
@@ -672,7 +724,7 @@ function UserPanel() {
             )}
           </div>
         </Descriptions.Item>
-        <Descriptions.Item label="服务有效期至">
+        <Descriptions.Item label={t('user.service_expire')}>
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(160px,180px)_160px] sm:items-start">
             <div>
               {displayExpireDay ? (
@@ -685,7 +737,7 @@ function UserPanel() {
                   )}
                 </>
               ) : (
-                <div>无</div>
+                <div>{t('user.no_expire')}</div>
               )}
             </div>
             <RenewalPurchaseButton
@@ -697,18 +749,17 @@ function UserPanel() {
             />
           </div>
         </Descriptions.Item>
-        <Descriptions.Item label="购买说明">
+        <Descriptions.Item label={t('user.purchase_note')}>
           <div className="text-sm text-gray-500">
-            只可续费相同服务版本或升级更高版本，如果您需要购买较低的服务版本，请等待当前版本过期，或联系
-            QQ 客服 34731408 手动处理。
+            {t('user.purchasing_note')}
             <div className="mt-2">
-              <Popover content={InvoiceHint} trigger="click">
-                <a className="font-semibold">点此查看如何申请发票</a>
+              <Popover content={getInvoiceHint(t)} trigger="click">
+                <a className="font-semibold">{t('user.view_invoice')}</a>
               </Popover>
             </div>
           </div>
         </Descriptions.Item>
-        <Descriptions.Item label="额度详情">
+        <Descriptions.Item label={t('user.quota_details')}>
           <QuotaDetailsPanel
             dailyQuota={currentQuota.pv}
             last7dAvg={user.last7dAvg}
@@ -732,7 +783,7 @@ function UserPanel() {
           rel="noopener noreferrer"
           className="w-full md:w-auto"
         >
-          查看价格表
+          {t('user.view_pricing')}
         </Button>
         <Button
           type="primary"
@@ -741,7 +792,7 @@ function UserPanel() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          使用网银转账
+          {t('user.bank_transfer')}
         </Button>
         <Button
           danger
@@ -749,7 +800,7 @@ function UserPanel() {
           onClick={handleLogout}
           className="w-full md:w-auto"
         >
-          退出登录
+          {t('user.logout')}
         </Button>
       </div>
     </div>
@@ -792,6 +843,7 @@ function QuotaDetailsPanel({
   tier: Tier;
   tierExpiresAt?: string;
 }) {
+  const { t } = useTranslation();
   const billingConfig = useOrderBillingConfig();
   const addonQuota = billingConfig.checkUpdateAddon?.quota ?? 100_000;
   const baseTier =
@@ -828,11 +880,11 @@ function QuotaDetailsPanel({
       : 'text-slate-900';
   const warningTag =
     quotaWarning.isExceeded && displayRemaining < 0
-      ? '已超额'
+      ? t('user.already_exceeded')
       : quotaWarning.isExceeded
-        ? '已用尽'
+        ? t('user.already_exhausted')
         : quotaWarning.isLow
-          ? '偏低'
+          ? t('user.low')
           : undefined;
 
   return (
@@ -862,9 +914,11 @@ function QuotaDetailsPanel({
                 />
               )}
               <div>
-                <div className="font-medium text-slate-900">每日检查额度</div>
+                <div className="font-medium text-slate-900">
+                  {t('user.daily_check_title')}
+                </div>
                 <div className="mt-0.5 text-slate-500 text-xs">
-                  客户端检查热更新时消耗，按账户全部应用汇总。
+                  {t('user.daily_check_desc')}
                 </div>
               </div>
             </div>
@@ -879,7 +933,9 @@ function QuotaDetailsPanel({
           </div>
           <div className="mt-4">
             <div>
-              <div className="text-[11px] text-gray-500">今日剩余额度</div>
+              <div className="text-[11px] text-gray-500">
+                {t('user.remaining_today')}
+              </div>
               <div
                 className={cn(
                   'mt-1 font-semibold text-2xl leading-none tabular-nums',
@@ -889,19 +945,24 @@ function QuotaDetailsPanel({
                 {displayRemaining.toLocaleString()}
               </div>
               <div className="mt-1 text-gray-500 text-xs">
-                上限 {dailyQuota.toLocaleString()} 次 / 日（套餐内{' '}
-                {packageIncludedQuota.toLocaleString()} 次 + 加购{' '}
-                {packageExtraQuota.toLocaleString()} 次）
+                {t('user.quota_limit_info', {
+                  dailyQuota: dailyQuota.toLocaleString(),
+                  included: packageIncludedQuota.toLocaleString(),
+                  extra: packageExtraQuota.toLocaleString(),
+                })}
               </div>
               {quotaWarning.isExceeded && displayRemaining < 0 && (
                 <div className="mt-1 font-medium text-red-600 text-xs">
-                  已超出 {Math.abs(displayRemaining).toLocaleString()} 次
+                  {t('user.exceeded_by', {
+                    count: Math.abs(displayRemaining).toLocaleString(),
+                  })}
                 </div>
               )}
               {quotaWarning.isLow && (
                 <div className="mt-1 font-medium text-amber-700 text-xs">
-                  低于 {Math.round(CHECK_QUOTA_LOW_RATIO * 100)}
-                  %，请留意检查频率
+                  {t('user.low_below', {
+                    percent: Math.round(CHECK_QUOTA_LOW_RATIO * 100),
+                  })}
                 </div>
               )}
             </div>
@@ -942,8 +1003,11 @@ function QuotaDetailsPanel({
         </div>
         <MiniQuotaBars
           dailyQuota={dailyQuota}
-          title={`最近 7 天平均剩余额度 ${formatOptionalNumber(last7dAvg)}（${formatQuotaDateRangeLabel()}）`}
-          tooltipSuffix="次"
+          title={t('user.recent_7day_avg', {
+            avg: formatOptionalNumber(last7dAvg),
+            range: formatQuotaDateRangeLabel(),
+          })}
+          tooltipSuffix={t('user.count_suffix')}
           values={last7dCounts}
         />
       </div>
@@ -957,7 +1021,9 @@ function QuotaDetailsPanel({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-medium text-slate-800">{row.label}</span>
-                {row.status === 'exception' && <Tag color="red">超额</Tag>}
+                {row.status === 'exception' && (
+                  <Tag color="red">{t('user.over_quota')}</Tag>
+                )}
               </div>
               <div className="mt-0.5 text-slate-500 text-xs">{row.note}</div>
             </div>
@@ -973,7 +1039,9 @@ function QuotaDetailsPanel({
       </div>
 
       <div className="border-slate-100 border-t bg-slate-50/70 px-4 py-3">
-        <div className="mb-2 font-medium text-slate-700 text-xs">规格限制</div>
+        <div className="mb-2 font-medium text-slate-700 text-xs">
+          {t('user.spec_limits')}
+        </div>
         <div className="grid gap-2 sm:grid-cols-3">
           {sizeLimits.map((item) => (
             <div key={item.label}>
@@ -1006,12 +1074,13 @@ function CheckUpdateAddonPurchase({
   tier: Tier;
   tierExpiresAt?: string;
 }) {
+  const { t } = useTranslation();
   const [loadingUnits, setLoadingUnits] = useState<number | null>(null);
   const monthlyUnitPrice =
     billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
   const eligibilityHint =
     billingConfig.checkUpdateAddon?.eligibilityMessage ??
-    defaultCheckUpdateAddonEligibilityHint;
+    getDefaultCheckUpdateAddonEligibilityHint(t);
   const isExistingPaidService = tier !== 'free' && !!tierExpiresAt;
   const canPurchaseAddon = canPurchaseCheckUpdateAddon({
     dailyQuota,
@@ -1028,8 +1097,10 @@ function CheckUpdateAddonPurchase({
 
         return {
           amountText: proration
-            ? `补差价 ${formatMoney(proration.amount)}`
-            : `${formatMoney(quote.amount)} / 年`,
+            ? t('user.addon_proration_amount', {
+                amount: formatMoney(proration.amount),
+              })
+            : `${formatMoney(quote.amount)} ${t('user.per_year')}`,
           disabled,
           key: option.key,
           onClick: async () => {
@@ -1040,42 +1111,61 @@ function CheckUpdateAddonPurchase({
               setLoadingUnits(null);
             }
           },
-          title: `+${(addonQuota * units).toLocaleString()} 次 / 日`,
+          title: `+${(addonQuota * units).toLocaleString()} ${t('user.per_day')}`,
         };
       })
     : [
         {
-          amountText: quotesLoading ? '报价中' : '按订单结算',
-          description: quotesLoading ? '正在获取加购报价' : undefined,
+          amountText: quotesLoading
+            ? t('user.quoting')
+            : t('user.order_settle'),
+          description: quotesLoading
+            ? t('user.fetching_addon_quote')
+            : undefined,
           disabled: true,
           key: 'unavailable',
-          title: '加购检查额度',
+          title: t('user.check_quota_addon'),
         },
       ];
 
   return (
     <div className="mt-4 flex flex-col gap-3 border-slate-200 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <div className="font-medium text-slate-900 text-sm">检查额度加购</div>
+        <div className="font-medium text-slate-900 text-sm">
+          {t('user.check_quota_addon')}
+        </div>
         <div className="mt-0.5 text-slate-500 text-xs">
           {canPurchaseAddon
-            ? `每增加 ${addonQuota.toLocaleString()} 次 / 日，每月额外收费 ${formatMoney(monthlyUnitPrice)}。`
+            ? t('user.addon_price_desc', {
+                quota: addonQuota.toLocaleString(),
+                price: formatMoney(monthlyUnitPrice),
+              })
             : eligibilityHint}
         </div>
       </div>
       {canPurchaseAddon ? (
         <PurchaseActionPopover
-          buttonLabel={loadingUnits ? '跳转中' : '加购检查额度'}
+          buttonLabel={
+            loadingUnits ? t('user.jumping') : t('user.check_quota_addon')
+          }
           hint={
             isExistingPaidService
-              ? `按剩余天数补差价。收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
-              : `收费基准为：${formatWan(addonQuota)}次/日，每月加收 ${formatMoney(monthlyUnitPrice)}，可叠加购买。`
+              ? t('user.addon_proration_hint', {
+                  quota: formatWan(addonQuota, t),
+                  price: formatMoney(monthlyUnitPrice),
+                })
+              : t('user.addon_purchase_hint', {
+                  quota: formatWan(addonQuota, t),
+                  price: formatMoney(monthlyUnitPrice),
+                })
           }
           loading={loadingUnits !== null}
           title={
             isExistingPaidService
-              ? `加购检查额度（当前有效期不变：至 ${formatExpireDate(tierExpiresAt)}）`
-              : '加购检查额度'
+              ? t('user.addon_title_with_expire', {
+                  date: formatExpireDate(tierExpiresAt, t),
+                })
+              : t('user.addon_title')
           }
           options={menuOptions}
         />
@@ -1083,7 +1173,7 @@ function CheckUpdateAddonPurchase({
         <Tooltip title={eligibilityHint}>
           <span>
             <Button className={purchaseButtonClassName} disabled>
-              加购检查额度
+              {t('user.check_quota_addon')}
             </Button>
           </span>
         </Tooltip>
@@ -1103,6 +1193,7 @@ function MiniQuotaBars({
   tooltipSuffix: string;
   values?: number[];
 }) {
+  const { t } = useTranslation();
   const bars = (values ?? [])
     .slice(0, 7)
     .reverse()
@@ -1166,7 +1257,7 @@ function MiniQuotaBars({
         </div>
       ) : (
         <div className="mt-2 flex flex-1 items-center justify-center rounded bg-white text-gray-400 text-xs">
-          暂无 7 天明细
+          {t('user.no_7day_details')}
         </div>
       )}
     </div>
@@ -1200,7 +1291,7 @@ async function purchase(tier: keyof typeof products, months?: number) {
     window.location.href = orderResponse.payUrl;
   } else if (orderResponse?.payUrl) {
     console.error('Invalid payment URL:', orderResponse.payUrl);
-    message.error('支付链接无效');
+    message.error(i18n.t('user.payment_invalid'));
   }
 }
 
@@ -1210,7 +1301,7 @@ async function purchaseCheckUpdateAddon(units: number) {
     window.location.href = orderResponse.payUrl;
   } else if (orderResponse?.payUrl) {
     console.error('Invalid payment URL:', orderResponse.payUrl);
-    message.error('支付链接无效');
+    message.error(i18n.t('user.payment_invalid'));
   }
 }
 

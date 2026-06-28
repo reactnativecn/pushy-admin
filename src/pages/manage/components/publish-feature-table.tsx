@@ -1,10 +1,13 @@
 import { Table, Tag } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 发布功能支持情况表格组件
  * 展示不同 react-native-update 版本对各种发布功能的支持情况
  */
 export default function PublishFeatureTable() {
+  const { t } = useTranslation();
+
   return (
     <div className="w-[600px]">
       <Table
@@ -14,32 +17,32 @@ export default function PublishFeatureTable() {
           {
             key: '1',
             version: '< v10.15.0',
-            fullRelease: '✓ 支持',
-            grayRelease: '✗ 不支持',
-            bothRelease: '⚠ 灰度被忽略',
+            fullRelease: t('publish_feature_table.supported'),
+            grayRelease: t('publish_feature_table.not_supported'),
+            bothRelease: t('publish_feature_table.gray_ignored'),
           },
           {
             key: '2',
             version: 'v10.15.0 - v10.31.3',
-            fullRelease: '✓ 支持',
-            grayRelease: '✓ 支持',
-            bothRelease: '⚠ 灰度被忽略',
+            fullRelease: t('publish_feature_table.supported'),
+            grayRelease: t('publish_feature_table.supported'),
+            bothRelease: t('publish_feature_table.gray_ignored'),
           },
           {
             key: '3',
             version: '≥ v10.32.0',
-            fullRelease: '✓ 支持',
-            grayRelease: '✓ 支持',
-            bothRelease: '✓ 支持（cli >= 2.4.0）',
+            fullRelease: t('publish_feature_table.supported'),
+            grayRelease: t('publish_feature_table.supported'),
+            bothRelease: t('publish_feature_table.both_supported'),
           },
         ]}
         columns={[
           {
             title: (
               <span>
-                react-native-update 版本
+                {t('publish_feature_table.version_header_line1')}
                 <br />
-                (用户端)
+                {t('publish_feature_table.version_header_line2')}
               </span>
             ),
             dataIndex: 'version',
@@ -47,7 +50,7 @@ export default function PublishFeatureTable() {
             width: 200,
           },
           {
-            title: '仅全量发布',
+            title: t('publish_feature_table.full_release_only'),
             dataIndex: 'fullRelease',
             key: 'fullRelease',
             align: 'center',
@@ -60,7 +63,7 @@ export default function PublishFeatureTable() {
             },
           },
           {
-            title: '仅灰度发布',
+            title: t('publish_feature_table.gray_release_only'),
             dataIndex: 'grayRelease',
             key: 'grayRelease',
             align: 'center',
@@ -73,7 +76,7 @@ export default function PublishFeatureTable() {
             },
           },
           {
-            title: '同时发布',
+            title: t('publish_feature_table.both_release'),
             dataIndex: 'bothRelease',
             key: 'bothRelease',
             align: 'center',
@@ -88,7 +91,7 @@ export default function PublishFeatureTable() {
           },
         ]}
       />
-      <div className="mt-2">注：取消发布不会导致已更新的用户回滚。</div>
+      <div className="mt-2">{t('publish_feature_table.note')}</div>
     </div>
   );
 }

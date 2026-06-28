@@ -1,6 +1,7 @@
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Card, Empty, Input, Spin, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   type AppDrawerItem,
@@ -23,9 +24,9 @@ const platformLabels: Record<AppItem['platform'], string> = {
   harmony: 'HarmonyOS',
 };
 
-const formatAppKey = (appKey?: string | null) => {
+const formatAppKey = (appKey?: string | null, t?: (key: string) => string) => {
   if (!appKey) {
-    return '尚未生成 App Key';
+    return t?.('apps.key_pending') ?? '尚未生成 App Key';
   }
   if (appKey.length <= 16) {
     return appKey;
@@ -34,6 +35,7 @@ const formatAppKey = (appKey?: string | null) => {
 };
 
 export const Component = () => {
+  const { t } = useTranslation();
   const { apps, isLoading } = useAppWorkspaceList();
   const { contextHolder, openAppSettings } = useAppSettingsModal();
   const [query, setQuery] = useState('');
@@ -76,10 +78,10 @@ export const Component = () => {
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <Title level={3} className="m-0!">
-            应用列表
+            {t('apps.title')}
           </Title>
           <div className="mt-1 text-gray-500">
-            选择一个应用进入版本、原生包和发布配置管理。
+            {t('apps.description')}
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -87,20 +89,20 @@ export const Component = () => {
             allowClear
             className="w-full sm:w-72"
             prefix={<SearchOutlined />}
-            placeholder="搜索应用名称、App Key 或平台"
+            placeholder={t('apps.search_placeholder')}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
           <Button type="primary" icon={<PlusOutlined />} onClick={createApp}>
-            添加应用
+            {t('apps.create_app')}
           </Button>
         </div>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        <MetricCard label="应用总数" value={apps.length.toLocaleString()} />
-        <MetricCard label="暂停应用" value={pausedCount.toLocaleString()} />
-        <MetricCard label="累计检查" value={totalChecks.toLocaleString()} />
+        <MetricCard label={t('apps.total_apps')} value={apps.length.toLocaleString()} />
+        <MetricCard label={t('apps.paused_apps')} value={pausedCount.toLocaleString()} />
+        <MetricCard label={t('apps.total_checks')} value={totalChecks.toLocaleString()} />
       </div>
 
       <Card className="shadow-sm">
@@ -114,7 +116,7 @@ export const Component = () => {
           ) : (
             <Empty
               className="py-16"
-              description={query ? '没有匹配的应用' : '还没有应用'}
+              description={query ? t('apps.no_search_results') : t('apps.no_apps')}
             >
               {!query && (
                 <Button
@@ -122,7 +124,7 @@ export const Component = () => {
                   icon={<PlusOutlined />}
                   onClick={createApp}
                 >
-                  添加第一个应用
+                  {t('apps.create_first')}
                 </Button>
               )}
             </Empty>
@@ -160,7 +162,8 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 }
 
 function AppCard({ app }: { app: AppItem }) {
-  const appKeyLabel = formatAppKey(app.appKey);
+  const { t } = useTranslation();
+  const appKeyLabel = formatAppKey(app.appKey, t);
 
   return (
     <Link
@@ -187,7 +190,7 @@ function AppCard({ app }: { app: AppItem }) {
             className="m-0 shrink-0"
             color={app.status === 'paused' ? 'orange' : 'green'}
           >
-            {app.status === 'paused' ? '暂停' : '正常'}
+            {app.status === 'paused' ? t('apps.paused') : t('apps.active')}
           </Tag>
         </div>
 
@@ -205,13 +208,13 @@ function AppCard({ app }: { app: AppItem }) {
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">检查次数</span>
+            <span className="text-gray-500">{t('apps.checks')}</span>
             <span className="font-medium text-slate-800 tabular-nums">
               {(app.checkCount ?? 0).toLocaleString()}
             </span>
           </div>
           <div className="pt-1 text-blue-600 text-xs opacity-0 transition-opacity group-hover:opacity-100">
-            进入应用管理
+            {t('apps.open_manage')}
           </div>
         </div>
       </div>

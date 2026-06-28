@@ -1,4 +1,5 @@
 import { Form, Input, Modal, message, Select } from 'antd';
+import i18n from '@/i18n';
 import { api } from '@/services/api';
 import PlatformIcon from './platform-icon';
 
@@ -7,6 +8,7 @@ export const showCreateAppModal = ({
 }: {
   onCreated?: (id: number) => void | Promise<void>;
 } = {}) => {
+  const t = i18n.t.bind(i18n);
   let name = '';
   let platform = 'android';
 
@@ -17,15 +19,18 @@ export const showCreateAppModal = ({
     content: (
       <Form initialValues={{ platform }}>
         <br />
-        <Form.Item label="应用名称" name="name">
+        <Form.Item label={t('create_app_modal.app_name')} name="name">
           <Input
-            placeholder="请输入应用名称"
+            placeholder={t('create_app_modal.app_name_placeholder')}
             onChange={({ target }) => {
               name = target.value;
             }}
           />
         </Form.Item>
-        <Form.Item label="选择平台" name="platform">
+        <Form.Item
+          label={t('create_app_modal.select_platform')}
+          name="platform"
+        >
           <Select
             onSelect={(value: string) => {
               platform = value;
@@ -64,7 +69,7 @@ export const showCreateAppModal = ({
     async onOk() {
       const trimmedName = name.trim();
       if (!trimmedName) {
-        message.warning('请输入应用名称');
+        message.warning(t('create_app_modal.app_name_required'));
         return false;
       }
 

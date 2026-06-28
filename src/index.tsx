@@ -1,12 +1,20 @@
 import { ConfigProvider } from 'antd';
+import enUS from 'antd/locale/en_US';
 import zhCN from 'antd/locale/zh_CN';
 import { createRoot } from 'react-dom/client';
+import { useTranslation } from 'react-i18next';
 import { RouterProvider } from 'react-router-dom';
 
 import './index.css';
+import './i18n';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { router } from './router';
 import { queryClient } from './utils/queryClient';
+
+const antdLocaleMap: Record<string, typeof zhCN> = {
+  en: enUS,
+  'zh-CN': zhCN,
+};
 
 const isLocalHost = () => {
   const { hostname } = window.location;
@@ -57,13 +65,20 @@ if (hasServiceWorker() && shouldEnablePwa) {
   window.addEventListener('load', clearLocalPwaState);
 }
 
-const root = document.getElementById('main');
-if (root) {
-  createRoot(root).render(
-    <ConfigProvider locale={zhCN}>
+function App() {
+  const { i18n } = useTranslation();
+  const antdLocale = antdLocaleMap[i18n.language] ?? zhCN;
+
+  return (
+    <ConfigProvider locale={antdLocale}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
-    </ConfigProvider>,
+    </ConfigProvider>
   );
+}
+
+const root = document.getElementById('main');
+if (root) {
+  createRoot(root).render(<App />);
 }

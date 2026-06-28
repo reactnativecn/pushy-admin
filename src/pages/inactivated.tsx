@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Button, message, Result } from 'antd';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { activationEmailResendCooldownStorageKey } from '@/constants/local-storage';
 import { api } from '@/services/api';
 import { getUserEmail } from '@/services/auth';
@@ -8,6 +9,7 @@ import { useLocalStorageCooldown } from '@/utils/hooks';
 import { rootRouterPath, router } from '../router';
 
 export const Inactivated = () => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!getUserEmail()) {
       router.navigate(rootRouterPath.login);
@@ -24,16 +26,16 @@ export const Inactivated = () => {
     mutationFn: () => api.sendEmail({ email: getUserEmail() }),
     onSuccess: () => {
       startCooldown();
-      message.info('邮件发送成功，请注意查收');
+      message.info(t('inactivated.email_sent'));
     },
     onError: () => {
-      message.error('邮件发送失败');
+      message.error(t('inactivated.send_failed'));
     },
   });
   return (
     <Result
-      title="您的账号还未激活，请查看您的邮箱"
-      subTitle="如未收到激活邮件，请点击"
+      title={t('inactivated.title')}
+      subTitle={t('inactivated.no_email')}
       extra={[
         <Button
           key="resend"
@@ -42,10 +44,10 @@ export const Inactivated = () => {
           loading={isPending}
           disabled={isCoolingDown}
         >
-          {isCoolingDown ? `${remainingSeconds}s 后可再次发送` : '再次发送'}
+          {isCoolingDown ? t('inactivated.resend_countdown', { seconds: remainingSeconds }) : t('inactivated.resend_button')}
         </Button>,
         <Button key="back" href="/user">
-          返回登录
+          {t('inactivated.back_login')}
         </Button>,
       ]}
     />
