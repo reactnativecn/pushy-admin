@@ -1,11 +1,13 @@
 import { DeleteFilled } from '@ant-design/icons';
 import { Button, Form, Input, Modal, Switch, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { useUserInfo } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
 
 const SettingModal = () => {
+  const { t } = useTranslation();
   const { user } = useUserInfo();
   const { appId } = useManageContext();
   const appKey = Form.useWatch('appKey') as string;
@@ -13,21 +15,29 @@ const SettingModal = () => {
 
   return (
     <>
-      <Form.Item label="AppId" layout="vertical">
+      <Form.Item label={t('setting_modal.app_id')} layout="vertical">
         <Typography.Paragraph className="!mb-0" type="secondary" copyable>
           {appId}
         </Typography.Paragraph>
       </Form.Item>
-      <Form.Item label="AppKey" name="appKey" layout="vertical">
+      <Form.Item
+        label={t('setting_modal.app_key')}
+        name="appKey"
+        layout="vertical"
+      >
         <Typography.Paragraph className="!mb-0" type="secondary" copyable>
           {appKey}
         </Typography.Paragraph>
       </Form.Item>
-      <Form.Item label="应用名" name="name" layout="vertical">
+      <Form.Item
+        label={t('setting_modal.app_name')}
+        name="name"
+        layout="vertical"
+      >
         <Input />
       </Form.Item>
       <Form.Item
-        label="原生包下载地址（当用户端的原生版本过期时，会使用此地址下载）"
+        label={t('setting_modal.download_url')}
         name="downloadUrl"
         layout="vertical"
       >
@@ -35,18 +45,21 @@ const SettingModal = () => {
       </Form.Item>
       <Form.Item
         layout="vertical"
-        label="启用热更新"
+        label={t('setting_modal.hot_updates')}
         name="status"
         normalize={(value) => (value ? 'normal' : 'paused')}
         getValueProps={(value) => ({
           value: value === 'normal' || value === null || value === undefined,
         })}
       >
-        <Switch checkedChildren="已启用" unCheckedChildren="已暂停" />
+        <Switch
+          checkedChildren={t('setting_modal.enabled')}
+          unCheckedChildren={t('setting_modal.paused')}
+        />
       </Form.Item>
       <Form.Item
         layout="vertical"
-        label="忽略编译时间戳（高级版以上可启用）"
+        label={t('setting_modal.ignore_timestamp')}
         name="ignoreBuildTime"
         normalize={(value) => (value ? 'enabled' : 'disabled')}
         getValueProps={(value) => ({ value: value === 'enabled' })}
@@ -56,18 +69,18 @@ const SettingModal = () => {
             (user?.tier === 'free' || user?.tier === 'standard') &&
             ignoreBuildTime !== 'enabled'
           }
-          checkedChildren="已启用"
-          unCheckedChildren="已禁用"
+          checkedChildren={t('setting_modal.enabled')}
+          unCheckedChildren={t('setting_modal.disabled')}
         />
       </Form.Item>
-      <Form.Item label="删除应用" layout="vertical">
+      <Form.Item label={t('setting_modal.delete_app')} layout="vertical">
         <Button
           type="primary"
           icon={<DeleteFilled />}
           onClick={() => {
             Modal.confirm({
-              title: '应用删除后无法恢复',
-              okText: '确认删除',
+              title: t('setting_modal.delete_confirm'),
+              okText: t('setting_modal.delete_ok'),
               okButtonProps: { danger: true },
               async onOk() {
                 await api.deleteApp(appId);
@@ -78,7 +91,7 @@ const SettingModal = () => {
           }}
           danger
         >
-          删除
+          {t('setting_modal.delete_button')}
         </Button>
       </Form.Item>
     </>

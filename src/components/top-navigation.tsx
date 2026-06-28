@@ -21,6 +21,7 @@ import type { MenuProps } from 'antd';
 import { Button, Drawer, Empty, Input, Menu, Popover, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import {
   type AppDrawerItem,
@@ -51,51 +52,58 @@ interface TopNavigationProps {
 
 type MenuItems = NonNullable<MenuProps['items']>;
 
-const externalItems: MenuItems = [
-  {
-    key: 'issues',
-    icon: <CommentOutlined />,
-    label: (
-      <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
-        讨论
-      </ExtLink>
-    ),
-  },
-  {
-    key: 'document',
-    icon: <ReadOutlined />,
-    label: (
-      <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
-        文档
-      </ExtLink>
-    ),
-  },
-  {
-    key: 'about',
-    icon: <InfoCircleOutlined />,
-    label: <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>,
-  },
-  {
-    key: 'ai-cresc',
-    icon: <OpenAIOutlined />,
-    label: (
-      <ExtLink href="https://ai.cresc.dev">
-        <span style={{ fontWeight: 'bold' }}>无需代理直连最先进的 AI 模型</span>
-      </ExtLink>
-    ),
-  },
-];
-
 const platformLabels: Record<AppItem['platform'], string> = {
   android: 'Android',
   ios: 'iOS',
   harmony: 'HarmonyOS',
 };
 
+function getExternalItems(t: (key: string) => string): MenuItems {
+  return [
+    {
+      key: 'issues',
+      icon: <CommentOutlined />,
+      label: (
+        <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
+          {t('nav.issues')}
+        </ExtLink>
+      ),
+    },
+    {
+      key: 'document',
+      icon: <ReadOutlined />,
+      label: (
+        <ExtLink href="https://pushy.reactnative.cn/docs/getting-started.html">
+          {t('nav.documentation')}
+        </ExtLink>
+      ),
+    },
+    {
+      key: 'about',
+      icon: <InfoCircleOutlined />,
+      label: (
+        <ExtLink href="https://reactnative.cn/about.html">
+          {t('nav.about_us')}
+        </ExtLink>
+      ),
+    },
+    {
+      key: 'ai-cresc',
+      icon: <OpenAIOutlined />,
+      label: (
+        <ExtLink href="https://ai.cresc.dev">
+          <span style={{ fontWeight: 'bold' }}>{t('nav.ai_promo')}</span>
+        </ExtLink>
+      ),
+    },
+  ];
+}
+
 export default function TopNavigation({
   isMobile,
   showAuthenticatedChrome,
 }: TopNavigationProps) {
+  const { t } = useTranslation();
   const { user } = useUserInfo();
   const { pathname } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -125,6 +133,8 @@ export default function TopNavigation({
     };
   }, []);
 
+  const externalItems = getExternalItems(t);
+
   const authenticatedItems: MenuItems =
     showAuthenticatedChrome && user
       ? [
@@ -133,7 +143,11 @@ export default function TopNavigation({
                 {
                   key: 'apps',
                   icon: <AppstoreOutlined />,
-                  label: <Link to={rootRouterPath.apps}>应用列表</Link>,
+                  label: (
+                    <Link to={rootRouterPath.apps}>
+                      {t('nav.applications')}
+                    </Link>
+                  ),
                 },
               ]
             : []),
@@ -143,7 +157,9 @@ export default function TopNavigation({
                   key: 'admin-service-status',
                   icon: <DashboardOutlined />,
                   label: (
-                    <Link to={rootRouterPath.adminServiceStatus}>服务状态</Link>
+                    <Link to={rootRouterPath.adminServiceStatus}>
+                      {t('nav.service_status')}
+                    </Link>
                   ),
                 },
               ]
@@ -151,47 +167,63 @@ export default function TopNavigation({
           {
             key: 'audit-logs',
             icon: <FileTextOutlined />,
-            label: <Link to={rootRouterPath.auditLogs}>操作日志</Link>,
+            label: (
+              <Link to={rootRouterPath.auditLogs}>{t('nav.audit_logs')}</Link>
+            ),
           },
           {
             key: 'realtime-metrics',
             icon: <LineChartOutlined />,
-            label: <Link to={rootRouterPath.realtimeMetrics}>实时数据</Link>,
+            label: (
+              <Link to={rootRouterPath.realtimeMetrics}>
+                {t('nav.realtime_metrics')}
+              </Link>
+            ),
           },
           {
             key: 'api-tokens',
             icon: <KeyOutlined />,
-            label: <Link to={rootRouterPath.apiTokens}>API Token</Link>,
+            label: (
+              <Link to={rootRouterPath.apiTokens}>{t('nav.api_tokens')}</Link>
+            ),
           },
           ...(user.admin
             ? [
                 {
                   key: 'admin',
                   icon: <SettingOutlined />,
-                  label: '管理员',
+                  label: t('nav.admin'),
                   children: [
                     {
                       key: 'admin-config',
                       label: (
-                        <Link to={rootRouterPath.adminConfig}>动态配置</Link>
+                        <Link to={rootRouterPath.adminConfig}>
+                          {t('nav.dynamic_config')}
+                        </Link>
                       ),
                     },
                     {
                       key: 'admin-users',
                       label: (
-                        <Link to={rootRouterPath.adminUsers}>用户管理</Link>
+                        <Link to={rootRouterPath.adminUsers}>
+                          {t('nav.user_management')}
+                        </Link>
                       ),
                     },
                     {
                       key: 'admin-apps',
                       label: (
-                        <Link to={rootRouterPath.adminApps}>应用管理</Link>
+                        <Link to={rootRouterPath.adminApps}>
+                          {t('nav.app_management')}
+                        </Link>
                       ),
                     },
                     {
                       key: 'admin-metrics',
                       label: (
-                        <Link to={rootRouterPath.adminMetrics}>全局统计</Link>
+                        <Link to={rootRouterPath.adminMetrics}>
+                          {t('nav.global_metrics')}
+                        </Link>
                       ),
                     },
                   ],
@@ -211,7 +243,9 @@ export default function TopNavigation({
           {
             key: 'user',
             icon: <UserOutlined />,
-            label: <Link to={rootRouterPath.user}>账户设置</Link>,
+            label: (
+              <Link to={rootRouterPath.user}>{t('nav.account_settings')}</Link>
+            ),
           },
         ]
       : []),
@@ -237,7 +271,7 @@ export default function TopNavigation({
             </Link>
           )}
           <button
-            aria-label="打开菜单"
+            aria-label={t('nav.open_menu')}
             className={cn(
               'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-0 bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-500',
               showAuthenticatedChrome && user ? undefined : 'ml-auto',
@@ -291,13 +325,14 @@ function MobileMenuSheet({
   open: boolean;
   selectedKeys: string[];
 }) {
+  const { t } = useTranslation();
   return (
     <Drawer
       height="68vh"
       onClose={onClose}
       open={open}
       placement="bottom"
-      title="菜单"
+      title={t('nav.menu')}
       styles={{ body: { padding: 8 } }}
     >
       <Menu
@@ -312,6 +347,7 @@ function MobileMenuSheet({
 }
 
 function AppSwitcher({ compact }: { compact: boolean }) {
+  const { t } = useTranslation();
   const { apps } = useAppWorkspaceList();
   const { contextHolder, openAppSettings } = useAppSettingsModal();
   const { pathname, search } = useLocation();
@@ -422,7 +458,7 @@ function AppSwitcher({ compact }: { compact: boolean }) {
     }
   }, [canOpenAppList, open]);
 
-  const triggerLabel = currentApp?.name ?? '选择应用';
+  const triggerLabel = currentApp?.name ?? t('nav.select_app');
   const content = (
     <AppSwitcherContent
       currentAppId={activeAppId}
@@ -458,7 +494,7 @@ function AppSwitcher({ compact }: { compact: boolean }) {
         <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
           <span className="truncate">{triggerLabel}</span>
           {currentApp?.status === 'paused' && (
-            <Tag className="m-0 shrink-0">暂停</Tag>
+            <Tag className="m-0 shrink-0">{t('nav.paused')}</Tag>
           )}
         </span>
         {canOpenAppList && (
@@ -478,7 +514,7 @@ function AppSwitcher({ compact }: { compact: boolean }) {
           onClose={() => setOpen(false)}
           open={open}
           placement="bottom"
-          title="选择应用"
+          title={t('nav.select_app')}
           styles={{ body: { padding: 0 } }}
         >
           {content}
@@ -539,6 +575,7 @@ function AppSwitcherContent({
   setQuery,
   totalAppCount,
 }: AppSwitcherContentProps) {
+  const { t } = useTranslation();
   const hasSearch = query.trim().length > 0;
 
   return (
@@ -548,13 +585,15 @@ function AppSwitcherContent({
           allowClear
           autoFocus
           prefix={<SearchOutlined />}
-          placeholder="搜索应用名称、App Key 或平台"
+          placeholder={t('nav.search_apps')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
         {recentApps.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[11px] text-gray-500">最近访问</span>
+            <span className="mr-1 text-[11px] text-gray-500">
+              {t('nav.recent_access')}
+            </span>
             {recentApps.map((app) => (
               <button
                 className={cn(
@@ -571,7 +610,7 @@ function AppSwitcherContent({
                 <span className="truncate">{app.name}</span>
                 {app.status === 'paused' && (
                   <span className="shrink-0 text-[10px] text-gray-400">
-                    暂停
+                    {t('nav.paused')}
                   </span>
                 )}
               </button>
@@ -582,8 +621,11 @@ function AppSwitcherContent({
       <div className="px-2 py-2">
         <div className="px-2 pb-1 font-medium text-gray-500 text-xs">
           {hasSearch
-            ? `搜索结果（${filteredApps.length}/${totalAppCount}）`
-            : `全部应用（${totalAppCount}）`}
+            ? t('nav.search_results', {
+                filtered: filteredApps.length,
+                total: totalAppCount,
+              })
+            : t('nav.all_apps', { total: totalAppCount })}
         </div>
         <div
           className={cn(
@@ -604,7 +646,9 @@ function AppSwitcherContent({
           ) : (
             <Empty
               className="my-8"
-              description={hasSearch ? '没有匹配的应用' : '暂无应用'}
+              description={
+                hasSearch ? t('nav.no_matching_apps') : t('nav.no_apps')
+              }
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           )}
@@ -620,11 +664,11 @@ function AppSwitcherContent({
             }
             onClick={onToggleAppDrawer}
           >
-            {isAppDrawerVisible ? '隐藏侧边栏' : '显示侧边栏'}
+            {isAppDrawerVisible ? t('nav.hide_sidebar') : t('nav.show_sidebar')}
           </Button>
         )}
         <Button type="primary" icon={<PlusOutlined />} onClick={onCreateApp}>
-          添加应用
+          {t('nav.add_app')}
         </Button>
       </div>
     </div>
@@ -642,6 +686,7 @@ function AppRow({
   onSelect: (appId: number) => void;
   onSettings: (app: AppItem) => void;
 }) {
+  const { t } = useTranslation();
   const appKeyLabel = formatAppKey(app.appKey);
 
   return (
@@ -663,7 +708,9 @@ function AppRow({
           <span className="min-w-0 flex-1">
             <span className="flex min-w-0 items-center gap-2">
               <span className="truncate font-medium">{app.name}</span>
-              {app.status === 'paused' && <Tag className="m-0">暂停</Tag>}
+              {app.status === 'paused' && (
+                <Tag className="m-0">{t('nav.paused')}</Tag>
+              )}
             </span>
             <span className="mt-0.5 flex min-w-0 items-center gap-2 text-gray-500 text-xs">
               <span>{platformLabels[app.platform]}</span>
@@ -681,22 +728,24 @@ function AppRow({
             <span className="block font-semibold text-slate-800 text-sm tabular-nums">
               {(app.checkCount ?? 0).toLocaleString()}
             </span>
-            <span className="block text-[10px] text-gray-500">检查次数</span>
+            <span className="block text-[10px] text-gray-500">
+              {t('nav.checks')}
+            </span>
           </span>
         </span>
         <span className="flex w-12 shrink-0 justify-end">
           {isActive && (
             <Tag color="blue" className="m-0 shrink-0">
-              当前
+              {t('nav.current')}
             </Tag>
           )}
         </span>
       </button>
       <button
-        aria-label={`打开 ${app.name} 应用设置`}
+        aria-label={t('nav.open_app_settings', { name: app.name })}
         className="mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 transition-colors hover:bg-white hover:text-blue-600"
         onClick={() => onSettings(app)}
-        title="应用设置"
+        title={t('nav.app_settings')}
         type="button"
       >
         <SettingOutlined className="text-base" />

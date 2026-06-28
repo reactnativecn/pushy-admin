@@ -12,6 +12,7 @@ import {
   Typography,
 } from 'antd';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import type { App } from '@/types';
@@ -32,6 +33,7 @@ type AppSettingsFormValues = Pick<
 >;
 
 export function useAppSettingsModal() {
+  const { t } = useTranslation();
   const [modal, contextHolder] = Modal.useModal();
   const [form] = Form.useForm<AppSettingsFormValues>();
   const screens = Grid.useBreakpoint();
@@ -40,7 +42,7 @@ export function useAppSettingsModal() {
     form.resetFields();
     form.setFieldsValue(normalizeAppSettings(app));
     modal.confirm({
-      title: '应用设置',
+      title: t('app_settings_modal.title'),
       icon: null,
       closable: true,
       maskClosable: true,
@@ -61,7 +63,7 @@ export function useAppSettingsModal() {
           message.error((error as Error).message);
           return Promise.reject(error);
         }
-        message.success('修改成功');
+        message.success(t('app_settings_modal.updated'));
       },
     });
   };
@@ -78,6 +80,7 @@ function AppSettingsModalContent({
   form: ReturnType<typeof Form.useForm<AppSettingsFormValues>>[0];
   initialApp: AppSettingsTarget;
 }) {
+  const { t } = useTranslation();
   const { user } = useUserInfo();
   const { data: app, isLoading } = useQuery({
     queryKey: ['app', appId],
@@ -99,21 +102,29 @@ function AppSettingsModalContent({
         form={form}
         initialValues={normalizeAppSettings(initialApp)}
       >
-        <Form.Item label="AppId" layout="vertical">
+        <Form.Item label={t('app_settings_modal.app_id')} layout="vertical">
           <Typography.Paragraph className="!mb-0" type="secondary" copyable>
             {appId}
           </Typography.Paragraph>
         </Form.Item>
-        <Form.Item label="AppKey" name="appKey" layout="vertical">
+        <Form.Item
+          label={t('app_settings_modal.app_key')}
+          name="appKey"
+          layout="vertical"
+        >
           <Typography.Paragraph className="!mb-0" type="secondary" copyable>
             {appKey}
           </Typography.Paragraph>
         </Form.Item>
-        <Form.Item label="应用名" name="name" layout="vertical">
+        <Form.Item
+          label={t('app_settings_modal.app_name')}
+          name="name"
+          layout="vertical"
+        >
           <Input />
         </Form.Item>
         <Form.Item
-          label="原生包下载地址（当用户端的原生版本过期时，会使用此地址下载）"
+          label={t('app_settings_modal.download_url')}
           name="downloadUrl"
           layout="vertical"
         >
@@ -121,18 +132,21 @@ function AppSettingsModalContent({
         </Form.Item>
         <Form.Item
           layout="vertical"
-          label="启用热更新"
+          label={t('app_settings_modal.hot_updates')}
           name="status"
           normalize={(value) => (value ? 'normal' : 'paused')}
           getValueProps={(value) => ({
             value: value === 'normal' || value === null || value === undefined,
           })}
         >
-          <Switch checkedChildren="已启用" unCheckedChildren="已暂停" />
+          <Switch
+            checkedChildren={t('app_settings_modal.enabled')}
+            unCheckedChildren={t('app_settings_modal.paused')}
+          />
         </Form.Item>
         <Form.Item
           layout="vertical"
-          label="忽略编译时间戳（高级版以上可启用）"
+          label={t('app_settings_modal.ignore_timestamp')}
           name="ignoreBuildTime"
           normalize={(value) => (value ? 'enabled' : 'disabled')}
           getValueProps={(value) => ({ value: value === 'enabled' })}
@@ -142,18 +156,18 @@ function AppSettingsModalContent({
               (user?.tier === 'free' || user?.tier === 'standard') &&
               ignoreBuildTime !== 'enabled'
             }
-            checkedChildren="已启用"
-            unCheckedChildren="已禁用"
+            checkedChildren={t('app_settings_modal.enabled')}
+            unCheckedChildren={t('app_settings_modal.disabled')}
           />
         </Form.Item>
-        <Form.Item label="删除应用" layout="vertical">
+        <Form.Item label={t('app_settings_modal.delete_app')} layout="vertical">
           <Button
             type="primary"
             icon={<DeleteFilled />}
             onClick={() => {
               Modal.confirm({
-                title: '应用删除后无法恢复',
-                okText: '确认删除',
+                title: t('app_settings_modal.delete_confirm'),
+                okText: t('app_settings_modal.delete_ok'),
                 okButtonProps: { danger: true },
                 async onOk() {
                   await api.deleteApp(appId);
@@ -164,7 +178,7 @@ function AppSettingsModalContent({
             }}
             danger
           >
-            删除
+            {t('app_settings_modal.delete_button')}
           </Button>
         </Form.Item>
       </Form>
