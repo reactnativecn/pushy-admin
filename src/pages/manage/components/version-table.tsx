@@ -12,6 +12,7 @@ import {
 } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TextContent } from 'vanilla-jsoneditor';
 import { TEST_QR_CODE_DOC } from '@/constants/links';
 import { api } from '@/services/api';
@@ -25,28 +26,29 @@ import PublishFeatureTable from './publish-feature-table';
 
 const DEEP_LINK_EXAMPLE = 'pushy://';
 
-function getDeepLinkError(deepLink: string) {
+function getDeepLinkError(deepLink: string, t: (key: string) => string) {
   if (!deepLink) {
-    return '请输入 App 已注册的 URL Scheme，例如 pushy://';
+    return t('version_table.deep_link_required');
   }
   if (/^https?:\/\//i.test(deepLink)) {
-    return '这里不是网页地址，请填写 App 的自定义 Scheme，例如 pushy://';
+    return t('version_table.deep_link_not_url');
   }
   if (/[?#]/.test(deepLink) || !deepLink.endsWith('://')) {
-    return '这里只填写 Scheme 前缀，格式为 scheme://，不要带路径、参数或版本信息';
+    return t('version_table.deep_link_format');
   }
   if (!/^[a-z][a-z0-9+.-]*:\/\/$/i.test(deepLink)) {
-    return 'Scheme 需以字母开头，只能包含字母、数字、+、-、.';
+    return t('version_table.deep_link_scheme');
   }
   return '';
 }
 
 const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
+  const { t } = useTranslation();
   const { appId, deepLink, setDeepLink } = useManageContext();
   const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
   const normalizedDeepLink = deepLink.trim();
   const deepLinkError = enableDeepLink
-    ? getDeepLinkError(normalizedDeepLink)
+    ? getDeepLinkError(normalizedDeepLink, t)
     : '';
 
   const isDeepLinkValid = enableDeepLink && !deepLinkError;
@@ -70,14 +72,14 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
       content={
         <div className="w-72 sm:w-80">
           <div className="text-center my-2 mx-auto">
-            测试二维码 <br />
+            {t('version_table.qr_title')} <br />
             <a
               target="_blank"
               className="ml-1 text-xs"
               href={TEST_QR_CODE_DOC}
               rel="noopener noreferrer"
             >
-              如何使用？
+              {t('version_table.how_to_use')}
             </a>
           </div>
           <div className="flex justify-center">
@@ -88,10 +90,10 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
           <div className="space-y-2">
             <Typography.Text type="secondary" className="block text-xs">
               {isDeepLinkValid
-                ? '二维码会拉起 App 并传入热更包 Hash'
+                ? t('version_table.qr_pass_hash')
                 : enableDeepLink
-                  ? 'Deep Link 格式未通过，当前二维码仍为普通 JSON'
-                  : '未使用 Deep Link 时，二维码内容为普通 JSON'}
+                  ? t('version_table.qr_deep_link_invalid')
+                  : t('version_table.qr_no_deep_link')}
             </Typography.Text>
             <Input.TextArea
               readOnly
@@ -106,16 +108,16 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
                   setEnableDeepLink(target.checked);
                 }}
               >
-                用 Deep Link 打开 App
+                {t('version_table.use_deep_link')}
               </Checkbox>
               {enableDeepLink ? (
                 <div className="space-y-1">
                   <Typography.Text type="secondary" className="block text-xs">
-                    填 App 原生注册的 URL Scheme，只填前缀，不填路径或参数。
+                    {t('version_table.deep_link_hint')}
                   </Typography.Text>
                   <Input
                     allowClear
-                    placeholder={`例如 ${DEEP_LINK_EXAMPLE}`}
+                    placeholder={`${DEEP_LINK_EXAMPLE}`}
                     status={deepLinkError ? 'error' : undefined}
                     value={deepLink}
                     onBlur={() => {
@@ -131,7 +133,9 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
                     </Typography.Text>
                   ) : (
                     <Typography.Text type="secondary" className="block text-xs">
-                      生成示例：{normalizedDeepLink}?type=...
+                      {t('version_table.deep_link_example', {
+                        link: normalizedDeepLink,
+                      })}
                     </Typography.Text>
                   )}
                 </div>
@@ -150,10 +154,12 @@ function removeSelectedVersions({
   selected,
   versions,
   appId,
+  t,
 }: {
   selected: number[];
   versions: Version[];
   appId: number;
+  t: (key: string) => string;
 }) {
   const versionNames: string[] = [];
   const selectedSet = new Set(selected);
@@ -163,8 +169,14 @@ function removeSelectedVersions({
     }
   }
   Modal.confirm({
-    title: '删除所选热更包：',
-    content: versionNames.join('，'),
+    title: t('version_table.delete_title'),
+    content: (
+      <div className="max-h-48 overflow-y-auto">
+        {versionNames.map((name) => (
+          <div key={name}>{name}</div>
+        ))}
+      </div>
+    ),
     maskClosable: true,
     okButtonProps: { danger: true },
     async onOk() {
@@ -173,68 +185,75 @@ function removeSelectedVersions({
   });
 }
 
-const columns: ColumnType<Version>[] = [
-  {
-    title: '版本',
-    dataIndex: 'name',
-    render: (_, record) => (
-      <TextColumn
-        record={record}
-        recordKey="name"
-        extra={
-          <>
-            <DepsTable deps={record.deps} name={`热更包 ${record.name}`} />
-            <Commit commit={record.commit} />
-            <TestQrCode name={record.name} hash={record.hash} />
-          </>
-        }
-      />
-    ),
-  },
-  {
-    title: '描述',
-    dataIndex: 'description',
-    responsive: ['md'],
-    render: (_, record) => (
-      <TextColumn record={record} recordKey="description" />
-    ),
-  },
-  {
-    title: '自定义元信息',
-    dataIndex: 'metaInfo',
-    responsive: ['lg'],
-    render: (_, record) => <TextColumn record={record} recordKey="metaInfo" />,
-  },
-  {
-    title: (
-      <Popover content={<PublishFeatureTable />}>
-        发布到原生包
-        <span className="text-amber-600">
-          (<InfoCircleOutlined />
-          功能说明)
-        </span>
-      </Popover>
-    ),
-    dataIndex: 'packages',
-    width: '100%',
-    render: (_, { id, config, deps, name }) => (
-      <BindPackage
-        config={config}
-        versionId={id}
-        versionDeps={deps}
-        versionName={name}
-      />
-    ),
-  },
-  {
-    title: '上传时间',
-    dataIndex: 'createdAt',
-    responsive: ['md'],
-    render: (_, record) => (
-      <TextColumn record={record} recordKey="createdAt" isEditable={false} />
-    ),
-  },
-];
+function getColumns(t: (key: string) => string): ColumnType<Version>[] {
+  return [
+    {
+      title: t('version_table.col_version'),
+      dataIndex: 'name',
+      render: (_, record) => (
+        <TextColumn
+          record={record}
+          recordKey="name"
+          extra={
+            <>
+              <DepsTable
+                deps={record.deps}
+                name={`${t('version_table.title')} ${record.name}`}
+              />
+              <Commit commit={record.commit} />
+              <TestQrCode name={record.name} hash={record.hash} />
+            </>
+          }
+        />
+      ),
+    },
+    {
+      title: t('version_table.col_description'),
+      dataIndex: 'description',
+      responsive: ['md'],
+      render: (_, record) => (
+        <TextColumn record={record} recordKey="description" />
+      ),
+    },
+    {
+      title: t('version_table.col_metadata'),
+      dataIndex: 'metaInfo',
+      responsive: ['lg'],
+      render: (_, record) => (
+        <TextColumn record={record} recordKey="metaInfo" />
+      ),
+    },
+    {
+      title: (
+        <Popover content={<PublishFeatureTable />}>
+          {t('version_table.col_publish')}
+          <span className="text-amber-600">
+            (<InfoCircleOutlined />
+            {t('version_table.col_publish_info')})
+          </span>
+        </Popover>
+      ),
+      dataIndex: 'packages',
+      width: '100%',
+      render: (_, { id, config, deps, name }) => (
+        <BindPackage
+          config={config}
+          versionId={id}
+          versionDeps={deps}
+          versionName={name}
+        />
+      ),
+    },
+    {
+      title: t('version_table.col_uploaded'),
+      dataIndex: 'createdAt',
+      responsive: ['md'],
+      render: (_, record) => (
+        <TextColumn record={record} recordKey="createdAt" isEditable={false} />
+      ),
+    },
+  ];
+}
 
 const TextColumn = ({
   record,
@@ -247,6 +266,8 @@ const TextColumn = ({
   isEditable?: boolean;
   extra?: ReactNode;
 }) => {
+  const { t } = useTranslation();
+  const columns = getColumns(t);
   const key = recordKey;
   const { appId } = useManageContext();
   let value = record[key as keyof Version] as string;
@@ -321,6 +342,8 @@ const TextColumn = ({
   );
 };
 export default function VersionTable() {
+  const { t } = useTranslation();
+  const columns = getColumns(t);
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const { appId } = useManageContext();
@@ -352,12 +375,12 @@ export default function VersionTable() {
       rowKey="id"
       title={() => (
         <div className="flex items-center gap-2">
-          {!isMobile && <span>热更包</span>}
+          {!isMobile && <span>{t('version_table.title')}</span>}
           <Input
             allowClear
             bordered={false}
             prefix={<SearchOutlined className="text-gray-400" />}
-            placeholder="搜索"
+            placeholder={t('common.search')}
             value={search}
             onChange={({ target }) => setSearch(target.value)}
             className="shrink-0 rounded bg-gray-100 px-2 text-sm leading-8"
@@ -374,7 +397,9 @@ export default function VersionTable() {
         total: count,
         current: offset / pageSize + 1,
         pageSize,
-        showTotal: isMobile ? undefined : (total) => `共 ${total} 个 `,
+        showTotal: isMobile
+          ? undefined
+          : (total) => t('version_table.total_versions', { total }),
         onChange(page, size) {
           if (size) {
             setOffset((page - 1) * size);
@@ -396,11 +421,11 @@ export default function VersionTable() {
               <Button
                 className={isMobile ? 'w-full' : undefined}
                 onClick={() =>
-                  removeSelectedVersions({ selected, versions, appId })
+                  removeSelectedVersions({ selected, versions, appId, t })
                 }
                 danger
               >
-                删除
+                {t('version_table.delete_button')}
               </Button>
             )
           : undefined

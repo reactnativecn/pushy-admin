@@ -12,6 +12,7 @@ import {
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '@/services/api';
 import { patchSearchParams } from '@/utils/helper';
@@ -36,10 +37,11 @@ interface MetricsResponse {
 
 const TOTAL_SERIES_LABEL = 'total';
 const DEFAULT_RANGE_HOURS = 24;
-const modeLabels: Record<MetricMode, string> = {
-  pv: '请求数',
-  uv: '用户数',
-};
+
+const getModeLabels = (t: (key: string) => string): Record<MetricMode, string> => ({
+  pv: t('admin_metrics.mode_requests'),
+  uv: t('admin_metrics.mode_users'),
+});
 
 const metricKeyOptions = [
   { label: 'rn', value: 'rn' },
@@ -123,6 +125,7 @@ const parseDateRange = (
 };
 
 export const Component = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const legendValuesRef = useRef<string[]>([]);
   const defaultRangeRef = useRef<[Dayjs, Dayjs] | null>(null);
@@ -136,6 +139,8 @@ export const Component = () => {
   );
   const startDate = rangeStart.toISOString();
   const endDate = rangeEnd.toISOString();
+
+  const modeLabels = getModeLabels(t);
 
   const { data: pvMetrics, isLoading: isLoadingPv } = useQuery({
     queryKey: ['globalMetrics', startDate, endDate, 'pv'],
@@ -308,7 +313,7 @@ export const Component = () => {
     shapeField: 'smooth',
     axis: {
       x: {
-        title: '时间',
+        title: t('admin_metrics.time'),
         labelAutoRotate: true,
         labelFormatter: (value: string) => {
           const parsed = dayjs(value);
@@ -365,10 +370,10 @@ export const Component = () => {
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <Title level={4} className="m-0!">
-              全局数据统计
+              {t('admin_metrics.title')}
             </Title>
             <div className="text-sm text-gray-500">
-              当前时间范围、指标模式和分类前缀都会写入 URL，方便回放同一视图。
+              {t('admin_metrics.description')}
             </div>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
@@ -381,11 +386,11 @@ export const Component = () => {
               }}
               className="w-full md:w-auto"
             >
-              <Radio.Button value="pv">请求数</Radio.Button>
-              <Radio.Button value="uv">用户数</Radio.Button>
+              <Radio.Button value="pv">{t('admin_metrics.mode_requests')}</Radio.Button>
+              <Radio.Button value="uv">{t('admin_metrics.mode_users')}</Radio.Button>
             </Radio.Group>
             <Select
-              placeholder="筛选 Key"
+              placeholder={t('admin_metrics.key_prefix')}
               showSearch
               optionFilterProp="label"
               value={selectedKeyPrefix}
@@ -402,23 +407,23 @@ export const Component = () => {
               className="w-full md:w-auto"
               presets={[
                 {
-                  label: '过去1小时',
+                  label: t('admin_metrics.range_1h'),
                   value: [dayjs().subtract(1, 'hour'), dayjs()],
                 },
                 {
-                  label: '过去6小时',
+                  label: t('admin_metrics.range_6h'),
                   value: [dayjs().subtract(6, 'hour'), dayjs()],
                 },
                 {
-                  label: '过去24小时',
+                  label: t('admin_metrics.range_24h'),
                   value: [dayjs().subtract(24, 'hour'), dayjs()],
                 },
                 {
-                  label: '过去7天',
+                  label: t('admin_metrics.range_7d'),
                   value: [dayjs().subtract(7, 'day'), dayjs()],
                 },
                 {
-                  label: '过去30天',
+                  label: t('admin_metrics.range_30d'),
                   value: [dayjs().subtract(30, 'day'), dayjs()],
                 },
               ]}
@@ -430,13 +435,13 @@ export const Component = () => {
           <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card size="small">
               <Statistic
-                title="总请求数"
+                title={t('admin_metrics.total_requests')}
                 value={isLoadingPv ? '-' : totalPv.toLocaleString()}
               />
             </Card>
             <Card size="small">
               <Statistic
-                title="总用户数"
+                title={t('admin_metrics.total_users')}
                 value={isLoadingUv ? '-' : totalUv.toLocaleString()}
               />
             </Card>
@@ -447,13 +452,13 @@ export const Component = () => {
               <Line {...lineConfig} />
             ) : (
               <div className="flex h-80 items-center justify-center text-gray-400">
-                暂无数据
+                {t('admin_metrics.no_data')}
               </div>
             )}
           </Card>
 
           {topCategories.length > 0 && (
-            <Card title="分类统计 (Top 10)" size="small">
+            <Card title={t('admin_metrics.category_breakdown')} size="small">
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
                 {topCategories.map(([category, value]) => (
                   <div key={category} className="rounded bg-gray-50 p-3">
@@ -467,7 +472,7 @@ export const Component = () => {
                       {value.toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-500">
-                      占比{' '}
+                      {t('admin_metrics.share')}{' '}
                       {displayTotals.total > 0
                         ? ((value / displayTotals.total) * 100).toFixed(1)
                         : '0.0'}

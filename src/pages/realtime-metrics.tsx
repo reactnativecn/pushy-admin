@@ -4,6 +4,7 @@ import { Card, DatePicker, Input, Radio, Spin } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
@@ -31,7 +32,6 @@ interface FormattedCategory {
   isTotal: boolean;
 }
 
-const TOTAL_LABEL = '查询热更次数';
 const CATEGORY_SEPARATOR = '\u001f';
 
 type ChartController = {
@@ -39,30 +39,34 @@ type ChartController = {
   on: (...args: unknown[]) => unknown;
 };
 
-const formatCategory = (rawCategory: string): FormattedCategory => {
+const formatCategory = (
+  rawCategory: string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): FormattedCategory => {
+  const totalLabel = t('realtime_metrics.update_checks');
   if (!rawCategory) {
-    return { label: 'unknown', isTotal: false };
+    return { label: t('realtime_metrics.unknown'), isTotal: false };
   }
   if (rawCategory === '_total' || rawCategory === 'total') {
-    return { label: TOTAL_LABEL, isTotal: true };
+    return { label: totalLabel, isTotal: true };
   }
   const parts = rawCategory.split(CATEGORY_SEPARATOR);
   if (parts.length >= 2) {
     const key = parts[0];
     let value = parts.slice(1).join();
     if (!value || value === 'unknown') {
-      value = '无';
+      value = t('realtime_metrics.none');
     }
     if (key === 'hash') {
       return {
-        label: `已更新到热更包: ${value}`,
+        label: `${t('realtime_metrics.bundle_prefix')} ${value}`,
         attribute: 'hash',
         isTotal: false,
       };
     }
     if (key === 'packageVersion_buildTime') {
       return {
-        label: `原生包: ${value}`,
+        label: `${t('realtime_metrics.package_prefix')} ${value}`,
         attribute: 'packageVersion_buildTime',
         isTotal: false,
       };
@@ -73,7 +77,7 @@ const formatCategory = (rawCategory: string): FormattedCategory => {
     rawCategory.endsWith(`${CATEGORY_SEPARATOR}unknown`)
   ) {
     return {
-      label: rawCategory.replace(CATEGORY_SEPARATOR, ': 无'),
+      label: rawCategory.replace(CATEGORY_SEPARATOR, `: ${t('realtime_metrics.none')}`),
       isTotal: false,
     };
   }
@@ -83,20 +87,27 @@ const formatCategory = (rawCategory: string): FormattedCategory => {
   };
 };
 
-const attributeOptions = [
-  { label: '热更包', value: 'hash' },
-  { label: '原生包', value: 'packageVersion_buildTime' },
+const getAttributeOptions = (t: (key: string) => string) => [
+  { label: t('realtime_metrics.bundle'), value: 'hash' as const },
+  { label: t('realtime_metrics.package'), value: 'packageVersion_buildTime' as const },
 ];
 
-const formatTooltipItem = (point: ChartDataPoint) => {
-  const countLabel = `${point.value.toLocaleString()} 次`;
+const formatTooltipItem = (
+  point: ChartDataPoint,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+) => {
+  const count = point.value.toLocaleString();
   if (point.isTotal || point.sharePercent === undefined) {
-    return countLabel;
+    return t('realtime_metrics.tooltip_count', { count });
   }
-  return `${countLabel} (${point.sharePercent.toFixed(1)}%)`;
+  return t('realtime_metrics.tooltip_count_percent', {
+    count,
+    percent: point.sharePercent.toFixed(1),
+  });
 };
 
 export const Component = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams({
     attribute: 'hash',
   });
@@ -118,6 +129,9 @@ export const Component = () => {
     searchParams.get('attribute') === 'packageVersion_buildTime'
       ? 'packageVersion_buildTime'
       : 'hash';
+
+  const attributeOptions = getAttributeOptions(t);
+  const totalLabel = t('realtime_metrics.update_checks');
 
   const selectableAppKeys = useMemo(
     () =>
@@ -183,7 +197,7 @@ export const Component = () => {
     for (const bucket of data.data) {
       for (const [dictIndex, count] of bucket.data) {
         const rawCategory = data.dict[dictIndex] || '';
-        const { label, attribute, isTotal } = formatCategory(rawCategory);
+        const { label, attribute, isTotal } = formatCategory(rawCategory, t);
         points.push({
           time: bucket.time,
           value: count,
@@ -194,7 +208,7 @@ export const Component = () => {
       }
     }
     return points;
-  }, [data]);
+  }, [data, t]);
 
   const filteredChartData = useMemo(() => {
     const selectedPoints = chartData.filter(
@@ -295,20 +309,20 @@ export const Component = () => {
       attributeOptions.find((option) => option.value === selectedAttribute)
         ?.label || selectedAttribute
     );
-  }, [selectedAttribute]);
+  }, [selectedAttribute, attributeOptions]);
 
   const defaultLegendValues = useMemo(() => {
     const topTen = sortedCategories.slice(0, 10);
     if (!hasTotal) return topTen;
-    return [TOTAL_LABEL, ...topTen];
-  }, [sortedCategories, hasTotal]);
+    return [totalLabel, ...topTen];
+  }, [sortedCategories, hasTotal, totalLabel]);
 
   const colorDomain = useMemo(() => {
     if (hasTotal) {
-      return [TOTAL_LABEL, ...sortedCategories];
+      return [totalLabel, ...sortedCategories];
     }
     return sortedCategories;
-  }, [sortedCategories, hasTotal]);
+  }, [sortedCategories, hasTotal, totalLabel]);
 
   legendValuesRef.current = defaultLegendValues;
 
@@ -324,7 +338,7 @@ export const Component = () => {
     shapeField: 'smooth',
     axis: {
       x: {
-        title: '时间',
+        title: t('realtime_metrics.time'),
         labelAutoRotate: true,
         labelFormatter: (value: string) => {
           const parsed = dayjs(value);
@@ -338,7 +352,7 @@ export const Component = () => {
       items: [
         (point: ChartDataPoint) => ({
           name: point.category,
-          value: formatTooltipItem(point),
+          value: formatTooltipItem(point, t),
         }),
       ],
     },
@@ -391,7 +405,7 @@ export const Component = () => {
       <AppDetailHeader
         activeView="metrics"
         app={selectedApp}
-        appNameFallback={selectedAppKey || '选择应用'}
+        appNameFallback={selectedAppKey || t('realtime_metrics.select_app')}
         managementDisabled={!selectedApp}
         onManagementClick={() => {
           if (!selectedApp) {
@@ -403,7 +417,7 @@ export const Component = () => {
         onSettingsClick={
           selectedApp ? () => openAppSettings(selectedApp) : undefined
         }
-        sectionLabel="实时数据"
+        sectionLabel={t('realtime_metrics.title')}
       />
       <Card>
         <div className="mb-5 flex flex-col gap-3">
@@ -427,7 +441,7 @@ export const Component = () => {
             {isAdmin && (
               <div className="w-full sm:w-52">
                 <Input
-                  placeholder="输入任意 App Key"
+                  placeholder={t('realtime_metrics.admin_placeholder')}
                   value={manualAppKey}
                   onChange={(e) => setManualAppKey(e.target.value)}
                   onPressEnter={handleManualAppKeySubmit}
@@ -442,19 +456,19 @@ export const Component = () => {
                 style={{ width: '100%' }}
                 presets={[
                   {
-                    label: '过去1小时',
+                    label: t('realtime_metrics.range_1h'),
                     value: [dayjs().subtract(1, 'hour'), dayjs()],
                   },
                   {
-                    label: '过去6小时',
+                    label: t('realtime_metrics.range_6h'),
                     value: [dayjs().subtract(6, 'hour'), dayjs()],
                   },
                   {
-                    label: '过去24小时',
+                    label: t('realtime_metrics.range_24h'),
                     value: [dayjs().subtract(24, 'hour'), dayjs()],
                   },
                   {
-                    label: '过去7天',
+                    label: t('realtime_metrics.range_7d'),
                     value: [dayjs().subtract(7, 'day'), dayjs()],
                   },
                 ]}
@@ -464,16 +478,16 @@ export const Component = () => {
         </div>
 
         <Spin spinning={isLoading}>
-          <Card title="请求概览" size="small" style={{ marginBottom: 16 }}>
+          <Card title={t('realtime_metrics.request_overview')} size="small" style={{ marginBottom: 16 }}>
             {!selectedAppKey ? (
               <div className="h-20 flex items-center justify-center text-gray-400">
-                请选择应用
+                {t('realtime_metrics.please_select_app')}
               </div>
             ) : (
               <div className="grid gap-3 xl:grid-cols-[280px_minmax(0,1fr)]">
                 <div className="grid grid-cols-2 gap-2 xl:grid-cols-1">
                   <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">
-                    <div className="text-xs text-gray-500">总请求数</div>
+                    <div className="text-xs text-gray-500">{t('realtime_metrics.total_requests')}</div>
                     <div className="mt-1 text-2xl font-semibold leading-none tabular-nums">
                       {isLoading ? '-' : totalRequests.toLocaleString()}
                     </div>
@@ -482,12 +496,14 @@ export const Component = () => {
                     </div>
                   </div>
                   <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">
-                    <div className="text-xs text-gray-500">分类数量</div>
+                    <div className="text-xs text-gray-500">{t('realtime_metrics.category_count')}</div>
                     <div className="mt-1 text-2xl font-semibold leading-none tabular-nums">
                       {categoryTotals.size}
                     </div>
                     <div className="mt-1 text-[11px] text-gray-500">
-                      当前维度：{selectedAttributeLabel}
+                      {t('realtime_metrics.current_dimension_label', {
+                        dimension: selectedAttributeLabel,
+                      })}
                     </div>
                   </div>
                 </div>
@@ -554,7 +570,7 @@ export const Component = () => {
                   </div>
                 ) : (
                   <div className="h-20 flex items-center justify-center text-gray-400">
-                    暂无 Top 10 数据
+                    {t('realtime_metrics.no_top_data')}
                   </div>
                 )}
               </div>
@@ -563,13 +579,13 @@ export const Component = () => {
           <Card size="small" style={{ marginBottom: 16 }}>
             {!selectedAppKey ? (
               <div className="h-80 flex items-center justify-center text-gray-400">
-                请选择应用
+                {t('realtime_metrics.please_select_app')}
               </div>
             ) : filteredChartData.length > 0 ? (
               <Line {...lineConfig} />
             ) : (
               <div className="h-80 flex items-center justify-center text-gray-400">
-                暂无数据
+                {t('realtime_metrics.no_data')}
               </div>
             )}
           </Card>

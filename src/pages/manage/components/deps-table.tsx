@@ -1,6 +1,7 @@
 import { DownOutlined, JavaScriptOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Popover } from 'antd';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Mode } from 'vanilla-jsoneditor';
 import { useAllVersions } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
@@ -13,6 +14,7 @@ export const DepsTable = ({
   deps?: Record<string, string>;
   name?: string;
 }) => {
+  const { t } = useTranslation();
   const { packages, appId } = useManageContext();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const { versions, isLoading: versionsLoading } = useAllVersions({
@@ -40,7 +42,7 @@ export const DepsTable = ({
             <>
               <div className="deps-popover-header">
                 <div className="deps-popover-title">
-                  <div>JavaScript 依赖列表{!diffs && `(${name})`}</div>
+                  <div>{t('deps_table.js_deps_title')}{!diffs && `(${name})`}</div>
                   {diffs && (
                     <div className="font-normal">
                       <span>{diffs.newName}</span>
@@ -55,7 +57,7 @@ export const DepsTable = ({
                         setDiffs(null);
                       }}
                     >
-                      返回
+                      {t('deps_table.back')}
                     </Button>
                   ) : (
                     <Dropdown
@@ -64,7 +66,7 @@ export const DepsTable = ({
                           {
                             key: 'package',
                             type: 'group',
-                            label: '原生包',
+                            label: t('deps_table.native_packages'),
                             children: packages.reduce(
                               (acc, p) => {
                                 if (p.deps) {
@@ -81,12 +83,12 @@ export const DepsTable = ({
                           {
                             key: 'version',
                             type: 'group',
-                            label: '热更包',
+                            label: t('deps_table.ota_versions'),
                             children: versionsLoading
                               ? [
                                   {
                                     key: 'version_loading',
-                                    label: '加载中...',
+                                    label: t('deps_table.loading'),
                                     disabled: true,
                                   },
                                 ]
@@ -118,21 +120,21 @@ export const DepsTable = ({
                             setDiffs({
                               oldDeps: pkg?.deps,
                               newDeps: deps,
-                              newName: `原生包 ${pkg?.name}`,
+                              newName: t('deps_table.native_package_with_name', { name: pkg?.name }),
                             });
                           } else {
                             const version = versions.find((v) => v.id === +id);
                             setDiffs({
                               oldDeps: version?.deps,
                               newDeps: deps,
-                              newName: `热更包 ${version?.name}`,
+                              newName: t('deps_table.ota_version_with_name', { name: version?.name }),
                             });
                           }
                         },
                       }}
                     >
                       <Button>
-                        对比变更
+                        {t('deps_table.compare')}
                         <DownOutlined />
                       </Button>
                     </Dropdown>
@@ -164,15 +166,14 @@ export const DepsTable = ({
                 )}
               </div>
               <div className="deps-popover-note">
-                仅在<span className="font-bold underline">上传</span>
-                时抓取package.json的直接依赖， 不保证严格匹配包内容，仅供参考。
+                {t('deps_table.note')}
               </div>
             </>
           ) : (
             <div>
-              <h4>JavaScript 依赖列表</h4>
+              <h4>{t('deps_table.js_deps_heading')}</h4>
               <div className="text-gray-500">
-                需要使用 cli v1.42.0+ 版本上传才能查看依赖列表
+                {t('deps_table.cli_required')}
               </div>
             </div>
           )}

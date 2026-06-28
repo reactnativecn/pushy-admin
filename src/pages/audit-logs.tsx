@@ -25,6 +25,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { UAParser } from 'ua-parser-js';
 import { patchSearchParams } from '@/utils/helper';
 import { useAuditLogs } from '@/utils/hooks';
@@ -36,16 +37,26 @@ const { Paragraph, Text } = Typography;
 dayjs.extend(relativeTime);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
-dayjs.locale('zh-cn');
+
+type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
 type AuditStatusFilter = 'all' | 'success' | 'client-error' | 'server-error';
 
-const statusFilterOptions = [
-  { label: '全部状态', value: 'all' },
-  { label: '2xx 成功', value: 'success' },
-  { label: '4xx 客户端错误', value: 'client-error' },
-  { label: '5xx 服务端错误', value: 'server-error' },
-] satisfies Array<{ label: string; value: AuditStatusFilter }>;
+const STATUS_FILTER_VALUES: AuditStatusFilter[] = [
+  'all',
+  'success',
+  'client-error',
+  'server-error',
+];
+
+function getStatusFilterOptions(t: TranslateFn) {
+  return [
+    { label: t('audit_logs.status_all'), value: 'all' as AuditStatusFilter },
+    { label: t('audit_logs.status_2xx'), value: 'success' as AuditStatusFilter },
+    { label: t('audit_logs.status_4xx'), value: 'client-error' as AuditStatusFilter },
+    { label: t('audit_logs.status_5xx'), value: 'server-error' as AuditStatusFilter },
+  ];
+}
 
 export const getUA = (userAgent: string) => {
   if (userAgent.startsWith('react-native-update-cli')) {
@@ -79,44 +90,51 @@ const normalizePath = (path: string): string => {
   return path.replace(/\/\d+/g, '/{id}').replace(/\/$/, '');
 };
 
-const actionMap: Record<string, string> = {
-  'POST /user/login': '登录',
-  'POST /user/register': '注册',
-  'POST /user/activate': '激活账户',
-  'POST /user/activate/sendmail': '发送激活邮件',
-  'POST /user/resetpwd/sendmail': '发送重置密码邮件',
-  'POST /user/resetpwd/reset': '重置密码',
-  'POST /app/create': '创建应用',
-  'PUT /app/{id}': '修改应用设置',
-  'DELETE /app/{id}': '删除应用',
-  'POST /orders': '创建订单',
-  'POST alipayCallback': '支付',
-  'POST /upload': '上传文件',
-  'POST /app/{id}/package/create': '创建原生包',
-  'PUT /app/{id}/package/{id}': '修改原生包设置',
-  'DELETE /app/{id}/package': '批量删除原生包',
-  'DELETE /app/{id}/package/{id}': '删除原生包',
-  'POST /app/{id}/version/create': '创建热更包',
-  'PUT /app/{id}/version/{id}': '修改热更包设置',
-  'DELETE /app/{id}/version': '批量删除热更包',
-  'DELETE /app/{id}/version/{id}': '删除热更包',
-  'POST /app/{id}/binding': '创建/更新绑定',
-  'DELETE /app/{id}/binding/{id}': '删除绑定',
-  'POST /api-token/create': '创建 API Key',
-  'DELETE /api-token/{id}': '删除 API Key',
-};
+function getActionMap(t: TranslateFn): Record<string, string> {
+  return {
+    'POST /user/login': t('audit_logs.action_login'),
+    'POST /user/register': t('audit_logs.action_register'),
+    'POST /user/activate': t('audit_logs.action_activate'),
+    'POST /user/activate/sendmail': t('audit_logs.action_send_activation'),
+    'POST /user/resetpwd/sendmail': t('audit_logs.action_send_reset'),
+    'POST /user/resetpwd/reset': t('audit_logs.action_reset_password'),
+    'POST /app/create': t('audit_logs.action_create_app'),
+    'PUT /app/{id}': t('audit_logs.action_update_app'),
+    'DELETE /app/{id}': t('audit_logs.action_delete_app'),
+    'POST /orders': t('audit_logs.action_create_order'),
+    'POST alipayCallback': t('audit_logs.action_pay'),
+    'POST /upload': t('audit_logs.action_upload_file'),
+    'POST /app/{id}/package/create': t('audit_logs.action_create_pkg'),
+    'PUT /app/{id}/package/{id}': t('audit_logs.action_update_pkg'),
+    'DELETE /app/{id}/package': t('audit_logs.action_batch_delete_pkg'),
+    'DELETE /app/{id}/package/{id}': t('audit_logs.action_delete_pkg'),
+    'POST /app/{id}/version/create': t('audit_logs.action_create_hotfix'),
+    'PUT /app/{id}/version/{id}': t('audit_logs.action_update_hotfix'),
+    'DELETE /app/{id}/version': t('audit_logs.action_batch_delete_hotfix'),
+    'DELETE /app/{id}/version/{id}': t('audit_logs.action_delete_hotfix'),
+    'POST /app/{id}/binding': t('audit_logs.action_binding'),
+    'DELETE /app/{id}/binding/{id}': t('audit_logs.action_delete_binding'),
+    'POST /api-token/create': t('audit_logs.action_create_key'),
+    'DELETE /api-token/{id}': t('audit_logs.action_delete_key'),
+  };
+}
 
-const actionOptions = Object.values(actionMap)
-  .sort()
-  .map((value) => ({
-    label: value,
-    value,
-  }));
+const getActionKey = (method: string, path: string): string =>
+  `${method.toUpperCase()} ${normalizePath(path)}`;
 
-const getActionLabel = (method: string, path: string): string => {
-  const normalizedPath = normalizePath(path);
-  const key = `${method.toUpperCase()} ${normalizedPath}`;
-  return actionMap[key] || `${method.toUpperCase()} ${path}`;
+function getActionOptions(t: TranslateFn) {
+  return Object.entries(getActionMap(t))
+    .map(([value, label]) => ({ label, value }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+const getActionLabel = (
+  t: TranslateFn,
+  method: string,
+  path: string,
+): string => {
+  const key = getActionKey(method, path);
+  return getActionMap(t)[key] || `${method.toUpperCase()} ${path}`;
 };
 
 const parsePositiveInt = (value: string | null, fallback: number) => {
@@ -125,7 +143,7 @@ const parsePositiveInt = (value: string | null, fallback: number) => {
 };
 
 const parseStatusFilter = (value: string | null): AuditStatusFilter => {
-  return statusFilterOptions.some((option) => option.value === value)
+  return STATUS_FILTER_VALUES.includes(value as AuditStatusFilter)
     ? (value as AuditStatusFilter)
     : 'all';
 };
@@ -176,10 +194,10 @@ const matchesStatusFilter = (
   return code >= 500;
 };
 
-const buildSearchText = (log: AuditLog) => {
+const buildSearchText = (t: TranslateFn, log: AuditLog) => {
   return [
     log.id,
-    getActionLabel(log.method, log.path),
+    getActionLabel(t, log.method, log.path),
     log.method,
     log.path,
     log.statusCode,
@@ -194,6 +212,7 @@ const buildSearchText = (log: AuditLog) => {
 };
 
 export const AuditLogs = () => {
+  const { t, i18n } = useTranslation();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -211,6 +230,13 @@ export const AuditLogs = () => {
   const statusFilter = parseStatusFilter(searchParams.get('status'));
   const dateRange = parseDateRange(searchParams);
   const selectedLogId = searchParams.get('logId');
+
+  const statusFilterOptions = getStatusFilterOptions(t);
+  const actionOptions = getActionOptions(t);
+
+  useEffect(() => {
+    dayjs.locale((i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('zh') ? 'zh-cn' : 'en');
+  }, [i18n.language, i18n.resolvedLanguage]);
 
   useEffect(() => {
     setSearchInput(searchParams.get('query')?.trim() ?? '');
@@ -244,7 +270,7 @@ export const AuditLogs = () => {
     return allAuditLogs.filter((log) => {
       if (
         selectedAction &&
-        getActionLabel(log.method, log.path) !== selectedAction
+        getActionKey(log.method, log.path) !== selectedAction
       ) {
         return false;
       }
@@ -253,7 +279,7 @@ export const AuditLogs = () => {
         return false;
       }
 
-      if (query && !buildSearchText(log).includes(query)) {
+      if (query && !buildSearchText(t, log).includes(query)) {
         return false;
       }
 
@@ -277,7 +303,7 @@ export const AuditLogs = () => {
       }
       return true;
     });
-  }, [allAuditLogs, dateRange, query, selectedAction, statusFilter]);
+  }, [allAuditLogs, dateRange, query, selectedAction, statusFilter, t]);
 
   const maxPage = Math.max(1, Math.ceil(filteredAuditLogs.length / pageSize));
 
@@ -376,15 +402,17 @@ export const AuditLogs = () => {
         }
 
         return {
-          时间: date.format('YYYY-MM-DD HH:mm:ss'),
-          操作: getActionLabel(log.method, log.path),
-          方法: log.method.toUpperCase(),
-          接口: log.path,
-          状态码: log.statusCode,
-          提交数据: previewData ? JSON.stringify(previewData) : '-',
-          浏览器: browserInfo,
-          操作系统: osInfo,
-          IP地址: log.ip || '-',
+          [t('audit_logs.col_time')]: date.format('YYYY-MM-DD HH:mm:ss'),
+          [t('audit_logs.col_action')]: getActionLabel(t, log.method, log.path),
+          [t('audit_logs.detail_method')]: log.method.toUpperCase(),
+          [t('audit_logs.col_path')]: log.path,
+          [t('audit_logs.col_status')]: log.statusCode,
+          [t('audit_logs.col_payload')]: previewData
+            ? JSON.stringify(previewData)
+            : '-',
+          [t('audit_logs.col_browser')]: browserInfo,
+          [t('audit_logs.col_os')]: osInfo,
+          [t('audit_logs.col_ip_addr')]: log.ip || '-',
           'API Key': getApiTokenLabel(log.apiTokens) || '-',
         };
       });
@@ -403,19 +431,25 @@ export const AuditLogs = () => {
         { wch: 18 },
         { wch: 18 },
       ];
-      XLSX.utils.book_append_sheet(workbook, worksheet, '操作日志');
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        t('audit_logs.sheet_name'),
+      );
       XLSX.writeFile(
         workbook,
-        `操作日志_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`,
+        `${t('audit_logs.sheet_name')}_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`,
       );
     } catch (error) {
-      message.error(`导出失败：${(error as Error).message}`);
+      message.error(
+        `${t('audit_logs.export_failed')}${(error as Error).message}`,
+      );
     }
   };
 
   const columns: ColumnType<AuditLog>[] = [
     {
-      title: '时间',
+      title: t('audit_logs.col_time'),
       dataIndex: 'createdAt',
       width: 180,
       render: (createdAt: string) => {
@@ -431,10 +465,10 @@ export const AuditLogs = () => {
       },
     },
     {
-      title: '操作',
+      title: t('audit_logs.col_action'),
       width: 140,
       render: (_value, record) => {
-        const actionLabel = getActionLabel(record.method, record.path);
+        const actionLabel = getActionLabel(t, record.method, record.path);
         const isDelete = record.method.toUpperCase() === 'DELETE';
         return (
           <span style={isDelete ? { color: '#ff4d4f' } : undefined}>
@@ -444,7 +478,7 @@ export const AuditLogs = () => {
       },
     },
     {
-      title: '接口',
+      title: t('audit_logs.col_path'),
       width: 260,
       responsive: ['md'],
       render: (_value, record) => (
@@ -459,7 +493,7 @@ export const AuditLogs = () => {
       ),
     },
     {
-      title: '状态码',
+      title: t('audit_logs.col_status'),
       dataIndex: 'statusCode',
       width: 110,
       render: (statusCode: string) => {
@@ -476,7 +510,7 @@ export const AuditLogs = () => {
       },
     },
     {
-      title: '提交数据',
+      title: t('audit_logs.col_payload'),
       responsive: ['lg'],
       width: 320,
       render: (_value, record) => {
@@ -502,7 +536,7 @@ export const AuditLogs = () => {
       },
     },
     {
-      title: '设备信息',
+      title: t('audit_logs.col_device'),
       dataIndex: 'userAgent',
       responsive: ['xl'],
       width: 220,
@@ -517,11 +551,14 @@ export const AuditLogs = () => {
           <div>
             {userAgent && <div>{getUA(userAgent)}</div>}
             {record.ip && (
-              <div className="mt-1 text-xs text-gray-500">IP: {record.ip}</div>
+              <div className="mt-1 text-xs text-gray-500">
+                {t('audit_logs.ip_prefix')} {record.ip}
+              </div>
             )}
             {apiToken && (
               <div className="mt-1 font-mono text-xs text-gray-500">
-                API Key：{apiToken}
+                {t('audit_logs.apikey_prefix')}
+                {apiToken}
               </div>
             )}
           </div>
@@ -529,7 +566,7 @@ export const AuditLogs = () => {
       },
     },
     {
-      title: '详情',
+      title: t('audit_logs.col_details'),
       key: 'detail',
       width: 90,
       render: (_value, record) => (
@@ -541,7 +578,7 @@ export const AuditLogs = () => {
             patchSearchParams(setSearchParams, { logId: String(record.id) });
           }}
         >
-          查看
+          {t('audit_logs.view')}
         </Button>
       ),
     },
@@ -554,22 +591,24 @@ export const AuditLogs = () => {
           <div>
             <h2 className="flex items-center gap-2 text-lg font-semibold md:text-xl">
               <FileTextOutlined />
-              操作日志
+              {t('audit_logs.title')}
             </h2>
-            <p className="mt-1 text-sm text-gray-500">仅保留 180 天内的数据</p>
+            <p className="mt-1 text-sm text-gray-500">
+              {t('audit_logs.description')}
+            </p>
           </div>
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
             <Input
               allowClear
               value={searchInput}
               prefix={<SearchOutlined />}
-              placeholder="搜索操作、接口、IP、API Key"
+              placeholder={t('audit_logs.search_placeholder')}
               onChange={(event) => setSearchInput(event.target.value)}
               className="w-full md:w-64"
             />
             <Select
               allowClear
-              placeholder="操作类型"
+              placeholder={t('audit_logs.action_placeholder')}
               options={actionOptions}
               value={selectedAction}
               onChange={(value) => {
@@ -596,7 +635,10 @@ export const AuditLogs = () => {
               value={dateRange}
               onChange={handleDateRangeChange}
               format="YYYY-MM-DD"
-              placeholder={['开始日期', '结束日期']}
+              placeholder={[
+                t('audit_logs.start_date'),
+                t('audit_logs.end_date'),
+              ]}
               allowClear
               disabledDate={disabledDate}
             />
@@ -607,13 +649,15 @@ export const AuditLogs = () => {
               disabled={filteredAuditLogs.length === 0}
               className="w-full md:w-auto"
             >
-              导出 Excel
+              {t('audit_logs.export_excel')}
             </Button>
           </div>
         </div>
         <div className="text-sm text-gray-500">
-          当前筛选结果 {filteredAuditLogs.length} 条，共载入{' '}
-          {allAuditLogs.length} 条最近日志。
+          {t('audit_logs.matching_logs', {
+            filtered: filteredAuditLogs.length,
+            total: allAuditLogs.length,
+          })}
         </div>
       </div>
 
@@ -629,7 +673,9 @@ export const AuditLogs = () => {
           showSizeChanger: !isMobile,
           showQuickJumper: !isMobile,
           simple: isMobile,
-          showTotal: isMobile ? undefined : (count) => `共 ${count} 条记录`,
+          showTotal: isMobile
+            ? undefined
+            : (count) => t('audit_logs.records_count', { count }),
           onChange: (page, nextPageSize) => {
             patchSearchParams(setSearchParams, {
               page: String(page),
@@ -648,10 +694,16 @@ export const AuditLogs = () => {
       />
 
       <Drawer
-        title={selectedLog ? `日志详情 #${selectedLog.id}` : '日志详情'}
+        title={
+          selectedLog
+            ? t('audit_logs.detail_title', { id: selectedLog.id })
+            : t('audit_logs.detail_title_default')
+        }
         width={isMobile ? '100%' : 720}
         open={Boolean(selectedLog)}
-        onClose={() => patchSearchParams(setSearchParams, { logId: undefined })}
+        onClose={() =>
+          patchSearchParams(setSearchParams, { logId: undefined })
+        }
       >
         {selectedLog && (
           <Space direction="vertical" size="large" className="w-full">
@@ -662,27 +714,28 @@ export const AuditLogs = () => {
               items={[
                 {
                   key: 'time',
-                  label: '时间',
+                  label: t('audit_logs.detail_time'),
                   children: dayjs(selectedLog.createdAt).format(
                     'YYYY-MM-DD HH:mm:ss',
                   ),
                 },
                 {
                   key: 'action',
-                  label: '操作',
+                  label: t('audit_logs.detail_action'),
                   children: getActionLabel(
+                    t,
                     selectedLog.method,
                     selectedLog.path,
                   ),
                 },
                 {
                   key: 'method',
-                  label: '方法',
+                  label: t('audit_logs.detail_method'),
                   children: selectedLog.method.toUpperCase(),
                 },
                 {
                   key: 'path',
-                  label: '接口',
+                  label: t('audit_logs.detail_path'),
                   children: (
                     <Paragraph className="!mb-0 font-mono" copyable>
                       {selectedLog.path}
@@ -691,24 +744,27 @@ export const AuditLogs = () => {
                 },
                 {
                   key: 'status',
-                  label: '状态码',
+                  label: t('audit_logs.detail_status'),
                   children: selectedLog.statusCode,
                 },
                 {
                   key: 'ip',
-                  label: 'IP',
+                  label: t('audit_logs.detail_ip'),
                   children: selectedLog.ip || '-',
                 },
                 {
                   key: 'apiToken',
-                  label: 'API Key',
-                  children: getApiTokenLabel(selectedLog.apiTokens) || '-',
+                  label: t('audit_logs.detail_apikey'),
+                  children:
+                    getApiTokenLabel(selectedLog.apiTokens) || '-',
                 },
               ]}
             />
 
             <div>
-              <div className="mb-2 font-medium">提交数据</div>
+              <div className="mb-2 font-medium">
+                {t('audit_logs.detail_payload')}
+              </div>
               <pre className="max-h-96 overflow-auto rounded bg-gray-50 p-3 text-xs">
                 {JSON.stringify(
                   getPreviewData(selectedLog.data) ?? {},
@@ -719,7 +775,9 @@ export const AuditLogs = () => {
             </div>
 
             <div>
-              <div className="mb-2 font-medium">User-Agent</div>
+              <div className="mb-2 font-medium">
+                {t('audit_logs.detail_ua')}
+              </div>
               <pre className="whitespace-pre-wrap break-all rounded bg-gray-50 p-3 text-xs">
                 {selectedLog.userAgent || '-'}
               </pre>
