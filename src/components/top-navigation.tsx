@@ -10,6 +10,7 @@ import {
   KeyOutlined,
   LineChartOutlined,
   MenuOutlined,
+  OpenAIOutlined,
   PlusOutlined,
   ReadOutlined,
   SearchOutlined,
@@ -73,6 +74,15 @@ const externalItems: MenuItems = [
     key: 'about',
     icon: <InfoCircleOutlined />,
     label: <ExtLink href="https://reactnative.cn/about.html">关于我们</ExtLink>,
+  },
+  {
+    key: 'ai-cresc',
+    icon: <OpenAIOutlined />,
+    label: (
+      <ExtLink href="https://ai.cresc.dev">
+        <span style={{ fontWeight: 'bold' }}>无需代理直连最先进的 AI 模型</span>
+      </ExtLink>
+    ),
   },
 ];
 
@@ -256,7 +266,7 @@ export default function TopNavigation({
           {showAuthenticatedChrome && user && (
             <Link
               to={rootRouterPath.user}
-              className="flex h-14 w-60 items-center rounded-xl px-2 text-slate-700 no-underline transition-colors hover:bg-slate-50"
+              className="flex h-14 w-40 items-center rounded-xl px-2 text-slate-700 no-underline transition-colors hover:bg-slate-50"
             >
               <DailyCheckQuotaUserTrigger
                 showPlanDetails
