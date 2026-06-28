@@ -313,19 +313,27 @@ function AppSwitcher({ compact }: { compact: boolean }) {
   );
   const currentAppId = getCurrentAppId(pathname);
   const currentAppKey = getCurrentAppKey(pathname, search);
-  const currentApp = apps.find((app) => {
-    if (currentAppId) {
-      return app.id === currentAppId;
+  const { appMap, appKeyMap } = useMemo(() => {
+    const byId = new Map<number, AppItem>();
+    const byKey = new Map<string, AppItem>();
+    for (let i = 0; i < apps.length; i++) {
+      const app = apps[i];
+      if (app.id) {
+        byId.set(app.id, app);
+      }
+      if (app.appKey) {
+        byKey.set(app.appKey, app);
+      }
     }
-    if (currentAppKey) {
-      return app.appKey === currentAppKey;
-    }
-    return false;
-  });
-  const activeAppId = currentApp?.id ?? currentAppId;
-  const appMap = useMemo(() => {
-    return new Map(apps.map((app) => [app.id, app]));
+    return { appMap: byId, appKeyMap: byKey };
   }, [apps]);
+  let currentApp: AppItem | undefined;
+  if (currentAppId) {
+    currentApp = appMap.get(currentAppId);
+  } else if (currentAppKey) {
+    currentApp = appKeyMap.get(currentAppKey);
+  }
+  const activeAppId = currentApp?.id ?? currentAppId;
   const recentApps = useMemo(() => {
     return recentAppIds
       .map((appId) => appMap.get(appId))

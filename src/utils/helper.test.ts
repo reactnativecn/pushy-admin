@@ -1,15 +1,15 @@
-import { describe, expect, test, mock } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import {
-  MAX_RECENT_APP_COUNT,
-  RECENT_APP_STORAGE_KEY,
   cn,
   getManageAppDrawerCollapsed,
   getManageAppDrawerPlacement,
   getRecentAppIds,
   isExpVersion,
   isPasswordValid,
+  MAX_RECENT_APP_COUNT,
   patchSearchParams,
   promiseAny,
+  RECENT_APP_STORAGE_KEY,
   rememberRecentApp,
   setManageAppDrawerCollapsed,
   setManageAppDrawerPlacement,
@@ -143,7 +143,9 @@ describe('promiseAny', () => {
   });
 
   test('resolves with first even if slow promises also resolve', async () => {
-    const fast = new Promise((resolve) => setTimeout(() => resolve('fast'), 10));
+    const fast = new Promise((resolve) =>
+      setTimeout(() => resolve('fast'), 10),
+    );
     const slow = new Promise((resolve) =>
       setTimeout(() => resolve('slow'), 100),
     );
@@ -198,7 +200,7 @@ describe('patchSearchParams', () => {
   });
 
   test('passes default navigateOptions to setter', () => {
-    const setter = mock((fn: any, opts: any) => {
+    const setter = mock((_fn: any, opts: any) => {
       expect(opts).toEqual({ replace: true });
     });
 
@@ -318,9 +320,9 @@ describe('isValidExternalUrl', () => {
   });
 
   test('should handle URLs with query and fragment', () => {
-    expect(
-      isValidExternalUrl('https://react-native.cn/path?a=b#section'),
-    ).toBe(true);
+    expect(isValidExternalUrl('https://react-native.cn/path?a=b#section')).toBe(
+      true,
+    );
   });
 });
 
@@ -381,7 +383,7 @@ describe('RecentAppIds', () => {
   });
 
   test('rememberRecentApp should add appId to the front and limit count', () => {
-    let storage: Record<string, string> = {
+    const storage: Record<string, string> = {
       [RECENT_APP_STORAGE_KEY]: JSON.stringify([2, 1]),
     };
     const mockStorage = {
@@ -434,7 +436,7 @@ describe('RecentAppIds', () => {
   });
 
   test('rememberRecentApp should handle empty localStorage', () => {
-    let storage: Record<string, string> = {};
+    const storage: Record<string, string> = {};
     const mockStorage = {
       getItem: mock((key: string) => storage[key] ?? null),
       setItem: mock((key: string, value: string) => {

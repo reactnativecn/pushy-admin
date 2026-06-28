@@ -294,9 +294,7 @@ describe('useLocalStorageCooldown', () => {
     expect(result.current.isCoolingDown).toBe(true);
 
     act(() => {
-      window.dispatchEvent(
-        new StorageEvent('storage', { key: 'other_key' }),
-      );
+      window.dispatchEvent(new StorageEvent('storage', { key: 'other_key' }));
     });
 
     expect(result.current.isCoolingDown).toBe(true);
