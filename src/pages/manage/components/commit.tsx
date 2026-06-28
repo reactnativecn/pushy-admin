@@ -3,11 +3,14 @@ import { Button, Popover } from 'antd';
 import dayjs from 'dayjs';
 import gitUrlParse from 'git-url-parse';
 
+const popoverOverlayStyle: React.CSSProperties = { maxWidth: 288, maxHeight: 240, overflowY: 'auto' };
+
 export const Commit = ({ commit }: { commit?: Commit }) => {
   if (!commit) {
     return (
       <Popover
         className="ant-typography-edit"
+        overlayInnerStyle={popoverOverlayStyle}
         content={
           <div>
             <div className="text-center my-1 mx-auto">
@@ -53,6 +56,7 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
   return (
     <Popover
       className="ant-typography-edit"
+      overlayInnerStyle={popoverOverlayStyle}
       content={
         <div>
           <div className="my-1 mx-auto">
@@ -61,7 +65,7 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
             <div>
               时间：{time.fromNow()}（{time.format('YYYY-MM-DD HH:mm:ss')}）
             </div>
-            <div>摘要：{message}</div>
+            <div className="break-all">摘要：{message}</div>
             <hr />
             {url ? (
               <a
