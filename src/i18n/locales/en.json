@@ -47,7 +47,8 @@
     "back_login": "Back to login"
   },
   "user": {
-    "invoice_hint": "Please send an email to <1>hi@charmlot.com</1> with the following:",
+    "invoice_hint_before_email": "Please send an email to ",
+    "invoice_hint_after_email": " with the following:",
     "invoice_company": "Company name, tax ID, registration email, invoice receipt email (defaults to registration email), and payment screenshot.",
     "invoice_default": "We will reply with a standard electronic invoice to the receipt email (check spam), categorized as software service.",
     "purchasing_note": "You can only renew the same plan or upgrade. To purchase a lower plan, wait for the current one to expire, or contact QQ support 34731408.",
@@ -134,7 +135,11 @@
     },
     "fetching_addon_quote": "Fetching addon quote",
     "per_year": "/ year",
-    "upgrade_button": "Upgrade"
+    "upgrade_button": "Upgrade",
+    "date_format": "YYYY-MM-DD",
+    "upgrade_title_with_expire": "Upgrade (expires unchanged: {{date}}, {{days}} days)",
+    "upgrade_proration_text": "Prorated: {{dailyAmount}} × {{days}} days = {{amount}}",
+    "addon_proration_amount": "Prorated {{amount}}"
   },
   "apps": {
     "title": "Applications",
