@@ -10,10 +10,12 @@ import {
   KeyOutlined,
   LineChartOutlined,
   MenuOutlined,
+  MoonOutlined,
   PlusOutlined,
   ReadOutlined,
   SearchOutlined,
   SettingOutlined,
+  SunOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
@@ -25,6 +27,7 @@ import {
   type AppDrawerItem,
   useAppWorkspaceList,
 } from '@/components/app-drawer';
+import { useTheme } from '@/components/theme-provider';
 import { rootRouterPath, router } from '@/router';
 import {
   cn,
@@ -92,6 +95,8 @@ export default function TopNavigation({
   const [appDrawerPlacement, setAppDrawerPlacementState] = useState(
     getManageAppDrawerPlacement,
   );
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
   const selectedKeys = useMemo(() => getSelectedKeys(pathname), [pathname]);
   const shouldShowAppsTopTab =
     showAuthenticatedChrome &&
@@ -218,6 +223,19 @@ export default function TopNavigation({
       {showAuthenticatedChrome && user && <AppSwitcher compact={isMobile} />}
       {isMobile ? (
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <Button
+            type="text"
+            icon={
+              isDark ? (
+                <SunOutlined className="text-lg!" />
+              ) : (
+                <MoonOutlined className="text-lg!" />
+              )
+            }
+            onClick={toggleTheme}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            title={isDark ? '切换为亮色模式' : '切换为暗色模式'}
+          />
           {showAuthenticatedChrome && user && (
             <Link
               to={rootRouterPath.user}
@@ -252,6 +270,19 @@ export default function TopNavigation({
             selectedKeys={selectedKeys}
             items={[...authenticatedItems, ...externalItems]}
             style={{ height: 64, lineHeight: '64px' }}
+          />
+          <Button
+            type="text"
+            icon={
+              isDark ? (
+                <SunOutlined className="text-lg!" />
+              ) : (
+                <MoonOutlined className="text-lg!" />
+              )
+            }
+            onClick={toggleTheme}
+            className="mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            title={isDark ? '切换为亮色模式' : '切换为暗色模式'}
           />
           {showAuthenticatedChrome && user && (
             <Link

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 html,
 body {
   height: 100%;
@@ -41,6 +43,10 @@ a:hover {
   background: #fff;
 }
 
+.dark .body {
+  background: #141414;
+}
+
 a.ant-typography .ant-typography {
   transition: color 0.3s;
 }
@@ -65,4 +71,60 @@ a.ant-typography:hover .ant-typography {
   .reset-card {
     margin: 0;
   }
+}
+
+/* Global dark mode overrides for hardcoded light-theme Tailwind classes */
+.dark body {
+  background-color: #141414;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dark .bg-white {
+  background-color: #1f1f1f;
+}
+
+.dark .bg-white\/70,
+.dark [class*="bg-white/70"] {
+  background-color: rgba(31, 31, 31, 0.7);
+}
+
+.dark .bg-white\/75,
+.dark [class*="bg-white/75"] {
+  background-color: rgba(31, 31, 31, 0.75);
+}
+
+.dark .bg-slate-50 {
+  background-color: #141414;
+}
+
+.dark .border-slate-200,
+.dark .border-gray-200 {
+  border-color: #303030;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-800,
+.dark .text-slate-600 {
+  color: #e5e5e5;
+}
+
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: #a3a3a3;
+}
+
+.dark .hover\:bg-white:hover {
+  background-color: #2a2a2a;
+}
+
+.dark .hover\:bg-slate-50:hover {
+  background-color: #242424;
+}
+
+.dark .hover\:border-blue-300:hover {
+  border-color: #177ddc;
+}
+
+.dark .hover\:text-blue-600:hover {
+  color: #177ddc;
 }

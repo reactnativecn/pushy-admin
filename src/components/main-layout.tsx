@@ -1,4 +1,4 @@
-import { Grid, Layout } from 'antd';
+import { Grid, Layout, theme } from 'antd';
 import type { CSSProperties } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useUserInfo } from '@/utils/hooks';
@@ -15,6 +15,7 @@ const MainLayout = () => {
   const location = useLocation();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
+  const { token } = theme.useToken();
   const usesPublicChrome = [
     '/activate',
     '/inactivated',
@@ -32,7 +33,12 @@ const MainLayout = () => {
     <Layout>
       <Layout>
         <Layout.Header
-          style={{ ...style.header, paddingInline: isMobile ? 12 : 24 }}
+          style={{
+            ...style.header,
+            background: token.colorBgContainer,
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            paddingInline: isMobile ? 12 : 24,
+          }}
         >
           <TopNavigation
             isMobile={isMobile}

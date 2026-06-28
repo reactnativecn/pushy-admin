@@ -8,6 +8,7 @@ import './manage.css';
 import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
+import { useTheme } from '@/components/theme-provider';
 import { rootRouterPath, router } from '@/router';
 import { rememberRecentApp } from '@/utils/helper';
 import { useApp } from '@/utils/hooks';
@@ -39,47 +40,44 @@ const PackageFilterControl = ({
 }: {
   filter: PackageFilter;
   setFilter: (filter: PackageFilter) => void;
-  dataSource: Package[];
+  dataSource: { id: number }[];
   selectedPackageIds: number[];
   setSelectedPackageIds: Dispatch<SetStateAction<number[]>>;
 }) => {
-  const filterLabel = filter === 'all' ? '全部' : '未使用';
   const items: MenuProps['items'] = [
     {
       key: 'all',
-      label: '全部',
-      onClick: () => setFilter('all'),
+      label: '全部原生包',
     },
     {
       key: 'unused',
-      label: '未使用',
-      onClick: () => setFilter('unused'),
+      label: '无关联的原生包',
     },
   ];
-  const packageIds = dataSource.map((item) => item.id);
-  const selectedPackageIdSet = new Set(selectedPackageIds);
-  const selectedVisibleCount = packageIds.filter((id) =>
-    selectedPackageIdSet.has(id),
-  ).length;
-  const allVisibleSelected =
-    packageIds.length > 0 && selectedVisibleCount === packageIds.length;
+  const onMenuClick: MenuProps['onClick'] = (e) => {
+    setFilter(e.key as PackageFilter);
+  };
+  const filterLabel = filter === 'all' ? '全部原生包' : '无关联的原生包';
+  const checked =
+    dataSource.length > 0 &&
+    dataSource.every((item) => selectedPackageIds.includes(item.id));
+  const indeterminate =
+    dataSource.some((item) => selectedPackageIds.includes(item.id)) && !checked;
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="flex items-center gap-2">
       <Checkbox
-        aria-label={`${filterLabel}全选`}
-        checked={allVisibleSelected}
-        disabled={packageIds.length === 0}
-        indeterminate={selectedVisibleCount > 0 && !allVisibleSelected}
-        onChange={({ target }) => {
+        checked={checked}
+        indeterminate={indeterminate}
+        onChange={(e) => {
           toggleAllVisiblePackages(
-            target.checked,
-            packageIds,
+            e.target.checked,
+            dataSource.map((item) => item.id),
             setSelectedPackageIds,
           );
         }}
       />
-      <Dropdown menu={{ items }} trigger={['hover']}>
+      <Dropdown menu={{ items, onClick: onMenuClick }} trigger={['hover']}>
         <button
           className="inline-flex h-10 cursor-pointer items-center gap-1 border-0 border-b-2 border-solid border-blue-500 bg-transparent px-1 text-sm font-medium text-blue-600"
           type="button"
@@ -93,6 +91,7 @@ const PackageFilterControl = ({
 };
 
 const ManageDashBoard = () => {
+  const { theme } = useTheme();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const { packages, unusedPackages, packagesLoading, bindingsLoading } =
@@ -167,7 +166,7 @@ const ManageDashBoard = () => {
   return (
     <Layout className="manage-layout">
       <Layout.Sider
-        theme="light"
+        theme={theme === 'dark' ? 'dark' : 'light'}
         className="manage-sider h-full rounded-lg p-4 pt-0"
         width={280}
         style={{ marginRight: 16, maxWidth: '100%' }}
