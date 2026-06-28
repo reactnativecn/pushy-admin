@@ -47,7 +47,8 @@
     "back_login": "返回登录"
   },
   "user": {
-    "invoice_hint": "请发送邮件至 <1>hi@charmlot.com</1>，并写明：",
+    "invoice_hint_before_email": "请发送邮件至 ",
+    "invoice_hint_after_email": "，并写明：",
     "invoice_company": "公司名称、税号、注册邮箱、接收发票邮箱（不写则发送到注册邮箱），附带支付截图。",
     "invoice_default": "我们默认会回复普通电子发票到接收邮箱(请同时留意垃圾邮件)，类目为软件服务。",
     "purchasing_note": "只可续费相同服务版本或升级更高版本，如果您需要购买较低的服务版本，请等待当前版本过期，或联系 QQ 客服 34731408 手动处理。",
@@ -136,7 +137,11 @@
     },
     "fetching_addon_quote": "正在获取加购报价",
     "per_year": "/ 年",
-    "upgrade_button": "升级"
+    "upgrade_button": "升级",
+    "date_format": "YYYY年MM月DD日",
+    "upgrade_title_with_expire": "升级（有效期不变：至 {{date}}，{{days}} 天）",
+    "upgrade_proration_text": "补差价 {{dailyAmount}} × {{days}} 天 = {{amount}}",
+    "addon_proration_amount": "补差价 {{amount}}"
   },
   "apps": {
     "title": "应用列表",
