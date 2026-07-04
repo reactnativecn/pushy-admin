@@ -18,6 +18,7 @@ import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { rootRouterPath, router } from '@/router';
+import type { Package } from '@/types';
 import { rememberRecentApp } from '@/utils/helper';
 import { useApp } from '@/utils/hooks';
 import PackageList from './components/package-list';
@@ -94,7 +95,7 @@ const PackageFilterControl = ({
       />
       <Dropdown menu={{ items }} trigger={['hover']}>
         <button
-          className="inline-flex h-10 cursor-pointer items-center gap-1 border-0 border-b-2 border-solid border-blue-500 bg-transparent px-1 text-sm font-medium text-blue-600"
+          className="inline-flex h-10 cursor-pointer items-center gap-1 border-0 border-b-2 border-solid border-primary bg-transparent px-1 text-sm font-medium text-primary"
           type="button"
         >
           <span>{filterLabel}</span>

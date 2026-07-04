@@ -1,11 +1,28 @@
 {
+  "notice": {
+    "v8_deprecation_title": "Notice: react-native-update will drop support for versions below v8",
+    "v8_deprecation_p1_before": "Starting ",
+    "v8_deprecation_date": "August 10, 2025",
+    "v8_deprecation_p1_after": ", native and OTA packages below v8 can no longer be uploaded. Please upgrade to v8 or later as soon as possible. Already-uploaded versions are unaffected.",
+    "v8_deprecation_p2": "Major version upgrades require rebuilding the native package — please test thoroughly.",
+    "v8_deprecation_p3": "Code for v5–v9 is largely compatible; v10 is not compatible with earlier versions.",
+    "v8_deprecation_p4": "For upgrade-related technical questions, please ask in the QQ group 729013783.",
+    "ok": "Got it",
+    "dont_show_again": "Don't show again"
+  },
   "login": {
     "slogan": "Lightning-fast OTA Framework for React Native",
     "email_placeholder": "Email",
     "password_placeholder": "Password",
     "login_button": "Log in",
     "register": "Sign up",
-    "forgot_password": "Forgot password?"
+    "forgot_password": "Forgot password?",
+    "success": "Logged in",
+    "failed": "Login failed"
+  },
+  "request": {
+    "error": "Error: {{message}}",
+    "proxy_hint": "If you are using a proxy, please disable it and try again"
   },
   "register": {
     "slogan": "Lightning-fast OTA Framework for React Native",
@@ -84,6 +101,7 @@
     "service_version": "Plan",
     "service_expire": "Expires",
     "no_expire": "None",
+    "remaining_note": "({{days}} days left, then reverts to Free)",
     "purchase_note": "Purchase Notes",
     "quota_details": "Quota Details",
     "view_pricing": "View Pricing",
@@ -248,6 +266,9 @@
     "col_status": "Status",
     "col_payload": "Payload",
     "col_device": "Device",
+    "col_browser": "Browser",
+    "col_os": "OS",
+    "col_ip_addr": "IP Address",
     "col_details": "Details",
     "view": "View",
     "title": "Audit Logs",
@@ -405,6 +426,23 @@
     "col_tier_expires": "Tier Expires",
     "col_custom_quota": "Custom Quota",
     "col_actions": "Actions",
+    "col_note": "Note",
+    "detail_title": "User Details",
+    "basic_info": "Basic Info",
+    "quota_usage": "Quota & Usage",
+    "pv_limit": "Daily Update Check Limit",
+    "today_used": "Used Today",
+    "today_remaining": "Remaining Today",
+    "avg_7_days": "7-Day Daily Average",
+    "last_7_days_details": "Last 7 Days",
+    "day_label": "Day {{day}}",
+    "app_limit": "App Limit",
+    "package_limit": "Packages per App Limit",
+    "apps_and_packages": "Apps & Packages",
+    "packages_count": "Packages",
+    "pkg_name": "Name / Version",
+    "checks_value": "{{value}}",
+    "packages_value": "{{value}}",
     "status_normal": "Normal",
     "status_unverified": "Unverified",
     "has_quota": "Yes",
@@ -732,7 +770,8 @@
     "yes": "Yes",
     "no": "No",
     "loading": "Loading...",
-    "copied": "Copied"
+    "copied": "Copied",
+    "search": "Search"
   },
   "publish_feature_table": {
     "version_header_line1": "react-native-update Version",

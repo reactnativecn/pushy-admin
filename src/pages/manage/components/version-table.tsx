@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import type { TextContent } from 'vanilla-jsoneditor';
 import { TEST_QR_CODE_DOC } from '@/constants/links';
 import { api } from '@/services/api';
+import type { Version } from '@/types';
 import { useVersions } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
 import BindPackage from './bind-package';

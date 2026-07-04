@@ -32,8 +32,9 @@ import {
 } from 'vanilla-jsoneditor';
 import { quotas } from '@/constants/quotas';
 import { adminApi } from '@/services/admin-api';
-import type { Tier } from '@/types';
+import type { AdminUser, Quota, Tier } from '@/types';
 import { patchSearchParams } from '@/utils/helper';
+import { adminKeys } from '@/utils/query-keys';
 
 const { Title } = Typography;
 
@@ -125,32 +126,26 @@ const UserDetailDrawer = ({
   open,
   onClose,
   isMobile,
-  t,
 }: {
   userId: number | null;
   open: boolean;
   onClose: () => void;
   isMobile: boolean;
-  t?: (key: string) => string;
 }) => {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ['adminUserDetail', userId],
+    queryKey: adminKeys.userDetail(userId),
     queryFn: () => (userId ? adminApi.getUserDetail(userId) : null),
     enabled: !!userId && open,
   });
 
-  const translate = (key: string, fallback: string) => {
-    if (t) {
-      return t(key);
-    }
-    return fallback;
-  };
+  const translate = (key: string) => t(key);
 
   const detail = data;
 
   return (
     <Drawer
-      title={translate('admin_users.detail_title', '用户详细信息')}
+      title={translate('admin_users.detail_title')}
       width={isMobile ? '100%' : 720}
       onClose={onClose}
       open={open}
@@ -160,43 +155,37 @@ const UserDetailDrawer = ({
         {detail && (
           <Space direction="vertical" size="large" className="w-full">
             <Descriptions
-              title={translate('admin_users.basic_info', '基本信息')}
+              title={translate('admin_users.basic_info')}
               bordered
               column={2}
             >
               <Descriptions.Item label="ID">{detail.user.id}</Descriptions.Item>
-              <Descriptions.Item
-                label={translate('admin_users.col_name', '用户名')}
-              >
+              <Descriptions.Item label={translate('admin_users.col_name')}>
                 {detail.user.name}
               </Descriptions.Item>
               <Descriptions.Item
-                label={translate('admin_users.col_email', '邮箱')}
+                label={translate('admin_users.col_email')}
                 span={2}
               >
                 {detail.user.email}
               </Descriptions.Item>
-              <Descriptions.Item
-                label={translate('admin_users.col_status', '状态')}
-              >
+              <Descriptions.Item label={translate('admin_users.col_status')}>
                 <Badge
                   status={
                     detail.user.status === 'normal' ? 'success' : 'warning'
                   }
                   text={
                     detail.user.status === 'normal'
-                      ? translate('admin_users.status_normal', '正常')
-                      : translate('admin_users.status_unverified', '未验证')
+                      ? translate('admin_users.status_normal')
+                      : translate('admin_users.status_unverified')
                   }
                 />
               </Descriptions.Item>
-              <Descriptions.Item
-                label={translate('admin_users.col_tier', '套餐')}
-              >
+              <Descriptions.Item label={translate('admin_users.col_tier')}>
                 {detail.user.tier}
               </Descriptions.Item>
               <Descriptions.Item
-                label={translate('admin_users.col_tier_expires', '过期时间')}
+                label={translate('admin_users.col_tier_expires')}
                 span={2}
               >
                 {detail.user.tierExpiresAt
@@ -206,58 +195,53 @@ const UserDetailDrawer = ({
             </Descriptions>
 
             <Descriptions
-              title={translate('admin_users.quota_usage', '额度与 PV 使用')}
+              title={translate('admin_users.quota_usage')}
               bordered
               column={2}
             >
-              <Descriptions.Item
-                label={translate('admin_users.pv_limit', '每日更新检查上限')}
-              >
-                {detail.quotaDetail.limit.pv} 次
+              <Descriptions.Item label={translate('admin_users.pv_limit')}>
+                {t('admin_users.checks_value', {
+                  value: detail.quotaDetail.limit.pv,
+                })}
+              </Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.today_used')}>
+                {t('admin_users.checks_value', {
+                  value: detail.quotaDetail.todayUsed,
+                })}
               </Descriptions.Item>
               <Descriptions.Item
-                label={translate('admin_users.today_used', '今日已用')}
+                label={translate('admin_users.today_remaining')}
               >
-                {detail.quotaDetail.todayUsed} 次
+                {t('admin_users.checks_value', {
+                  value: detail.quotaDetail.todayRemaining,
+                })}
+              </Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.avg_7_days')}>
+                {t('admin_users.checks_value', {
+                  value: detail.quotaDetail.last7Days.avg,
+                })}
               </Descriptions.Item>
               <Descriptions.Item
-                label={translate('admin_users.today_remaining', '今日剩余')}
-              >
-                {detail.quotaDetail.todayRemaining} 次
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={translate('admin_users.avg_7_days', '过去 7 天日均')}
-              >
-                {detail.quotaDetail.last7Days.avg} 次
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={translate(
-                  'admin_users.last_7_days_details',
-                  '过去 7 天详情',
-                )}
+                label={translate('admin_users.last_7_days_details')}
                 span={2}
               >
                 {detail.quotaDetail.last7Days.counts
                   .slice()
                   .reverse()
                   .map((c, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length ordered day list, index is the stable identity
                     <span key={i} className="mr-3 inline-block">
-                      Day {i + 1}: <strong>{c}</strong>
+                      {t('admin_users.day_label', { day: i + 1 })}: <strong>{c}</strong>
                     </span>
                   ))}
               </Descriptions.Item>
-              <Descriptions.Item
-                label={translate('admin_users.app_limit', '应用创建限制')}
-              >
+              <Descriptions.Item label={translate('admin_users.app_limit')}>
                 {detail.apps.length} / {detail.quotaDetail.limit.app}
               </Descriptions.Item>
-              <Descriptions.Item
-                label={translate(
-                  'admin_users.package_limit',
-                  '单应用发布包限制',
-                )}
-              >
-                {detail.quotaDetail.limit.package} 个
+              <Descriptions.Item label={translate('admin_users.package_limit')}>
+                {t('admin_users.packages_value', {
+                  value: detail.quotaDetail.limit.package,
+                })}
               </Descriptions.Item>
             </Descriptions>
 
@@ -266,7 +250,7 @@ const UserDetailDrawer = ({
                 className="ant-descriptions-title"
                 style={{ marginBottom: 12 }}
               >
-                {translate('admin_users.apps_and_packages', '应用与原生包')}
+                {translate('admin_users.apps_and_packages')}
               </div>
               <Collapse>
                 {detail.apps.map((app) => (
@@ -282,7 +266,7 @@ const UserDetailDrawer = ({
                             PV: <strong>{app.checkCount}</strong>
                           </span>
                           <span>
-                            {translate('admin_users.packages_count', '发布包')}:{' '}
+                            {translate('admin_users.packages_count')}:{' '}
                             <strong>{app.packagesCount}</strong>
                           </span>
                         </Space>
@@ -306,10 +290,7 @@ const UserDetailDrawer = ({
                             width: 60,
                           },
                           {
-                            title: translate(
-                              'admin_users.pkg_name',
-                              '包名/版本',
-                            ),
+                            title: translate('admin_users.pkg_name'),
                             dataIndex: 'name',
                             key: 'name',
                           },
@@ -329,13 +310,13 @@ const UserDetailDrawer = ({
                               `${r.buildNumber || '-'}(${r.buildTime || '-'})`,
                           },
                           {
-                            title: translate('admin_users.col_status', '状态'),
+                            title: translate('admin_users.col_status'),
                             dataIndex: 'status',
                             key: 'status',
                             width: 80,
                           },
                           {
-                            title: translate('admin_users.col_note', '备注'),
+                            title: translate('admin_users.col_note'),
                             dataIndex: 'note',
                             key: 'note',
                           },
@@ -402,7 +383,7 @@ export const Component = () => {
   }, [searchKeyword, searchQuery, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminUsers', searchQuery],
+    queryKey: adminKeys.users(searchQuery),
     queryFn: () => adminApi.searchUsers(searchQuery || undefined),
   });
 
@@ -421,7 +402,7 @@ export const Component = () => {
     onSuccess: () => {
       message.success(t('admin_users.user_updated'));
       setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
     },
     onError: (error) => {
       message.error((error as Error).message);

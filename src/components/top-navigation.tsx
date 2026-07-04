@@ -352,7 +352,7 @@ export default function TopNavigation({
           <button
             aria-label={t('nav.open_menu')}
             className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-0 bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-500',
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-0 bg-primary text-white shadow-sm transition-colors hover:bg-primary-hover',
               showAuthenticatedChrome && user ? undefined : 'ml-auto',
             )}
             onClick={() => setMobileMenuOpen(true)}
@@ -687,9 +687,9 @@ function AppSwitcherContent({
             {recentApps.map((app) => (
               <button
                 className={cn(
-                  'inline-flex max-w-[180px] cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-gray-600 text-xs transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600',
+                  'inline-flex max-w-[180px] cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-gray-600 text-xs transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-primary',
                   app.id === currentAppId
-                    ? 'border-blue-200 bg-blue-50 text-blue-600'
+                    ? 'border-blue-200 bg-blue-50 text-primary'
                     : undefined,
                 )}
                 key={app.id}
@@ -833,7 +833,7 @@ function AppRow({
       </button>
       <button
         aria-label={t('nav.open_app_settings', { name: app.name })}
-        className="mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 transition-colors hover:bg-white hover:text-blue-600"
+        className="mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 transition-colors hover:bg-white hover:text-primary"
         onClick={() => onSettings(app)}
         title={t('nav.app_settings')}
         type="button"

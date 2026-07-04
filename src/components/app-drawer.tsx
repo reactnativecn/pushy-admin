@@ -349,7 +349,7 @@ function AppIconButton({
     <button
       className={cn(
         'flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border-0 bg-transparent transition-colors hover:bg-slate-100',
-        isActive ? 'bg-blue-600 text-white hover:bg-blue-600' : undefined,
+        isActive ? 'bg-primary text-white hover:bg-primary' : undefined,
       )}
       onClick={() => onSelect(app)}
       title={`${app.name} · ${formatCheckCount(app, t)}`}
@@ -381,7 +381,7 @@ function AppDrawerRow({
       )}
     >
       {isActive && (
-        <span className="absolute top-1/2 left-2 h-2 w-2 -translate-y-1/2 rounded-full bg-blue-600" />
+        <span className="absolute top-1/2 left-2 h-2 w-2 -translate-y-1/2 rounded-full bg-primary" />
       )}
       <button
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 border-0 bg-transparent py-2.5 pr-2 pl-5 text-left text-inherit"
@@ -419,8 +419,8 @@ function AppDrawerRow({
         <button
           aria-label={t('app_drawer.open_app_settings', { name: app.name })}
           className={cn(
-            'mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 opacity-0 transition-all hover:bg-white/80 hover:text-blue-600 hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100',
-            isActive ? 'text-blue-600 hover:bg-blue-50' : undefined,
+            'mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 opacity-0 transition-all hover:bg-white/80 hover:text-primary hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100',
+            isActive ? 'text-primary hover:bg-blue-50' : undefined,
           )}
           onClick={() => onSettings(app)}
           title={t('app_drawer.app_settings')}

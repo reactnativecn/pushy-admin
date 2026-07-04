@@ -1,14 +1,18 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { getToken } from '@/services/request';
-import { versionKeys } from '@/utils/query-keys';
-import 'dayjs/locale/zh-cn';
-import { useEffect, useMemo, useState } from 'react';
-
-dayjs.locale('zh-cn');
-dayjs.extend(relativeTime);
+import type { App, Package } from '@/types';
+import dayjs from '@/utils/dayjs';
+import {
+  appKeys,
+  auditKeys,
+  bindingKeys,
+  packageKeys,
+  userKeys,
+  versionKeys,
+} from '@/utils/query-keys';
 
 const METRIC_CATEGORY_SEPARATOR = '\u001f';
 const PACKAGE_METRIC_PREFIX = `packageVersion_buildTime${METRIC_CATEGORY_SEPARATOR}`;
@@ -170,8 +174,9 @@ export const useLocalStorageCooldown = ({
 };
 
 export const useUserInfo = () => {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ['userInfo'],
+    queryKey: userKeys.info(),
     queryFn: api.me,
     enabled: () => !!getToken(),
   });
@@ -181,21 +186,21 @@ export const useUserInfo = () => {
           ...data,
           quota: {
             ...data.quota,
-            title: '定制版',
+            title: t('user.purchasable_tiers.custom'),
           },
         }
       : data;
   const expireDay = dayjs(data?.tierExpiresAt);
   const displayExpireDay = data?.tierExpiresAt
-    ? expireDay.format('YYYY年MM月DD日')
-    : '无';
+    ? expireDay.format(t('user.date_format'))
+    : t('user.no_expire');
   const now = data?.serverTime ? dayjs(data.serverTime) : dayjs();
   const remainingDays = data?.tierExpiresAt
     ? expireDay.add(1, 'day').diff(now, 'day')
     : null;
-  const isExpiringSoon = remainingDays !== null && remainingDays <= 90;
+  const isExpiringSoon = remainingDays !== null && remainingDays >= 0 && remainingDays <= 90;
   const displayRemainingDays = isExpiringSoon
-    ? `(剩余 ${remainingDays} 天，之后转为免费版)`
+    ? t('user.remaining_note', { days: remainingDays })
     : '';
   return {
     user: getToken() ? user : null,
@@ -208,7 +213,7 @@ export const useUserInfo = () => {
 
 export const useAppList = () => {
   const { data, isLoading } = useQuery({
-    queryKey: ['appList'],
+    queryKey: appKeys.list(),
     queryFn: api.appList,
   });
   return { apps: data?.data, isLoading };
@@ -216,7 +221,7 @@ export const useAppList = () => {
 
 export const useApp = (appId: number) => {
   const { data } = useQuery({
-    queryKey: ['app', appId],
+    queryKey: appKeys.detail(appId),
     queryFn: () => api.getApp(appId),
   });
   return { app: data };
@@ -224,7 +229,7 @@ export const useApp = (appId: number) => {
 
 export const usePackages = (appId: number) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['packages', appId],
+    queryKey: packageKeys.byApp(appId),
     queryFn: () => api.getPackages(appId),
   });
   const { packageMap, packages } = useMemo(() => {
@@ -288,7 +293,7 @@ export const useAllVersions = ({
 
 export const useBinding = (appId: number) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['bindings', appId],
+    queryKey: bindingKeys.byApp(appId),
     queryFn: () => api.getBinding(appId),
   });
   const bindings = data?.data ?? [];
@@ -355,7 +360,7 @@ export const useAuditLogs = ({
 }) => {
   // Fetch all audit logs (up to 1000) from backend and cache them
   const { data, isLoading } = useQuery({
-    queryKey: ['auditLogs'],
+    queryKey: auditKeys.all(),
     staleTime: 3000,
     queryFn: () =>
       api.getAuditLogs({

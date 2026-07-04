@@ -1,6 +1,10 @@
 import { message } from 'antd';
+import i18n from '@/i18n';
 import { testUrls } from '@/utils/helper';
-import { logout } from './auth';
+import { handleResponse, RequestError, type RequestOptions } from './response';
+
+export type { RequestOptions };
+export { RequestError };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 let _token = localStorage.getItem('token');
@@ -34,29 +38,9 @@ const getBaseUrl = (async () => {
       // remove /status
       baseUrl = ret.replace('/status', '');
     }
-    console.log('baseUrl', baseUrl);
     return baseUrl;
   });
 })();
-
-interface PushyResponse {
-  message?: string;
-}
-
-export class RequestError extends Error {
-  status?: number;
-
-  constructor(message: string, status?: number) {
-    super(message);
-    this.name = 'RequestError';
-    this.status = status;
-  }
-}
-
-export interface RequestOptions {
-  baseUrl?: string;
-  suppressErrorToast?: boolean;
-}
 
 export default async function request<T extends Record<any, any>>(
   method: 'get' | 'post' | 'put' | 'delete',
@@ -81,37 +65,20 @@ export default async function request<T extends Record<any, any>>(
   }
   try {
     const response = await fetch(url, options);
-    if (response.status === 401) {
-      logout();
-      return;
-    }
-    // TODO token 过期
-    const json = (await response.json()) as PushyResponse;
-    if (response.status === 200) {
-      return json as T & PushyResponse;
-    }
-
-    const error = new RequestError(
-      json.message || `Request failed with status ${response.status}`,
-      response.status,
-    );
-    if (!requestOptions.suppressErrorToast && error.message) {
-      message.error(error.message);
-    }
-    throw error;
+    return await handleResponse<T>(response, requestOptions);
   } catch (err) {
     if (err instanceof RequestError) {
       throw err;
     }
 
-    if ((err as Error).message.includes('Unauthorized')) {
-      logout();
-    } else {
-      if (!requestOptions.suppressErrorToast) {
-        message.error(`错误：${(err as Error).message}`);
-        message.error('如有使用代理，请关闭代理后重试');
-      }
-      throw err;
+    // Network-level failure (DNS, TLS, CORS, offline). The proxy hint is only
+    // meaningful here, not for parsed business errors.
+    if (!requestOptions.suppressErrorToast) {
+      message.error(
+        i18n.t('request.error', { message: (err as Error).message }),
+      );
+      message.error(i18n.t('request.proxy_hint'));
     }
+    throw err;
   }
 }

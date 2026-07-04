@@ -2,14 +2,18 @@ import { ConfigProvider } from 'antd';
 import enUS from 'antd/locale/en_US';
 import zhCN from 'antd/locale/zh_CN';
 import { createRoot } from 'react-dom/client';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RouterProvider } from 'react-router-dom';
 
 import './index.css';
 import './i18n';
+import './utils/dayjs';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { router } from './router';
+import { themeConfig } from './theme';
 import { queryClient } from './utils/queryClient';
+import { showNotices } from './utils/notice';
 
 const antdLocaleMap: Record<string, typeof zhCN> = {
   en: enUS,
@@ -70,8 +74,12 @@ function App() {
   const language = i18n.resolvedLanguage ?? i18n.language;
   const antdLocale = antdLocaleMap[language] ?? zhCN;
 
+  useEffect(() => {
+    showNotices();
+  }, []);
+
   return (
-    <ConfigProvider locale={antdLocale}>
+    <ConfigProvider locale={antdLocale} theme={themeConfig}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

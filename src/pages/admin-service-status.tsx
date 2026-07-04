@@ -24,6 +24,7 @@ import {
   type InternalMetricsResponse,
 } from '@/services/api';
 import { cn } from '@/utils/helper';
+import { metricsKeys } from '@/utils/query-keys';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -649,7 +650,7 @@ function ServiceStatusPanel({
         offset: api5xxEventOffset,
         suppressErrorToast: true,
       }),
-    queryKey: ['internalApi5xxEvents', target.key, api5xxEventOffset],
+    queryKey: metricsKeys.internalApi5xxEvents(target.key, api5xxEventOffset),
     refetchInterval: 30_000,
   });
   const apiDuration = useMemo(
@@ -946,7 +947,7 @@ function ServiceTargetSidebar({
               className={cn(
                 'w-full cursor-pointer rounded-lg border bg-white p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md',
                 isActive
-                  ? 'border-blue-500 bg-blue-50 shadow-none'
+                  ? 'border-primary bg-blue-50 shadow-none'
                   : 'border-slate-200',
               )}
               key={target.key}
@@ -957,7 +958,7 @@ function ServiceTargetSidebar({
                 <span
                   className={cn(
                     'shrink-0 font-semibold text-base',
-                    isActive ? 'text-blue-700' : 'text-slate-900',
+                    isActive ? 'text-primary' : 'text-slate-900',
                   )}
                 >
                   {target.label}
@@ -1025,7 +1026,7 @@ export const Component = () => {
           baseUrl: target.baseUrl,
           suppressErrorToast: true,
         }),
-      queryKey: ['internalMetrics', target.key],
+      queryKey: metricsKeys.internal(target.key),
       refetchInterval: 30_000,
     })),
   });

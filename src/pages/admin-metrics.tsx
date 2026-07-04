@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '@/services/api';
 import { patchSearchParams } from '@/utils/helper';
+import { metricsKeys } from '@/utils/query-keys';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -145,7 +146,7 @@ export const Component = () => {
   const modeLabels = getModeLabels(t);
 
   const { data: pvMetrics, isLoading: isLoadingPv } = useQuery({
-    queryKey: ['globalMetrics', startDate, endDate, 'pv'],
+    queryKey: metricsKeys.global(startDate, endDate, 'pv'),
     queryFn: () =>
       api.getGlobalMetrics({
         start: startDate,
@@ -155,7 +156,7 @@ export const Component = () => {
   });
 
   const { data: uvMetrics, isLoading: isLoadingUv } = useQuery({
-    queryKey: ['globalMetrics', startDate, endDate, 'uv'],
+    queryKey: metricsKeys.global(startDate, endDate, 'uv'),
     queryFn: () =>
       api.getGlobalMetrics({
         start: startDate,

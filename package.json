@@ -7,7 +7,10 @@
     "build": "NODE_ENV=production rsbuild build",
     "preview": "rsbuild preview",
     "typecheck": "tsgo --noEmit -p tsconfig.json",
-    "lint": "tsgo --noEmit -p tsconfig.json && biome check --write ."
+    "test": "bun test",
+    "lint": "biome check .",
+    "lint:fix": "tsgo --noEmit -p tsconfig.json && biome check --write .",
+    "ci": "bun run typecheck && bun run lint && bun run test"
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.7",
@@ -21,6 +24,7 @@
     "git-url-parse": "^16.1.0",
     "hash-wasm": "^4.12.0",
     "history": "^5.3.0",
+    "i18next": "^26.3.4",
     "i18next-browser-languagedetector": "^8.2.1",
     "json-diff-kit": "^1.0.35",
     "react": "^19.2.7",

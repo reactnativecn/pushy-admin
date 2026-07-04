@@ -1,4 +1,4 @@
-import type { AdminApp, AdminUser, AdminVersion } from '@/types';
+import type { AdminApp, AdminUser, AdminVersion, Quota } from '@/types';
 import request from './request';
 
 export const adminApi = {

@@ -566,7 +566,7 @@ export const Component = () => {
 
                             <div className="mt-2 h-1.5 overflow-hidden rounded bg-gray-100">
                               <div
-                                className="h-full rounded bg-blue-500"
+                                className="h-full rounded bg-primary"
                                 style={{ width: `${barWidth}%` }}
                               />
                             </div>

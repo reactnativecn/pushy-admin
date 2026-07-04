@@ -45,6 +45,12 @@ mock.module('hash-wasm', () => ({
   md5: mock(async (str) => `md5-${str}`),
 }));
 
+// i18n.t echoes the key so assertions can match on stable keys instead of
+// locale strings.
+mock.module('@/i18n', () => ({
+  default: { t: (key: string) => key },
+}));
+
 class MockRequestError extends Error {
   status?: number;
   constructor(message: string, status?: number) {
@@ -132,7 +138,7 @@ describe('auth.ts runtime test', () => {
         pwd: 'md5-mypassword',
       });
       expect(mockSetTokenObj).toHaveBeenCalledWith('fake-token');
-      expect(mockMessage.success).toHaveBeenCalledWith('登录成功');
+      expect(mockMessage.success).toHaveBeenCalledWith('login.success');
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 

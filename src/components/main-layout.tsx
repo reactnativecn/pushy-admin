@@ -54,13 +54,13 @@ export default MainLayout;
 
 const style: Style = {
   header: {
-    background: '#fff',
+    background: 'var(--ant-color-bg-container)',
     minHeight: 64,
     height: 'auto',
     lineHeight: 'normal',
     display: 'flex',
     alignItems: 'center',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: '1px solid var(--ant-color-border-secondary)',
     boxShadow: 'none',
     zIndex: 10,
   },

@@ -1,12 +1,13 @@
 import { WarningOutlined } from '@ant-design/icons';
 import { Alert, Progress, Tag, Tooltip, Typography } from 'antd';
-import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { quotas } from '@/constants/quotas';
 import {
   CHECK_QUOTA_LOW_RATIO,
+  getCheckQuotaColors,
   getCheckQuotaWarningState,
 } from '@/utils/check-quota-warning';
+import dayjs from '@/utils/dayjs';
 import { cn } from '@/utils/helper';
 import { useUserInfo } from '@/utils/hooks';
 
@@ -106,11 +107,7 @@ export function DailyCheckQuotaUserTrigger({
   const { t } = useTranslation();
   const quotaState = useDailyCheckQuotaState();
   const { user } = quotaState;
-  const strokeColor = quotaState.isExceeded
-    ? '#ef4444'
-    : quotaState.isLow
-      ? '#f59e0b'
-      : '#2563eb';
+  const quotaColors = getCheckQuotaColors(quotaState.level);
   const tierTitle = user ? getTierTitle(user.tier, user.quota?.title, t) : '';
   const expireLabel = user?.tierExpiresAt
     ? t('daily_check_quota.expire_date', {
@@ -151,14 +148,8 @@ export function DailyCheckQuotaUserTrigger({
       showInfo={false}
       size="small"
       status={quotaState.progressStatus}
-      strokeColor={strokeColor}
-      trailColor={
-        quotaState.isExceeded
-          ? '#fecaca'
-          : quotaState.isLow
-            ? '#fde68a'
-            : '#e5e7eb'
-      }
+      strokeColor={quotaColors.stroke}
+      trailColor={quotaColors.trail}
     />
   );
   const content = compact ? (
@@ -259,11 +250,7 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
         : quotaState.isLow
           ? t('daily_check_quota.status_low')
           : t('daily_check_quota.status_healthy');
-  const progressStrokeColor = quotaState.isExceeded
-    ? '#ef4444'
-    : quotaState.isLow
-      ? '#f59e0b'
-      : '#2563eb';
+  const progressColors = getCheckQuotaColors(quotaState.level);
 
   return (
     <div className="space-y-3">
@@ -343,15 +330,9 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
             percent={quotaState.percent}
             showInfo={false}
             status={quotaState.progressStatus}
-            strokeColor={progressStrokeColor}
+            strokeColor={progressColors.stroke}
             strokeLinecap="round"
-            trailColor={
-              quotaState.isExceeded
-                ? '#fecaca'
-                : quotaState.isLow
-                  ? '#fde68a'
-                  : undefined
-            }
+            trailColor={quotaState.isWarning ? progressColors.trail : undefined}
           />
         </Tooltip>
         <div className="mt-2 text-gray-500 text-xs">

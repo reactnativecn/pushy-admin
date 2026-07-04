@@ -81,5 +81,9 @@ const style: Record<'body' | 'form' | 'logo' | 'slogan', CSSProperties> = {
     flex: 1,
   },
   logo: { textAlign: 'center', margin: '48px 0' },
-  slogan: { marginTop: 16, color: '#00000073', fontSize: 18 },
+  slogan: {
+    marginTop: 16,
+    color: 'var(--ant-color-text-secondary)',
+    fontSize: 18,
+  },
 };

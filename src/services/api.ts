@@ -8,7 +8,12 @@ import type {
   User,
   Version,
 } from '@/types';
-import { versionKeys } from '@/utils/query-keys';
+import {
+  appKeys,
+  bindingKeys,
+  packageKeys,
+  versionKeys,
+} from '@/utils/query-keys';
 import { queryClient } from '@/utils/queryClient';
 import request from './request';
 
@@ -201,7 +206,7 @@ export const api = {
   deleteApp: (appId: number) =>
     request('delete', `/app/${appId}`).then(() => {
       queryClient.setQueryData(
-        ['appList'],
+        appKeys.list(),
         (old?: { data?: App[] } | undefined) => ({
           data: old?.data?.filter((i) => i.id !== appId) ?? [],
         }),
@@ -212,7 +217,7 @@ export const api = {
       if (!response) throw Error('Failed to create app');
       const { id } = response;
       queryClient.setQueryData(
-        ['appList'],
+        appKeys.list(),
         (old?: { data?: App[] } | undefined) => ({
           data: [...(old?.data || []), { ...params, id }],
         }),
@@ -224,12 +229,15 @@ export const api = {
     params: Omit<App, 'appKey' | 'checkCount' | 'id' | 'platform'>,
   ) =>
     request('put', `/app/${appId}`, params).then(() => {
-      queryClient.setQueryData(['app', appId], (old: App | undefined) => ({
-        ...old,
-        ...params,
-      }));
       queryClient.setQueryData(
-        ['appList'],
+        appKeys.detail(appId),
+        (old: App | undefined) => ({
+          ...old,
+          ...params,
+        }),
+      );
+      queryClient.setQueryData(
+        appKeys.list(),
         (old?: { data?: App[] } | undefined) => ({
           data:
             old?.data?.map((i) => (i.id === appId ? { ...i, ...params } : i)) ??
@@ -258,12 +266,16 @@ export const api = {
   }) =>
     request('put', `/app/${appId}/package/${packageId}`, params).then(() => {
       queryClient.setQueryData(
-        ['packages', appId],
-        ({ data }: { data: Package[] }) => ({
-          data: data?.map((i) =>
-            i.id === packageId ? { ...i, ...params } : i,
-          ),
-        }),
+        packageKeys.byApp(appId),
+        (old?: { data: Package[] }) =>
+          old
+            ? {
+                ...old,
+                data: old.data?.map((i) =>
+                  i.id === packageId ? { ...i, ...params } : i,
+                ),
+              }
+            : old,
       );
       if (params.versionId !== undefined) {
         queryClient.invalidateQueries({ queryKey: versionKeys.byApp(appId) });
@@ -272,10 +284,11 @@ export const api = {
   deletePackage: ({ appId, packageId }: { appId: number; packageId: number }) =>
     request('delete', `/app/${appId}/package/${packageId}`).then(() => {
       queryClient.setQueryData(
-        ['packages', appId],
-        ({ data }: { data: Package[] }) => ({
-          data: data?.filter((i) => i.id !== packageId),
-        }),
+        packageKeys.byApp(appId),
+        (old?: { data: Package[] }) =>
+          old
+            ? { ...old, data: old.data?.filter((i) => i.id !== packageId) }
+            : old,
       );
     }),
   deletePackages: ({
@@ -288,10 +301,14 @@ export const api = {
     request('delete', `/app/${appId}/package`, { packageIds }).then(() => {
       const packageIdSet = new Set(packageIds);
       queryClient.setQueryData(
-        ['packages', appId],
-        ({ data }: { data: Package[] }) => ({
-          data: data?.filter((i) => !packageIdSet.has(i.id)),
-        }),
+        packageKeys.byApp(appId),
+        (old?: { data: Package[] }) =>
+          old
+            ? {
+                ...old,
+                data: old.data?.filter((i) => !packageIdSet.has(i.id)),
+              }
+            : old,
       );
     }),
   // version
@@ -423,16 +440,16 @@ export const api = {
       config,
       packageId,
     }).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['bindings', appId] });
+      queryClient.invalidateQueries({ queryKey: bindingKeys.byApp(appId) });
     }),
   upsertBindings: ({ appId, ...params }: UpsertBindingsParams) =>
     request('post', `/app/${appId}/binding/`, params).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['bindings', appId] });
+      queryClient.invalidateQueries({ queryKey: bindingKeys.byApp(appId) });
     }),
   deleteBinding: ({ appId, bindingId }: { appId: number; bindingId: number }) =>
     request('delete', `/app/${appId}/binding/${bindingId}`).then(() => {
       queryClient.setQueriesData(
-        { queryKey: ['bindings', appId] },
+        { queryKey: bindingKeys.byApp(appId) },
         (old?: { data: Binding[] }) =>
           old
             ? { ...old, data: old.data?.filter((i) => i.id !== bindingId) }

@@ -21,13 +21,16 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
+import type { Quota, Tier } from '@/types';
 import { ANNUAL_BILLING_MONTHS } from '@/utils/billing';
 import {
   CHECK_QUOTA_LOW_RATIO,
+  getCheckQuotaColors,
   getCheckQuotaWarningState,
 } from '@/utils/check-quota-warning';
 import { cn, isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
+import { userKeys } from '@/utils/query-keys';
 import { PRICING_LINK } from '../constants/links';
 import { type products, quotas } from '../constants/quotas';
 
@@ -83,7 +86,7 @@ const getInvoiceHint = (t: (key: string) => string) => (
 
 function useOrderBillingConfig() {
   const { data } = useQuery({
-    queryKey: ['orderBillingConfig'],
+    queryKey: userKeys.orderBillingConfig(),
     queryFn: async () => {
       try {
         return await api.getOrderBillingConfig();
@@ -342,7 +345,7 @@ function PurchaseActionPopover({
                           'mt-0.5 truncate font-semibold text-sm tabular-nums',
                           option.disabled || loading
                             ? 'text-slate-400'
-                            : 'text-blue-700',
+                            : 'text-primary',
                         )}
                       >
                         {detail.value}
@@ -571,28 +574,27 @@ function UserPanel() {
   const appList = apps ?? [];
   const versionCountQueries = useQueries({
     queries: appList.map((app) => ({
-      queryKey: ['accountQuotaVersions', app.id],
+      queryKey: userKeys.accountQuotaVersions(app.id),
       queryFn: () => api.getVersions({ appId: app.id, limit: 1 }),
       staleTime: 60_000,
     })),
   });
   const packageCountQueries = useQueries({
     queries: appList.map((app) => ({
-      queryKey: ['accountQuotaPackages', app.id],
+      queryKey: userKeys.accountQuotaPackages(app.id),
       queryFn: () => api.getPackages(app.id),
       staleTime: 60_000,
     })),
   });
   const orderQuotesQuery = useQuery({
-    queryKey: [
-      'orderQuotes',
+    queryKey: userKeys.orderQuotes([
       user?.tier,
       user?.tierExpiresAt,
       user?.quota?.pv,
       user?.quota?.price,
       user?.quota?.monthlyRenewalPrice,
       user?.quota?.checkUpdateAddonUnits,
-    ],
+    ]),
     queryFn: () => api.getOrderQuotes(),
     enabled: !!user,
     retry: false,
@@ -610,7 +612,12 @@ function UserPanel() {
   const defaultQuota = quotas[tier as keyof typeof quotas];
   const currentQuota = quota || defaultQuota;
 
-  const tierDisplay = currentQuota.title;
+  const tierLabelKey = tier ? `user.purchasable_tiers.${tier}` : '';
+  const translatedTierLabel = tierLabelKey ? t(tierLabelKey) : '';
+  const tierDisplay =
+    translatedTierLabel && translatedTierLabel !== tierLabelKey
+      ? translatedTierLabel
+      : currentQuota.title;
   const appCount = appList.length;
   const versionCounts = versionCountQueries.map((query) => query.data?.count);
   const isVersionCountLoading = versionCountQueries.some(
@@ -861,6 +868,7 @@ function QuotaDetailsPanel({
   });
   const remainingPercent = quotaWarning.percent;
   const status = quotaWarning.progressStatus;
+  const quotaColors = getCheckQuotaColors(quotaWarning.level);
   const displayRemaining =
     typeof remainingChecks === 'number' ? remainingChecks : dailyQuota;
   const panelClassName = quotaWarning.isExceeded
@@ -975,18 +983,10 @@ function QuotaDetailsPanel({
               size="small"
               status={status}
               strokeColor={
-                quotaWarning.isExceeded
-                  ? '#ef4444'
-                  : quotaWarning.isLow
-                    ? '#f59e0b'
-                    : undefined
+                quotaWarning.isWarning ? quotaColors.stroke : undefined
               }
               trailColor={
-                quotaWarning.isExceeded
-                  ? '#fecaca'
-                  : quotaWarning.isLow
-                    ? '#fde68a'
-                    : undefined
+                quotaWarning.isWarning ? quotaColors.trail : undefined
               }
             />
           </div>
@@ -1229,7 +1229,7 @@ function MiniQuotaBars({
               ? 'bg-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.24)] hover:bg-red-600'
               : quotaWarning.isLow
                 ? 'bg-amber-500 hover:bg-amber-600'
-                : 'bg-blue-500 hover:bg-blue-600';
+                : 'bg-primary hover:bg-primary-hover';
             return (
               <div
                 className="flex h-full min-w-0 flex-1 flex-col items-center"

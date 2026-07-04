@@ -1,5 +1,16 @@
 import { describe, expect, test } from 'bun:test';
-import { versionKeys } from './query-keys';
+import {
+  activateKeys,
+  adminKeys,
+  apiTokenKeys,
+  appKeys,
+  auditKeys,
+  bindingKeys,
+  metricsKeys,
+  packageKeys,
+  userKeys,
+  versionKeys,
+} from './query-keys';
 
 describe('versionKeys', () => {
   describe('byApp', () => {
@@ -80,5 +91,80 @@ describe('versionKeys', () => {
       const key2 = versionKeys.page(2, 0, 10);
       expect(key1).not.toEqual(key2);
     });
+  });
+});
+
+describe('domain key factories', () => {
+  test('appKeys', () => {
+    expect(appKeys.list()).toEqual(['appList']);
+    expect(appKeys.detail(3)).toEqual(['app', 3]);
+  });
+
+  test('packageKeys / bindingKeys', () => {
+    expect(packageKeys.byApp(7)).toEqual(['packages', 7]);
+    expect(bindingKeys.byApp(7)).toEqual(['bindings', 7]);
+  });
+
+  test('userKeys', () => {
+    expect(userKeys.info()).toEqual(['userInfo']);
+    expect(userKeys.orderBillingConfig()).toEqual(['orderBillingConfig']);
+    expect(userKeys.accountQuotaVersions(1)).toEqual([
+      'accountQuotaVersions',
+      1,
+    ]);
+    expect(userKeys.orderQuotes(['pro', undefined, 100])).toEqual([
+      'orderQuotes',
+      'pro',
+      undefined,
+      100,
+    ]);
+  });
+
+  test('auditKeys / apiTokenKeys / activateKeys', () => {
+    expect(auditKeys.all()).toEqual(['auditLogs']);
+    expect(apiTokenKeys.all()).toEqual(['apiTokens']);
+    expect(activateKeys.byToken('t')).toEqual(['activate', 't']);
+    expect(activateKeys.byToken(null)).toEqual(['activate', null]);
+  });
+
+  test('metricsKeys', () => {
+    expect(metricsKeys.global('a', 'b', 'pv')).toEqual([
+      'globalMetrics',
+      'a',
+      'b',
+      'pv',
+    ]);
+    expect(metricsKeys.internal('main')).toEqual(['internalMetrics', 'main']);
+    expect(metricsKeys.internalApi5xxEvents('main', 20)).toEqual([
+      'internalApi5xxEvents',
+      'main',
+      20,
+    ]);
+  });
+
+  describe('adminKeys.users partial matching', () => {
+    test('base key is a prefix of the searched key', () => {
+      const base = adminKeys.users();
+      const searched = adminKeys.users('alice');
+      expect(base).toEqual(['adminUsers']);
+      expect(searched).toEqual(['adminUsers', 'alice']);
+      // invalidateQueries(base) must match the more specific searched key
+      expect(searched.slice(0, base.length)).toEqual(base);
+    });
+  });
+
+  describe('adminKeys.apps partial matching', () => {
+    test('base key is a prefix of the paged key', () => {
+      const base = adminKeys.apps();
+      const paged = adminKeys.apps('q', 2, 10);
+      expect(base).toEqual(['adminApps']);
+      expect(paged).toEqual(['adminApps', 'q', 2, 10]);
+      expect(paged.slice(0, base.length)).toEqual(base);
+    });
+  });
+
+  test('adminKeys.userDetail / config', () => {
+    expect(adminKeys.userDetail(5)).toEqual(['adminUserDetail', 5]);
+    expect(adminKeys.config()).toEqual(['adminConfig']);
   });
 });

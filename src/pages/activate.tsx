@@ -5,13 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
+import { activateKeys } from '@/utils/query-keys';
 
 export const Activate = () => {
   const { t } = useTranslation();
   const { search } = useLocation();
   const token = new URLSearchParams(search).get('code') || '';
   const { isLoading, error } = useQuery({
-    queryKey: ['activate', token],
+    queryKey: activateKeys.byToken(token),
     queryFn: () => api.activate({ token }),
     enabled: !!token,
   });

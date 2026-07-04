@@ -24,9 +24,12 @@ const platformLabels: Record<AppItem['platform'], string> = {
   harmony: 'HarmonyOS',
 };
 
-const formatAppKey = (appKey?: string | null, t?: (key: string) => string) => {
+const formatAppKey = (
+  appKey: string | null | undefined,
+  t: (key: string) => string,
+) => {
   if (!appKey) {
-    return t?.('apps.key_pending') ?? '尚未生成 App Key';
+    return t('apps.key_pending');
   }
   if (appKey.length <= 16) {
     return appKey;
@@ -77,7 +80,7 @@ export const Component = () => {
     <div className="min-w-0">
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <Title level={3} className="m-0!">
+          <Title level={4} className="m-0!">
             {t('apps.title')}
           </Title>
           <div className="mt-1 text-gray-500">{t('apps.description')}</div>
@@ -222,7 +225,7 @@ function AppCard({ app }: { app: AppItem }) {
               {(app.checkCount ?? 0).toLocaleString()}
             </span>
           </div>
-          <div className="pt-1 text-blue-600 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="pt-1 text-primary text-xs opacity-0 transition-opacity group-hover:opacity-100">
             {t('apps.open_manage')}
           </div>
         </div>
