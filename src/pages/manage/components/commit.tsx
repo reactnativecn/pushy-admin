@@ -1,8 +1,8 @@
 import { PullRequestOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
-import dayjs from 'dayjs';
 import gitUrlParse from 'git-url-parse';
 import { useTranslation } from 'react-i18next';
+import dayjs from '@/utils/dayjs';
 
 const popoverOverlayStyle: React.CSSProperties = {
   maxWidth: 288,

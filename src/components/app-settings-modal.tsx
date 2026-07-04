@@ -1,4 +1,4 @@
-import { DeleteFilled } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import {
   Button,
@@ -162,8 +162,7 @@ function AppSettingsModalContent({
         </Form.Item>
         <Form.Item label={t('app_settings_modal.delete_app')} layout="vertical">
           <Button
-            type="primary"
-            icon={<DeleteFilled />}
+            icon={<DeleteOutlined />}
             onClick={() => {
               Modal.confirm({
                 title: t('app_settings_modal.delete_confirm'),

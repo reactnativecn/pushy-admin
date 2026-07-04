@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/*
+ * 让 Tailwind 的颜色工具类（text-primary / bg-primary / border-error ...）
+ * 直接消费 antd（cssVar 模式）输出的 CSS 变量，实现全站唯一色源。
+ * antd 的变量在运行时注入到 :root，这里只做别名映射。
+ */
+@theme inline {
+  --color-primary: var(--ant-color-primary);
+  --color-primary-hover: var(--ant-color-primary-hover);
+  --color-primary-active: var(--ant-color-primary-active);
+  --color-success: var(--ant-color-success);
+  --color-warning: var(--ant-color-warning);
+  --color-error: var(--ant-color-error);
+  --color-info: var(--ant-color-info);
+  --color-text: var(--ant-color-text);
+  --color-text-secondary: var(--ant-color-text-secondary);
+  --color-text-tertiary: var(--ant-color-text-tertiary);
+  --color-border: var(--ant-color-border);
+}
+
 html,
 body {
   height: 100%;
@@ -11,6 +30,17 @@ a {
 
 a:hover {
   text-decoration: none;
+}
+
+/*
+ * 页面级容器：统一最大宽度与水平居中，避免超宽屏下内容拉满。
+ * 之前该类被 8 处页面引用却无定义（幽灵类），页面留白只靠
+ * .ant-layout-content 的 padding，缺少统一的最大宽度约束。
+ */
+.page-section {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
 }
 
 .ant-layout-content {
@@ -38,7 +68,7 @@ a:hover {
 
 .body {
   padding: 16px;
-  background: #fff;
+  background: var(--ant-color-bg-container);
 }
 
 a.ant-typography .ant-typography {
@@ -46,7 +76,7 @@ a.ant-typography .ant-typography {
 }
 
 a.ant-typography:hover .ant-typography {
-  color: #40a9ff;
+  color: var(--ant-color-primary-hover);
 }
 
 [draggable] {

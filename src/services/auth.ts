@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { message } from 'antd';
 import { md5 } from 'hash-wasm';
+import i18n from '@/i18n';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { RequestError, setToken } from '@/services/request';
@@ -36,14 +37,15 @@ export async function login(email: string, password: string) {
     const res = await api.login(params);
     if (res?.token) {
       setToken(res.token);
-      message.success('登录成功');
+      message.success(i18n.t('login.success'));
       router.navigate(resolveLoginFrom(getSearchParam('loginFrom')));
     }
   } catch (err) {
     if (err instanceof RequestError && err.status === 423) {
       router.navigate(rootRouterPath.inactivated);
     } else {
-      const errorMessage = err instanceof Error ? err.message : '登录失败';
+      const errorMessage =
+        err instanceof Error ? err.message : i18n.t('login.failed');
       message.error(errorMessage);
     }
   }

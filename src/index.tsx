@@ -7,8 +7,10 @@ import { RouterProvider } from 'react-router-dom';
 
 import './index.css';
 import './i18n';
+import './utils/dayjs';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { router } from './router';
+import { themeConfig } from './theme';
 import { queryClient } from './utils/queryClient';
 
 const antdLocaleMap: Record<string, typeof zhCN> = {
@@ -71,7 +73,7 @@ function App() {
   const antdLocale = antdLocaleMap[language] ?? zhCN;
 
   return (
-    <ConfigProvider locale={antdLocale}>
+    <ConfigProvider locale={antdLocale} theme={themeConfig}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

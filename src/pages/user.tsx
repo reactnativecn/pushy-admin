@@ -24,6 +24,7 @@ import { logout } from '@/services/auth';
 import { ANNUAL_BILLING_MONTHS } from '@/utils/billing';
 import {
   CHECK_QUOTA_LOW_RATIO,
+  getCheckQuotaColors,
   getCheckQuotaWarningState,
 } from '@/utils/check-quota-warning';
 import { cn, isValidExternalUrl } from '@/utils/helper';
@@ -342,7 +343,7 @@ function PurchaseActionPopover({
                           'mt-0.5 truncate font-semibold text-sm tabular-nums',
                           option.disabled || loading
                             ? 'text-slate-400'
-                            : 'text-blue-700',
+                            : 'text-primary',
                         )}
                       >
                         {detail.value}
@@ -610,7 +611,12 @@ function UserPanel() {
   const defaultQuota = quotas[tier as keyof typeof quotas];
   const currentQuota = quota || defaultQuota;
 
-  const tierDisplay = currentQuota.title;
+  const tierLabelKey = tier ? `user.purchasable_tiers.${tier}` : '';
+  const translatedTierLabel = tierLabelKey ? t(tierLabelKey) : '';
+  const tierDisplay =
+    translatedTierLabel && translatedTierLabel !== tierLabelKey
+      ? translatedTierLabel
+      : currentQuota.title;
   const appCount = appList.length;
   const versionCounts = versionCountQueries.map((query) => query.data?.count);
   const isVersionCountLoading = versionCountQueries.some(
@@ -861,6 +867,7 @@ function QuotaDetailsPanel({
   });
   const remainingPercent = quotaWarning.percent;
   const status = quotaWarning.progressStatus;
+  const quotaColors = getCheckQuotaColors(quotaWarning.level);
   const displayRemaining =
     typeof remainingChecks === 'number' ? remainingChecks : dailyQuota;
   const panelClassName = quotaWarning.isExceeded
@@ -975,18 +982,10 @@ function QuotaDetailsPanel({
               size="small"
               status={status}
               strokeColor={
-                quotaWarning.isExceeded
-                  ? '#ef4444'
-                  : quotaWarning.isLow
-                    ? '#f59e0b'
-                    : undefined
+                quotaWarning.isWarning ? quotaColors.stroke : undefined
               }
               trailColor={
-                quotaWarning.isExceeded
-                  ? '#fecaca'
-                  : quotaWarning.isLow
-                    ? '#fde68a'
-                    : undefined
+                quotaWarning.isWarning ? quotaColors.trail : undefined
               }
             />
           </div>
@@ -1229,7 +1228,7 @@ function MiniQuotaBars({
               ? 'bg-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.24)] hover:bg-red-600'
               : quotaWarning.isLow
                 ? 'bg-amber-500 hover:bg-amber-600'
-                : 'bg-blue-500 hover:bg-blue-600';
+                : 'bg-primary hover:bg-primary-hover';
             return (
               <div
                 className="flex h-full min-w-0 flex-1 flex-col items-center"

@@ -1,14 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { getToken } from '@/services/request';
+import dayjs from '@/utils/dayjs';
 import { versionKeys } from '@/utils/query-keys';
-import 'dayjs/locale/zh-cn';
-import { useEffect, useMemo, useState } from 'react';
-
-dayjs.locale('zh-cn');
-dayjs.extend(relativeTime);
 
 const METRIC_CATEGORY_SEPARATOR = '\u001f';
 const PACKAGE_METRIC_PREFIX = `packageVersion_buildTime${METRIC_CATEGORY_SEPARATOR}`;
@@ -170,6 +166,7 @@ export const useLocalStorageCooldown = ({
 };
 
 export const useUserInfo = () => {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ['userInfo'],
     queryFn: api.me,
@@ -181,21 +178,21 @@ export const useUserInfo = () => {
           ...data,
           quota: {
             ...data.quota,
-            title: '定制版',
+            title: t('user.purchasable_tiers.custom'),
           },
         }
       : data;
   const expireDay = dayjs(data?.tierExpiresAt);
   const displayExpireDay = data?.tierExpiresAt
-    ? expireDay.format('YYYY年MM月DD日')
-    : '无';
+    ? expireDay.format(t('user.date_format'))
+    : t('user.no_expire');
   const now = data?.serverTime ? dayjs(data.serverTime) : dayjs();
   const remainingDays = data?.tierExpiresAt
     ? expireDay.add(1, 'day').diff(now, 'day')
     : null;
   const isExpiringSoon = remainingDays !== null && remainingDays <= 90;
   const displayRemainingDays = isExpiringSoon
-    ? `(剩余 ${remainingDays} 天，之后转为免费版)`
+    ? t('user.remaining_note', { days: remainingDays })
     : '';
   return {
     user: getToken() ? user : null,

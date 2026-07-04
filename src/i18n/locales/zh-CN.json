@@ -1,11 +1,28 @@
 {
+  "notice": {
+    "v8_deprecation_title": "通知：react-native-update 即将停止支持 v8 以下版本",
+    "v8_deprecation_p1_before": "从",
+    "v8_deprecation_date": "2025年8月10日",
+    "v8_deprecation_p1_after": "起低于 v8 版本的原生包和热更包将无法上传，请尽快升级到 v8 及以上版本。已上传的版本不受影响。",
+    "v8_deprecation_p2": "跨大版本更新时需要重新打原生包，并请充分测试。",
+    "v8_deprecation_p3": "v5 - v9 版本代码基本兼容，v10 版本代码与之前版本不兼容。",
+    "v8_deprecation_p4": "升级相关的技术问题，请在 QQ 群 729013783 中咨询技术支持。",
+    "ok": "我知道了",
+    "dont_show_again": "不再显示"
+  },
   "login": {
     "slogan": "极速热更新框架 for React Native",
     "email_placeholder": "邮箱",
     "password_placeholder": "密码",
     "login_button": "登录",
     "register": "注册",
-    "forgot_password": "忘记密码？"
+    "forgot_password": "忘记密码？",
+    "success": "登录成功",
+    "failed": "登录失败"
+  },
+  "request": {
+    "error": "错误：{{message}}",
+    "proxy_hint": "如有使用代理，请关闭代理后重试"
   },
   "register": {
     "slogan": "极速热更新框架 for React Native",
@@ -84,6 +101,7 @@
     "service_version": "服务版本",
     "service_expire": "服务有效期至",
     "no_expire": "无",
+    "remaining_note": "(剩余 {{days}} 天，之后转为免费版)",
     "purchase_note": "购买说明",
     "quota_details": "额度详情",
     "view_pricing": "查看价格表",
@@ -248,6 +266,9 @@
     "col_status": "状态码",
     "col_payload": "提交数据",
     "col_device": "设备信息",
+    "col_browser": "浏览器",
+    "col_os": "操作系统",
+    "col_ip_addr": "IP 地址",
     "col_details": "详情",
     "view": "查看",
     "title": "操作日志",
@@ -405,6 +426,22 @@
     "col_tier_expires": "套餐过期时间",
     "col_custom_quota": "自定义配额",
     "col_actions": "操作",
+    "col_note": "备注",
+    "detail_title": "用户详细信息",
+    "basic_info": "基本信息",
+    "quota_usage": "配额与用量",
+    "pv_limit": "每日更新检查上限",
+    "today_used": "今日已用",
+    "today_remaining": "今日剩余",
+    "avg_7_days": "近 7 天日均",
+    "last_7_days_details": "近 7 天明细",
+    "app_limit": "应用数量上限",
+    "package_limit": "单应用发布包上限",
+    "apps_and_packages": "应用与发布包",
+    "packages_count": "发布包数",
+    "pkg_name": "包名 / 版本",
+    "checks_value": "{{value}} 次",
+    "packages_value": "{{value}} 个",
     "status_normal": "正常",
     "status_unverified": "未验证",
     "has_quota": "有",
@@ -732,7 +769,8 @@
     "yes": "是",
     "no": "否",
     "loading": "加载中...",
-    "copied": "已复制"
+    "copied": "已复制",
+    "search": "搜索"
   },
   "language": {
     "switch": "语言",

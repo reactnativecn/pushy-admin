@@ -26,11 +26,13 @@ declare module 'bun:test' {
   type ExpectAssertions = {
     toBe(expected: unknown): void;
     toBeGreaterThan(expected: number): void;
+    toBeInstanceOf(expected: unknown): void;
     toBeNull(): void;
     toContain(expected: unknown): void;
     toEqual(expected: unknown): void;
     toHaveBeenCalledWith(...args: unknown[]): void;
     toHaveBeenCalled(): void;
+    toHaveBeenCalledTimes(expected: number): void;
     toHaveLength(expected: number): void;
     toThrow(expected?: unknown): void;
   };
@@ -49,6 +51,7 @@ declare module 'bun:test' {
   export function setSystemTime(time: Date | number | null): void;
   export const mock: {
     module(path: string, factory: () => any): void;
+    restore(): void;
     <T extends (...args: any[]) => any>(
       fn?: T,
     ): T & { mockClear(): void; mockImplementationOnce(fn: T): void };

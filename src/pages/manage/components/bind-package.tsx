@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { useManageContext } from '../hooks/useManageContext';
 
-type DepChangeType = '新增' | '移除' | '版本变更';
+type DepChangeType = 'added' | 'removed' | 'changed';
 
 type DepChangeRow = {
   key: string;
@@ -51,9 +51,9 @@ type DepsChangePackage = {
 function getDepsChangeSummary(changes: DepChangeRow[]): DepChangeSummary {
   return changes.reduce(
     (acc, item) => {
-      if (item.changeType === '新增') {
+      if (item.changeType === 'added') {
         acc.added += 1;
-      } else if (item.changeType === '移除') {
+      } else if (item.changeType === 'removed') {
         acc.removed += 1;
       } else {
         acc.changed += 1;
@@ -81,32 +81,32 @@ function getDepsChangeColumns({
         <span>
           {t('bind_package.col_dependencies')}（
           <Checkbox
-            checked={filters.新增}
+            checked={filters.added}
             onChange={({ target }) => {
-              onFilterChange('新增', target.checked);
+              onFilterChange('added', target.checked);
             }}
           />
-          <span className="ml-1" style={{ color: '#dc2626', fontWeight: 700 }}>
+          <span className="ml-1 font-bold text-error">
             {t('bind_package.change_added')} {summary.added}
           </span>
           ，
           <Checkbox
-            checked={filters.移除}
+            checked={filters.removed}
             onChange={({ target }) => {
-              onFilterChange('移除', target.checked);
+              onFilterChange('removed', target.checked);
             }}
           />
-          <span className="ml-1" style={{ color: '#16a34a', fontWeight: 700 }}>
+          <span className="ml-1 font-bold text-success">
             {t('bind_package.change_removed')} {summary.removed}
           </span>
           ，
           <Checkbox
-            checked={filters.版本变更}
+            checked={filters.changed}
             onChange={({ target }) => {
-              onFilterChange('版本变更', target.checked);
+              onFilterChange('changed', target.checked);
             }}
           />
-          <span className="ml-1" style={{ color: '#d97706', fontWeight: 700 }}>
+          <span className="ml-1 font-bold text-warning">
             {t('bind_package.change_changed')} {summary.changed}
           </span>
           ）
@@ -121,30 +121,30 @@ function getDepsChangeColumns({
       key: 'versionChange',
       ellipsis: true,
       render: (_: unknown, record: DepChangeRow) => {
-        if (record.changeType === '版本变更') {
+        if (record.changeType === 'changed') {
           return (
             <span className="font-mono">
-              <span style={{ color: '#d97706', fontWeight: 600 }}>
+              <span className="font-semibold text-warning">
                 {record.oldVersion}
               </span>
               <ArrowRightOutlined className="mx-2 text-gray-400" />
-              <span style={{ color: '#d97706', fontWeight: 600 }}>
+              <span className="font-semibold text-warning">
                 {record.newVersion}
               </span>
             </span>
           );
         }
 
-        if (record.changeType === '新增') {
+        if (record.changeType === 'added') {
           return (
             <span className="font-mono">
-              <span style={{ color: '#dc2626', fontWeight: 700 }}>
+              <span className="font-bold text-error">
                 {t('bind_package.change_added')}
               </span>
               <span className="mx-2 text-gray-400">|</span>
-              <span style={{ color: '#6b7280' }}>{record.oldVersion}</span>
+              <span className="text-text-tertiary">{record.oldVersion}</span>
               <ArrowRightOutlined className="mx-2 text-gray-400" />
-              <span style={{ color: '#dc2626', fontWeight: 600 }}>
+              <span className="font-semibold text-error">
                 {record.newVersion}
               </span>
             </span>
@@ -153,15 +153,15 @@ function getDepsChangeColumns({
 
         return (
           <span className="font-mono">
-            <span style={{ color: '#16a34a', fontWeight: 700 }}>
+            <span className="font-bold text-success">
               {t('bind_package.change_removed')}
             </span>
             <span className="mx-2 text-gray-400">|</span>
-            <span style={{ color: '#16a34a', fontWeight: 600 }}>
+            <span className="font-semibold text-success">
               {record.oldVersion}
             </span>
             <ArrowRightOutlined className="mx-2 text-gray-400" />
-            <span style={{ color: '#6b7280' }}>{record.newVersion}</span>
+            <span className="text-text-tertiary">{record.newVersion}</span>
           </span>
         );
       },
@@ -180,9 +180,9 @@ const DepsChangeConfirmContent = ({
 }) => {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<DepChangeFilters>({
-    新增: true,
-    移除: true,
-    版本变更: true,
+    added: true,
+    removed: true,
+    changed: true,
   });
 
   const summary = useMemo(() => getDepsChangeSummary(changes), [changes]);
@@ -252,7 +252,7 @@ function getDepsChanges(
         dependency: key,
         oldVersion: '-',
         newVersion: newValue,
-        changeType: '新增',
+        changeType: 'added',
       });
       continue;
     }
@@ -262,7 +262,7 @@ function getDepsChanges(
         dependency: key,
         oldVersion: oldValue,
         newVersion: '-',
-        changeType: '移除',
+        changeType: 'removed',
       });
       continue;
     }
@@ -276,7 +276,7 @@ function getDepsChanges(
         dependency: key,
         oldVersion: oldValue,
         newVersion: newValue,
-        changeType: '版本变更',
+        changeType: 'changed',
       });
     }
   }

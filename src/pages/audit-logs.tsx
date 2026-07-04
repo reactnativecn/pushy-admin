@@ -19,24 +19,17 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
-import dayjs, { type Dayjs } from 'dayjs';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import type { Dayjs } from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { UAParser } from 'ua-parser-js';
+import dayjs from '@/utils/dayjs';
 import { patchSearchParams } from '@/utils/helper';
 import { useAuditLogs } from '@/utils/hooks';
-import 'dayjs/locale/zh-cn';
 
 const { RangePicker } = DatePicker;
-const { Paragraph, Text } = Typography;
-
-dayjs.extend(relativeTime);
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
+const { Paragraph, Text, Title } = Typography;
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
@@ -221,7 +214,7 @@ const buildSearchText = (t: TranslateFn, log: AuditLog) => {
 };
 
 export const AuditLogs = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -242,14 +235,6 @@ export const AuditLogs = () => {
 
   const statusFilterOptions = getStatusFilterOptions(t);
   const actionOptions = getActionOptions(t);
-
-  useEffect(() => {
-    dayjs.locale(
-      (i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('zh')
-        ? 'zh-cn'
-        : 'en',
-    );
-  }, [i18n.language, i18n.resolvedLanguage]);
 
   useEffect(() => {
     setSearchInput(searchParams.get('query')?.trim() ?? '');
@@ -484,7 +469,7 @@ export const AuditLogs = () => {
         const actionLabel = getActionLabel(t, record.method, record.path);
         const isDelete = record.method.toUpperCase() === 'DELETE';
         return (
-          <span style={isDelete ? { color: '#ff4d4f' } : undefined}>
+          <span className={isDelete ? 'text-error' : undefined}>
             {actionLabel}
           </span>
         );
@@ -602,10 +587,10 @@ export const AuditLogs = () => {
       <div className="mb-4">
         <div className="mb-2 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-semibold md:text-xl">
+            <Title level={4} className="m-0! flex items-center gap-2">
               <FileTextOutlined />
               {t('audit_logs.title')}
-            </h2>
+            </Title>
             <p className="mt-1 text-sm text-gray-500">
               {t('audit_logs.description')}
             </p>

@@ -259,11 +259,15 @@ export const api = {
     request('put', `/app/${appId}/package/${packageId}`, params).then(() => {
       queryClient.setQueryData(
         ['packages', appId],
-        ({ data }: { data: Package[] }) => ({
-          data: data?.map((i) =>
-            i.id === packageId ? { ...i, ...params } : i,
-          ),
-        }),
+        (old?: { data: Package[] }) =>
+          old
+            ? {
+                ...old,
+                data: old.data?.map((i) =>
+                  i.id === packageId ? { ...i, ...params } : i,
+                ),
+              }
+            : old,
       );
       if (params.versionId !== undefined) {
         queryClient.invalidateQueries({ queryKey: versionKeys.byApp(appId) });
@@ -273,9 +277,10 @@ export const api = {
     request('delete', `/app/${appId}/package/${packageId}`).then(() => {
       queryClient.setQueryData(
         ['packages', appId],
-        ({ data }: { data: Package[] }) => ({
-          data: data?.filter((i) => i.id !== packageId),
-        }),
+        (old?: { data: Package[] }) =>
+          old
+            ? { ...old, data: old.data?.filter((i) => i.id !== packageId) }
+            : old,
       );
     }),
   deletePackages: ({
@@ -289,9 +294,13 @@ export const api = {
       const packageIdSet = new Set(packageIds);
       queryClient.setQueryData(
         ['packages', appId],
-        ({ data }: { data: Package[] }) => ({
-          data: data?.filter((i) => !packageIdSet.has(i.id)),
-        }),
+        (old?: { data: Package[] }) =>
+          old
+            ? {
+                ...old,
+                data: old.data?.filter((i) => !packageIdSet.has(i.id)),
+              }
+            : old,
       );
     }),
   // version
