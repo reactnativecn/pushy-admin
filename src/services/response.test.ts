@@ -1,4 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+// biome-ignore format: keep single line for ts-ignore
+// @ts-expect-error
+import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import * as realAuth from './auth';
 
 const mockLogout = mock(() => {});
 const mockMessageError = mock(() => {});
@@ -8,6 +11,7 @@ mock.module('antd', () => ({
 }));
 
 mock.module('./auth', () => ({
+  ...realAuth,
   logout: mockLogout,
 }));
 
@@ -44,6 +48,10 @@ describe('handleResponse', () => {
 
   afterEach(() => {
     mock.restore();
+  });
+
+  afterAll(() => {
+    mock.module('./auth', () => realAuth);
   });
 
   it('returns parsed JSON on a 200 response', async () => {
