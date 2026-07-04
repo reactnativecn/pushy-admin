@@ -126,7 +126,7 @@ function AppDetailTab({
           : undefined,
         disabled
           ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-300 shadow-none hover:border-slate-200 hover:bg-slate-50 hover:text-slate-300'
-          : undefined,
+          : 'cursor-pointer',
       )}
       disabled={disabled}
       onClick={onClick}
