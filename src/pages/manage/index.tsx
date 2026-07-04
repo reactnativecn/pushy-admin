@@ -18,6 +18,7 @@ import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { rootRouterPath, router } from '@/router';
+import type { Package } from '@/types';
 import { rememberRecentApp } from '@/utils/helper';
 import { useApp } from '@/utils/hooks';
 import PackageList from './components/package-list';

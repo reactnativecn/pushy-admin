@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { UAParser } from 'ua-parser-js';
+import type { AuditLog } from '@/types';
 import dayjs from '@/utils/dayjs';
 import { patchSearchParams } from '@/utils/helper';
 import { useAuditLogs } from '@/utils/hooks';

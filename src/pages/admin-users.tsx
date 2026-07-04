@@ -32,7 +32,7 @@ import {
 } from 'vanilla-jsoneditor';
 import { quotas } from '@/constants/quotas';
 import { adminApi } from '@/services/admin-api';
-import type { Tier } from '@/types';
+import type { AdminUser, Quota, Tier } from '@/types';
 import { patchSearchParams } from '@/utils/helper';
 import { adminKeys } from '@/utils/query-keys';
 

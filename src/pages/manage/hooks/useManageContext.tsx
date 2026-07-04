@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import type { App, Binding, Package } from '@/types';
 import {
   useBinding,
   usePackages,

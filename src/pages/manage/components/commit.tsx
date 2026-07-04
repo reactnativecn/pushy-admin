@@ -2,6 +2,7 @@ import { PullRequestOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
 import gitUrlParse from 'git-url-parse';
 import { useTranslation } from 'react-i18next';
+import type { Commit as CommitType } from '@/types';
 import dayjs from '@/utils/dayjs';
 
 const popoverOverlayStyle: React.CSSProperties = {
@@ -10,7 +11,7 @@ const popoverOverlayStyle: React.CSSProperties = {
   overflowY: 'auto',
 };
 
-export const Commit = ({ commit }: { commit?: Commit }) => {
+export const Commit = ({ commit }: { commit?: CommitType }) => {
   const { t } = useTranslation();
 
   if (!commit) {

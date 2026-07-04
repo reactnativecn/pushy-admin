@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
+import type { Package } from '@/types';
 import { useManageContext } from '../hooks/useManageContext';
 import { Commit } from './commit';
 import { DepsTable } from './deps-table';

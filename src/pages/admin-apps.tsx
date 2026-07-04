@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
+import type { AdminApp } from '@/types';
 import { patchSearchParams } from '@/utils/helper';
 import { adminKeys } from '@/utils/query-keys';
 

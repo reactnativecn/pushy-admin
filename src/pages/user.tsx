@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
+import type { Quota, Tier } from '@/types';
 import { ANNUAL_BILLING_MONTHS } from '@/utils/billing';
 import {
   CHECK_QUOTA_LOW_RATIO,
