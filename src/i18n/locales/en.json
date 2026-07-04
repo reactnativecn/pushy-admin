@@ -526,7 +526,10 @@
     "checks": "checks",
     "app_settings": "App Settings",
     "open_app_settings": "Open {{name}} settings",
-    "paused": "Paused"
+    "paused": "Paused",
+    "language": "Language",
+    "language_en": "English",
+    "language_zh": "中文"
   },
   "app_drawer": {
     "expand": "Expand app list",

@@ -6,6 +6,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   FileTextOutlined,
+  GlobalOutlined,
   InfoCircleOutlined,
   KeyOutlined,
   LineChartOutlined,
@@ -18,7 +19,16 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Drawer, Empty, Input, Menu, Popover, Tag } from 'antd';
+import {
+  Button,
+  Drawer,
+  Dropdown,
+  Empty,
+  Input,
+  Menu,
+  Popover,
+  Tag,
+} from 'antd';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -102,6 +112,67 @@ function getExternalItems(
   ];
 }
 
+const languageOptions = [
+  { key: 'zh-CN', labelKey: 'nav.language_zh' },
+  { key: 'en', labelKey: 'nav.language_en' },
+] as const;
+
+function getCurrentLanguage(language?: string) {
+  return language?.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en';
+}
+
+function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
+  const { t, i18n } = useTranslation();
+  const currentLanguage = getCurrentLanguage(
+    i18n.resolvedLanguage ?? i18n.language,
+  );
+  const items: MenuItems = languageOptions.map(({ key, labelKey }) => ({
+    key,
+    label: t(labelKey),
+  }));
+
+  return (
+    <Dropdown
+      menu={{
+        items,
+        selectable: true,
+        selectedKeys: [currentLanguage],
+        onClick: ({ key }) => {
+          void i18n.changeLanguage(key);
+        },
+      }}
+      placement="bottomRight"
+      trigger={['click']}
+    >
+      <Button
+        aria-label={t('nav.language')}
+        className={compact ? 'px-2' : undefined}
+        icon={<GlobalOutlined />}
+        type="text"
+      >
+        {compact
+          ? null
+          : t(`nav.language_${currentLanguage === 'zh-CN' ? 'zh' : 'en'}`)}
+      </Button>
+    </Dropdown>
+  );
+}
+
+function getLanguageMenuItem(
+  t: (key: string) => string,
+  currentLanguage: string,
+): MenuItems[number] {
+  return {
+    key: 'language',
+    icon: <GlobalOutlined />,
+    label: t('nav.language'),
+    children: languageOptions.map(({ key, labelKey }) => ({
+      key: `language:${key}`,
+      label: currentLanguage === key ? `${t(labelKey)} ✓` : t(labelKey),
+    })),
+  };
+}
+
 export default function TopNavigation({
   isMobile,
   showAuthenticatedChrome,
@@ -136,10 +207,10 @@ export default function TopNavigation({
     };
   }, []);
 
-  const externalItems = getExternalItems(
-    t,
+  const currentLanguage = getCurrentLanguage(
     i18n.resolvedLanguage ?? i18n.language,
   );
+  const externalItems = getExternalItems(t, currentLanguage);
 
   const authenticatedItems: MenuItems =
     showAuthenticatedChrome && user
@@ -240,6 +311,8 @@ export default function TopNavigation({
       : [];
 
   const mobileItems: MenuItems = [
+    getLanguageMenuItem(t, currentLanguage),
+    { type: 'divider' as const },
     ...authenticatedItems,
     ...(authenticatedItems.length ? [{ type: 'divider' as const }] : []),
     ...externalItems,
@@ -291,7 +364,10 @@ export default function TopNavigation({
             items={mobileItems}
             onClose={() => setMobileMenuOpen(false)}
             open={mobileMenuOpen}
-            selectedKeys={selectedKeys}
+            selectedKeys={[...selectedKeys, `language:${currentLanguage}`]}
+            onLanguageChange={(language) => {
+              void i18n.changeLanguage(language);
+            }}
           />
         </div>
       ) : (
@@ -303,6 +379,7 @@ export default function TopNavigation({
             items={[...authenticatedItems, ...externalItems]}
             style={{ height: 64, lineHeight: '64px' }}
           />
+          <LanguageSwitcher />
           {showAuthenticatedChrome && user && (
             <Link
               to={rootRouterPath.user}
@@ -323,11 +400,13 @@ export default function TopNavigation({
 function MobileMenuSheet({
   items,
   onClose,
+  onLanguageChange,
   open,
   selectedKeys,
 }: {
   items: MenuItems;
   onClose: () => void;
+  onLanguageChange: (language: string) => void;
   open: boolean;
   selectedKeys: string[];
 }) {
@@ -345,7 +424,12 @@ function MobileMenuSheet({
         className="border-e-0!"
         items={items}
         mode="inline"
-        onClick={onClose}
+        onClick={({ key }) => {
+          if (String(key).startsWith('language:')) {
+            onLanguageChange(String(key).replace('language:', ''));
+          }
+          onClose();
+        }}
         selectedKeys={selectedKeys}
       />
     </Drawer>

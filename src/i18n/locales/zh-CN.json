@@ -526,7 +526,10 @@
     "checks": "检查次数",
     "app_settings": "应用设置",
     "open_app_settings": "打开 {{name}} 应用设置",
-    "paused": "暂停"
+    "paused": "暂停",
+    "language": "语言",
+    "language_en": "English",
+    "language_zh": "中文"
   },
   "app_drawer": {
     "expand": "展开应用列表",
