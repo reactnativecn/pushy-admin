@@ -1,9 +1,13 @@
-import { EditOutlined, SearchOutlined } from '@ant-design/icons';
+import { EditOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Badge,
   Button,
   Card,
+  Collapse,
   DatePicker,
+  Descriptions,
+  Drawer,
   Form,
   Grid,
   Input,
@@ -118,12 +122,137 @@ const JsonEditorWrapper = ({
   return <div ref={containerRef} style={{ height }} />;
 };
 
+const UserDetailDrawer = ({
+  userId,
+  open,
+  onClose,
+  isMobile,
+  t,
+}: {
+  userId: number | null;
+  open: boolean;
+  onClose: () => void;
+  isMobile: boolean;
+  t?: (key: string) => string;
+}) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ['adminUserDetail', userId],
+    queryFn: () => (userId ? adminApi.getUserDetail(userId) : null),
+    enabled: !!userId && open,
+  });
+
+  const translate = (key: string, fallback: string) => {
+    if (t) {
+      return t(key);
+    }
+    return fallback;
+  };
+
+  const detail = data;
+
+  return (
+    <Drawer
+      title={translate('admin_users.detail_title', '用户详细信息')}
+      width={isMobile ? '100%' : 720}
+      onClose={onClose}
+      open={open}
+      destroyOnClose
+    >
+      <Spin spinning={isLoading}>
+        {detail && (
+          <Space direction="vertical" size="large" className="w-full">
+            <Descriptions title={translate('admin_users.basic_info', '基本信息')} bordered column={2}>
+              <Descriptions.Item label="ID">{detail.user.id}</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.col_name', '用户名')}>{detail.user.name}</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.col_email', '邮箱')} span={2}>{detail.user.email}</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.col_status', '状态')}>
+                <Badge
+                  status={detail.user.status === 'normal' ? 'success' : 'warning'}
+                  text={detail.user.status === 'normal' ? translate('admin_users.status_normal', '正常') : translate('admin_users.status_unverified', '未验证')}
+                />
+              </Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.col_tier', '套餐')}>
+                {detail.user.tier}
+              </Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.col_tier_expires', '过期时间')} span={2}>
+                {detail.user.tierExpiresAt ? dayjs(detail.user.tierExpiresAt).format('YYYY-MM-DD HH:mm') : '-'}
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Descriptions title={translate('admin_users.quota_usage', '额度与 PV 使用')} bordered column={2}>
+              <Descriptions.Item label={translate('admin_users.pv_limit', '每日更新检查上限')}>{detail.quotaDetail.limit.pv} 次</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.today_used', '今日已用')}>{detail.quotaDetail.todayUsed} 次</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.today_remaining', '今日剩余')}>{detail.quotaDetail.todayRemaining} 次</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.avg_7_days', '过去 7 天日均')}>{detail.quotaDetail.last7Days.avg} 次</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.last_7_days_details', '过去 7 天详情')} span={2}>
+                {detail.quotaDetail.last7Days.counts.slice().reverse().map((c, i) => (
+                  <span key={i} className="mr-3 inline-block">
+                    Day {i + 1}: <strong>{c}</strong>
+                  </span>
+                ))}
+              </Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.app_limit', '应用创建限制')}>{detail.apps.length} / {detail.quotaDetail.limit.app}</Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.package_limit', '单应用发布包限制')}>{detail.quotaDetail.limit.package} 个</Descriptions.Item>
+            </Descriptions>
+
+            <div>
+              <div className="ant-descriptions-title" style={{ marginBottom: 12 }}>
+                {translate('admin_users.apps_and_packages', '应用与原生包')}
+              </div>
+              <Collapse>
+                {detail.apps.map((app) => (
+                  <Collapse.Panel
+                    key={app.id}
+                    header={
+                      <div className="flex w-full justify-between pr-4 items-center">
+                        <span>
+                          <strong>{app.name}</strong> ({app.platform})
+                        </span>
+                        <Space size="middle">
+                          <span>PV: <strong>{app.checkCount}</strong></span>
+                          <span>{translate('admin_users.packages_count', '发布包')}: <strong>{app.packagesCount}</strong></span>
+                        </Space>
+                      </div>
+                    }
+                  >
+                    <Space direction="vertical" className="w-full">
+                      <div className="text-xs text-gray-500 mb-2">
+                        App Key: <code>{app.appKey}</code>
+                      </div>
+                      <Table
+                        dataSource={app.packages}
+                        rowKey="id"
+                        pagination={{ pageSize: 5, size: 'small' }}
+                        size="small"
+                        columns={[
+                          { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+                          { title: translate('admin_users.pkg_name', '包名/版本'), dataIndex: 'name', key: 'name' },
+                          { title: 'Hash', dataIndex: 'hash', key: 'hash', width: 100, render: (h: string) => <code className="text-xs">{h.slice(0, 8)}</code> },
+                          { title: 'Build', key: 'build', render: (_, r) => `${r.buildNumber || '-'}(${r.buildTime || '-'})` },
+                          { title: translate('admin_users.col_status', '状态'), dataIndex: 'status', key: 'status', width: 80 },
+                          { title: translate('admin_users.col_note', '备注'), dataIndex: 'note', key: 'note' },
+                        ]}
+                      />
+                    </Space>
+                  </Collapse.Panel>
+                ))}
+              </Collapse>
+            </div>
+          </Space>
+        )}
+      </Spin>
+    </Drawer>
+  );
+};
+
 export const Component = () => {
   const queryClient = useQueryClient();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [form] = Form.useForm();
   const [quotaValue, setQuotaValue] = useState('');
@@ -313,15 +442,27 @@ export const Component = () => {
     {
       title: '操作',
       key: 'action',
-      width: 80,
+      width: 150,
       render: (_value, record) => (
-        <Button
-          type="link"
-          icon={<EditOutlined />}
-          onClick={() => handleEdit(record)}
-        >
-          编辑
-        </Button>
+        <Space size="middle">
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setViewingUserId(record.id);
+              setIsDetailOpen(true);
+            }}
+          >
+            查看
+          </Button>
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            编辑
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -451,6 +592,12 @@ export const Component = () => {
           </Space>
         </Form>
       </Modal>
+      <UserDetailDrawer
+        userId={viewingUserId}
+        open={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        isMobile={isMobile}
+      />
     </div>
   );
 };

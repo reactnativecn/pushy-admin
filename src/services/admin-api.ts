@@ -58,4 +58,34 @@ export const adminApi = {
     request<AdminVersion>('put', `/admin/versions/${id}`, data),
   updateApp: (id: number, data: Partial<AdminApp>) =>
     request<AdminApp>('put', `/admin/apps/${id}`, data),
+  getUserDetail: (id: number) =>
+    request<{
+      user: AdminUser;
+      quotaDetail: {
+        limit: Quota;
+        todayRemaining: number;
+        todayUsed: number;
+        last7Days: {
+          counts: number[];
+          avg: number;
+        };
+      };
+      apps: Array<
+        AdminApp & {
+          checkCount: number;
+          packagesCount: number;
+          packages: Array<{
+            id: number;
+            name: string;
+            hash: string;
+            status: string;
+            buildTime: string | null;
+            buildNumber: string | null;
+            note: string | null;
+            createdAt: string;
+            updatedAt: string;
+          }>;
+        }
+      >;
+    }>('get', `/admin/users/${id}`),
 };
