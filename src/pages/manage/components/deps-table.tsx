@@ -42,7 +42,10 @@ export const DepsTable = ({
             <>
               <div className="deps-popover-header">
                 <div className="deps-popover-title">
-                  <div>{t('deps_table.js_deps_title')}{!diffs && `(${name})`}</div>
+                  <div>
+                    {t('deps_table.js_deps_title')}
+                    {!diffs && `(${name})`}
+                  </div>
                   {diffs && (
                     <div className="font-normal">
                       <span>{diffs.newName}</span>
@@ -120,14 +123,19 @@ export const DepsTable = ({
                             setDiffs({
                               oldDeps: pkg?.deps,
                               newDeps: deps,
-                              newName: t('deps_table.native_package_with_name', { name: pkg?.name }),
+                              newName: t(
+                                'deps_table.native_package_with_name',
+                                { name: pkg?.name },
+                              ),
                             });
                           } else {
                             const version = versions.find((v) => v.id === +id);
                             setDiffs({
                               oldDeps: version?.deps,
                               newDeps: deps,
-                              newName: t('deps_table.ota_version_with_name', { name: version?.name }),
+                              newName: t('deps_table.ota_version_with_name', {
+                                name: version?.name,
+                              }),
                             });
                           }
                         },
@@ -165,9 +173,7 @@ export const DepsTable = ({
                   />
                 )}
               </div>
-              <div className="deps-popover-note">
-                {t('deps_table.note')}
-              </div>
+              <div className="deps-popover-note">{t('deps_table.note')}</div>
             </>
           ) : (
             <div>

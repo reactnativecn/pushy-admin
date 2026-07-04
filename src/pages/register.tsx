@@ -37,10 +37,19 @@ export const Register = () => {
           <div style={style.slogan}>{t('register.slogan')}</div>
         </div>
         <Form.Item name="name" hasFeedback>
-          <Input placeholder={t('register.username_placeholder')} size="large" required />
+          <Input
+            placeholder={t('register.username_placeholder')}
+            size="large"
+            required
+          />
         </Form.Item>
         <Form.Item name="email" hasFeedback>
-          <Input placeholder={t('register.email_placeholder')} size="large" type="email" required />
+          <Input
+            placeholder={t('register.email_placeholder')}
+            size="large"
+            type="email"
+            required
+          />
         </Form.Item>
         <Form.Item
           hasFeedback

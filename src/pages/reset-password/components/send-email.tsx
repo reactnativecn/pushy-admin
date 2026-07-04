@@ -39,7 +39,11 @@ export default function SendEmail() {
         name="email"
         rules={[{ type: 'email', message: t('reset_password.email_invalid') }]}
       >
-        <Input placeholder={t('reset_password.email_placeholder')} type="email" required />
+        <Input
+          placeholder={t('reset_password.email_placeholder')}
+          type="email"
+          required
+        />
       </Form.Item>
       <Form.Item>
         <Button type="primary" htmlType="submit" loading={isPending} block>

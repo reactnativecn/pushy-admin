@@ -285,7 +285,9 @@ export const Component = () => {
         <span
           className={status === 'normal' ? 'text-green-600' : 'text-orange-500'}
         >
-          {status === 'normal' ? t('admin_users.status_normal') : t('admin_users.status_unverified')}
+          {status === 'normal'
+            ? t('admin_users.status_normal')
+            : t('admin_users.status_unverified')}
         </span>
       ),
     },
@@ -312,7 +314,8 @@ export const Component = () => {
       key: 'quota',
       responsive: ['md'],
       width: 100,
-      render: (quota: Quota | null) => (quota ? t('admin_users.has_quota') : '-'),
+      render: (quota: Quota | null) =>
+        quota ? t('admin_users.has_quota') : '-',
     },
     {
       title: t('admin_users.col_actions'),
@@ -365,7 +368,9 @@ export const Component = () => {
               simple: isMobile,
               showQuickJumper: !isMobile,
               showSizeChanger: !isMobile,
-              showTotal: isMobile ? undefined : (count) => t('admin_users.users_count', { count }),
+              showTotal: isMobile
+                ? undefined
+                : (count) => t('admin_users.users_count', { count }),
               onChange: (page, nextPageSize) => {
                 patchSearchParams(setSearchParams, {
                   page: String(page),
@@ -399,13 +404,25 @@ export const Component = () => {
       >
         <Form form={form} layout="vertical" className="mt-4">
           <Space className="w-full" direction="vertical" size="middle">
-            <Form.Item name="name" label={t('admin_users.form_name')} className="mb-0!">
+            <Form.Item
+              name="name"
+              label={t('admin_users.form_name')}
+              className="mb-0!"
+            >
               <Input />
             </Form.Item>
-            <Form.Item name="email" label={t('admin_users.form_email')} className="mb-0!">
+            <Form.Item
+              name="email"
+              label={t('admin_users.form_email')}
+              className="mb-0!"
+            >
               <Input />
             </Form.Item>
-            <Form.Item name="tier" label={t('admin_users.form_tier')} className="mb-0!">
+            <Form.Item
+              name="tier"
+              label={t('admin_users.form_tier')}
+              className="mb-0!"
+            >
               <Select
                 options={tierOptions}
                 optionFilterProp="label"
@@ -413,15 +430,28 @@ export const Component = () => {
                 onChange={handleTierChange}
               />
             </Form.Item>
-            <Form.Item name="status" label={t('admin_users.form_status')} className="mb-0!">
+            <Form.Item
+              name="status"
+              label={t('admin_users.form_status')}
+              className="mb-0!"
+            >
               <Select
                 options={[
-                  { value: 'normal', label: t('admin_users.form_status_normal') },
-                  { value: 'unverified', label: t('admin_users.form_status_unverified') },
+                  {
+                    value: 'normal',
+                    label: t('admin_users.form_status_normal'),
+                  },
+                  {
+                    value: 'unverified',
+                    label: t('admin_users.form_status_unverified'),
+                  },
                 ]}
               />
             </Form.Item>
-            <Form.Item label={t('admin_users.form_tier_expires')} className="mb-0!">
+            <Form.Item
+              label={t('admin_users.form_tier_expires')}
+              className="mb-0!"
+            >
               <Space direction="vertical" size="small" className="w-full">
                 <Form.Item name="tierExpiresAt" noStyle>
                   <DatePicker showTime className="w-full" />

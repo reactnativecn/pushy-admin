@@ -4,7 +4,11 @@ import dayjs from 'dayjs';
 import gitUrlParse from 'git-url-parse';
 import { useTranslation } from 'react-i18next';
 
-const popoverOverlayStyle: React.CSSProperties = { maxWidth: 288, maxHeight: 240, overflowY: 'auto' };
+const popoverOverlayStyle: React.CSSProperties = {
+  maxWidth: 288,
+  maxHeight: 240,
+  overflowY: 'auto',
+};
 
 export const Commit = ({ commit }: { commit?: Commit }) => {
   const { t } = useTranslation();
@@ -18,9 +22,7 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
           <div>
             <div className="text-center my-1 mx-auto">
               <div className="font-bold">{t('commit.title')}:</div>
-              <div className="text-gray-500">
-                {t('commit.description')}
-              </div>
+              <div className="text-gray-500">{t('commit.description')}</div>
             </div>
           </div>
         }
@@ -63,11 +65,18 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
         <div>
           <div className="my-1 mx-auto">
             <div className="font-bold">{t('commit.title_with_commit')}:</div>
-            <div>{t('commit.author')}{author}</div>
             <div>
-              {t('commit.time')}{time.fromNow()}（{time.format('YYYY-MM-DD HH:mm:ss')}）
+              {t('commit.author')}
+              {author}
             </div>
-            <div className="break-all">{t('commit.summary')}{message}</div>
+            <div>
+              {t('commit.time')}
+              {time.fromNow()}（{time.format('YYYY-MM-DD HH:mm:ss')}）
+            </div>
+            <div className="break-all">
+              {t('commit.summary')}
+              {message}
+            </div>
             <hr />
             {url ? (
               <a

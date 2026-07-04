@@ -33,29 +33,58 @@ export default function PublishFeatureTable() {
       <Table
         size="small"
         pagination={false}
-        dataSource={[
-          {
-            key: '1',
-            version: '< v10.15.0',
-            fullRelease: { label: t('publish_feature_table.supported'), status: 'supported' },
-            grayRelease: { label: t('publish_feature_table.not_supported'), status: 'unsupported' },
-            bothRelease: { label: t('publish_feature_table.gray_ignored'), status: 'warning' },
-          },
-          {
-            key: '2',
-            version: 'v10.15.0 - v10.31.3',
-            fullRelease: { label: t('publish_feature_table.supported'), status: 'supported' },
-            grayRelease: { label: t('publish_feature_table.supported'), status: 'supported' },
-            bothRelease: { label: t('publish_feature_table.gray_ignored'), status: 'warning' },
-          },
-          {
-            key: '3',
-            version: '≥ v10.32.0',
-            fullRelease: { label: t('publish_feature_table.supported'), status: 'supported' },
-            grayRelease: { label: t('publish_feature_table.supported'), status: 'supported' },
-            bothRelease: { label: t('publish_feature_table.both_supported'), status: 'supported' },
-          },
-        ] satisfies PublishFeatureRow[]}
+        dataSource={
+          [
+            {
+              key: '1',
+              version: '< v10.15.0',
+              fullRelease: {
+                label: t('publish_feature_table.supported'),
+                status: 'supported',
+              },
+              grayRelease: {
+                label: t('publish_feature_table.not_supported'),
+                status: 'unsupported',
+              },
+              bothRelease: {
+                label: t('publish_feature_table.gray_ignored'),
+                status: 'warning',
+              },
+            },
+            {
+              key: '2',
+              version: 'v10.15.0 - v10.31.3',
+              fullRelease: {
+                label: t('publish_feature_table.supported'),
+                status: 'supported',
+              },
+              grayRelease: {
+                label: t('publish_feature_table.supported'),
+                status: 'supported',
+              },
+              bothRelease: {
+                label: t('publish_feature_table.gray_ignored'),
+                status: 'warning',
+              },
+            },
+            {
+              key: '3',
+              version: '≥ v10.32.0',
+              fullRelease: {
+                label: t('publish_feature_table.supported'),
+                status: 'supported',
+              },
+              grayRelease: {
+                label: t('publish_feature_table.supported'),
+                status: 'supported',
+              },
+              bothRelease: {
+                label: t('publish_feature_table.both_supported'),
+                status: 'supported',
+              },
+            },
+          ] satisfies PublishFeatureRow[]
+        }
         columns={[
           {
             title: (

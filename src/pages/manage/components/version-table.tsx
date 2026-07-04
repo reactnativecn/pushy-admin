@@ -1,4 +1,8 @@
-import { InfoCircleOutlined, QrcodeOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+  InfoCircleOutlined,
+  QrcodeOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import {
   Button,
   Checkbox,

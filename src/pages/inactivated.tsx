@@ -44,7 +44,9 @@ export const Inactivated = () => {
           loading={isPending}
           disabled={isCoolingDown}
         >
-          {isCoolingDown ? t('inactivated.resend_countdown', { seconds: remainingSeconds }) : t('inactivated.resend_button')}
+          {isCoolingDown
+            ? t('inactivated.resend_countdown', { seconds: remainingSeconds })
+            : t('inactivated.resend_button')}
         </Button>,
         <Button key="back" href={rootRouterPath.login}>
           {t('inactivated.back_login')}

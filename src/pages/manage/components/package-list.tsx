@@ -80,13 +80,19 @@ const PackageList = ({
               danger
               icon={<DeleteOutlined />}
               onClick={() =>
-                removeSelectedPackages(selectedPackages, appId, () => {
-                  setSelectedPackageIds((prev) =>
-                    prev.filter(
-                      (id) => !selectedPackages.some((item) => item.id === id),
-                    ),
-                  );
-                }, t)
+                removeSelectedPackages(
+                  selectedPackages,
+                  appId,
+                  () => {
+                    setSelectedPackageIds((prev) =>
+                      prev.filter(
+                        (id) =>
+                          !selectedPackages.some((item) => item.id === id),
+                      ),
+                    );
+                  },
+                  t,
+                )
               }
             >
               {t('package_list.delete_button')}
@@ -145,7 +151,11 @@ function removeSelectedPackages(
   });
 }
 
-function remove(item: Package, appId: number, t: (key: string, opts?: Record<string, unknown>) => string) {
+function remove(
+  item: Package,
+  appId: number,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+) {
   Modal.confirm({
     title: t('package_list.single_delete_title', { name: item.name }),
     content: (
@@ -181,9 +191,15 @@ function edit(item: Package, appId: number, t: (key: string) => string) {
               status = value;
             }}
           >
-            <Select.Option value="normal">{t('package_list.status_normal')}</Select.Option>
-            <Select.Option value="paused">{t('package_list.status_paused')}</Select.Option>
-            <Select.Option value="expired">{t('package_list.status_expired')}</Select.Option>
+            <Select.Option value="normal">
+              {t('package_list.status_normal')}
+            </Select.Option>
+            <Select.Option value="paused">
+              {t('package_list.status_paused')}
+            </Select.Option>
+            <Select.Option value="expired">
+              {t('package_list.status_expired')}
+            </Select.Option>
           </Select>
         </Form.Item>
       </Form>
@@ -217,11 +233,11 @@ const TimestampWarning = ({
               <div key={timestamp}>{timestamp}</div>
             ))}
           </div>
-          <div className="mt-2">
-            {t('package_list.mismatch_desc')}
-          </div>
+          <div className="mt-2">{t('package_list.mismatch_desc')}</div>
           <div className="mt-1">
-            <Link to={realtimeMetricsPath}>{t('package_list.view_realtime')}</Link>
+            <Link to={realtimeMetricsPath}>
+              {t('package_list.view_realtime')}
+            </Link>
           </div>
         </div>
       }
@@ -279,7 +295,12 @@ const Item = ({
                   )}
                 </div>
               </Col>
-              <DepsTable deps={item.deps} name={t('deps_table.native_package_with_name', { name: item.name })} />
+              <DepsTable
+                deps={item.deps}
+                name={t('deps_table.native_package_with_name', {
+                  name: item.name,
+                })}
+              />
               <Commit commit={item.commit} />
               <Button
                 type="link"
@@ -302,11 +323,15 @@ const Item = ({
                   type="secondary"
                   ellipsis={{ tooltip: item.note }}
                 >
-                  {t('package_list.note_prefix')}{item.note}
+                  {t('package_list.note_prefix')}
+                  {item.note}
                 </Typography.Paragraph>
               )}
               <div className="text-xs flex flex-col gap-1">
-                <div>{t('package_list.build_time')}{item.buildTime}</div>
+                <div>
+                  {t('package_list.build_time')}
+                  {item.buildTime}
+                </div>
               </div>
             </div>
           }

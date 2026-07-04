@@ -66,7 +66,9 @@ export function ErrorBoundary() {
           <Button type="primary" onClick={handleRetry}>
             {t('error_boundary.retry')}
           </Button>
-          <Button onClick={handleGoHome}>{t('error_boundary.back_home')}</Button>
+          <Button onClick={handleGoHome}>
+            {t('error_boundary.back_home')}
+          </Button>
         </>
       }
     />

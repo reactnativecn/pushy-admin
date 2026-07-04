@@ -38,7 +38,9 @@ interface MetricsResponse {
 const TOTAL_SERIES_LABEL = 'total';
 const DEFAULT_RANGE_HOURS = 24;
 
-const getModeLabels = (t: (key: string) => string): Record<MetricMode, string> => ({
+const getModeLabels = (
+  t: (key: string) => string,
+): Record<MetricMode, string> => ({
   pv: t('admin_metrics.mode_requests'),
   uv: t('admin_metrics.mode_users'),
 });
@@ -386,8 +388,12 @@ export const Component = () => {
               }}
               className="w-full md:w-auto"
             >
-              <Radio.Button value="pv">{t('admin_metrics.mode_requests')}</Radio.Button>
-              <Radio.Button value="uv">{t('admin_metrics.mode_users')}</Radio.Button>
+              <Radio.Button value="pv">
+                {t('admin_metrics.mode_requests')}
+              </Radio.Button>
+              <Radio.Button value="uv">
+                {t('admin_metrics.mode_users')}
+              </Radio.Button>
             </Radio.Group>
             <Select
               placeholder={t('admin_metrics.key_prefix')}

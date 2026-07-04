@@ -24,8 +24,8 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { UAParser } from 'ua-parser-js';
 import { patchSearchParams } from '@/utils/helper';
 import { useAuditLogs } from '@/utils/hooks';
@@ -52,9 +52,18 @@ const STATUS_FILTER_VALUES: AuditStatusFilter[] = [
 function getStatusFilterOptions(t: TranslateFn) {
   return [
     { label: t('audit_logs.status_all'), value: 'all' as AuditStatusFilter },
-    { label: t('audit_logs.status_2xx'), value: 'success' as AuditStatusFilter },
-    { label: t('audit_logs.status_4xx'), value: 'client-error' as AuditStatusFilter },
-    { label: t('audit_logs.status_5xx'), value: 'server-error' as AuditStatusFilter },
+    {
+      label: t('audit_logs.status_2xx'),
+      value: 'success' as AuditStatusFilter,
+    },
+    {
+      label: t('audit_logs.status_4xx'),
+      value: 'client-error' as AuditStatusFilter,
+    },
+    {
+      label: t('audit_logs.status_5xx'),
+      value: 'server-error' as AuditStatusFilter,
+    },
   ];
 }
 
@@ -235,7 +244,11 @@ export const AuditLogs = () => {
   const actionOptions = getActionOptions(t);
 
   useEffect(() => {
-    dayjs.locale((i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('zh') ? 'zh-cn' : 'en');
+    dayjs.locale(
+      (i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('zh')
+        ? 'zh-cn'
+        : 'en',
+    );
   }, [i18n.language, i18n.resolvedLanguage]);
 
   useEffect(() => {
@@ -701,9 +714,7 @@ export const AuditLogs = () => {
         }
         width={isMobile ? '100%' : 720}
         open={Boolean(selectedLog)}
-        onClose={() =>
-          patchSearchParams(setSearchParams, { logId: undefined })
-        }
+        onClose={() => patchSearchParams(setSearchParams, { logId: undefined })}
       >
         {selectedLog && (
           <Space direction="vertical" size="large" className="w-full">
@@ -755,8 +766,7 @@ export const AuditLogs = () => {
                 {
                   key: 'apiToken',
                   label: t('audit_logs.detail_apikey'),
-                  children:
-                    getApiTokenLabel(selectedLog.apiTokens) || '-',
+                  children: getApiTokenLabel(selectedLog.apiTokens) || '-',
                 },
               ]}
             />

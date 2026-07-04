@@ -138,7 +138,9 @@ function getDepsChangeColumns({
         if (record.changeType === '新增') {
           return (
             <span className="font-mono">
-              <span style={{ color: '#dc2626', fontWeight: 700 }}>{t('bind_package.change_added')}</span>
+              <span style={{ color: '#dc2626', fontWeight: 700 }}>
+                {t('bind_package.change_added')}
+              </span>
               <span className="mx-2 text-gray-400">|</span>
               <span style={{ color: '#6b7280' }}>{record.oldVersion}</span>
               <ArrowRightOutlined className="mx-2 text-gray-400" />
@@ -151,7 +153,9 @@ function getDepsChangeColumns({
 
         return (
           <span className="font-mono">
-            <span style={{ color: '#16a34a', fontWeight: 700 }}>{t('bind_package.change_removed')}</span>
+            <span style={{ color: '#16a34a', fontWeight: 700 }}>
+              {t('bind_package.change_removed')}
+            </span>
             <span className="mx-2 text-gray-400">|</span>
             <span style={{ color: '#16a34a', fontWeight: 600 }}>
               {record.oldVersion}
@@ -201,8 +205,14 @@ const DepsChangeConfirmContent = ({
 
   return (
     <div>
-      <div>{t('bind_package.target_package')}{packageName}</div>
-      <div>{t('bind_package.ota_version')}{versionDisplayName}</div>
+      <div>
+        {t('bind_package.target_package')}
+        {packageName}
+      </div>
+      <div>
+        {t('bind_package.ota_version')}
+        {versionDisplayName}
+      </div>
       <Alert
         className="mt-3"
         showIcon

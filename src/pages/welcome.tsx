@@ -53,7 +53,9 @@ export const Welcome = () => {
           loading={isPending}
           disabled={isCoolingDown}
         >
-          {isCoolingDown ? t('welcome.resend_countdown', { seconds: remainingSeconds }) : t('welcome.resend_button')}
+          {isCoolingDown
+            ? t('welcome.resend_countdown', { seconds: remainingSeconds })
+            : t('welcome.resend_button')}
         </Button>
       }
     />

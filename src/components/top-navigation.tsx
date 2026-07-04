@@ -58,7 +58,10 @@ const platformLabels: Record<AppItem['platform'], string> = {
   harmony: 'HarmonyOS',
 };
 
-function getExternalItems(t: (key: string) => string, language?: string): MenuItems {
+function getExternalItems(
+  t: (key: string) => string,
+  language?: string,
+): MenuItems {
   const isChinese = language?.toLowerCase().startsWith('zh');
   const docsUrl = isChinese
     ? 'https://pushy.reactnative.cn/docs/getting-started.html'
@@ -80,20 +83,12 @@ function getExternalItems(t: (key: string) => string, language?: string): MenuIt
     {
       key: 'document',
       icon: <ReadOutlined />,
-      label: (
-        <ExtLink href={docsUrl}>
-          {t('nav.documentation')}
-        </ExtLink>
-      ),
+      label: <ExtLink href={docsUrl}>{t('nav.documentation')}</ExtLink>,
     },
     {
       key: 'about',
       icon: <InfoCircleOutlined />,
-      label: (
-        <ExtLink href={aboutUrl}>
-          {t('nav.about_us')}
-        </ExtLink>
-      ),
+      label: <ExtLink href={aboutUrl}>{t('nav.about_us')}</ExtLink>,
     },
     {
       key: 'ai-cresc',
@@ -141,7 +136,10 @@ export default function TopNavigation({
     };
   }, []);
 
-  const externalItems = getExternalItems(t, i18n.resolvedLanguage ?? i18n.language);
+  const externalItems = getExternalItems(
+    t,
+    i18n.resolvedLanguage ?? i18n.language,
+  );
 
   const authenticatedItems: MenuItems =
     showAuthenticatedChrome && user

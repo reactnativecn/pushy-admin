@@ -1,5 +1,13 @@
 import { DownOutlined, SearchOutlined } from '@ant-design/icons';
-import { Checkbox, Dropdown, Grid, Input, Layout, type MenuProps, Tabs } from 'antd';
+import {
+  Checkbox,
+  Dropdown,
+  Grid,
+  Input,
+  Layout,
+  type MenuProps,
+  Tabs,
+} from 'antd';
 
 import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -120,7 +128,9 @@ const ManageDashBoard = () => {
     }
   };
   const isUnusedPackageFilter = packageFilter === 'unused';
-  const allPackageDataSource = isUnusedPackageFilter ? unusedPackages : packages;
+  const allPackageDataSource = isUnusedPackageFilter
+    ? unusedPackages
+    : packages;
   const normalizedPackageSearch = packageSearch.trim().toLowerCase();
   const packageDataSource = useMemo(
     () =>

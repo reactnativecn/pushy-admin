@@ -23,7 +23,9 @@ export default function SetPassword() {
           });
           router.navigate(rootRouterPath.resetPassword('3'));
         } catch (e) {
-          message.error((e as Error).message ?? t('reset_password.network_error'));
+          message.error(
+            (e as Error).message ?? t('reset_password.network_error'),
+          );
         }
         setLoading(false);
       }}
@@ -44,7 +46,12 @@ export default function SetPassword() {
           }),
         ]}
       >
-        <Input type="password" placeholder={t('reset_password.new_password_placeholder')} autoComplete="" required />
+        <Input
+          type="password"
+          placeholder={t('reset_password.new_password_placeholder')}
+          autoComplete=""
+          required
+        />
       </Form.Item>
       <Form.Item
         hasFeedback
@@ -53,7 +60,9 @@ export default function SetPassword() {
           ({ getFieldValue }) => ({
             validator(_, value: string) {
               if (getFieldValue('newPwd') !== value) {
-                return Promise.reject(Error(t('reset_password.password_mismatch')));
+                return Promise.reject(
+                  Error(t('reset_password.password_mismatch')),
+                );
               }
               return Promise.resolve();
             },

@@ -227,7 +227,11 @@ export const Component = () => {
       width: 120,
       render: (value: string | null) => (
         <span className={value === 'enabled' ? 'text-green-600' : ''}>
-          {value === 'enabled' ? t('admin_apps.ignore_build_yes') : value === 'disabled' ? t('admin_apps.ignore_build_no') : '-'}
+          {value === 'enabled'
+            ? t('admin_apps.ignore_build_yes')
+            : value === 'disabled'
+              ? t('admin_apps.ignore_build_no')
+              : '-'}
         </span>
       ),
     },
@@ -307,7 +311,9 @@ export const Component = () => {
               simple: isMobile,
               showQuickJumper: !isMobile,
               showSizeChanger: !isMobile,
-              showTotal: isMobile ? undefined : (count) => t('admin_apps.apps_count', { count }),
+              showTotal: isMobile
+                ? undefined
+                : (count) => t('admin_apps.apps_count', { count }),
               onChange: (page, nextPageSize) => {
                 patchSearchParams(setSearchParams, {
                   page: String(page),
@@ -349,10 +355,18 @@ export const Component = () => {
             >
               <Input />
             </Form.Item>
-            <Form.Item name="appKey" label={t('admin_apps.col_app_key')} className="mb-0!">
+            <Form.Item
+              name="appKey"
+              label={t('admin_apps.col_app_key')}
+              className="mb-0!"
+            >
               <Input placeholder={t('admin_apps.placeholder_keep')} />
             </Form.Item>
-            <Form.Item name="platform" label={t('admin_apps.form_platform')} className="mb-0!">
+            <Form.Item
+              name="platform"
+              label={t('admin_apps.form_platform')}
+              className="mb-0!"
+            >
               <Select
                 options={[
                   { value: 'ios', label: 'iOS' },
@@ -361,13 +375,28 @@ export const Component = () => {
                 ]}
               />
             </Form.Item>
-            <Form.Item name="userId" label={t('admin_apps.form_user_id')} className="mb-0!">
-              <Input type="number" placeholder={t('admin_apps.placeholder_no_owner')} />
+            <Form.Item
+              name="userId"
+              label={t('admin_apps.form_user_id')}
+              className="mb-0!"
+            >
+              <Input
+                type="number"
+                placeholder={t('admin_apps.placeholder_no_owner')}
+              />
             </Form.Item>
-            <Form.Item name="downloadUrl" label={t('admin_apps.form_download_url')} className="mb-0!">
+            <Form.Item
+              name="downloadUrl"
+              label={t('admin_apps.form_download_url')}
+              className="mb-0!"
+            >
               <Input placeholder={t('admin_apps.placeholder_store')} />
             </Form.Item>
-            <Form.Item name="status" label={t('admin_apps.form_status')} className="mb-0!">
+            <Form.Item
+              name="status"
+              label={t('admin_apps.form_status')}
+              className="mb-0!"
+            >
               <Input placeholder={t('admin_apps.placeholder_status')} />
             </Form.Item>
             <Form.Item
@@ -378,8 +407,14 @@ export const Component = () => {
               <Select
                 allowClear
                 options={[
-                  { value: 'enabled', label: t('admin_apps.ignore_build_enabled') },
-                  { value: 'disabled', label: t('admin_apps.ignore_build_disabled') },
+                  {
+                    value: 'enabled',
+                    label: t('admin_apps.ignore_build_enabled'),
+                  },
+                  {
+                    value: 'disabled',
+                    label: t('admin_apps.ignore_build_disabled'),
+                  },
                 ]}
               />
             </Form.Item>

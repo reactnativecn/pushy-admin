@@ -18,7 +18,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { ApiToken } from '@/types';
 
@@ -124,9 +124,15 @@ function ApiTokensPage() {
       key: 'permissions',
       render: (permissions: ApiToken['permissions']) => (
         <Space>
-          {permissions?.read && <Tag color="blue">{t('api_tokens.perm_read')}</Tag>}
-          {permissions?.write && <Tag color="green">{t('api_tokens.perm_write')}</Tag>}
-          {permissions?.delete && <Tag color="red">{t('api_tokens.perm_delete')}</Tag>}
+          {permissions?.read && (
+            <Tag color="blue">{t('api_tokens.perm_read')}</Tag>
+          )}
+          {permissions?.write && (
+            <Tag color="green">{t('api_tokens.perm_write')}</Tag>
+          )}
+          {permissions?.delete && (
+            <Tag color="red">{t('api_tokens.perm_delete')}</Tag>
+          )}
         </Space>
       ),
     },
@@ -136,7 +142,9 @@ function ApiTokensPage() {
       key: 'expiresAt',
       responsive: ['sm'],
       render: (expiresAt: string | null) =>
-        expiresAt ? dayjs(expiresAt).format('YYYY-MM-DD HH:mm') : t('api_tokens.never'),
+        expiresAt
+          ? dayjs(expiresAt).format('YYYY-MM-DD HH:mm')
+          : t('api_tokens.never'),
     },
     {
       title: t('api_tokens.col_last_used'),
@@ -144,7 +152,9 @@ function ApiTokensPage() {
       key: 'lastUsedAt',
       responsive: ['lg'],
       render: (lastUsedAt: string | null) =>
-        lastUsedAt ? dayjs(lastUsedAt).format('YYYY-MM-DD HH:mm') : t('api_tokens.never_used'),
+        lastUsedAt
+          ? dayjs(lastUsedAt).format('YYYY-MM-DD HH:mm')
+          : t('api_tokens.never_used'),
     },
     {
       title: t('api_tokens.col_created'),
@@ -230,25 +240,41 @@ function ApiTokensPage() {
           <Form.Item
             label={t('api_tokens.token_name')}
             name="name"
-            rules={[{ required: true, message: t('api_tokens.token_name_required') }]}
+            rules={[
+              { required: true, message: t('api_tokens.token_name_required') },
+            ]}
           >
-            <Input placeholder={t('api_tokens.token_name_placeholder')} maxLength={100} />
+            <Input
+              placeholder={t('api_tokens.token_name_placeholder')}
+              maxLength={100}
+            />
           </Form.Item>
           <Form.Item
             label={t('api_tokens.permissions')}
             name="permissions"
-            rules={[{ required: true, message: t('api_tokens.permissions_required') }]}
+            rules={[
+              { required: true, message: t('api_tokens.permissions_required') },
+            ]}
           >
             <Checkbox.Group>
               <Space direction="vertical">
                 <Checkbox value="read">
-                  <span dangerouslySetInnerHTML={{ __html: t('api_tokens.perm_read_desc') }} />
+                  <Trans
+                    i18nKey="api_tokens.perm_read_desc"
+                    components={{ b: <b /> }}
+                  />
                 </Checkbox>
                 <Checkbox value="write">
-                  <span dangerouslySetInnerHTML={{ __html: t('api_tokens.perm_write_desc') }} />
+                  <Trans
+                    i18nKey="api_tokens.perm_write_desc"
+                    components={{ b: <b /> }}
+                  />
                 </Checkbox>
                 <Checkbox value="delete">
-                  <span dangerouslySetInnerHTML={{ __html: t('api_tokens.perm_delete_desc') }} />
+                  <Trans
+                    i18nKey="api_tokens.perm_delete_desc"
+                    components={{ b: <b /> }}
+                  />
                 </Checkbox>
                 <div className="text-xs text-gray-500 mt-1">
                   {t('api_tokens.perm_note')}
@@ -256,7 +282,11 @@ function ApiTokensPage() {
               </Space>
             </Checkbox.Group>
           </Form.Item>
-          <Form.Item label={t('api_tokens.expiration')} name="expiresIn" initialValue={180}>
+          <Form.Item
+            label={t('api_tokens.expiration')}
+            name="expiresIn"
+            initialValue={180}
+          >
             <Select
               options={[
                 { value: 0, label: t('api_tokens.exp_never') },

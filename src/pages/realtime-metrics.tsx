@@ -77,7 +77,10 @@ const formatCategory = (
     rawCategory.endsWith(`${CATEGORY_SEPARATOR}unknown`)
   ) {
     return {
-      label: rawCategory.replace(CATEGORY_SEPARATOR, `: ${t('realtime_metrics.none')}`),
+      label: rawCategory.replace(
+        CATEGORY_SEPARATOR,
+        `: ${t('realtime_metrics.none')}`,
+      ),
       isTotal: false,
     };
   }
@@ -89,7 +92,10 @@ const formatCategory = (
 
 const getAttributeOptions = (t: (key: string) => string) => [
   { label: t('realtime_metrics.bundle'), value: 'hash' as const },
-  { label: t('realtime_metrics.package'), value: 'packageVersion_buildTime' as const },
+  {
+    label: t('realtime_metrics.package'),
+    value: 'packageVersion_buildTime' as const,
+  },
 ];
 
 const formatTooltipItem = (
@@ -478,7 +484,11 @@ export const Component = () => {
         </div>
 
         <Spin spinning={isLoading}>
-          <Card title={t('realtime_metrics.request_overview')} size="small" style={{ marginBottom: 16 }}>
+          <Card
+            title={t('realtime_metrics.request_overview')}
+            size="small"
+            style={{ marginBottom: 16 }}
+          >
             {!selectedAppKey ? (
               <div className="h-20 flex items-center justify-center text-gray-400">
                 {t('realtime_metrics.please_select_app')}
@@ -487,7 +497,9 @@ export const Component = () => {
               <div className="grid gap-3 xl:grid-cols-[280px_minmax(0,1fr)]">
                 <div className="grid grid-cols-2 gap-2 xl:grid-cols-1">
                   <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">
-                    <div className="text-xs text-gray-500">{t('realtime_metrics.total_requests')}</div>
+                    <div className="text-xs text-gray-500">
+                      {t('realtime_metrics.total_requests')}
+                    </div>
                     <div className="mt-1 text-2xl font-semibold leading-none tabular-nums">
                       {isLoading ? '-' : totalRequests.toLocaleString()}
                     </div>
@@ -496,7 +508,9 @@ export const Component = () => {
                     </div>
                   </div>
                   <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">
-                    <div className="text-xs text-gray-500">{t('realtime_metrics.category_count')}</div>
+                    <div className="text-xs text-gray-500">
+                      {t('realtime_metrics.category_count')}
+                    </div>
                     <div className="mt-1 text-2xl font-semibold leading-none tabular-nums">
                       {categoryTotals.size}
                     </div>

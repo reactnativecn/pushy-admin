@@ -239,7 +239,11 @@ export const Component = () => {
       </Card>
 
       <Modal
-        title={editingItem ? t('admin_config.edit_modal_title') : t('admin_config.add_modal_title')}
+        title={
+          editingItem
+            ? t('admin_config.edit_modal_title')
+            : t('admin_config.add_modal_title')
+        }
         open={isModalOpen}
         width={isMobile ? 'calc(100vw - 32px)' : 700}
         onCancel={() => setIsModalOpen(false)}
@@ -261,9 +265,14 @@ export const Component = () => {
           <Form.Item
             name="key"
             label={t('admin_config.col_key')}
-            rules={[{ required: true, message: t('admin_config.key_required') }]}
+            rules={[
+              { required: true, message: t('admin_config.key_required') },
+            ]}
           >
-            <Input disabled={!!editingItem} placeholder={t('admin_config.key_placeholder')} />
+            <Input
+              disabled={!!editingItem}
+              placeholder={t('admin_config.key_placeholder')}
+            />
           </Form.Item>
           <Form.Item label={t('admin_config.value_label')}>
             <JsonEditorWrapper

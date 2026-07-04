@@ -80,9 +80,7 @@ export const Component = () => {
           <Title level={3} className="m-0!">
             {t('apps.title')}
           </Title>
-          <div className="mt-1 text-gray-500">
-            {t('apps.description')}
-          </div>
+          <div className="mt-1 text-gray-500">{t('apps.description')}</div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
@@ -100,9 +98,18 @@ export const Component = () => {
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        <MetricCard label={t('apps.total_apps')} value={apps.length.toLocaleString()} />
-        <MetricCard label={t('apps.paused_apps')} value={pausedCount.toLocaleString()} />
-        <MetricCard label={t('apps.total_checks')} value={totalChecks.toLocaleString()} />
+        <MetricCard
+          label={t('apps.total_apps')}
+          value={apps.length.toLocaleString()}
+        />
+        <MetricCard
+          label={t('apps.paused_apps')}
+          value={pausedCount.toLocaleString()}
+        />
+        <MetricCard
+          label={t('apps.total_checks')}
+          value={totalChecks.toLocaleString()}
+        />
       </div>
 
       <Card className="shadow-sm">
@@ -116,7 +123,9 @@ export const Component = () => {
           ) : (
             <Empty
               className="py-16"
-              description={query ? t('apps.no_search_results') : t('apps.no_apps')}
+              description={
+                query ? t('apps.no_search_results') : t('apps.no_apps')
+              }
             >
               {!query && (
                 <Button
