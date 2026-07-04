@@ -16,6 +16,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   type Content,
   createJSONEditor,
@@ -89,6 +90,7 @@ const JsonEditorWrapper = ({
 };
 
 export const Component = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -135,13 +137,13 @@ export const Component = () => {
       try {
         parsedValue = JSON.parse(jsonValue);
       } catch {
-        message.error('请输入有效的 JSON 格式');
+        message.error(t('admin_config.invalid_json'));
         return;
       }
 
       const compactValue = JSON.stringify(parsedValue);
       await adminApi.setConfig(key, compactValue);
-      message.success('保存成功');
+      message.success(t('admin_config.saved'));
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['adminConfig'] });
     } catch (error) {
@@ -153,24 +155,24 @@ export const Component = () => {
     async (key: string) => {
       try {
         await adminApi.deleteConfig(key);
-        message.success('已删除');
+        message.success(t('admin_config.deleted'));
         refetch();
       } catch (error) {
         message.error((error as Error).message);
       }
     },
-    [refetch],
+    [refetch, t],
   );
 
   const columns: ColumnsType<ConfigItem> = [
     {
-      title: 'Key',
+      title: t('admin_config.col_key'),
       dataIndex: 'key',
       key: 'key',
       width: 200,
     },
     {
-      title: 'Value',
+      title: t('admin_config.col_value'),
       dataIndex: 'value',
       key: 'value',
       responsive: ['sm'],
@@ -188,16 +190,16 @@ export const Component = () => {
       },
     },
     {
-      title: '操作',
+      title: t('admin_config.col_action'),
       key: 'action',
       width: 150,
       render: (_: unknown, record: ConfigItem) => (
         <Space>
           <Button type="link" onClick={() => handleEdit(record)}>
-            编辑
+            {t('admin_config.edit')}
           </Button>
           <Popconfirm
-            title="确定删除此配置？"
+            title={t('admin_config.delete_title')}
             onConfirm={() => handleDelete(record.key)}
           >
             <Button type="link" danger icon={<DeleteOutlined />} />
@@ -212,7 +214,7 @@ export const Component = () => {
       <Card>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
           <Title level={4} className="m-0!">
-            动态配置管理
+            {t('admin_config.title')}
           </Title>
           <Button
             type="primary"
@@ -220,7 +222,7 @@ export const Component = () => {
             onClick={handleAdd}
             className="w-full md:w-auto"
           >
-            添加配置
+            {t('admin_config.add_config')}
           </Button>
         </div>
 
@@ -237,13 +239,17 @@ export const Component = () => {
       </Card>
 
       <Modal
-        title={editingItem ? '编辑配置' : '添加配置'}
+        title={
+          editingItem
+            ? t('admin_config.edit_modal_title')
+            : t('admin_config.add_modal_title')
+        }
         open={isModalOpen}
         width={isMobile ? 'calc(100vw - 32px)' : 700}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>
-            取消
+            {t('admin_config.cancel')}
           </Button>,
           <Button
             key="save"
@@ -251,19 +257,24 @@ export const Component = () => {
             icon={<SaveOutlined />}
             onClick={handleSave}
           >
-            保存
+            {t('admin_config.save')}
           </Button>,
         ]}
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="key"
-            label="Key"
-            rules={[{ required: true, message: '请输入配置键名' }]}
+            label={t('admin_config.col_key')}
+            rules={[
+              { required: true, message: t('admin_config.key_required') },
+            ]}
           >
-            <Input disabled={!!editingItem} placeholder="配置键名" />
+            <Input
+              disabled={!!editingItem}
+              placeholder={t('admin_config.key_placeholder')}
+            />
           </Form.Item>
-          <Form.Item label="Value (JSON)">
+          <Form.Item label={t('admin_config.value_label')}>
             <JsonEditorWrapper
               height={isMobile ? 220 : 300}
               value={jsonValue}

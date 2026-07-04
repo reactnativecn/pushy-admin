@@ -2,10 +2,17 @@ import { PullRequestOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
 import dayjs from 'dayjs';
 import gitUrlParse from 'git-url-parse';
+import { useTranslation } from 'react-i18next';
 
-const popoverOverlayStyle: React.CSSProperties = { maxWidth: 288, maxHeight: 240, overflowY: 'auto' };
+const popoverOverlayStyle: React.CSSProperties = {
+  maxWidth: 288,
+  maxHeight: 240,
+  overflowY: 'auto',
+};
 
 export const Commit = ({ commit }: { commit?: Commit }) => {
+  const { t } = useTranslation();
+
   if (!commit) {
     return (
       <Popover
@@ -14,11 +21,8 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
         content={
           <div>
             <div className="text-center my-1 mx-auto">
-              <div className="font-bold">最近的提交：</div>
-              <div className="text-gray-500">
-                需要使用 cli v1.42.0+ 版本上传，且使用 git
-                管理代码才能查看提交记录
-              </div>
+              <div className="font-bold">{t('commit.title')}:</div>
+              <div className="text-gray-500">{t('commit.description')}</div>
             </div>
           </div>
         }
@@ -60,12 +64,19 @@ export const Commit = ({ commit }: { commit?: Commit }) => {
       content={
         <div>
           <div className="my-1 mx-auto">
-            <div className="font-bold">最近的提交：</div>
-            <div>作者：{author}</div>
+            <div className="font-bold">{t('commit.title_with_commit')}:</div>
             <div>
-              时间：{time.fromNow()}（{time.format('YYYY-MM-DD HH:mm:ss')}）
+              {t('commit.author')}
+              {author}
             </div>
-            <div className="break-all">摘要：{message}</div>
+            <div>
+              {t('commit.time')}
+              {time.fromNow()}（{time.format('YYYY-MM-DD HH:mm:ss')}）
+            </div>
+            <div className="break-all">
+              {t('commit.summary')}
+              {message}
+            </div>
             <hr />
             {url ? (
               <a

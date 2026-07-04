@@ -18,6 +18,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import {
   type Content,
@@ -32,20 +33,17 @@ import { patchSearchParams } from '@/utils/helper';
 
 const { Title } = Typography;
 
-const tierOptions = [
-  { value: 'free', label: '免费版' },
-  { value: 'standard', label: '标准版' },
-  { value: 'premium', label: '高级版' },
-  { value: 'pro', label: '专业版' },
-  { value: 'vip1', label: '大客户VIP1版' },
-  { value: 'vip2', label: '大客户VIP2版' },
-  { value: 'vip3', label: '大客户VIP3版' },
-  { value: 'custom', label: '定制版' },
+const getTierOptions = (t: (key: string) => string) => [
+  { value: 'free', label: t('admin_users.tier_free') },
+  { value: 'standard', label: t('admin_users.tier_standard') },
+  { value: 'premium', label: t('admin_users.tier_premium') },
+  { value: 'pro', label: t('admin_users.tier_pro') },
+  { value: 'vip1', label: t('admin_users.tier_vip1') },
+  { value: 'vip2', label: t('admin_users.tier_vip2') },
+  { value: 'vip3', label: t('admin_users.tier_vip3') },
+  { value: 'custom', label: t('admin_users.tier_custom') },
 ];
 
-const tierLabelMap = new Map(
-  tierOptions.map((option) => [option.value, option.label]),
-);
 const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
 const expiryShortcutDays = [7, 30, 365] as const;
 
@@ -119,6 +117,7 @@ const JsonEditorWrapper = ({
 };
 
 export const Component = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -127,6 +126,11 @@ export const Component = () => {
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [form] = Form.useForm();
   const [quotaValue, setQuotaValue] = useState('');
+
+  const tierOptions = getTierOptions(t);
+  const tierLabelMap = new Map(
+    tierOptions.map((option) => [option.value, option.label]),
+  );
 
   const searchQuery = searchParams.get('search')?.trim() ?? '';
   const currentPage = parsePositiveInt(searchParams.get('page'), 1);
@@ -176,7 +180,7 @@ export const Component = () => {
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminUser> }) =>
       adminApi.updateUser(id, data),
     onSuccess: () => {
-      message.success('用户信息已更新');
+      message.success(t('admin_users.user_updated'));
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
     },
@@ -223,7 +227,7 @@ export const Component = () => {
         try {
           updateData.quota = JSON.parse(quotaValue);
         } catch {
-          message.error('Quota 格式无效，请输入有效的 JSON');
+          message.error(t('admin_users.invalid_quota'));
           return;
         }
       } else {
@@ -255,24 +259,24 @@ export const Component = () => {
 
   const columns: ColumnsType<AdminUser> = [
     {
-      title: 'ID',
+      title: t('admin_users.col_id'),
       dataIndex: 'id',
       key: 'id',
       responsive: ['md'],
       width: 80,
     },
     {
-      title: '邮箱',
+      title: t('admin_users.col_email'),
       dataIndex: 'email',
       key: 'email',
     },
     {
-      title: '用户名',
+      title: t('admin_users.col_name'),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: '状态',
+      title: t('admin_users.col_status'),
       dataIndex: 'status',
       key: 'status',
       responsive: ['sm'],
@@ -281,12 +285,14 @@ export const Component = () => {
         <span
           className={status === 'normal' ? 'text-green-600' : 'text-orange-500'}
         >
-          {status === 'normal' ? '正常' : '未验证'}
+          {status === 'normal'
+            ? t('admin_users.status_normal')
+            : t('admin_users.status_unverified')}
         </span>
       ),
     },
     {
-      title: '套餐',
+      title: t('admin_users.col_tier'),
       dataIndex: 'tier',
       key: 'tier',
       responsive: ['sm'],
@@ -294,7 +300,7 @@ export const Component = () => {
       render: (tier: string) => tierLabelMap.get(tier) || tier || '-',
     },
     {
-      title: '套餐过期时间',
+      title: t('admin_users.col_tier_expires'),
       dataIndex: 'tierExpiresAt',
       key: 'tierExpiresAt',
       responsive: ['lg'],
@@ -303,15 +309,16 @@ export const Component = () => {
         date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
     },
     {
-      title: '自定义配额',
+      title: t('admin_users.col_custom_quota'),
       dataIndex: 'quota',
       key: 'quota',
       responsive: ['md'],
       width: 100,
-      render: (quota: Quota | null) => (quota ? '有' : '-'),
+      render: (quota: Quota | null) =>
+        quota ? t('admin_users.has_quota') : '-',
     },
     {
-      title: '操作',
+      title: t('admin_users.col_actions'),
       key: 'action',
       width: 80,
       render: (_value, record) => (
@@ -320,7 +327,7 @@ export const Component = () => {
           icon={<EditOutlined />}
           onClick={() => handleEdit(record)}
         >
-          编辑
+          {t('admin_users.edit')}
         </Button>
       ),
     },
@@ -332,14 +339,14 @@ export const Component = () => {
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <Title level={4} className="m-0!">
-              用户管理
+              {t('admin_users.title')}
             </Title>
             <div className="text-sm text-gray-500">
-              当前搜索条件和分页会保留在 URL 中，方便排查问题时直接分享链接。
+              {t('admin_users.description')}
             </div>
           </div>
           <Input
-            placeholder="搜索用户名或邮箱"
+            placeholder={t('admin_users.search_placeholder')}
             prefix={<SearchOutlined />}
             value={searchKeyword}
             onChange={(event) => setSearchKeyword(event.target.value)}
@@ -361,7 +368,9 @@ export const Component = () => {
               simple: isMobile,
               showQuickJumper: !isMobile,
               showSizeChanger: !isMobile,
-              showTotal: isMobile ? undefined : (count) => `共 ${count} 个用户`,
+              showTotal: isMobile
+                ? undefined
+                : (count) => t('admin_users.users_count', { count }),
               onChange: (page, nextPageSize) => {
                 patchSearchParams(setSearchParams, {
                   page: String(page),
@@ -375,13 +384,13 @@ export const Component = () => {
       </Card>
 
       <Modal
-        title={`编辑用户: ${editingUser?.email}`}
+        title={t('admin_users.edit_title', { email: editingUser?.email })}
         open={isModalOpen}
         width={isMobile ? 'calc(100vw - 32px)' : 600}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>
-            取消
+            {t('admin_users.cancel')}
           </Button>,
           <Button
             key="save"
@@ -389,19 +398,31 @@ export const Component = () => {
             loading={updateMutation.isPending}
             onClick={handleSave}
           >
-            保存
+            {t('admin_users.save')}
           </Button>,
         ]}
       >
         <Form form={form} layout="vertical" className="mt-4">
           <Space className="w-full" direction="vertical" size="middle">
-            <Form.Item name="name" label="用户名" className="mb-0!">
+            <Form.Item
+              name="name"
+              label={t('admin_users.form_name')}
+              className="mb-0!"
+            >
               <Input />
             </Form.Item>
-            <Form.Item name="email" label="邮箱" className="mb-0!">
+            <Form.Item
+              name="email"
+              label={t('admin_users.form_email')}
+              className="mb-0!"
+            >
               <Input />
             </Form.Item>
-            <Form.Item name="tier" label="套餐" className="mb-0!">
+            <Form.Item
+              name="tier"
+              label={t('admin_users.form_tier')}
+              className="mb-0!"
+            >
               <Select
                 options={tierOptions}
                 optionFilterProp="label"
@@ -409,15 +430,28 @@ export const Component = () => {
                 onChange={handleTierChange}
               />
             </Form.Item>
-            <Form.Item name="status" label="状态" className="mb-0!">
+            <Form.Item
+              name="status"
+              label={t('admin_users.form_status')}
+              className="mb-0!"
+            >
               <Select
                 options={[
-                  { value: 'normal', label: '正常' },
-                  { value: 'unverified', label: '未验证' },
+                  {
+                    value: 'normal',
+                    label: t('admin_users.form_status_normal'),
+                  },
+                  {
+                    value: 'unverified',
+                    label: t('admin_users.form_status_unverified'),
+                  },
                 ]}
               />
             </Form.Item>
-            <Form.Item label="套餐过期时间" className="mb-0!">
+            <Form.Item
+              label={t('admin_users.form_tier_expires')}
+              className="mb-0!"
+            >
               <Space direction="vertical" size="small" className="w-full">
                 <Form.Item name="tierExpiresAt" noStyle>
                   <DatePicker showTime className="w-full" />
@@ -429,17 +463,17 @@ export const Component = () => {
                       size="small"
                       onClick={() => handleExtendTierExpiry(days)}
                     >
-                      +{days} 天
+                      {t('admin_users.expiry_plus_days', { days })}
                     </Button>
                   ))}
                   <Button size="small" onClick={handleResetTierExpiry}>
-                    重置
+                    {t('admin_users.reset')}
                   </Button>
                 </Space>
               </Space>
             </Form.Item>
             <Form.Item
-              label="自定义配额 (JSON，留空则使用默认配额)"
+              label={t('admin_users.custom_quota_label')}
               className="mb-0!"
             >
               <JsonEditorWrapper

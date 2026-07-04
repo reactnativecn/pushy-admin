@@ -15,6 +15,7 @@ import {
   Table,
 } from 'antd';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { useManageContext } from '../hooks/useManageContext';
 
@@ -67,16 +68,18 @@ function getDepsChangeColumns({
   summary,
   filters,
   onFilterChange,
+  t,
 }: {
   summary: DepChangeSummary;
   filters: DepChangeFilters;
   onFilterChange: (type: DepChangeType, checked: boolean) => void;
+  t: (key: string) => string;
 }) {
   return [
     {
       title: (
         <span>
-          依赖（
+          {t('bind_package.col_dependencies')}（
           <Checkbox
             checked={filters.新增}
             onChange={({ target }) => {
@@ -84,7 +87,7 @@ function getDepsChangeColumns({
             }}
           />
           <span className="ml-1" style={{ color: '#dc2626', fontWeight: 700 }}>
-            新增 {summary.added}
+            {t('bind_package.change_added')} {summary.added}
           </span>
           ，
           <Checkbox
@@ -94,7 +97,7 @@ function getDepsChangeColumns({
             }}
           />
           <span className="ml-1" style={{ color: '#16a34a', fontWeight: 700 }}>
-            移除 {summary.removed}
+            {t('bind_package.change_removed')} {summary.removed}
           </span>
           ，
           <Checkbox
@@ -104,7 +107,7 @@ function getDepsChangeColumns({
             }}
           />
           <span className="ml-1" style={{ color: '#d97706', fontWeight: 700 }}>
-            变更 {summary.changed}
+            {t('bind_package.change_changed')} {summary.changed}
           </span>
           ）
         </span>
@@ -114,7 +117,7 @@ function getDepsChangeColumns({
       ellipsis: true,
     },
     {
-      title: '版本变化',
+      title: t('bind_package.col_version_change'),
       key: 'versionChange',
       ellipsis: true,
       render: (_: unknown, record: DepChangeRow) => {
@@ -135,7 +138,9 @@ function getDepsChangeColumns({
         if (record.changeType === '新增') {
           return (
             <span className="font-mono">
-              <span style={{ color: '#dc2626', fontWeight: 700 }}>新增</span>
+              <span style={{ color: '#dc2626', fontWeight: 700 }}>
+                {t('bind_package.change_added')}
+              </span>
               <span className="mx-2 text-gray-400">|</span>
               <span style={{ color: '#6b7280' }}>{record.oldVersion}</span>
               <ArrowRightOutlined className="mx-2 text-gray-400" />
@@ -148,7 +153,9 @@ function getDepsChangeColumns({
 
         return (
           <span className="font-mono">
-            <span style={{ color: '#16a34a', fontWeight: 700 }}>移除</span>
+            <span style={{ color: '#16a34a', fontWeight: 700 }}>
+              {t('bind_package.change_removed')}
+            </span>
             <span className="mx-2 text-gray-400">|</span>
             <span style={{ color: '#16a34a', fontWeight: 600 }}>
               {record.oldVersion}
@@ -171,6 +178,7 @@ const DepsChangeConfirmContent = ({
   versionDisplayName: string | number;
   changes: DepChangeRow[];
 }) => {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<DepChangeFilters>({
     新增: true,
     移除: true,
@@ -190,25 +198,26 @@ const DepsChangeConfirmContent = ({
         onFilterChange: (type, checked) => {
           setFilters((prev) => ({ ...prev, [type]: checked }));
         },
+        t,
       }),
-    [summary, filters],
+    [summary, filters, t],
   );
 
   return (
     <div>
-      <div>目标原生包：{packageName}</div>
-      <div>热更包：{versionDisplayName}</div>
+      <div>
+        {t('bind_package.target_package')}
+        {packageName}
+      </div>
+      <div>
+        {t('bind_package.ota_version')}
+        {versionDisplayName}
+      </div>
       <Alert
         className="mt-3"
         showIcon
         type="warning"
-        message={
-          <span>
-            如果变更的依赖是纯 JS 模块，则一般没有影响；若包含
-            <strong>原生代码</strong>
-            的新增或变化，热更可能导致功能不正常甚至闪退。建议仔细检查并在正式发布前使用扫码功能完整测试。
-          </span>
-        }
+        message={t('bind_package.native_warning')}
       />
       <Table<DepChangeRow>
         className="mt-3"
@@ -217,7 +226,7 @@ const DepsChangeConfirmContent = ({
         columns={columns}
         dataSource={filteredChanges}
         scroll={{ y: 320 }}
-        locale={{ emptyText: '当前筛选条件下无依赖变化' }}
+        locale={{ emptyText: t('bind_package.no_dep_changes') }}
       />
     </div>
   );
@@ -289,6 +298,7 @@ const BindPackage = ({
   versionDeps?: Record<string, string>;
   versionName?: string;
 }) => {
+  const { t } = useTranslation();
   const {
     packages: allPackages,
     appId,
@@ -371,11 +381,11 @@ const BindPackage = ({
       );
 
     Modal.confirm({
-      title: '检测到依赖变化，确认继续发布？',
+      title: t('bind_package.dep_changes_title'),
       maskClosable: true,
       okButtonProps: { danger: true },
-      okText: '继续发布',
-      cancelText: '取消',
+      okText: t('bind_package.publish_anyway'),
+      cancelText: t('bind_package.cancel'),
       width: 820,
       content,
       async onOk() {
@@ -392,17 +402,17 @@ const BindPackage = ({
     publishMenuItems.push(
       {
         key: 'all',
-        label: '全部可用原生包',
+        label: t('bind_package.all_packages'),
         children: [
           {
             key: 'all-full',
-            label: '全量',
+            label: t('bind_package.full_release'),
             icon: <CloudDownloadOutlined />,
             onClick: () => publishToPackages(availablePackages),
           },
           {
             key: 'all-gray',
-            label: '灰度',
+            label: t('bind_package.staged_release'),
             icon: <ExperimentOutlined />,
             children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
               key: `all-gray-${percentage}`,
@@ -422,13 +432,13 @@ const BindPackage = ({
       children: [
         {
           key: `pkg-${p.id}-full`,
-          label: '全量',
+          label: t('bind_package.full_release'),
           icon: <CloudDownloadOutlined />,
           onClick: () => publishToPackage(p),
         },
         {
           key: `pkg-${p.id}-gray`,
-          label: '灰度',
+          label: t('bind_package.staged_release'),
           icon: <ExperimentOutlined />,
           children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
             key: `pkg-${p.id}-gray-${percentage}`,
@@ -460,7 +470,7 @@ const BindPackage = ({
         : [
             {
               key: 'full',
-              label: '全量',
+              label: t('bind_package.full_release'),
               icon: <CloudDownloadOutlined />,
               onClick: () => publishToPackage(p),
             },
@@ -469,7 +479,7 @@ const BindPackage = ({
       if (rolloutConfigNumber < 50 && !isFull) {
         items.push({
           key: 'gray',
-          label: '灰度',
+          label: t('bind_package.staged_release'),
           icon: <ExperimentOutlined />,
           children: [1, 2, 5, 10, 20, 50].reduce<
             NonNullable<MenuProps['items']>
@@ -490,7 +500,7 @@ const BindPackage = ({
       }
       items.push({
         key: 'unpublish',
-        label: '取消发布',
+        label: t('bind_package.unpublish'),
         icon: <RestOutlined />,
         onClick: () => {
           const bindingId = binding.id;
@@ -535,7 +545,7 @@ const BindPackage = ({
           className="ant-typography-edit"
         >
           <Button type="link" size="small" icon={<LinkOutlined />}>
-            发布
+            {t('bind_package.publish')}
           </Button>
         </Dropdown>
       )}

@@ -2,6 +2,7 @@ import { Button, Checkbox, Form, Input, message, Row } from 'antd';
 import { md5 } from 'hash-wasm';
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { api } from '@/services/api';
 import { setUserEmail } from '@/services/auth';
@@ -10,6 +11,7 @@ import { rootRouterPath, router } from '../router';
 import { isPasswordValid } from '../utils/helper';
 
 export const Register = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState<boolean>(false);
 
   async function submit(values: { [key: string]: string }) {
@@ -22,7 +24,7 @@ export const Register = () => {
       setUserEmail(values.email);
       router.navigate(rootRouterPath.welcome);
     } catch (_) {
-      message.error('该邮箱已被注册');
+      message.error(t('register.email_exists'));
     }
     setLoading(false);
   }
@@ -32,13 +34,22 @@ export const Register = () => {
       <Form style={style.form} onFinish={(values) => submit(values)}>
         <div style={style.logo}>
           <Logo className="mx-auto" />
-          <div style={style.slogan}>极速热更新框架 for React Native</div>
+          <div style={style.slogan}>{t('register.slogan')}</div>
         </div>
         <Form.Item name="name" hasFeedback>
-          <Input placeholder="用户名" size="large" required />
+          <Input
+            placeholder={t('register.username_placeholder')}
+            size="large"
+            required
+          />
         </Form.Item>
         <Form.Item name="email" hasFeedback>
-          <Input placeholder="邮箱" size="large" type="email" required />
+          <Input
+            placeholder={t('register.email_placeholder')}
+            size="large"
+            type="email"
+            required
+          />
         </Form.Item>
         <Form.Item
           hasFeedback
@@ -48,7 +59,7 @@ export const Register = () => {
             () => ({
               async validator(_, value: string) {
                 if (value && !isPasswordValid(value)) {
-                  throw '密码中需要同时包含大、小写字母和数字，且长度不少于6位';
+                  throw t('register.password_rules');
                 }
               },
             }),
@@ -56,7 +67,7 @@ export const Register = () => {
         >
           <Input
             type="password"
-            placeholder="密码"
+            placeholder={t('register.password_placeholder')}
             size="large"
             autoComplete=""
             required
@@ -70,7 +81,7 @@ export const Register = () => {
             ({ getFieldValue }) => ({
               async validator(_, value: string) {
                 if (getFieldValue('pwd') !== value) {
-                  throw '两次输入的密码不一致';
+                  throw t('register.password_mismatch');
                 }
               },
             }),
@@ -78,7 +89,7 @@ export const Register = () => {
         >
           <Input
             type="password"
-            placeholder="再次输入密码"
+            placeholder={t('register.confirm_password_placeholder')}
             size="large"
             autoComplete=""
             required
@@ -91,7 +102,7 @@ export const Register = () => {
             size="large"
             loading={loading}
           >
-            注册
+            {t('register.create_button')}
           </Button>
         </Form.Item>
         <Form.Item>
@@ -104,7 +115,7 @@ export const Register = () => {
                   validator: (_, value) =>
                     value
                       ? Promise.resolve()
-                      : Promise.reject(Error('请阅读并同意后勾选此处')),
+                      : Promise.reject(Error(t('register.agreement_required'))),
                 },
               ]}
               hasFeedback
@@ -112,19 +123,19 @@ export const Register = () => {
             >
               <Checkbox>
                 <span>
-                  已阅读并同意
+                  {t('register.agreement_prefix')}{' '}
                   <a
                     target="_blank"
                     href="https://pushy.reactnative.cn/agreement/"
                     rel="noopener noreferrer"
                   >
-                    用户协议
+                    {t('register.agreement_link')}
                   </a>
                 </span>
               </Checkbox>
             </Form.Item>
             <span />
-            <Link to="/login">已有帐号？</Link>
+            <Link to={rootRouterPath.login}>{t('register.has_account')}</Link>
           </Row>
         </Form.Item>
       </Form>

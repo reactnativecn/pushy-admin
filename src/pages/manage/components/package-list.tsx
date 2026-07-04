@@ -20,6 +20,7 @@ import {
   Typography,
 } from 'antd';
 import { type Dispatch, type SetStateAction, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
@@ -38,6 +39,7 @@ const PackageList = ({
   selectedPackageIds: number[];
   setSelectedPackageIds: Dispatch<SetStateAction<number[]>>;
 }) => {
+  const { t } = useTranslation();
   const { app, appId, packageTimestampWarnings } = useManageContext();
   const selectedPackageIdSet = useMemo(
     () => new Set(selectedPackageIds),
@@ -78,16 +80,22 @@ const PackageList = ({
               danger
               icon={<DeleteOutlined />}
               onClick={() =>
-                removeSelectedPackages(selectedPackages, appId, () => {
-                  setSelectedPackageIds((prev) =>
-                    prev.filter(
-                      (id) => !selectedPackages.some((item) => item.id === id),
-                    ),
-                  );
-                })
+                removeSelectedPackages(
+                  selectedPackages,
+                  appId,
+                  () => {
+                    setSelectedPackageIds((prev) =>
+                      prev.filter(
+                        (id) =>
+                          !selectedPackages.some((item) => item.id === id),
+                      ),
+                    );
+                  },
+                  t,
+                )
               }
             >
-              删除
+              {t('package_list.delete_button')}
             </Button>
           </div>
         ) : undefined
@@ -112,16 +120,17 @@ function removeSelectedPackages(
   items: Package[],
   appId: number,
   onSuccess: () => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   if (items.length === 0) {
     return;
   }
   Modal.confirm({
-    title: '确认永久删除所选原生包？',
+    title: t('package_list.batch_delete_title'),
     content: (
       <div>
         <Typography.Paragraph type="danger">
-          删除后无法恢复，请确认这些原生包不再需要。
+          {t('package_list.batch_delete_warning')}
         </Typography.Paragraph>
         <div className="max-h-48 overflow-y-auto">
           {items.map((item) => (
@@ -142,12 +151,16 @@ function removeSelectedPackages(
   });
 }
 
-function remove(item: Package, appId: number) {
+function remove(
+  item: Package,
+  appId: number,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+) {
   Modal.confirm({
-    title: `确认永久删除原生包“${item.name}”？`,
+    title: t('package_list.single_delete_title', { name: item.name }),
     content: (
       <Typography.Paragraph type="danger">
-        删除后无法恢复，请确认这个原生包不再需要。
+        {t('package_list.single_delete_warning')}
       </Typography.Paragraph>
     ),
     maskClosable: true,
@@ -158,7 +171,7 @@ function remove(item: Package, appId: number) {
   });
 }
 
-function edit(item: Package, appId: number) {
+function edit(item: Package, appId: number, t: (key: string) => string) {
   let { note, status } = item;
   Modal.confirm({
     icon: null,
@@ -166,21 +179,27 @@ function edit(item: Package, appId: number) {
     maskClosable: true,
     content: (
       <Form layout="vertical" initialValues={item}>
-        <Form.Item name="note" label="备注">
+        <Form.Item name="note" label={t('package_list.note')}>
           <Input
-            placeholder="添加原生包备注"
+            placeholder={t('package_list.add_note')}
             onChange={({ target }) => (note = target.value)}
           />
         </Form.Item>
-        <Form.Item name="status" label="状态">
+        <Form.Item name="status" label={t('package_list.status')}>
           <Select
             onSelect={(value: Package['status']) => {
               status = value;
             }}
           >
-            <Select.Option value="normal">正常</Select.Option>
-            <Select.Option value="paused">暂停</Select.Option>
-            <Select.Option value="expired">过期</Select.Option>
+            <Select.Option value="normal">
+              {t('package_list.status_normal')}
+            </Select.Option>
+            <Select.Option value="paused">
+              {t('package_list.status_paused')}
+            </Select.Option>
+            <Select.Option value="expired">
+              {t('package_list.status_expired')}
+            </Select.Option>
           </Select>
         </Form.Item>
       </Form>
@@ -201,31 +220,34 @@ const TimestampWarning = ({
 }: {
   warningTimestamps: string[];
   realtimeMetricsPath: string;
-}) => (
-  <Popover
-    trigger="hover"
-    content={
-      <div className="max-w-72 text-xs leading-5">
-        <div>发现不同时间戳：</div>
-        <div className="mt-1 break-all text-gray-700">
-          {warningTimestamps.map((timestamp) => (
-            <div key={timestamp}>{timestamp}</div>
-          ))}
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Popover
+      trigger="hover"
+      content={
+        <div className="max-w-72 text-xs leading-5">
+          <div>{t('package_list.mismatch_title')}</div>
+          <div className="mt-1 break-all text-gray-700">
+            {warningTimestamps.map((timestamp) => (
+              <div key={timestamp}>{timestamp}</div>
+            ))}
+          </div>
+          <div className="mt-2">{t('package_list.mismatch_desc')}</div>
+          <div className="mt-1">
+            <Link to={realtimeMetricsPath}>
+              {t('package_list.view_realtime')}
+            </Link>
+          </div>
         </div>
-        <div className="mt-2">
-          需要在应用设置中打开“忽略时间戳”选项，否则这些包无法获得热更新。
-        </div>
-        <div className="mt-1">
-          <Link to={realtimeMetricsPath}>点击此处查看实时数据</Link>
-        </div>
-      </div>
-    }
-  >
-    <span className="ml-2 inline-flex cursor-help items-center text-amber-500">
-      <ExclamationCircleFilled />
-    </span>
-  </Popover>
-);
+      }
+    >
+      <span className="ml-2 inline-flex cursor-help items-center text-amber-500">
+        <ExclamationCircleFilled />
+      </span>
+    </Popover>
+  );
+};
 
 const Item = ({
   item,
@@ -240,8 +262,13 @@ const Item = ({
   warningTimestamps: string[];
   realtimeMetricsPath?: string;
 }) => {
+  const { t } = useTranslation();
   const { appId } = useManageContext();
   const hasTimestampWarning = warningTimestamps.length > 0;
+  const statusMap: Partial<Record<NonNullable<Package['status']>, string>> = {
+    paused: t('package_list.status_map_paused'),
+    expired: t('package_list.status_map_expired'),
+  };
   return (
     <div className="bg-white my-0 [&_li]:px-0!">
       <List.Item className="p-2">
@@ -264,21 +291,26 @@ const Item = ({
                     />
                   )}
                   {item.status && item.status !== 'normal' && (
-                    <Tag className="ml-2">{status[item.status]}</Tag>
+                    <Tag className="ml-2">{statusMap[item.status]}</Tag>
                   )}
                 </div>
               </Col>
-              <DepsTable deps={item.deps} name={`原生包 ${item.name}`} />
+              <DepsTable
+                deps={item.deps}
+                name={t('deps_table.native_package_with_name', {
+                  name: item.name,
+                })}
+              />
               <Commit commit={item.commit} />
               <Button
                 type="link"
                 icon={<EditOutlined />}
-                onClick={() => edit(item, appId)}
+                onClick={() => edit(item, appId, t)}
               />
               <Button
                 type="link"
                 icon={<DeleteOutlined />}
-                onClick={() => remove(item, appId)}
+                onClick={() => remove(item, appId, t)}
                 danger
               />
             </Row>
@@ -291,11 +323,15 @@ const Item = ({
                   type="secondary"
                   ellipsis={{ tooltip: item.note }}
                 >
-                  备注：{item.note}
+                  {t('package_list.note_prefix')}
+                  {item.note}
                 </Typography.Paragraph>
               )}
               <div className="text-xs flex flex-col gap-1">
-                <div>编译时间：{item.buildTime}</div>
+                <div>
+                  {t('package_list.build_time')}
+                  {item.buildTime}
+                </div>
               </div>
             </div>
           }
@@ -303,8 +339,4 @@ const Item = ({
       </List.Item>
     </div>
   );
-};
-const status: Partial<Record<NonNullable<Package['status']>, string>> = {
-  paused: '暂停',
-  expired: '过期',
 };
