@@ -18,12 +18,14 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { ApiToken } from '@/types';
 
 const { Paragraph } = Typography;
 
 function ApiTokensPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -42,24 +44,24 @@ function ApiTokensPage() {
       if (result?.token) {
         setNewToken(result.token);
         setCreateModalVisible(false);
-        message.success('API Token 创建成功');
+        message.success(t('api_tokens.create_success'));
         queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
         form.resetFields();
       }
     },
     onError: (error: Error) => {
-      message.error(error.message || '创建失败');
+      message.error(error.message || t('api_tokens.create_failed'));
     },
   });
 
   const revokeMutation = useMutation({
     mutationFn: api.revokeApiToken,
     onSuccess: () => {
-      message.success('Token 已撤销');
+      message.success(t('api_tokens.revoke_success'));
       queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
     },
     onError: (error: Error) => {
-      message.error(error.message || '撤销失败');
+      message.error(error.message || t('api_tokens.revoke_failed'));
     },
   });
 
@@ -85,29 +87,29 @@ function ApiTokensPage() {
 
   const columns: ColumnsType<ApiToken> = [
     {
-      title: 'ID',
+      title: t('api_tokens.col_id'),
       dataIndex: 'id',
       key: 'id',
       responsive: ['md'],
       width: 60,
     },
     {
-      title: '名称',
+      title: t('api_tokens.col_name'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: ApiToken) => (
         <Space wrap size={[4, 8]}>
           <KeyOutlined />
           {name}
-          {record.isRevoked && <Tag color="red">已撤销</Tag>}
+          {record.isRevoked && <Tag color="red">{t('api_tokens.revoked')}</Tag>}
           {record.isExpired && !record.isRevoked && (
-            <Tag color="orange">已过期</Tag>
+            <Tag color="orange">{t('api_tokens.expired')}</Tag>
           )}
         </Space>
       ),
     },
     {
-      title: 'Token',
+      title: t('api_tokens.col_token'),
       dataIndex: 'tokenSuffix',
       key: 'tokenSuffix',
       render: (tokenSuffix: string) => (
@@ -117,35 +119,45 @@ function ApiTokensPage() {
       ),
     },
     {
-      title: '权限',
+      title: t('api_tokens.col_permissions'),
       dataIndex: 'permissions',
       key: 'permissions',
       render: (permissions: ApiToken['permissions']) => (
         <Space>
-          {permissions?.read && <Tag color="blue">读取</Tag>}
-          {permissions?.write && <Tag color="green">写入</Tag>}
-          {permissions?.delete && <Tag color="red">删除</Tag>}
+          {permissions?.read && (
+            <Tag color="blue">{t('api_tokens.perm_read')}</Tag>
+          )}
+          {permissions?.write && (
+            <Tag color="green">{t('api_tokens.perm_write')}</Tag>
+          )}
+          {permissions?.delete && (
+            <Tag color="red">{t('api_tokens.perm_delete')}</Tag>
+          )}
         </Space>
       ),
     },
     {
-      title: '过期时间',
+      title: t('api_tokens.col_expires'),
       dataIndex: 'expiresAt',
       key: 'expiresAt',
       responsive: ['sm'],
       render: (expiresAt: string | null) =>
-        expiresAt ? dayjs(expiresAt).format('YYYY-MM-DD HH:mm') : '永不过期',
+        expiresAt
+          ? dayjs(expiresAt).format('YYYY-MM-DD HH:mm')
+          : t('api_tokens.never'),
     },
     {
-      title: '最后使用',
+      title: t('api_tokens.col_last_used'),
       dataIndex: 'lastUsedAt',
       key: 'lastUsedAt',
       responsive: ['lg'],
       render: (lastUsedAt: string | null) =>
-        lastUsedAt ? dayjs(lastUsedAt).format('YYYY-MM-DD HH:mm') : '从未使用',
+        lastUsedAt
+          ? dayjs(lastUsedAt).format('YYYY-MM-DD HH:mm')
+          : t('api_tokens.never_used'),
     },
     {
-      title: '创建时间',
+      title: t('api_tokens.col_created'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       responsive: ['lg'],
@@ -153,15 +165,15 @@ function ApiTokensPage() {
         dayjs(createdAt).format('YYYY-MM-DD HH:mm'),
     },
     {
-      title: '操作',
+      title: t('api_tokens.col_action'),
       key: 'action',
       render: (_: unknown, record: ApiToken) => (
         <Popconfirm
-          title="确认撤销"
-          description="撤销后此 Token 将无法再使用，确定要撤销吗？"
+          title={t('api_tokens.revoke_title')}
+          description={t('api_tokens.revoke_desc')}
           onConfirm={() => revokeMutation.mutate(record.id)}
-          okText="确定"
-          cancelText="取消"
+          okText={t('api_tokens.yes')}
+          cancelText={t('api_tokens.no')}
           disabled={record.isRevoked}
         >
           <Button
@@ -170,7 +182,7 @@ function ApiTokensPage() {
             icon={<DeleteOutlined />}
             disabled={record.isRevoked}
           >
-            撤销
+            {t('api_tokens.revoke_button')}
           </Button>
         </Popconfirm>
       ),
@@ -181,17 +193,17 @@ function ApiTokensPage() {
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <div className="text-lg font-semibold">API Token 管理</div>
+          <div className="text-lg font-semibold">{t('api_tokens.title')}</div>
           <Paragraph type="secondary" className="mb-0 mt-1">
-            API Token 可用于 CI/CD 流程或自动化脚本中调用{' '}
+            {t('api_tokens.description_prefix')}{' '}
             <a
               target="_blank"
               href="https://update.reactnative.cn/api/openapi"
               rel="noopener noreferrer"
             >
-              Pushy API
+              {t('api_tokens.pushy_api')}
             </a>
-            。每个用户最多可同时保留 10 个活跃的 Token。
+            {t('api_tokens.description_suffix')}
           </Paragraph>
         </div>
         <Button
@@ -200,7 +212,7 @@ function ApiTokensPage() {
           onClick={() => setCreateModalVisible(true)}
           className="w-full md:w-auto"
         >
-          创建 Token
+          {t('api_tokens.create_token')}
         </Button>
       </div>
       <Table
@@ -214,7 +226,7 @@ function ApiTokensPage() {
       />
 
       <Modal
-        title="创建 API Token"
+        title={t('api_tokens.create_modal_title')}
         open={createModalVisible}
         width={isMobile ? 'calc(100vw - 32px)' : 520}
         onCancel={() => {
@@ -226,42 +238,62 @@ function ApiTokensPage() {
       >
         <Form form={form} layout="vertical" onFinish={handleCreate}>
           <Form.Item
-            label="Token 名称"
+            label={t('api_tokens.token_name')}
             name="name"
-            rules={[{ required: true, message: '请输入 Token 名称' }]}
+            rules={[
+              { required: true, message: t('api_tokens.token_name_required') },
+            ]}
           >
-            <Input placeholder="例如：CI/CD Pipeline" maxLength={100} />
+            <Input
+              placeholder={t('api_tokens.token_name_placeholder')}
+              maxLength={100}
+            />
           </Form.Item>
           <Form.Item
-            label="权限"
+            label={t('api_tokens.permissions')}
             name="permissions"
-            rules={[{ required: true, message: '请至少选择一个权限' }]}
+            rules={[
+              { required: true, message: t('api_tokens.permissions_required') },
+            ]}
           >
             <Checkbox.Group>
               <Space direction="vertical">
                 <Checkbox value="read">
-                  <b>读取 (read)</b> - 查看应用、版本、原生包信息
+                  <Trans
+                    i18nKey="api_tokens.perm_read_desc"
+                    components={{ b: <b /> }}
+                  />
                 </Checkbox>
                 <Checkbox value="write">
-                  <b>写入 (write)</b> - 创建和更新应用、发布版本、上传原生包
+                  <Trans
+                    i18nKey="api_tokens.perm_write_desc"
+                    components={{ b: <b /> }}
+                  />
                 </Checkbox>
                 <Checkbox value="delete">
-                  <b>删除 (delete)</b> - 删除应用、版本、原生包
+                  <Trans
+                    i18nKey="api_tokens.perm_delete_desc"
+                    components={{ b: <b /> }}
+                  />
                 </Checkbox>
                 <div className="text-xs text-gray-500 mt-1">
-                  注意：写入权限不包括读取权限，如需同时读取请勾选读取权限
+                  {t('api_tokens.perm_note')}
                 </div>
               </Space>
             </Checkbox.Group>
           </Form.Item>
-          <Form.Item label="过期时间" name="expiresIn" initialValue={180}>
+          <Form.Item
+            label={t('api_tokens.expiration')}
+            name="expiresIn"
+            initialValue={180}
+          >
             <Select
               options={[
-                { value: 0, label: '永不过期' },
-                { value: 30, label: '30 天' },
-                { value: 90, label: '90 天' },
-                { value: 180, label: '180 天' },
-                { value: 360, label: '360 天' },
+                { value: 0, label: t('api_tokens.exp_never') },
+                { value: 30, label: t('api_tokens.exp_30') },
+                { value: 90, label: t('api_tokens.exp_90') },
+                { value: 180, label: t('api_tokens.exp_180') },
+                { value: 360, label: t('api_tokens.exp_360') },
               ]}
             />
           </Form.Item>
@@ -272,24 +304,24 @@ function ApiTokensPage() {
               loading={createMutation.isPending}
               block
             >
-              创建
+              {t('api_tokens.create_button')}
             </Button>
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title="Token 创建成功"
+        title={t('api_tokens.created_title')}
         open={!!newToken}
         width={isMobile ? 'calc(100vw - 32px)' : 520}
         onOk={() => setNewToken(null)}
         onCancel={() => setNewToken(null)}
         cancelButtonProps={{ style: { display: 'none' } }}
-        okText="我已保存"
+        okText={t('api_tokens.created_ok')}
       >
         <div className="my-4">
           <Paragraph type="warning" className="mb-2">
-            ⚠️ 请立即复制并安全保存此 Token，关闭后将无法再次查看！
+            {t('api_tokens.created_warning')}
           </Paragraph>
           <Input.TextArea
             value={newToken || ''}
@@ -304,11 +336,11 @@ function ApiTokensPage() {
             onClick={() => {
               if (newToken) {
                 navigator.clipboard.writeText(newToken);
-                message.success('已复制到剪贴板');
+                message.success(t('api_tokens.copied'));
               }
             }}
           >
-            复制 Token
+            {t('api_tokens.copy_button')}
           </Button>
         </div>
       </Modal>

@@ -1,21 +1,25 @@
 import { Layout, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 
-const Footer = () => (
-  <Layout.Footer className="shrink-0 text-center">
-    <Typography.Paragraph type="secondary">
-      React Native 中文网 © {new Date().getFullYear()} 武汉青罗网络科技有限公司
-    </Typography.Paragraph>
-    <Typography.Paragraph className="flex flex-wrap items-center justify-center gap-2">
-      <a href="http://beian.miit.gov.cn/">鄂ICP备20002031号-3</a>
-      <img
-        className="h-6 my-0 mx-1"
-        src="https://img.alicdn.com/tfs/TB1..50QpXXXXX7XpXXXXXXXXXX-40-40.png"
-        alt="鄂公网安备 42011202001821号"
-      />
-      <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42011202001821">
-        鄂公网安备 42011202001821号
-      </a>
-    </Typography.Paragraph>
-  </Layout.Footer>
-);
+const Footer = () => {
+  const { t } = useTranslation();
+  return (
+    <Layout.Footer className="shrink-0 text-center">
+      <Typography.Paragraph type="secondary">
+        {t('footer.copyright', { year: new Date().getFullYear() })}
+      </Typography.Paragraph>
+      <Typography.Paragraph className="flex flex-wrap items-center justify-center gap-2">
+        <a href="http://beian.miit.gov.cn/">鄂ICP备20002031号-3</a>
+        <img
+          className="h-6 my-0 mx-1"
+          src="https://img.alicdn.com/tfs/TB1..50QpXXXXX7XpXXXXXXXXXX-40-40.png"
+          alt="鄂公网安备 42011202001821号"
+        />
+        <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42011202001821">
+          鄂公网安备 42011202001821号
+        </a>
+      </Typography.Paragraph>
+    </Layout.Footer>
+  );
+};
 export default Footer;

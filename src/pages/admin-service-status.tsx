@@ -15,6 +15,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   api,
   type InternalApi5xxEvent,
@@ -104,16 +105,22 @@ const SERVICE_STATUS_TARGETS = [
 type ServiceStatusTarget = (typeof SERVICE_STATUS_TARGETS)[number];
 type ServiceStatusTargetKey = ServiceStatusTarget['key'];
 
-const counterLabels: Record<string, string> = {
-  'api.request.error': '5xx',
-  'api.request.total': '请求',
-  'cache.l1.hit': 'L1 命中',
-  'cache.redis.hit': 'Redis 命中',
-  'cache.stale.hit': 'Stale 命中',
-  'redis.circuit.open': '熔断打开',
-  'redis.operation.fallback': 'Redis fallback',
-  'redis.operation.short_circuit': '短路',
-};
+function getCounterLabels(t: (key: string) => string): Record<string, string> {
+  return {
+    'api.request.error': t('admin_service_status.counter_5xx'),
+    'api.request.total': t('admin_service_status.counter_requests'),
+    'cache.l1.hit': t('admin_service_status.counter_l1_hit'),
+    'cache.redis.hit': t('admin_service_status.counter_redis_hit'),
+    'cache.stale.hit': t('admin_service_status.counter_stale_hit'),
+    'redis.circuit.open': t('admin_service_status.counter_circuit_open'),
+    'redis.operation.fallback': t(
+      'admin_service_status.counter_redis_fallback',
+    ),
+    'redis.operation.short_circuit': t(
+      'admin_service_status.counter_short_circuit',
+    ),
+  };
+}
 
 function getDurationBucketMs(config?: InternalMetricsResponse['config']) {
   return config?.durationBucketsMs?.length
@@ -257,7 +264,10 @@ function getAverageMs(aggregate: DurationAggregate) {
   return aggregate.count > 0 ? aggregate.totalMs / aggregate.count : null;
 }
 
-function buildRequestSeries(snapshot?: InternalMetricsResponse): SeriesPoint[] {
+function buildRequestSeries(
+  snapshot: InternalMetricsResponse | undefined,
+  counterLabels: Record<string, string>,
+): SeriesPoint[] {
   return (snapshot?.buckets ?? []).flatMap((bucket) => [
     {
       category: counterLabels['api.request.total'],
@@ -299,7 +309,10 @@ function buildDurationSeries(
   });
 }
 
-function buildRedisSeries(snapshot?: InternalMetricsResponse): SeriesPoint[] {
+function buildRedisSeries(
+  snapshot: InternalMetricsResponse | undefined,
+  counterLabels: Record<string, string>,
+): SeriesPoint[] {
   const names = [
     'redis.operation.fallback',
     'redis.operation.short_circuit',
@@ -416,6 +429,7 @@ function createLineConfig(
   data: SeriesPoint[],
   yTitle: string,
   valueFormatter: (value: number) => string = formatCount,
+  xTitle?: string,
 ) {
   return {
     axis: {
@@ -425,7 +439,7 @@ function createLineConfig(
           const parsed = dayjs(value);
           return parsed.isValid() ? parsed.format('HH:mm') : value;
         },
-        title: '时间',
+        title: xTitle ?? 'Time',
       },
       y: {
         title: yTitle,
@@ -461,16 +475,18 @@ function MetricLineCard({
   title,
   valueFormatter,
   yTitle,
+  xTitle,
 }: {
   data: SeriesPoint[];
   title: string;
   valueFormatter?: (value: number) => string;
   yTitle: string;
+  xTitle?: string;
 }) {
   return (
     <Card title={title}>
       {data.length > 0 ? (
-        <Line {...createLineConfig(data, yTitle, valueFormatter)} />
+        <Line {...createLineConfig(data, yTitle, valueFormatter, xTitle)} />
       ) : (
         <div className="flex h-[300px] items-center justify-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -480,125 +496,133 @@ function MetricLineCard({
   );
 }
 
-const endpointColumns: ColumnsType<EndpointRow> = [
-  {
-    dataIndex: 'method',
-    render: (method: string) => <Tag>{method}</Tag>,
-    title: '方法',
-    width: 90,
-  },
-  {
-    dataIndex: 'path',
-    render: (path: string) => (
-      <Text code className="break-all text-xs">
-        {path}
-      </Text>
-    ),
-    title: '路径',
-  },
-  {
-    align: 'right',
-    dataIndex: 'total',
-    render: (value: number) => formatCount(value),
-    title: '请求',
-    width: 110,
-  },
-  {
-    align: 'right',
-    dataIndex: 'errors',
-    render: (value: number) => formatCount(value),
-    title: '5xx',
-    width: 90,
-  },
-  {
-    align: 'right',
-    dataIndex: 'errorRate',
-    render: (value: number) => formatPercent(value),
-    title: '错误率',
-    width: 110,
-  },
-  {
-    align: 'right',
-    dataIndex: 'avgMs',
-    render: (value: number | null) => formatMs(value),
-    title: 'avg',
-    width: 100,
-  },
-  {
-    align: 'right',
-    dataIndex: 'p95Ms',
-    render: (value: number | null) => formatMs(value),
-    title: 'p95',
-    width: 100,
-  },
-];
+function getEndpointColumns(
+  t: (key: string) => string,
+): ColumnsType<EndpointRow> {
+  return [
+    {
+      dataIndex: 'method',
+      render: (method: string) => <Tag>{method}</Tag>,
+      title: t('admin_service_status.col_method'),
+      width: 90,
+    },
+    {
+      dataIndex: 'path',
+      render: (path: string) => (
+        <Text code className="break-all text-xs">
+          {path}
+        </Text>
+      ),
+      title: t('admin_service_status.col_path'),
+    },
+    {
+      align: 'right',
+      dataIndex: 'total',
+      render: (value: number) => formatCount(value),
+      title: t('admin_service_status.col_requests'),
+      width: 110,
+    },
+    {
+      align: 'right',
+      dataIndex: 'errors',
+      render: (value: number) => formatCount(value),
+      title: t('admin_service_status.col_5xx'),
+      width: 90,
+    },
+    {
+      align: 'right',
+      dataIndex: 'errorRate',
+      render: (value: number) => formatPercent(value),
+      title: t('admin_service_status.col_error_rate'),
+      width: 110,
+    },
+    {
+      align: 'right',
+      dataIndex: 'avgMs',
+      render: (value: number | null) => formatMs(value),
+      title: t('admin_service_status.col_avg'),
+      width: 100,
+    },
+    {
+      align: 'right',
+      dataIndex: 'p95Ms',
+      render: (value: number | null) => formatMs(value),
+      title: t('admin_service_status.col_p95'),
+      width: 100,
+    },
+  ];
+}
 
-const api5xxEventColumns: ColumnsType<InternalApi5xxEvent> = [
-  {
-    dataIndex: 'time',
-    render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm:ss'),
-    title: '时间',
-    width: 180,
-  },
-  {
-    dataIndex: 'statusCode',
-    render: (statusCode: number) => <Tag color="red">{statusCode}</Tag>,
-    title: '状态',
-    width: 90,
-  },
-  {
-    dataIndex: 'method',
-    render: (method: string) => <Tag>{method}</Tag>,
-    title: '方法',
-    width: 90,
-  },
-  {
-    dataIndex: 'path',
-    render: (value: string) => (
-      <Text className="font-mono text-xs" copyable>
-        {value}
-      </Text>
-    ),
-    title: '路径',
-    width: 260,
-  },
-  {
-    align: 'right',
-    dataIndex: 'durationMs',
-    render: (value: number) => formatMs(value),
-    title: '耗时',
-    width: 100,
-  },
-  {
-    dataIndex: 'requestId',
-    render: (value: string | undefined) =>
-      value ? (
+function getApi5xxEventColumns(
+  t: (key: string) => string,
+): ColumnsType<InternalApi5xxEvent> {
+  return [
+    {
+      dataIndex: 'time',
+      render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm:ss'),
+      title: t('admin_service_status.col_time'),
+      width: 180,
+    },
+    {
+      dataIndex: 'statusCode',
+      render: (statusCode: number) => <Tag color="red">{statusCode}</Tag>,
+      title: t('admin_service_status.col_status'),
+      width: 90,
+    },
+    {
+      dataIndex: 'method',
+      render: (method: string) => <Tag>{method}</Tag>,
+      title: t('admin_service_status.col_method'),
+      width: 90,
+    },
+    {
+      dataIndex: 'path',
+      render: (value: string) => (
         <Text className="font-mono text-xs" copyable>
           {value}
         </Text>
-      ) : (
-        '-'
       ),
-    title: 'Request ID',
-    width: 180,
-  },
-  {
-    dataIndex: 'message',
-    render: (_: string | undefined, entry) => (
-      <div className="flex flex-col gap-1">
-        <div className="flex flex-wrap gap-1">
-          {entry.errorCode && <Tag>{entry.errorCode}</Tag>}
-          {entry.errorName && <Tag>{entry.errorName}</Tag>}
-          <Tag>PID {entry.pid}</Tag>
+      title: t('admin_service_status.col_path'),
+      width: 260,
+    },
+    {
+      align: 'right',
+      dataIndex: 'durationMs',
+      render: (value: number) => formatMs(value),
+      title: t('admin_service_status.col_duration'),
+      width: 100,
+    },
+    {
+      dataIndex: 'requestId',
+      render: (value: string | undefined) =>
+        value ? (
+          <Text className="font-mono text-xs" copyable>
+            {value}
+          </Text>
+        ) : (
+          '-'
+        ),
+      title: t('admin_service_status.col_request_id'),
+      width: 180,
+    },
+    {
+      dataIndex: 'message',
+      render: (_: string | undefined, entry) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap gap-1">
+            {entry.errorCode && <Tag>{entry.errorCode}</Tag>}
+            {entry.errorName && <Tag>{entry.errorName}</Tag>}
+            <Tag>PID {entry.pid}</Tag>
+          </div>
+          <Paragraph className="m-0! whitespace-pre-wrap break-all text-xs">
+            {entry.message || '-'}
+          </Paragraph>
         </div>
-        <Paragraph className="m-0! whitespace-pre-wrap break-all text-xs">
-          {entry.message || '-'}
-        </Paragraph>
-      </div>
-    ),
-    title: '错误',
-  },
-];
+      ),
+      title: t('admin_service_status.col_error'),
+    },
+  ];
+}
 
 function ServiceStatusPanel({
   error,
@@ -613,6 +637,8 @@ function ServiceStatusPanel({
   snapshot?: InternalMetricsResponse;
   target: ServiceStatusTarget;
 }) {
+  const { t } = useTranslation();
+  const counterLabels = getCounterLabels(t);
   const [api5xxEventPage, setApi5xxEventPage] = useState(1);
   const api5xxEventOffset = (api5xxEventPage - 1) * API_5XX_EVENT_PAGE_SIZE;
   const api5xxEventsQuery = useQuery({
@@ -635,12 +661,18 @@ function ServiceStatusPanel({
       ),
     [snapshot],
   );
-  const requestSeries = useMemo(() => buildRequestSeries(snapshot), [snapshot]);
+  const requestSeries = useMemo(
+    () => buildRequestSeries(snapshot, counterLabels),
+    [snapshot, counterLabels],
+  );
   const durationSeries = useMemo(
     () => buildDurationSeries(snapshot),
     [snapshot],
   );
-  const redisSeries = useMemo(() => buildRedisSeries(snapshot), [snapshot]);
+  const redisSeries = useMemo(
+    () => buildRedisSeries(snapshot, counterLabels),
+    [snapshot, counterLabels],
+  );
   const endpointRows = useMemo(() => buildEndpointRows(snapshot), [snapshot]);
 
   const totalRequests = sumCounters(snapshot?.counters, 'api.request.total');
@@ -694,13 +726,16 @@ function ServiceStatusPanel({
             api5xxEventsQuery.refetch();
           }}
         >
-          刷新
+          {t('admin_service_status.refresh')}
         </Button>
       </div>
 
       {error && (
         <Card className="mb-4">
-          <Text type="danger">{(error as Error).message || '请求失败'}</Text>
+          <Text type="danger">
+            {(error as Error).message ||
+              t('admin_service_status.request_failed')}
+          </Text>
         </Card>
       )}
 
@@ -708,19 +743,19 @@ function ServiceStatusPanel({
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card>
             <Statistic
-              title="Uptime"
+              title={t('admin_service_status.uptime')}
               value={formatUptime(snapshot?.process.uptimeSeconds)}
             />
           </Card>
           <Card>
             <Statistic
-              title="RSS"
+              title={t('admin_service_status.rss')}
               value={formatBytes(snapshot?.process.memory.rss)}
             />
           </Card>
           <Card>
             <Statistic
-              title="Heap"
+              title={t('admin_service_status.heap')}
               value={formatBytes(snapshot?.process.memory.heapUsed)}
             />
             <Progress
@@ -731,7 +766,7 @@ function ServiceStatusPanel({
           </Card>
           <Card>
             <Statistic
-              title="External"
+              title={t('admin_service_status.external')}
               value={formatBytes(snapshot?.process.memory.external)}
             />
           </Card>
@@ -739,7 +774,10 @@ function ServiceStatusPanel({
 
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card>
-            <Statistic title="API 请求" value={formatCount(totalRequests)} />
+            <Statistic
+              title={t('admin_service_status.api_requests')}
+              value={formatCount(totalRequests)}
+            />
             <Text type={totalErrors > 0 ? 'danger' : 'secondary'}>
               5xx {formatCount(totalErrors)} /{' '}
               {formatPercent(totalErrors / totalRequests)}
@@ -747,7 +785,7 @@ function ServiceStatusPanel({
           </Card>
           <Card>
             <Statistic
-              title="API 延时"
+              title={t('admin_service_status.api_latency')}
               value={formatMs(getAverageMs(apiDuration))}
             />
             <Text type="secondary">
@@ -758,7 +796,10 @@ function ServiceStatusPanel({
             </Text>
           </Card>
           <Card>
-            <Statistic title="缓存命中" value={formatPercent(cacheHitRate)} />
+            <Statistic
+              title={t('admin_service_status.cache_hit')}
+              value={formatPercent(cacheHitRate)}
+            />
             <Text type="secondary">
               L1 {formatCount(l1Hits)} / Redis {formatCount(redisHits)} / Stale{' '}
               {formatCount(staleHits)}
@@ -766,7 +807,7 @@ function ServiceStatusPanel({
           </Card>
           <Card>
             <Statistic
-              title="Redis 降级"
+              title={t('admin_service_status.redis_degrade')}
               value={formatCount(redisFallbacks + redisShortCircuits)}
             />
             <Text type={redisCircuitOpens > 0 ? 'warning' : 'secondary'}>
@@ -780,25 +821,28 @@ function ServiceStatusPanel({
         <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
           <MetricLineCard
             data={requestSeries}
-            title="API 请求"
-            yTitle="请求数"
+            title={t('admin_service_status.chart_api_requests')}
+            yTitle={t('admin_service_status.y_requests')}
+            xTitle={t('admin_service_status.col_time')}
           />
           <MetricLineCard
             data={durationSeries}
-            title="API 延时"
+            title={t('admin_service_status.chart_api_latency')}
             valueFormatter={formatMs}
-            yTitle="毫秒"
+            yTitle={t('admin_service_status.y_milliseconds')}
+            xTitle={t('admin_service_status.col_time')}
           />
           <MetricLineCard
             data={redisSeries}
-            title="Redis / Cache"
-            yTitle="次数"
+            title={t('admin_service_status.chart_redis_cache')}
+            yTitle={t('admin_service_status.y_count')}
+            xTitle={t('admin_service_status.col_time')}
           />
         </div>
 
-        <Card className="mb-4" title="Top API 路径">
+        <Card className="mb-4" title={t('admin_service_status.top_api_paths')}>
           <Table
-            columns={endpointColumns}
+            columns={getEndpointColumns(t)}
             dataSource={endpointRows.slice(0, 12)}
             pagination={false}
             rowKey="key"
@@ -812,33 +856,40 @@ function ServiceStatusPanel({
           extra={
             api5xxEventsQuery.data ? (
               <Text type="secondary">
-                最近 {formatCount(api5xxEventsQuery.data.total)} / 容量{' '}
+                {t('admin_service_status.info_recent')}{' '}
+                {formatCount(api5xxEventsQuery.data.total)} /{' '}
+                {t('admin_service_status.info_capacity')}{' '}
                 {formatCount(api5xxEventsQuery.data.capacity)}
                 {api5xxEventsQuery.data.log ? (
                   <>
                     {' '}
-                    / 过滤 {formatCount(api5xxEventsQuery.data.log.ignored)} /
-                    日志 {formatBytes(api5xxEventsQuery.data.log.readBytes)}
+                    / {t('admin_service_status.info_filtered')}{' '}
+                    {formatCount(api5xxEventsQuery.data.log.ignored)} /{' '}
+                    {t('admin_service_status.info_log_window')}{' '}
+                    {formatBytes(api5xxEventsQuery.data.log.readBytes)}
                   </>
                 ) : null}
               </Text>
             ) : null
           }
-          title="5xx 事件"
+          title={t('admin_service_status.events_5xx')}
         >
           {api5xxEventsQuery.error && (
             <div className="mb-3">
               <Text type="danger">
-                {(api5xxEventsQuery.error as Error).message || '请求失败'}
+                {(api5xxEventsQuery.error as Error).message ||
+                  t('admin_service_status.request_failed')}
               </Text>
             </div>
           )}
           <Table
-            columns={api5xxEventColumns}
+            columns={getApi5xxEventColumns(t)}
             dataSource={api5xxEventsQuery.data?.data ?? []}
             loading={api5xxEventsQuery.isFetching}
             locale={{
-              emptyText: api5xxEventsQuery.error ? '请求失败' : '暂无 5xx 事件',
+              emptyText: api5xxEventsQuery.error
+                ? t('admin_service_status.request_failed')
+                : t('admin_service_status.no_5xx_events'),
             }}
             pagination={{
               current: api5xxEventPage,
@@ -846,7 +897,10 @@ function ServiceStatusPanel({
               onChange: setApi5xxEventPage,
               pageSize: API_5XX_EVENT_PAGE_SIZE,
               showSizeChanger: false,
-              showTotal: (total) => `共 ${formatCount(total)} 条`,
+              showTotal: (total) =>
+                t('admin_service_status.events_count', {
+                  count: formatCount(total),
+                }),
               total: api5xxEventsQuery.data?.total ?? 0,
             }}
             rowKey="id"
@@ -874,16 +928,17 @@ function ServiceTargetSidebar({
   }>;
   onChange: (key: ServiceStatusTargetKey) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <aside className="min-w-0">
       <div className="space-y-2 lg:sticky lg:top-6">
         {items.map(({ hasData, isError, isFetching, summary, target }) => {
           const isActive = target.key === activeKey;
           const statusTitle = isError
-            ? '请求失败'
+            ? t('admin_service_status.sidebar_failed')
             : isFetching && !hasData
-              ? '加载中'
-              : '正常';
+              ? t('admin_service_status.sidebar_loading')
+              : t('admin_service_status.sidebar_healthy');
 
           return (
             <button
@@ -927,19 +982,25 @@ function ServiceTargetSidebar({
               </span>
               <span className="mt-2 grid grid-cols-3 gap-2 text-xs">
                 <span className="min-w-0">
-                  <span className="block text-slate-400">请求/错</span>
+                  <span className="block text-slate-400">
+                    {t('admin_service_status.sidebar_req_err')}
+                  </span>
                   <span className="block truncate font-medium text-slate-700 tabular-nums">
                     {summary.requestText}
                   </span>
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-slate-400">延时</span>
+                  <span className="block text-slate-400">
+                    {t('admin_service_status.sidebar_latency')}
+                  </span>
                   <span className="block truncate font-medium text-slate-700 tabular-nums">
                     {summary.delayText}
                   </span>
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-slate-400">命中</span>
+                  <span className="block text-slate-400">
+                    {t('admin_service_status.sidebar_hit')}
+                  </span>
                   <span className="block truncate font-medium text-slate-700 tabular-nums">
                     {summary.hitText}
                   </span>
@@ -956,6 +1017,7 @@ function ServiceTargetSidebar({
 export const Component = () => {
   const [activeTargetKey, setActiveTargetKey] =
     useState<ServiceStatusTargetKey>(SERVICE_STATUS_TARGETS[0].key);
+  const { t } = useTranslation();
   const targetQueries = useQueries({
     queries: SERVICE_STATUS_TARGETS.map((target) => ({
       queryFn: () =>
@@ -990,9 +1052,9 @@ export const Component = () => {
     <div className="page-section">
       <div className="mb-4">
         <Title level={4} className="m-0!">
-          服务状态
+          {t('admin_service_status.title')}
         </Title>
-        <Text type="secondary">按节点查看内部指标和运行状态。</Text>
+        <Text type="secondary">{t('admin_service_status.description')}</Text>
       </div>
       <div className="grid min-w-0 gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <ServiceTargetSidebar

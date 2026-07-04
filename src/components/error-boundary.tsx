@@ -1,5 +1,6 @@
 import { Button, Result } from 'antd';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useRouteError } from 'react-router-dom';
 
 interface ChunkError extends Error {
@@ -19,6 +20,7 @@ const isLocalHost = () => {
 };
 
 export function ErrorBoundary() {
+  const { t } = useTranslation();
   const error = useRouteError() as ChunkError;
   const navigate = useNavigate();
 
@@ -57,14 +59,16 @@ export function ErrorBoundary() {
   return (
     <Result
       status="500"
-      title="页面出错了"
-      subTitle={message || '发生了未知错误'}
+      title={t('error_boundary.title')}
+      subTitle={message || t('error_boundary.unknown_error')}
       extra={
         <>
           <Button type="primary" onClick={handleRetry}>
-            重试
+            {t('error_boundary.retry')}
           </Button>
-          <Button onClick={handleGoHome}>返回首页</Button>
+          <Button onClick={handleGoHome}>
+            {t('error_boundary.back_home')}
+          </Button>
         </>
       }
     />

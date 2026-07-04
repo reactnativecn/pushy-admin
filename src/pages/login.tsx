@@ -1,6 +1,7 @@
 import { Button, Form, Input, Row } from 'antd';
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { login } from '@/services/auth';
 import { ReactComponent as Logo } from '../assets/logo.svg';
@@ -9,6 +10,7 @@ let email: string;
 let password: string;
 
 export const Login = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   return (
     <div style={style.body}>
@@ -23,11 +25,11 @@ export const Login = () => {
       >
         <div style={style.logo}>
           <Logo className="mx-auto" />
-          <div style={style.slogan}>极速热更新框架 for React Native</div>
+          <div style={style.slogan}>{t('login.slogan')}</div>
         </div>
         <Form.Item>
           <Input
-            placeholder="邮箱"
+            placeholder={t('login.email_placeholder')}
             size="large"
             type="email"
             autoComplete=""
@@ -38,7 +40,7 @@ export const Login = () => {
         <Form.Item>
           <Input
             type="password"
-            placeholder="密码"
+            placeholder={t('login.password_placeholder')}
             size="large"
             autoComplete=""
             onChange={({ target }) => (password = target.value)}
@@ -53,13 +55,13 @@ export const Login = () => {
             loading={loading}
             block
           >
-            登录
+            {t('login.login_button')}
           </Button>
         </Form.Item>
         <Form.Item>
           <Row justify="space-between">
-            <Link to="/register">注册</Link>
-            <Link to="/reset-password/0">忘记密码？</Link>
+            <Link to="/register">{t('login.register')}</Link>
+            <Link to="/reset-password/0">{t('login.forgot_password')}</Link>
           </Row>
         </Form.Item>
       </form>

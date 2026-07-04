@@ -1,7 +1,16 @@
 import { DownOutlined, SearchOutlined } from '@ant-design/icons';
-import { Checkbox, Dropdown, Grid, Input, Layout, type MenuProps, Tabs } from 'antd';
+import {
+  Checkbox,
+  Dropdown,
+  Grid,
+  Input,
+  Layout,
+  type MenuProps,
+  Tabs,
+} from 'antd';
 
 import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import './manage.css';
 
@@ -43,16 +52,18 @@ const PackageFilterControl = ({
   selectedPackageIds: number[];
   setSelectedPackageIds: Dispatch<SetStateAction<number[]>>;
 }) => {
-  const filterLabel = filter === 'all' ? '全部' : '未使用';
+  const { t } = useTranslation();
+  const filterLabel =
+    filter === 'all' ? t('manage.filter_all') : t('manage.filter_unused');
   const items: MenuProps['items'] = [
     {
       key: 'all',
-      label: '全部',
+      label: t('manage.filter_all'),
       onClick: () => setFilter('all'),
     },
     {
       key: 'unused',
-      label: '未使用',
+      label: t('manage.filter_unused'),
       onClick: () => setFilter('unused'),
     },
   ];
@@ -67,7 +78,9 @@ const PackageFilterControl = ({
   return (
     <span className="inline-flex items-center gap-2">
       <Checkbox
-        aria-label={`${filterLabel}全选`}
+        aria-label={t('manage.select_visible_packages', {
+          filter: filterLabel,
+        })}
         checked={allVisibleSelected}
         disabled={packageIds.length === 0}
         indeterminate={selectedVisibleCount > 0 && !allVisibleSelected}
@@ -93,6 +106,7 @@ const PackageFilterControl = ({
 };
 
 const ManageDashBoard = () => {
+  const { t } = useTranslation();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const { packages, unusedPackages, packagesLoading, bindingsLoading } =
@@ -114,7 +128,9 @@ const ManageDashBoard = () => {
     }
   };
   const isUnusedPackageFilter = packageFilter === 'unused';
-  const allPackageDataSource = isUnusedPackageFilter ? unusedPackages : packages;
+  const allPackageDataSource = isUnusedPackageFilter
+    ? unusedPackages
+    : packages;
   const normalizedPackageSearch = packageSearch.trim().toLowerCase();
   const packageDataSource = useMemo(
     () =>
@@ -159,7 +175,7 @@ const ManageDashBoard = () => {
       allowClear
       bordered={false}
       prefix={<SearchOutlined className="text-gray-400" />}
-      placeholder="搜索"
+      placeholder={t('common.search')}
       value={packageSearch}
       onChange={({ target }) => setPackageSearch(target.value)}
       className="rounded bg-gray-100 px-2 text-sm leading-8"
@@ -175,12 +191,12 @@ const ManageDashBoard = () => {
         items={[
           {
             key: 'versions',
-            label: '热更包',
+            label: t('manage.tab_versions'),
             children: <VersionTable />,
           },
           {
             key: 'packages',
-            label: '原生包',
+            label: t('manage.tab_packages'),
             children: (
               <div className="rounded-lg bg-white p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -204,7 +220,7 @@ const ManageDashBoard = () => {
         style={{ marginRight: 16, maxWidth: '100%' }}
       >
         <div className="flex shrink-0 items-center gap-2 py-4">
-          原生包
+          {t('manage.tab_packages')}
           {packageSearchInput}
         </div>
         {packageList}
@@ -217,6 +233,7 @@ const ManageDashBoard = () => {
 };
 
 export const Manage = () => {
+  const { t } = useTranslation();
   const params = useParams<{ id?: string }>();
   const id = Number(params.id!);
   const { app } = useApp(id);
@@ -233,7 +250,7 @@ export const Manage = () => {
       <AppDetailHeader
         activeView="management"
         app={app}
-        appNameFallback="加载应用中"
+        appNameFallback={t('manage.loading_app')}
         metricsDisabled={!realtimeMetricsPath}
         onMetricsClick={() => {
           if (realtimeMetricsPath) {
@@ -241,7 +258,7 @@ export const Manage = () => {
           }
         }}
         onSettingsClick={app ? () => openAppSettings(app) : undefined}
-        sectionLabel="应用"
+        sectionLabel={t('manage.breadcrumb_apps')}
       />
       <ManageDashBoard />
     </ManageProvider>

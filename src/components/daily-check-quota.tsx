@@ -1,6 +1,7 @@
 import { WarningOutlined } from '@ant-design/icons';
 import { Alert, Progress, Tag, Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { quotas } from '@/constants/quotas';
 import {
   CHECK_QUOTA_LOW_RATIO,
@@ -11,11 +12,27 @@ import { useUserInfo } from '@/utils/hooks';
 
 const { Text } = Typography;
 
+const getTierTitle = (
+  tier: string | undefined,
+  customTitle: string | undefined,
+  t: (key: string) => string,
+) => {
+  if (!tier) {
+    return customTitle ?? '';
+  }
+  const translatedTier = t(`user.purchasable_tiers.${tier}`);
+  if (translatedTier !== `user.purchasable_tiers.${tier}`) {
+    return translatedTier;
+  }
+  return customTitle ?? tier;
+};
+
 interface DailyCheckQuotaProps {
   variant: 'account';
 }
 
 const useDailyCheckQuotaState = () => {
+  const { t } = useTranslation();
   const { user } = useUserInfo();
   const quota = user
     ? (user.quota ?? quotas[user.tier as keyof typeof quotas])
@@ -32,34 +49,40 @@ const useDailyCheckQuotaState = () => {
       {user && (
         <>
           <div>
-            套餐：
-            {quota?.title ??
-              quotas[user.tier as keyof typeof quotas]?.title ??
-              user.tier}
+            {t('daily_check_quota.tier')}
+            {getTierTitle(user.tier, quota?.title, t)}
           </div>
           <div>
-            到期：
+            {t('daily_check_quota.expires')}
             {user.tierExpiresAt
               ? dayjs(user.tierExpiresAt).format('YYYY-MM-DD')
-              : '无'}
+              : t('daily_check_quota.no_expire')}
           </div>
         </>
       )}
       {warningState.hasData && (
         <>
           <div>
-            今日剩余额度：{warningState.remaining.toLocaleString()} /{' '}
-            {warningState.dailyQuota.toLocaleString()} 次
+            {t('daily_check_quota.remaining_today')}
+            {warningState.remaining.toLocaleString()} /{' '}
+            {warningState.dailyQuota.toLocaleString()}
+            {t('daily_check_quota.checks')}
           </div>
           {warningState.remaining < 0 && (
             <div className="font-medium text-red-200">
-              已超出：{Math.abs(warningState.remaining).toLocaleString()} 次
+              {t('daily_check_quota.over_quota')}
+              {Math.abs(warningState.remaining).toLocaleString()}
+              {t('daily_check_quota.checks')}
             </div>
           )}
         </>
       )}
       {user?.last7dAvg !== undefined && (
-        <div>7 日平均剩余额度：{user.last7dAvg.toLocaleString()} 次</div>
+        <div>
+          {t('daily_check_quota.avg_remaining')}
+          {user.last7dAvg.toLocaleString()}
+          {t('daily_check_quota.checks')}
+        </div>
       )}
     </div>
   );
@@ -80,6 +103,7 @@ export function DailyCheckQuotaUserTrigger({
   showPlanDetails?: boolean;
   userName: string;
 }) {
+  const { t } = useTranslation();
   const quotaState = useDailyCheckQuotaState();
   const { user } = quotaState;
   const strokeColor = quotaState.isExceeded
@@ -87,14 +111,12 @@ export function DailyCheckQuotaUserTrigger({
     : quotaState.isLow
       ? '#f59e0b'
       : '#2563eb';
-  const tierTitle = user
-    ? (user.quota?.title ??
-      quotas[user.tier as keyof typeof quotas]?.title ??
-      user.tier)
-    : '';
+  const tierTitle = user ? getTierTitle(user.tier, user.quota?.title, t) : '';
   const expireLabel = user?.tierExpiresAt
-    ? `${dayjs(user.tierExpiresAt).format('YYYY-MM-DD')} 到期`
-    : '无到期';
+    ? t('daily_check_quota.expire_date', {
+        date: dayjs(user.tierExpiresAt).format('YYYY-MM-DD'),
+      })
+    : t('daily_check_quota.no_expire');
   const warningIcon = (quotaState.isExceeded || quotaState.isLow) && (
     <WarningOutlined
       className={`shrink-0 ${
@@ -194,6 +216,7 @@ export function DailyCheckQuotaUserTrigger({
 }
 
 export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
+  const { t } = useTranslation();
   const quotaState = useDailyCheckQuotaState();
   const { user } = quotaState;
   if (!user) {
@@ -202,21 +225,22 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
 
   if (!quotaState.hasData) {
     return (
-      <Text type="secondary">
-        暂无今日检查额度数据。额度用于客户端查询是否有可用热更新，按账户下所有应用汇总。
-      </Text>
+      <Text type="secondary">{t('daily_check_quota.quota_not_available')}</Text>
     );
   }
 
   const message = quotaState.isExceeded
     ? quotaState.remaining < 0
-      ? `今日检查额度已超出 ${Math.abs(quotaState.remaining).toLocaleString()} 次，客户端检查可能返回空数据。`
-      : '今日检查额度已用尽，请升级套餐或等待每日额度重置。'
+      ? t('daily_check_quota.quota_exceeded', {
+          count: Math.abs(quotaState.remaining).toLocaleString(),
+        })
+      : t('daily_check_quota.quota_exhausted')
     : quotaState.isLow
-      ? `今日检查额度只剩 ${quotaState.remaining.toLocaleString()} 次，低于 ${Math.round(
-          CHECK_QUOTA_LOW_RATIO * 100,
-        )}%，请留意客户端检查频率。`
-      : '今日检查额度状态正常。';
+      ? t('daily_check_quota.quota_low', {
+          count: quotaState.remaining.toLocaleString(),
+          percent: Math.round(CHECK_QUOTA_LOW_RATIO * 100),
+        })
+      : t('daily_check_quota.quota_healthy');
   const panelClassName = quotaState.isExceeded
     ? 'border-red-300 bg-red-50 shadow-[0_0_0_3px_rgba(239,68,68,0.10)]'
     : quotaState.isLow
@@ -229,12 +253,12 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
       : 'text-slate-900';
   const quotaTag =
     quotaState.isExceeded && quotaState.remaining < 0
-      ? '已超额'
+      ? t('daily_check_quota.status_exceeded')
       : quotaState.isExceeded
-        ? '已用尽'
+        ? t('daily_check_quota.status_exhausted')
         : quotaState.isLow
-          ? '偏低'
-          : '正常';
+          ? t('daily_check_quota.status_low')
+          : t('daily_check_quota.status_healthy');
   const progressStrokeColor = quotaState.isExceeded
     ? '#ef4444'
     : quotaState.isLow
@@ -257,9 +281,9 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
               />
             )}
             <div>
-              <div className="font-medium">每日检查额度</div>
+              <div className="font-medium">{t('daily_check_quota.title')}</div>
               <div className="text-gray-500 text-sm">
-                客户端检查热更新时消耗，按账户下所有应用合并计算，每日重置。
+                {t('daily_check_quota.description')}
               </div>
             </div>
           </div>
@@ -278,7 +302,9 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
         </div>
         <div className="mb-3 grid gap-2 rounded-md bg-white/75 p-3 sm:grid-cols-3">
           <div>
-            <div className="text-[11px] text-gray-500">今日剩余额度</div>
+            <div className="text-[11px] text-gray-500">
+              {t('daily_check_quota.remaining_label')}
+            </div>
             <div
               className={cn(
                 'mt-0.5 font-semibold text-lg tabular-nums',
@@ -289,17 +315,26 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-gray-500">每日上限</div>
+            <div className="text-[11px] text-gray-500">
+              {t('daily_check_quota.daily_limit')}
+            </div>
             <div className="mt-0.5 font-medium text-slate-700 tabular-nums">
-              {quotaState.dailyQuota.toLocaleString()} 次
+              {quotaState.dailyQuota.toLocaleString()}
+              {t('daily_check_quota.checks')}
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-gray-500">状态</div>
+            <div className="text-[11px] text-gray-500">
+              {t('daily_check_quota.status_label')}
+            </div>
             <div className="text-gray-500 text-sm">
               {quotaState.remaining < 0
-                ? `已超出 ${Math.abs(quotaState.remaining).toLocaleString()} 次`
-                : `${quotaState.percent.toFixed(0)}% 剩余`}
+                ? t('daily_check_quota.exceeded_info', {
+                    count: Math.abs(quotaState.remaining).toLocaleString(),
+                  })
+                : t('daily_check_quota.percent_remaining', {
+                    percent: quotaState.percent.toFixed(0),
+                  })}
             </div>
           </div>
         </div>
@@ -320,7 +355,7 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
           />
         </Tooltip>
         <div className="mt-2 text-gray-500 text-xs">
-          鼠标悬停进度条可查看套餐、到期时间和最近 7 日平均剩余额度。
+          {t('daily_check_quota.hint')}
         </div>
       </div>
       {(quotaState.isExceeded || quotaState.isLow) && (

@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Button, message, Result } from 'antd';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { activationEmailResendCooldownStorageKey } from '@/constants/local-storage';
 import { api } from '@/services/api';
 import { getUserEmail } from '@/services/auth';
@@ -8,6 +9,7 @@ import { useLocalStorageCooldown } from '@/utils/hooks';
 import { rootRouterPath, router } from '../router';
 
 export const Welcome = () => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!getUserEmail()) {
       router.navigate(rootRouterPath.login);
@@ -24,10 +26,10 @@ export const Welcome = () => {
     mutationFn: () => api.sendEmail({ email: getUserEmail() }),
     onSuccess: () => {
       startCooldown();
-      message.info('邮件发送成功，请注意查收');
+      message.info(t('welcome.email_sent'));
     },
     onError: () => {
-      message.error('邮件发送失败');
+      message.error(t('welcome.send_failed'));
     },
   });
 
@@ -35,15 +37,15 @@ export const Welcome = () => {
     <Result
       title={
         <>
-          感谢您关注由 React Native 中文网提供的热更新服务
+          {t('welcome.thanks_line1')}
           <br />
-          我们已经往您的邮箱发送了一封激活邮件
+          {t('welcome.thanks_line2')}
           <br />
-          请点击邮件内的激活链接激活您的帐号
+          {t('welcome.thanks_line3')}
           <div className="h-6" />
         </>
       }
-      subTitle="如未收到激活邮件，请点击"
+      subTitle={t('welcome.no_email')}
       extra={
         <Button
           type="primary"
@@ -51,7 +53,9 @@ export const Welcome = () => {
           loading={isPending}
           disabled={isCoolingDown}
         >
-          {isCoolingDown ? `${remainingSeconds}s 后可再次发送` : '重新发送'}
+          {isCoolingDown
+            ? t('welcome.resend_countdown', { seconds: remainingSeconds })
+            : t('welcome.resend_button')}
         </Button>
       }
     />
