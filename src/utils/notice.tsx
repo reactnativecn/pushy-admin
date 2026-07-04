@@ -39,13 +39,13 @@ const buildNotice = (key: NoticeKey) => {
  * 显式调用，避免 import 即弹窗的副作用。
  */
 export function showNotices() {
-  (['v8-deprecation'] as NoticeKey[]).forEach((key) => {
-    if (localStorage.getItem(key)) {
-      return;
-    }
-    const notice = buildNotice(key);
-    if (notice) {
-      confirm(notice);
-    }
-  });
+  // (['v8-deprecation'] as NoticeKey[]).forEach((key) => {
+  //   if (localStorage.getItem(key)) {
+  //     return;
+  //   }
+  //   const notice = buildNotice(key);
+  //   if (notice) {
+  //     confirm(notice);
+  //   }
+  // });
 }
