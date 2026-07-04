@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { RequestError, setToken } from '@/services/request';
 
 // In order to avoid environment setup issues with react-router-dom and other DOM dependencies during test execution
 // in bun, we can mock out the internal dependencies and the router directly.
@@ -51,22 +52,6 @@ mock.module('@/i18n', () => ({
   default: { t: (key: string) => key },
 }));
 
-class MockRequestError extends Error {
-  status?: number;
-  constructor(message: string, status?: number) {
-    super(message);
-    this.name = 'RequestError';
-    this.status = status;
-  }
-}
-
-const mockSetTokenObj = mock(() => {});
-
-mock.module('@/services/request', () => ({
-  RequestError: MockRequestError,
-  setToken: mockSetTokenObj,
-}));
-
 // Provide react-router-dom mock globally to stop "Cannot parse URL /" on router load when using happy-dom
 mock.module('react-router-dom', () => ({
   createHashRouter: () => ({
@@ -93,7 +78,7 @@ describe('auth.ts runtime test', () => {
     mockMessage.success.mockClear();
     mockMessage.error.mockClear();
     mockNavigate.mockClear();
-    mockSetTokenObj.mockClear();
+    (setToken as any).mockClear();
     mockApiObj.login.mockClear();
     setUserEmail('');
 
@@ -137,7 +122,7 @@ describe('auth.ts runtime test', () => {
         email: 'test@email.com',
         pwd: 'md5-mypassword',
       });
-      expect(mockSetTokenObj).toHaveBeenCalledWith('fake-token');
+      expect(setToken).toHaveBeenCalledWith('fake-token');
       expect(mockMessage.success).toHaveBeenCalledWith('login.success');
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
@@ -158,7 +143,7 @@ describe('auth.ts runtime test', () => {
 
     it('should navigate to inactivated page if 423 RequestError occurs', async () => {
       mockApiObj.login.mockImplementationOnce(async () => {
-        throw new MockRequestError('Account inactive', 423);
+        throw new RequestError('Account inactive', 423);
       });
 
       await login('test@email.com', 'mypassword');
@@ -185,7 +170,7 @@ describe('auth.ts runtime test', () => {
 
       logout();
 
-      expect(mockSetTokenObj).toHaveBeenCalledWith('');
+      expect(setToken).toHaveBeenCalledWith('');
       expect(mockNavigate).toHaveBeenCalledWith('/login');
       expect(global.window.location.reload).toHaveBeenCalled();
     });
@@ -195,7 +180,7 @@ describe('auth.ts runtime test', () => {
 
       logout();
 
-      expect(mockSetTokenObj).toHaveBeenCalledWith('');
+      expect(setToken).toHaveBeenCalledWith('');
       expect(mockNavigate).not.toHaveBeenCalled();
       expect(global.window.location.reload).toHaveBeenCalled();
     });

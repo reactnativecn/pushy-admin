@@ -15,10 +15,21 @@ global.StorageEvent = win.StorageEvent as any;
 mock.module('@/services/api', () => ({
   api: {},
 }));
+class MockRequestError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'RequestError';
+    this.status = status;
+  }
+}
+
+const mockSetToken = mock(() => {});
+
 mock.module('@/services/request', () => ({
   getToken: () => '',
-  setToken: () => {},
-  RequestError: class extends Error {},
+  setToken: mockSetToken,
+  RequestError: MockRequestError,
   default: {},
 }));
 mock.module('@/assets/logo-h.svg', () => ({
