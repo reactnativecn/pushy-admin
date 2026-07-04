@@ -29,6 +29,7 @@ import {
 } from '@/utils/check-quota-warning';
 import { cn, isValidExternalUrl } from '@/utils/helper';
 import { useAppList, useUserInfo } from '@/utils/hooks';
+import { userKeys } from '@/utils/query-keys';
 import { PRICING_LINK } from '../constants/links';
 import { type products, quotas } from '../constants/quotas';
 
@@ -84,7 +85,7 @@ const getInvoiceHint = (t: (key: string) => string) => (
 
 function useOrderBillingConfig() {
   const { data } = useQuery({
-    queryKey: ['orderBillingConfig'],
+    queryKey: userKeys.orderBillingConfig(),
     queryFn: async () => {
       try {
         return await api.getOrderBillingConfig();
@@ -572,28 +573,27 @@ function UserPanel() {
   const appList = apps ?? [];
   const versionCountQueries = useQueries({
     queries: appList.map((app) => ({
-      queryKey: ['accountQuotaVersions', app.id],
+      queryKey: userKeys.accountQuotaVersions(app.id),
       queryFn: () => api.getVersions({ appId: app.id, limit: 1 }),
       staleTime: 60_000,
     })),
   });
   const packageCountQueries = useQueries({
     queries: appList.map((app) => ({
-      queryKey: ['accountQuotaPackages', app.id],
+      queryKey: userKeys.accountQuotaPackages(app.id),
       queryFn: () => api.getPackages(app.id),
       staleTime: 60_000,
     })),
   });
   const orderQuotesQuery = useQuery({
-    queryKey: [
-      'orderQuotes',
+    queryKey: userKeys.orderQuotes([
       user?.tier,
       user?.tierExpiresAt,
       user?.quota?.pv,
       user?.quota?.price,
       user?.quota?.monthlyRenewalPrice,
       user?.quota?.checkUpdateAddonUnits,
-    ],
+    ]),
     queryFn: () => api.getOrderQuotes(),
     enabled: !!user,
     retry: false,

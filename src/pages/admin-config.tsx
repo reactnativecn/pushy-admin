@@ -24,6 +24,7 @@ import {
   type OnChange,
 } from 'vanilla-jsoneditor';
 import { adminApi } from '@/services/admin-api';
+import { adminKeys } from '@/utils/query-keys';
 
 const { Title } = Typography;
 
@@ -100,7 +101,7 @@ export const Component = () => {
   const [jsonValue, setJsonValue] = useState('');
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['adminConfig'],
+    queryKey: adminKeys.config(),
     queryFn: () => adminApi.getConfig(),
   });
 
@@ -145,7 +146,7 @@ export const Component = () => {
       await adminApi.setConfig(key, compactValue);
       message.success(t('admin_config.saved'));
       setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['adminConfig'] });
+      queryClient.invalidateQueries({ queryKey: adminKeys.config() });
     } catch (error) {
       message.error((error as Error).message);
     }

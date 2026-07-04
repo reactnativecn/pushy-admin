@@ -4,7 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { getToken } from '@/services/request';
 import dayjs from '@/utils/dayjs';
-import { versionKeys } from '@/utils/query-keys';
+import {
+  appKeys,
+  auditKeys,
+  bindingKeys,
+  packageKeys,
+  userKeys,
+  versionKeys,
+} from '@/utils/query-keys';
 
 const METRIC_CATEGORY_SEPARATOR = '\u001f';
 const PACKAGE_METRIC_PREFIX = `packageVersion_buildTime${METRIC_CATEGORY_SEPARATOR}`;
@@ -168,7 +175,7 @@ export const useLocalStorageCooldown = ({
 export const useUserInfo = () => {
   const { t } = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ['userInfo'],
+    queryKey: userKeys.info(),
     queryFn: api.me,
     enabled: () => !!getToken(),
   });
@@ -205,7 +212,7 @@ export const useUserInfo = () => {
 
 export const useAppList = () => {
   const { data, isLoading } = useQuery({
-    queryKey: ['appList'],
+    queryKey: appKeys.list(),
     queryFn: api.appList,
   });
   return { apps: data?.data, isLoading };
@@ -213,7 +220,7 @@ export const useAppList = () => {
 
 export const useApp = (appId: number) => {
   const { data } = useQuery({
-    queryKey: ['app', appId],
+    queryKey: appKeys.detail(appId),
     queryFn: () => api.getApp(appId),
   });
   return { app: data };
@@ -221,7 +228,7 @@ export const useApp = (appId: number) => {
 
 export const usePackages = (appId: number) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['packages', appId],
+    queryKey: packageKeys.byApp(appId),
     queryFn: () => api.getPackages(appId),
   });
   const { packageMap, packages } = useMemo(() => {
@@ -285,7 +292,7 @@ export const useAllVersions = ({
 
 export const useBinding = (appId: number) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['bindings', appId],
+    queryKey: bindingKeys.byApp(appId),
     queryFn: () => api.getBinding(appId),
   });
   const bindings = data?.data ?? [];
@@ -352,7 +359,7 @@ export const useAuditLogs = ({
 }) => {
   // Fetch all audit logs (up to 1000) from backend and cache them
   const { data, isLoading } = useQuery({
-    queryKey: ['auditLogs'],
+    queryKey: auditKeys.all(),
     staleTime: 3000,
     queryFn: () =>
       api.getAuditLogs({

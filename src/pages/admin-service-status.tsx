@@ -24,6 +24,7 @@ import {
   type InternalMetricsResponse,
 } from '@/services/api';
 import { cn } from '@/utils/helper';
+import { metricsKeys } from '@/utils/query-keys';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -649,7 +650,7 @@ function ServiceStatusPanel({
         offset: api5xxEventOffset,
         suppressErrorToast: true,
       }),
-    queryKey: ['internalApi5xxEvents', target.key, api5xxEventOffset],
+    queryKey: metricsKeys.internalApi5xxEvents(target.key, api5xxEventOffset),
     refetchInterval: 30_000,
   });
   const apiDuration = useMemo(
@@ -1025,7 +1026,7 @@ export const Component = () => {
           baseUrl: target.baseUrl,
           suppressErrorToast: true,
         }),
-      queryKey: ['internalMetrics', target.key],
+      queryKey: metricsKeys.internal(target.key),
       refetchInterval: 30_000,
     })),
   });

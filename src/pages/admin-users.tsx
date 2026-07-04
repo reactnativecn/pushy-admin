@@ -34,6 +34,7 @@ import { quotas } from '@/constants/quotas';
 import { adminApi } from '@/services/admin-api';
 import type { Tier } from '@/types';
 import { patchSearchParams } from '@/utils/helper';
+import { adminKeys } from '@/utils/query-keys';
 
 const { Title } = Typography;
 
@@ -133,7 +134,7 @@ const UserDetailDrawer = ({
 }) => {
   const { t } = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ['adminUserDetail', userId],
+    queryKey: adminKeys.userDetail(userId),
     queryFn: () => (userId ? adminApi.getUserDetail(userId) : null),
     enabled: !!userId && open,
   });
@@ -382,7 +383,7 @@ export const Component = () => {
   }, [searchKeyword, searchQuery, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminUsers', searchQuery],
+    queryKey: adminKeys.users(searchQuery),
     queryFn: () => adminApi.searchUsers(searchQuery || undefined),
   });
 
@@ -401,7 +402,7 @@ export const Component = () => {
     onSuccess: () => {
       message.success(t('admin_users.user_updated'));
       setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
     },
     onError: (error) => {
       message.error((error as Error).message);

@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { ApiToken } from '@/types';
+import { apiTokenKeys } from '@/utils/query-keys';
 
 const { Paragraph } = Typography;
 
@@ -34,7 +35,7 @@ function ApiTokensPage() {
   const [form] = Form.useForm();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['apiTokens'],
+    queryKey: apiTokenKeys.all(),
     queryFn: api.listApiTokens,
   });
 
@@ -45,7 +46,7 @@ function ApiTokensPage() {
         setNewToken(result.token);
         setCreateModalVisible(false);
         message.success(t('api_tokens.create_success'));
-        queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
+        queryClient.invalidateQueries({ queryKey: apiTokenKeys.all() });
         form.resetFields();
       }
     },
@@ -58,7 +59,7 @@ function ApiTokensPage() {
     mutationFn: api.revokeApiToken,
     onSuccess: () => {
       message.success(t('api_tokens.revoke_success'));
-      queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
+      queryClient.invalidateQueries({ queryKey: apiTokenKeys.all() });
     },
     onError: (error: Error) => {
       message.error(error.message || t('api_tokens.revoke_failed'));

@@ -28,6 +28,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
 import { patchSearchParams } from '@/utils/helper';
+import { adminKeys } from '@/utils/query-keys';
 
 const { Title } = Typography;
 
@@ -77,7 +78,7 @@ export const Component = () => {
   }, [searchKeyword, searchQuery, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminApps', searchQuery, currentPage, pageSize],
+    queryKey: adminKeys.apps(searchQuery, currentPage, pageSize),
     queryFn: () =>
       adminApi.searchApps({
         search: searchQuery || undefined,
@@ -101,7 +102,7 @@ export const Component = () => {
     onSuccess: () => {
       message.success(t('admin_apps.app_updated'));
       setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['adminApps'] });
+      queryClient.invalidateQueries({ queryKey: adminKeys.apps() });
     },
     onError: (error) => {
       message.error((error as Error).message);

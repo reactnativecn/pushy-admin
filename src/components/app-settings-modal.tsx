@@ -17,6 +17,7 @@ import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import type { App } from '@/types';
 import { useUserInfo } from '@/utils/hooks';
+import { appKeys } from '@/utils/query-keys';
 
 export interface AppSettingsTarget {
   id: number;
@@ -83,7 +84,7 @@ function AppSettingsModalContent({
   const { t } = useTranslation();
   const { user } = useUserInfo();
   const { data: app, isLoading } = useQuery({
-    queryKey: ['app', appId],
+    queryKey: appKeys.detail(appId),
     queryFn: () => api.getApp(appId),
   });
   const appKey = Form.useWatch('appKey', form) as string;
