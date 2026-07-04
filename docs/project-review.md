@@ -208,7 +208,7 @@
 1. ✅ 修 `request.ts`：401 改为 throw；按 `response.ok` + content-type 处理响应（§2.1）。响应处理逻辑抽到 `src/services/response.ts`，并新增 `response.test.ts`（7 个用例覆盖 401/204/非 JSON/2xx/业务错误/suppressErrorToast）。同时修复 `api.ts` 中 packages 系列 `setQueryData` 未防 undefined 的崩溃隐患。
 2. ✅ 补齐 20 个缺失 i18n key（admin_users 详情 14 个、audit 导出列头 3 个、`common.search`、以及 `col_note`/`detail_title` 等），修复 admin-users 失效的 translate helper（改用 `useTranslation`）。两份 locale key 完全对齐。
 3. ✅ `package.json` 加 `test`/`lint`（只读）/`lint:fix`/`ci` 脚本；新增 `.github/workflows/ci.yml`（PR 触发 typecheck+lint+test），并在 `gh-pages.yml` 部署前加同款门禁。
-4. ✅ 移除全局 `dayjs.locale('zh-cn')`，新建 `src/utils/dayjs.ts` 统一注册插件并随 i18n 语言切换 locale；antd locale 兜底也从 zhCN 改为 enUS 与 `fallbackLng` 对齐。
+4. ✅ 移除全局 `dayjs.locale('zh-cn')`，新建 `src/utils/dayjs.ts` 统一注册插件并随 i18n 语言切换 locale；i18n `fallbackLng` 与 antd locale 兜底均保持 `zh-CN`/`zhCN` 对齐。
 
 ### P1 — 视觉设计地基（3~5 天）✅ 已完成（2026-07-04）
 

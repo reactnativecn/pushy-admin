@@ -435,6 +435,7 @@
     "today_remaining": "今日剩余",
     "avg_7_days": "近 7 天日均",
     "last_7_days_details": "近 7 天明细",
+    "day_label": "第 {{day}} 天",
     "app_limit": "应用数量上限",
     "package_limit": "单应用原生包上限",
     "apps_and_packages": "应用与原生包",

@@ -198,7 +198,7 @@ export const useUserInfo = () => {
   const remainingDays = data?.tierExpiresAt
     ? expireDay.add(1, 'day').diff(now, 'day')
     : null;
-  const isExpiringSoon = remainingDays !== null && remainingDays <= 90;
+  const isExpiringSoon = remainingDays !== null && remainingDays >= 0 && remainingDays <= 90;
   const displayRemainingDays = isExpiringSoon
     ? t('user.remaining_note', { days: remainingDays })
     : '';

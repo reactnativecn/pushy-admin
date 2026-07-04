@@ -435,6 +435,7 @@
     "today_remaining": "Remaining Today",
     "avg_7_days": "7-Day Daily Average",
     "last_7_days_details": "Last 7 Days",
+    "day_label": "Day {{day}}",
     "app_limit": "App Limit",
     "package_limit": "Packages per App Limit",
     "apps_and_packages": "Apps & Packages",

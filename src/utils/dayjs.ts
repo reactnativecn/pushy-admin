@@ -25,7 +25,8 @@ export const syncDayjsLocale = (language?: string) => {
   );
 };
 
-syncDayjsLocale();
+// Sync locale after i18n finishes initialization (not at import time)
+i18n.on('initialized', syncDayjsLocale);
 i18n.on('languageChanged', syncDayjsLocale);
 
 export default dayjs;
