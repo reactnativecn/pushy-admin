@@ -231,7 +231,8 @@ const UserDetailDrawer = ({
                   .map((c, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length ordered day list, index is the stable identity
                     <span key={i} className="mr-3 inline-block">
-                      {t('admin_users.day_label', { day: i + 1 })}: <strong>{c}</strong>
+                      {t('admin_users.day_label', { day: i + 1 })}:{' '}
+                      <strong>{c}</strong>
                     </span>
                   ))}
               </Descriptions.Item>
