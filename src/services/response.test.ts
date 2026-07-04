@@ -1,19 +1,15 @@
 // biome-ignore format: keep single line for ts-ignore
 // @ts-expect-error
-import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import * as realAuth from './auth';
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import * as auth from './auth';
 
-const mockLogout = mock(() => {});
 const mockMessageError = mock(() => {});
 
 mock.module('antd', () => ({
   message: { error: mockMessageError },
 }));
 
-mock.module('./auth', () => ({
-  ...realAuth,
-  logout: mockLogout,
-}));
+let logoutSpy: any;
 
 import { handleResponse, RequestError } from './response';
 
@@ -42,16 +38,13 @@ function makeResponse(init: {
 
 describe('handleResponse', () => {
   beforeEach(() => {
-    mockLogout.mockClear();
+    logoutSpy = spyOn(auth, 'logout').mockImplementation(() => {});
     mockMessageError.mockClear();
   });
 
   afterEach(() => {
+    logoutSpy.mockRestore();
     mock.restore();
-  });
-
-  afterAll(() => {
-    mock.module('./auth', () => realAuth);
   });
 
   it('returns parsed JSON on a 200 response', async () => {
@@ -86,7 +79,7 @@ describe('handleResponse', () => {
     }
     expect(caught).toBeInstanceOf(RequestError);
     expect((caught as RequestError).status).toBe(401);
-    expect(mockLogout).toHaveBeenCalledTimes(1);
+    expect(logoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('throws RequestError with server message on a 4xx business error', async () => {
