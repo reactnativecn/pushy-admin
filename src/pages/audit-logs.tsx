@@ -380,9 +380,11 @@ export const AuditLogs = () => {
     }
 
     try {
-      const XLSX = await import('xlsx');
+      const { default: writeXlsxFile } = await import(
+        'write-excel-file/browser'
+      );
 
-      const excelData = filteredAuditLogs.map((log) => {
+      const rows = filteredAuditLogs.map((log) => {
         const date = dayjs(log.createdAt);
         const previewData = getPreviewData(log.data);
         let browserInfo = '-';
@@ -401,42 +403,77 @@ export const AuditLogs = () => {
         }
 
         return {
-          [t('audit_logs.col_time')]: date.format('YYYY-MM-DD HH:mm:ss'),
-          [t('audit_logs.col_action')]: getActionLabel(t, log.method, log.path),
-          [t('audit_logs.detail_method')]: log.method.toUpperCase(),
-          [t('audit_logs.col_path')]: log.path,
-          [t('audit_logs.col_status')]: log.statusCode,
-          [t('audit_logs.col_payload')]: previewData
-            ? JSON.stringify(previewData)
-            : '-',
-          [t('audit_logs.col_browser')]: browserInfo,
-          [t('audit_logs.col_os')]: osInfo,
-          [t('audit_logs.col_ip_addr')]: log.ip || '-',
-          'API Key': getApiTokenLabel(log.apiTokens) || '-',
+          time: date.format('YYYY-MM-DD HH:mm:ss'),
+          action: getActionLabel(t, log.method, log.path),
+          method: log.method.toUpperCase(),
+          path: log.path,
+          status: log.statusCode,
+          payload: previewData ? JSON.stringify(previewData) : '-',
+          browser: browserInfo,
+          os: osInfo,
+          ip: log.ip || '-',
+          apiKey: getApiTokenLabel(log.apiTokens) || '-',
         };
       });
 
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      worksheet['!cols'] = [
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 10 },
-        { wch: 36 },
-        { wch: 10 },
-        { wch: 40 },
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 18 },
-        { wch: 18 },
+      type ExportRow = (typeof rows)[number];
+      const columns = [
+        {
+          header: t('audit_logs.col_time'),
+          cell: (row: ExportRow) => row.time,
+          width: 20,
+        },
+        {
+          header: t('audit_logs.col_action'),
+          cell: (row: ExportRow) => row.action,
+          width: 20,
+        },
+        {
+          header: t('audit_logs.detail_method'),
+          cell: (row: ExportRow) => row.method,
+          width: 10,
+        },
+        {
+          header: t('audit_logs.col_path'),
+          cell: (row: ExportRow) => row.path,
+          width: 36,
+        },
+        {
+          header: t('audit_logs.col_status'),
+          cell: (row: ExportRow) => row.status,
+          width: 10,
+        },
+        {
+          header: t('audit_logs.col_payload'),
+          cell: (row: ExportRow) => row.payload,
+          width: 40,
+        },
+        {
+          header: t('audit_logs.col_browser'),
+          cell: (row: ExportRow) => row.browser,
+          width: 20,
+        },
+        {
+          header: t('audit_logs.col_os'),
+          cell: (row: ExportRow) => row.os,
+          width: 20,
+        },
+        {
+          header: t('audit_logs.col_ip_addr'),
+          cell: (row: ExportRow) => row.ip,
+          width: 18,
+        },
+        {
+          header: 'API Key',
+          cell: (row: ExportRow) => row.apiKey,
+          width: 18,
+        },
       ];
-      XLSX.utils.book_append_sheet(
-        workbook,
-        worksheet,
-        t('audit_logs.sheet_name'),
-      );
-      XLSX.writeFile(
-        workbook,
+
+      await writeXlsxFile(rows, {
+        columns,
+        sheet: t('audit_logs.sheet_name'),
+      }).toFile(
         `${t('audit_logs.sheet_name')}_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`,
       );
     } catch (error) {
