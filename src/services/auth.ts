@@ -5,6 +5,7 @@ import i18n from '@/i18n';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { RequestError, setToken } from '@/services/request';
+import { resolveLoginRedirect } from '@/utils/safe-redirect';
 
 let _email = '';
 export const setUserEmail = (email: string) => {
@@ -17,19 +18,6 @@ function getSearchParam(name: string) {
   return new URLSearchParams(router.state.location.search).get(name);
 }
 
-function resolveLoginFrom(loginFrom?: string | null) {
-  if (!loginFrom?.startsWith('/') || loginFrom.startsWith('//')) {
-    return rootRouterPath.home;
-  }
-  if (
-    loginFrom === rootRouterPath.login ||
-    loginFrom.startsWith(`${rootRouterPath.login}?`)
-  ) {
-    return rootRouterPath.home;
-  }
-  return loginFrom;
-}
-
 export async function login(email: string, password: string) {
   _email = email;
   const params = { email, pwd: await md5(password) };
@@ -38,7 +26,7 @@ export async function login(email: string, password: string) {
     if (res?.token) {
       setToken(res.token);
       message.success(i18n.t('login.success'));
-      router.navigate(resolveLoginFrom(getSearchParam('loginFrom')));
+      router.navigate(resolveLoginRedirect(getSearchParam('loginFrom')));
     }
   } catch (err) {
     if (err instanceof RequestError && err.status === 423) {

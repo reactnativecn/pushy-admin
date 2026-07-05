@@ -1,6 +1,7 @@
 import { message } from 'antd';
 import i18n from '@/i18n';
 import { testUrls } from '@/utils/helper';
+import { buildRequest, type HttpMethod } from './build-request';
 import { handleResponse, RequestError, type RequestOptions } from './response';
 
 export type { RequestOptions };
@@ -43,26 +44,19 @@ const getBaseUrl = (async () => {
 })();
 
 export default async function request<T extends Record<any, any>>(
-  method: 'get' | 'post' | 'put' | 'delete',
+  method: HttpMethod,
   path: string,
   params?: Record<any, any>,
   requestOptions: RequestOptions = {},
 ) {
-  const headers: HeadersInit = {};
-  const options: RequestInit = { method, headers };
   const baseUrl = requestOptions.baseUrl ?? (await getBaseUrl);
-  let url = `${baseUrl.replace(/\/$/, '')}${path}`;
-  if (_token) {
-    headers['x-accesstoken'] = _token;
-  }
-  if (params) {
-    if (method === 'get') {
-      url += `?${new URLSearchParams(params).toString()}`;
-    } else {
-      headers['content-type'] = 'application/json';
-      options.body = JSON.stringify(params);
-    }
-  }
+  const { url, options } = buildRequest({
+    method,
+    path,
+    baseUrl,
+    params,
+    token: _token,
+  });
   try {
     const response = await fetch(url, options);
     return await handleResponse<T>(response, requestOptions);

@@ -220,12 +220,12 @@
 
 ### P2 — 架构收敛（持续）
 
-8. service 层去缓存副作用，manage 系列改 `useMutation`（带 loading/onError/回滚）；query key 全部收进 `query-keys.ts`（§2.1）。
-9. 拆分 user.tsx / admin-service-status.tsx / top-navigation.tsx 等超大组件；version-table/package-list 的闭包编辑改受控 Form（§2.2）。
-10. 删除 `globals.d.ts` 全局 ambient 类型，收敛 any/断言；补 request.ts 与 router loader 测试（§2.4、§2.5）。
+8. ✅（2026-07-05）service 层去缓存副作用：`api.ts` 全部 mutation 改为纯请求，缓存写入集中到新建的 `src/services/mutations.ts`（useMutation hooks + 单一缓存 updater 层）。调用点全部迁移：bind-package / version-table / package-list / setting-modal / app-settings-modal 改用 `useMutation`（带 isPending/错误保持弹窗），create-app-modal（非组件上下文）走 `mutations.createApp` 命令式包装。query key 此前已全部收进 `query-keys.ts`。（§2.1）
+9. ◐ 部分完成（2026-07-05）：version-table 的闭包编辑改受控 `EditFieldModal`（JSON 草稿用 ref 适配非受控的 vanilla-jsoneditor）、package-list 的 edit 改受控 `EditPackageModal`（Form 实例 + validateFields）、login.tsx 模块级 `let email/password` 改 useState 受控；`getColumns(t)` 加 useMemo 并把 title 作 prop 传入 TextColumn（消除 N×M 次全量列构建）；手写补零日期改 dayjs。**user.tsx（1308 行）已拆分**为 `src/pages/user/`：`billing.ts`（计费纯函数 + useOrderBillingConfig + purchase）/ `purchase-controls.tsx`（购买弹层三组件）/ `quota-details.tsx`（配额面板 + MiniQuotaBars）/ `index.tsx`（页面组装，约 280 行），路由 `import('./pages/user')` 无需改动。**未完成**：admin-service-status.tsx（1079）/ top-navigation.tsx（919）等拆分（建议按同样模式逐页迭代）。（§2.2）
+10. ✅ 基本完成（2026-07-05）：`globals.d.ts` 领域 ambient 类型已删（现仅剩资源模块声明与 bun:test 类型）；version-table 的 `editable: any` 与 `as unknown as` 双重断言已清除（全仓 any/断言余 2 处）；请求构造逻辑抽为纯函数 `src/services/build-request.ts` + `build-request.test.ts`（5 用例；真实 request 模块被 bun-test-setup 全局 mock 无法直接测，响应半边已有 response.test.ts 覆盖）；router loader 的鉴权跳转与 open-redirect 防护抽为 `src/utils/safe-redirect.ts` 纯函数并新增 `safe-redirect.test.ts`（9 用例），同时消除了 §2.3 指出的 auth.ts 与 router.tsx 防护逻辑逐行重复。（§2.3、§2.4、§2.5）
 
 ### P3 — 锦上添花
 
 11. 暗色模式（依赖 P1 的 token 地基）（§1.3）。
-12. charts / jsoneditor 按需加载、staleTime 调优、xlsx 替换（§4.2、§4.3）。
+12. ◐ 部分完成（2026-07-05）：`vanilla-jsoneditor` 改 `React.lazy` 按需加载（已从应用管理页 chunk 拆出独立异步 chunk，~275K）；`staleTime` 5s → 30s（切标签页不再重复请求，实时页有自己的 refetchInterval 不受影响）。**未完成**：charts 按需子包、xlsx 替换。（§4.2、§4.3）
 13. token 迁出 localStorage 的方案评估（§2.3）。

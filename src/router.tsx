@@ -3,7 +3,10 @@ import { AdminRoute } from './components/admin-route';
 import { ErrorBoundary } from './components/error-boundary';
 import MainLayout from './components/main-layout';
 import { getToken } from './services/request';
-// import './utils/notice';
+import {
+  getUnauthenticatedRedirect,
+  resolveLoginRedirect,
+} from './utils/safe-redirect';
 
 export const rootRouterPath = {
   home: '/',
@@ -29,31 +32,11 @@ export const rootRouterPath = {
 export const needAuthLoader = ({ request }: { request: Request }) => {
   if (!getToken()) {
     const { pathname, search } = new URL(request.url);
-    if (pathname === rootRouterPath.login) {
-      return null;
-    }
-    if (pathname === '/') {
-      return redirect(rootRouterPath.login);
-    }
-    return redirect(
-      `${rootRouterPath.login}?loginFrom=${encodeURIComponent(pathname + search)}`,
-    );
+    const target = getUnauthenticatedRedirect(pathname, search);
+    return target ? redirect(target) : null;
   }
   return null;
 };
-
-function resolveAuthenticatedRedirect(loginFrom?: string | null) {
-  if (!loginFrom?.startsWith('/') || loginFrom.startsWith('//')) {
-    return rootRouterPath.home;
-  }
-  if (
-    loginFrom === rootRouterPath.login ||
-    loginFrom.startsWith(`${rootRouterPath.login}?`)
-  ) {
-    return rootRouterPath.home;
-  }
-  return loginFrom;
-}
 
 export const publicOnlyLoader = ({ request }: { request: Request }) => {
   if (!getToken()) {
@@ -62,7 +45,7 @@ export const publicOnlyLoader = ({ request }: { request: Request }) => {
 
   const { search } = new URL(request.url);
   const loginFrom = new URLSearchParams(search).get('loginFrom');
-  return redirect(resolveAuthenticatedRedirect(loginFrom));
+  return redirect(resolveLoginRedirect(loginFrom));
 };
 
 export const router = createHashRouter([

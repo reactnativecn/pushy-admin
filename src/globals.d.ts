@@ -28,6 +28,7 @@ declare module 'bun:test' {
     toBeGreaterThan(expected: number): void;
     toBeInstanceOf(expected: unknown): void;
     toBeNull(): void;
+    toBeUndefined(): void;
     toContain(expected: unknown): void;
     toEqual(expected: unknown): void;
     toHaveBeenCalledWith(...args: unknown[]): void;
