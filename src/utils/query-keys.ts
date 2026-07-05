@@ -60,4 +60,7 @@ export const adminKeys = {
       ? (['adminApps'] as const)
       : (['adminApps', searchQuery, page, pageSize] as const),
   config: () => ['adminConfig'] as const,
+  systemInstances: (target: string) =>
+    ['adminSystemInstances', target] as const,
+  systemNpm: () => ['adminSystemNpm'] as const,
 };

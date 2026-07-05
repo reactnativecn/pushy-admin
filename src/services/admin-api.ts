@@ -1,4 +1,12 @@
-import type { AdminApp, AdminUser, AdminVersion, Quota } from '@/types';
+import type {
+  AdminApp,
+  AdminUser,
+  AdminVersion,
+  Quota,
+  SystemDeployStatus,
+  SystemInstance,
+  SystemNpmInfo,
+} from '@/types';
 import request from './request';
 
 export const adminApi = {
@@ -88,4 +96,35 @@ export const adminApi = {
         }
       >;
     }>('get', `/admin/users/${id}`),
+  // admin system deploy
+  getSystemInstances: (baseUrl?: string) =>
+    request<{
+      data: SystemInstance[];
+      deployStatuses: Record<string, SystemDeployStatus>;
+    }>('get', '/admin/system/instances', undefined, {
+      baseUrl,
+      suppressErrorToast: true,
+    }),
+  getSystemNpmInfo: (baseUrl?: string) =>
+    request<SystemNpmInfo>('get', '/admin/system/npm', undefined, {
+      baseUrl,
+      suppressErrorToast: true,
+    }),
+  sendInstanceCommand: ({
+    instanceId,
+    action,
+    version,
+    baseUrl,
+  }: {
+    instanceId: string;
+    action: 'restart' | 'update';
+    version?: string;
+    baseUrl?: string;
+  }) =>
+    request<{ queued: boolean }>(
+      'post',
+      `/admin/system/instances/${encodeURIComponent(instanceId)}/command`,
+      { action, version },
+      { baseUrl },
+    ),
 };

@@ -26,6 +26,7 @@ export const rootRouterPath = {
   adminApps: '/admin-apps',
   adminMetrics: '/admin-metrics',
   adminServiceStatus: '/admin-service-status',
+  adminDeploy: '/admin-deploy',
   apiTokens: '/api-tokens',
 };
 
@@ -135,6 +136,11 @@ export const router = createHashRouter([
         element: (
           <AdminRoute load={() => import('./pages/admin-service-status')} />
         ),
+      },
+      {
+        path: 'admin-deploy',
+        loader: needAuthLoader,
+        element: <AdminRoute load={() => import('./pages/admin-deploy')} />,
       },
       {
         path: 'api-tokens',

@@ -186,3 +186,68 @@ export interface ApiToken {
   isExpired: boolean;
   isRevoked: boolean;
 }
+
+export type SystemInstanceRole = 'server' | 'worker' | 'fc-worker';
+
+export interface SystemInstance {
+  id: string;
+  role: SystemInstanceRole;
+  hostname: string;
+  pid: number;
+  version: string;
+  commit: string;
+  buildTime: string;
+  runtimeVersion: string;
+  startTime: string;
+  uptimeSeconds: number;
+  memory: {
+    rss: number;
+    heapUsed: number;
+    heapTotal: number;
+  };
+  cpuPercent: number | null;
+  system: {
+    loadavg: number[];
+    totalMemory: number;
+    freeMemory: number;
+  };
+  extra?: {
+    worker?: {
+      currentTask: {
+        id: number;
+        type: string;
+        fromHash: string;
+        toHash: string;
+        startedAt: string;
+      } | null;
+      counters: {
+        processed: number;
+        locked: number;
+        retry: number;
+        failed: number;
+      };
+    };
+  };
+  updatedAt: string;
+}
+
+export interface SystemDeployStatus {
+  commandId: string;
+  action: 'restart' | 'update';
+  version?: string;
+  status: 'installing' | 'restarting' | 'failed';
+  message?: string;
+  fromVersion: string;
+  updatedAt: string;
+}
+
+export interface SystemNpmInfo {
+  name: string;
+  distTags: Record<string, string>;
+  versions: Array<{
+    version: string;
+    publishedAt: string | null;
+  }>;
+  fetchedAt: string;
+  currentVersion: string;
+}
