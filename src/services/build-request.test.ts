@@ -59,6 +59,23 @@ describe('buildRequest', () => {
     expect(url).toBe(`${BASE_URL}/app/1`);
   });
 
+  it('includes credentials only when withCredentials is set', () => {
+    const withCookies = buildRequest({
+      method: 'get',
+      path: '/user/me',
+      baseUrl: BASE_URL,
+      withCredentials: true,
+    });
+    expect(withCookies.options.credentials).toBe('include');
+
+    const withoutCookies = buildRequest({
+      method: 'get',
+      path: '/user/me',
+      baseUrl: BASE_URL,
+    });
+    expect(withoutCookies.options.credentials).toBeUndefined();
+  });
+
   it('does not append a query string when GET has no params', () => {
     const { url, options } = buildRequest({
       method: 'get',

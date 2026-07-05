@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import { RequestError, setToken } from '@/services/request';
+import {
+  clearSession,
+  markCookieSession,
+  RequestError,
+  setToken,
+} from '@/services/request';
 
 // In order to avoid environment setup issues with react-router-dom and other DOM dependencies during test execution
 // in bun, we can mock out the internal dependencies and the router directly.
@@ -79,6 +84,8 @@ describe('auth.ts runtime test', () => {
     mockMessage.error.mockClear();
     mockNavigate.mockClear();
     (setToken as any).mockClear();
+    (markCookieSession as any).mockClear();
+    (clearSession as any).mockClear();
     mockApiObj.login.mockClear();
     setUserEmail('');
 
@@ -127,6 +134,17 @@ describe('auth.ts runtime test', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 
+    it('should mark a cookie session when login succeeds without a token', async () => {
+      mockApiObj.login.mockImplementationOnce(async () => ({}) as never);
+
+      await login('test@email.com', 'mypassword');
+
+      expect(setToken).not.toHaveBeenCalled();
+      expect(markCookieSession).toHaveBeenCalledTimes(1);
+      expect(mockMessage.success).toHaveBeenCalledWith('login.success');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+
     it('should navigate to loginFrom if it is a valid path', async () => {
       mockRouterObj.state.location.search = '?loginFrom=/user/settings';
       await login('test@email.com', 'mypassword');
@@ -165,12 +183,12 @@ describe('auth.ts runtime test', () => {
   });
 
   describe('logout', () => {
-    it('should set token to empty string, navigate to login, and reload', () => {
+    it('should clear the session, navigate to login, and reload', () => {
       mockRouterObj.state.location.pathname = '/apps';
 
       logout();
 
-      expect(setToken).toHaveBeenCalledWith('');
+      expect(clearSession).toHaveBeenCalledTimes(1);
       expect(mockNavigate).toHaveBeenCalledWith('/login');
       expect(global.window.location.reload).toHaveBeenCalled();
     });
@@ -180,7 +198,7 @@ describe('auth.ts runtime test', () => {
 
       logout();
 
-      expect(setToken).toHaveBeenCalledWith('');
+      expect(clearSession).toHaveBeenCalledTimes(1);
       expect(mockNavigate).not.toHaveBeenCalled();
       expect(global.window.location.reload).toHaveBeenCalled();
     });

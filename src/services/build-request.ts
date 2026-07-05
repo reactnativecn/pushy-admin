@@ -10,15 +10,21 @@ export function buildRequest({
   baseUrl,
   params,
   token,
+  withCredentials,
 }: {
   method: HttpMethod;
   path: string;
   baseUrl: string;
   params?: Record<string, any>;
   token?: string | null;
+  /** Send cookies cross-origin — required for httpOnly-cookie sessions. */
+  withCredentials?: boolean;
 }): { url: string; options: RequestInit } {
   const headers: Record<string, string> = {};
   const options: RequestInit = { method, headers };
+  if (withCredentials) {
+    options.credentials = 'include';
+  }
   let url = `${baseUrl.replace(/\/$/, '')}${path}`;
   if (token) {
     headers['x-accesstoken'] = token;

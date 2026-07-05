@@ -25,10 +25,16 @@ class MockRequestError extends Error {
 }
 
 const mockSetToken = mock(() => {});
+const mockMarkCookieSession = mock(() => {});
+const mockClearSession = mock(() => {});
 
 mock.module('@/services/request', () => ({
   getToken: () => '',
+  hasSession: () => false,
+  usesCookieSession: () => false,
   setToken: mockSetToken,
+  markCookieSession: mockMarkCookieSession,
+  clearSession: mockClearSession,
   RequestError: MockRequestError,
   default: {},
 }));

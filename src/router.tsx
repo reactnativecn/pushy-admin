@@ -2,7 +2,7 @@ import { createHashRouter, redirect } from 'react-router-dom';
 import { AdminRoute } from './components/admin-route';
 import { ErrorBoundary } from './components/error-boundary';
 import MainLayout from './components/main-layout';
-import { getToken } from './services/request';
+import { hasSession } from './services/request';
 import {
   getUnauthenticatedRedirect,
   resolveLoginRedirect,
@@ -30,7 +30,7 @@ export const rootRouterPath = {
 };
 
 export const needAuthLoader = ({ request }: { request: Request }) => {
-  if (!getToken()) {
+  if (!hasSession()) {
     const { pathname, search } = new URL(request.url);
     const target = getUnauthenticatedRedirect(pathname, search);
     return target ? redirect(target) : null;
@@ -39,7 +39,7 @@ export const needAuthLoader = ({ request }: { request: Request }) => {
 };
 
 export const publicOnlyLoader = ({ request }: { request: Request }) => {
-  if (!getToken()) {
+  if (!hasSession()) {
     return null;
   }
 

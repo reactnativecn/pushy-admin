@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
-import { getToken } from '@/services/request';
+import { hasSession } from '@/services/request';
 import type { App, Package } from '@/types';
 import dayjs from '@/utils/dayjs';
 import {
@@ -178,7 +178,7 @@ export const useUserInfo = () => {
   const { data, isLoading } = useQuery({
     queryKey: userKeys.info(),
     queryFn: api.me,
-    enabled: () => !!getToken(),
+    enabled: () => hasSession(),
   });
   const user =
     data?.tier === 'custom' && data.quota
@@ -204,7 +204,7 @@ export const useUserInfo = () => {
     ? t('user.remaining_note', { days: remainingDays })
     : '';
   return {
-    user: getToken() ? user : null,
+    user: hasSession() ? user : null,
     displayExpireDay,
     displayRemainingDays,
     isExpiringSoon,
