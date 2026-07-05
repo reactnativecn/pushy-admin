@@ -1,15 +1,19 @@
 import {
   CommentOutlined,
+  DesktopOutlined,
   GlobalOutlined,
   InfoCircleOutlined,
+  MoonOutlined,
   OpenAIOutlined,
   ReadOutlined,
+  SunOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Dropdown } from 'antd';
+import { Button, Dropdown, Tooltip } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rootRouterPath } from '@/router';
+import { type ThemeMode, useThemeMode } from '@/utils/theme-mode';
 
 export type MenuItems = NonNullable<MenuProps['items']>;
 
@@ -79,7 +83,7 @@ export function getCurrentLanguage(language?: string) {
   return language?.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en';
 }
 
-export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
+function LanguageSwitcher() {
   const { t, i18n } = useTranslation();
   const currentLanguage = getCurrentLanguage(
     i18n.resolvedLanguage ?? i18n.language,
@@ -102,17 +106,67 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
       placement="bottomRight"
       trigger={['click']}
     >
-      <Button
-        aria-label={t('nav.language')}
-        className={compact ? 'px-2' : undefined}
-        icon={<GlobalOutlined />}
-        type="text"
-      >
-        {compact
-          ? null
-          : t(`nav.language_${currentLanguage === 'zh-CN' ? 'zh' : 'en'}`)}
-      </Button>
+      <Tooltip placement="bottom" title={t('nav.language')}>
+        <Button
+          aria-label={t('nav.language')}
+          icon={<GlobalOutlined />}
+          shape="circle"
+          type="text"
+        />
+      </Tooltip>
     </Dropdown>
+  );
+}
+
+const themeModeIcons: Record<ThemeMode, ReactNode> = {
+  auto: <DesktopOutlined />,
+  light: <SunOutlined />,
+  dark: <MoonOutlined />,
+};
+
+const THEME_MODES: ThemeMode[] = ['auto', 'light', 'dark'];
+
+function ThemeSwitcher() {
+  const { t } = useTranslation();
+  const { mode, setMode } = useThemeMode();
+  const items: MenuItems = THEME_MODES.map((value) => ({
+    key: value,
+    icon: themeModeIcons[value],
+    label: t(`nav.theme_${value}`),
+  }));
+
+  return (
+    <Dropdown
+      menu={{
+        items,
+        selectable: true,
+        selectedKeys: [mode],
+        onClick: ({ key }) => {
+          setMode(key as ThemeMode);
+        },
+      }}
+      placement="bottomRight"
+      trigger={['click']}
+    >
+      <Tooltip placement="bottom" title={t('nav.theme')}>
+        <Button
+          aria-label={t('nav.theme')}
+          icon={themeModeIcons[mode]}
+          shape="circle"
+          type="text"
+        />
+      </Tooltip>
+    </Dropdown>
+  );
+}
+
+/** 主题 + 语言切换：导航栏右侧的胶囊控件组。 */
+export function NavControls() {
+  return (
+    <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border-secondary p-0.5">
+      <ThemeSwitcher />
+      <LanguageSwitcher />
+    </div>
   );
 }
 
@@ -127,6 +181,25 @@ export function getLanguageMenuItem(
     children: languageOptions.map(({ key, labelKey }) => ({
       key: `language:${key}`,
       label: currentLanguage === key ? `${t(labelKey)} ✓` : t(labelKey),
+    })),
+  };
+}
+
+export function getThemeMenuItem(
+  t: (key: string) => string,
+  currentMode: ThemeMode,
+): MenuItems[number] {
+  return {
+    key: 'theme',
+    icon: themeModeIcons[currentMode],
+    label: t('nav.theme'),
+    children: THEME_MODES.map((value) => ({
+      key: `theme:${value}`,
+      icon: themeModeIcons[value],
+      label:
+        currentMode === value
+          ? `${t(`nav.theme_${value}`)} ✓`
+          : t(`nav.theme_${value}`),
     })),
   };
 }

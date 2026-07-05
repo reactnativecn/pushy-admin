@@ -568,7 +568,11 @@
     "paused": "Paused",
     "language": "Language",
     "language_en": "English",
-    "language_zh": "中文"
+    "language_zh": "中文",
+    "theme": "Theme",
+    "theme_auto": "Follow system",
+    "theme_light": "Light",
+    "theme_dark": "Dark"
   },
   "app_drawer": {
     "expand": "Expand app list",

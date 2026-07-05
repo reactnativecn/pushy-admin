@@ -150,7 +150,7 @@ export function AppSwitcher({ compact }: { compact: boolean }) {
   const trigger = (
     <button
       className={cn(
-        'flex h-16 min-w-0 cursor-pointer items-center border-0 border-slate-200 border-x bg-slate-50 px-4 text-left transition-colors hover:bg-white',
+        'flex h-16 min-w-0 cursor-pointer items-center border-0 border-slate-200 border-x bg-slate-50 px-4 text-left transition-colors hover:bg-container',
         compact ? 'max-w-[150px] flex-1 px-2' : 'w-72 lg:w-80',
       )}
       onClick={compact ? () => setOpen(true) : undefined}
@@ -415,7 +415,7 @@ function AppRow({
       </button>
       <button
         aria-label={t('nav.open_app_settings', { name: app.name })}
-        className="mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 transition-colors hover:bg-white hover:text-primary"
+        className="mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 transition-colors hover:bg-container hover:text-primary"
         onClick={() => onSettings(app)}
         title={t('nav.app_settings')}
         type="button"

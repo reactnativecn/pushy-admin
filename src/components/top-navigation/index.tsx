@@ -15,6 +15,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { cn } from '@/utils/helper';
 import { useUserInfo } from '@/utils/hooks';
+import { type ThemeMode, useThemeMode } from '@/utils/theme-mode';
 import { ReactComponent as LogoH } from '../../assets/logo-h.svg';
 import { DailyCheckQuotaUserTrigger } from '../daily-check-quota';
 import { AppSwitcher } from './app-switcher';
@@ -23,8 +24,9 @@ import {
   getExternalItems,
   getLanguageMenuItem,
   getSelectedKeys,
-  LanguageSwitcher,
+  getThemeMenuItem,
   type MenuItems,
+  NavControls,
 } from './nav-items';
 import { useManageAppDrawerPlacement } from './use-app-drawer-placement';
 
@@ -40,6 +42,7 @@ export default function TopNavigation({
   const { t, i18n } = useTranslation();
   const { user } = useUserInfo();
   const { pathname } = useLocation();
+  const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [appDrawerPlacement] = useManageAppDrawerPlacement();
   const selectedKeys = useMemo(() => getSelectedKeys(pathname), [pathname]);
@@ -153,6 +156,7 @@ export default function TopNavigation({
       : [];
 
   const mobileItems: MenuItems = [
+    getThemeMenuItem(t, themeMode),
     getLanguageMenuItem(t, currentLanguage),
     { type: 'divider' as const },
     ...authenticatedItems,
@@ -206,10 +210,15 @@ export default function TopNavigation({
             items={mobileItems}
             onClose={() => setMobileMenuOpen(false)}
             open={mobileMenuOpen}
-            selectedKeys={[...selectedKeys, `language:${currentLanguage}`]}
+            selectedKeys={[
+              ...selectedKeys,
+              `language:${currentLanguage}`,
+              `theme:${themeMode}`,
+            ]}
             onLanguageChange={(language) => {
               void i18n.changeLanguage(language);
             }}
+            onThemeChange={setThemeMode}
           />
         </div>
       ) : (
@@ -221,7 +230,7 @@ export default function TopNavigation({
             items={[...authenticatedItems, ...externalItems]}
             style={{ height: 64, lineHeight: '64px' }}
           />
-          <LanguageSwitcher />
+          <NavControls />
           {showAuthenticatedChrome && user && (
             <Link
               to={rootRouterPath.user}
@@ -243,12 +252,14 @@ function MobileMenuSheet({
   items,
   onClose,
   onLanguageChange,
+  onThemeChange,
   open,
   selectedKeys,
 }: {
   items: MenuItems;
   onClose: () => void;
   onLanguageChange: (language: string) => void;
+  onThemeChange: (mode: ThemeMode) => void;
   open: boolean;
   selectedKeys: string[];
 }) {
@@ -267,8 +278,12 @@ function MobileMenuSheet({
         items={items}
         mode="inline"
         onClick={({ key }) => {
-          if (String(key).startsWith('language:')) {
-            onLanguageChange(String(key).replace('language:', ''));
+          const keyText = String(key);
+          if (keyText.startsWith('language:')) {
+            onLanguageChange(keyText.replace('language:', ''));
+          }
+          if (keyText.startsWith('theme:')) {
+            onThemeChange(keyText.replace('theme:', '') as ThemeMode);
           }
           onClose();
         }}

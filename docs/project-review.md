@@ -226,6 +226,6 @@
 
 ### P3 — 锦上添花
 
-11. 暗色模式（依赖 P1 的 token 地基）（§1.3）。
+11. ✅（2026-07-05）暗色模式：`ThemeModeProvider`（`src/utils/theme-mode.tsx`）默认跟随系统 `prefers-color-scheme`，支持手动覆盖（auto/light/dark，localStorage 持久化）；ConfigProvider 按解析结果切换 `darkAlgorithm`，`<html>` 同步 `.dark` 类与 `color-scheme`。适配方式：把全仓既有的 slate/gray/blue/red/amber/emerald Tailwind 刻度在 `@theme inline` 中整体重映射到 antd token（--ant-*），darkAlgorithm 翻转变量后全部颜色类自动适配，无需逐处加 `dark:` 变体；`bg-white`/`to-white` 全部替换为语义类 `bg-container`/`to-container`；manage.css 残留 hex 改 antd 变量；三处 @ant-design/charts 图表按主题切换 `classicDark`。切换入口：导航栏胶囊控件组 `NavControls`（主题 + 语言圆形图标按钮，Dropdown 选择），移动端菜单同步提供主题子菜单。（§1.3）
 12. ◐ 部分完成（2026-07-05）：`vanilla-jsoneditor` 改 `React.lazy` 按需加载（已从应用管理页 chunk 拆出独立异步 chunk，~275K）；`staleTime` 5s → 30s（切标签页不再重复请求，实时页有自己的 refetchInterval 不受影响）。**未完成**：charts 按需子包、xlsx 替换。（§4.2、§4.3）
-13. token 迁出 localStorage 的方案评估（§2.3）。
+13. token 迁出 localStorage：决定先由 server 端支持 httpOnly cookie 会话后，前端再跟进改造（移除 localStorage 读写、请求改 credentials）。前端部分待 server 就绪。（§2.3）

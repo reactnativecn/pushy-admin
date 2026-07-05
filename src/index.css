@@ -1,9 +1,16 @@
 @import "tailwindcss";
 
+/* 暗色模式由 ThemeModeProvider 在 <html> 上切换 .dark 类驱动（默认跟随系统）。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * 让 Tailwind 的颜色工具类（text-primary / bg-primary / border-error ...）
  * 直接消费 antd（cssVar 模式）输出的 CSS 变量，实现全站唯一色源。
  * antd 的变量在运行时注入到 :root，这里只做别名映射。
+ *
+ * 同时把项目里既有的中性色（slate/gray）与品牌/语义色（blue/red/amber/emerald）
+ * 刻度整体重映射到 antd token：切换 darkAlgorithm 时 --ant-* 变量随之翻转，
+ * 全部 Tailwind 颜色类无需逐处添加 dark: 变体即可适配暗色。
  */
 @theme inline {
   --color-primary: var(--ant-color-primary);
@@ -17,6 +24,61 @@
   --color-text-secondary: var(--ant-color-text-secondary);
   --color-text-tertiary: var(--ant-color-text-tertiary);
   --color-border: var(--ant-color-border);
+  --color-border-secondary: var(--ant-color-border-secondary);
+
+  /* 结构面：白底统一走 bg-container / bg-layout / bg-elevated 语义类 */
+  --color-container: var(--ant-color-bg-container);
+  --color-layout: var(--ant-color-bg-layout);
+  --color-elevated: var(--ant-color-bg-elevated);
+
+  /* 中性色刻度 → antd 填充/文本/边框 token */
+  --color-slate-50: var(--ant-color-fill-quaternary);
+  --color-gray-50: var(--ant-color-fill-quaternary);
+  --color-slate-100: var(--ant-color-fill-tertiary);
+  --color-gray-100: var(--ant-color-fill-tertiary);
+  --color-slate-200: var(--ant-color-border-secondary);
+  --color-gray-200: var(--ant-color-border-secondary);
+  --color-slate-300: var(--ant-color-border);
+  --color-gray-300: var(--ant-color-border);
+  --color-slate-400: var(--ant-color-text-quaternary);
+  --color-gray-400: var(--ant-color-text-quaternary);
+  --color-slate-500: var(--ant-color-text-tertiary);
+  --color-gray-500: var(--ant-color-text-tertiary);
+  --color-slate-600: var(--ant-color-text-secondary);
+  --color-gray-600: var(--ant-color-text-secondary);
+  --color-slate-700: var(--ant-color-text-secondary);
+  --color-gray-700: var(--ant-color-text-secondary);
+  --color-slate-800: var(--ant-color-text);
+  --color-gray-800: var(--ant-color-text);
+  --color-slate-900: var(--ant-color-text);
+  --color-gray-900: var(--ant-color-text);
+
+  /* 品牌蓝刻度 → primary token */
+  --color-blue-50: var(--ant-color-primary-bg);
+  --color-blue-100: var(--ant-color-primary-bg-hover);
+  --color-blue-200: var(--ant-color-primary-border);
+  --color-blue-300: var(--ant-color-primary-border-hover);
+  --color-blue-400: var(--ant-color-primary-hover);
+  --color-blue-500: var(--ant-color-primary);
+  --color-blue-600: var(--ant-color-primary);
+
+  /* 语义色刻度 → error / warning / success token */
+  --color-red-50: var(--ant-color-error-bg);
+  --color-red-100: var(--ant-color-error-bg);
+  --color-red-200: var(--ant-color-error-border);
+  --color-red-300: var(--ant-color-error-border-hover);
+  --color-red-500: var(--ant-color-error);
+  --color-red-600: var(--ant-color-error-active);
+  --color-red-700: var(--ant-color-error-text-active);
+  --color-amber-50: var(--ant-color-warning-bg);
+  --color-amber-100: var(--ant-color-warning-bg);
+  --color-amber-200: var(--ant-color-warning-border);
+  --color-amber-300: var(--ant-color-warning-border-hover);
+  --color-amber-500: var(--ant-color-warning);
+  --color-amber-600: var(--ant-color-warning-active);
+  --color-amber-700: var(--ant-color-warning-text-active);
+  --color-emerald-500: var(--ant-color-success);
+  --color-emerald-600: var(--ant-color-success-active);
 }
 
 html,

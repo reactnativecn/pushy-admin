@@ -568,7 +568,11 @@
     "paused": "暂停",
     "language": "语言",
     "language_en": "English",
-    "language_zh": "中文"
+    "language_zh": "中文",
+    "theme": "主题",
+    "theme_auto": "跟随系统",
+    "theme_light": "浅色",
+    "theme_dark": "深色"
   },
   "app_drawer": {
     "expand": "展开应用列表",

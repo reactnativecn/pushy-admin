@@ -307,7 +307,7 @@ const Item = ({
     expired: t('package_list.status_map_expired'),
   };
   return (
-    <div className="bg-white my-0 [&_li]:px-0!">
+    <div className="bg-container my-0 [&_li]:px-0!">
       <List.Item className="p-2">
         <List.Item.Meta
           title={

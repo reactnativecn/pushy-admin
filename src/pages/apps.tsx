@@ -164,7 +164,7 @@ export const Component = () => {
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-container px-4 py-3 shadow-sm">
       <div className="text-gray-500 text-xs">{label}</div>
       <div className="mt-1 font-semibold text-2xl text-slate-900 tabular-nums">
         {value}
@@ -183,7 +183,7 @@ function AppCard({ app }: { app: AppItem }) {
       to={rootRouterPath.versions(String(app.id))}
       onClick={() => rememberRecentApp(app.id)}
     >
-      <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+      <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-container p-4 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100">

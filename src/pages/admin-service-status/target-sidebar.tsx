@@ -37,7 +37,7 @@ export function ServiceTargetSidebar({
             <button
               aria-pressed={isActive}
               className={cn(
-                'w-full cursor-pointer rounded-lg border bg-white p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md',
+                'w-full cursor-pointer rounded-lg border bg-container p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md',
                 isActive
                   ? 'border-primary bg-blue-50 shadow-none'
                   : 'border-slate-200',

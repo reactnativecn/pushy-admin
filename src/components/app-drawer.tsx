@@ -107,7 +107,7 @@ export function AppDrawer({
   return (
     <div
       className={cn(
-        'sticky top-6 h-[calc(100dvh-112px)] max-h-[calc(100dvh-112px)] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm',
+        'sticky top-6 h-[calc(100dvh-112px)] max-h-[calc(100dvh-112px)] overflow-hidden rounded-lg border border-slate-200 bg-container shadow-sm',
         collapsed ? 'w-16' : 'w-[280px]',
       )}
     >
@@ -419,7 +419,7 @@ function AppDrawerRow({
         <button
           aria-label={t('app_drawer.open_app_settings', { name: app.name })}
           className={cn(
-            'mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 opacity-0 transition-all hover:bg-white/80 hover:text-primary hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100',
+            'mr-2 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-slate-400 opacity-0 transition-all hover:bg-container/80 hover:text-primary hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100',
             isActive ? 'text-primary hover:bg-blue-50' : undefined,
           )}
           onClick={() => onSettings(app)}

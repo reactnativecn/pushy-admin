@@ -287,7 +287,7 @@ export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
             {quotaTag}
           </Tag>
         </div>
-        <div className="mb-3 grid gap-2 rounded-md bg-white/75 p-3 sm:grid-cols-3">
+        <div className="mb-3 grid gap-2 rounded-md bg-container/75 p-3 sm:grid-cols-3">
           <div>
             <div className="text-[11px] text-gray-500">
               {t('daily_check_quota.remaining_label')}

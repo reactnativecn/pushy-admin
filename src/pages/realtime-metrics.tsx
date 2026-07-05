@@ -12,6 +12,7 @@ import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
+import { useThemeMode } from '@/utils/theme-mode';
 
 const { RangePicker } = DatePicker;
 
@@ -114,6 +115,7 @@ const formatTooltipItem = (
 
 export const Component = () => {
   const { t } = useTranslation();
+  const { isDark } = useThemeMode();
   const [searchParams, setSearchParams] = useSearchParams({
     attribute: 'hash',
   });
@@ -333,6 +335,7 @@ export const Component = () => {
   legendValuesRef.current = defaultLegendValues;
 
   const lineConfig = {
+    theme: isDark ? 'classicDark' : 'classic',
     interaction: {
       legendFilter: true,
       tooltip: { shared: true },
@@ -550,7 +553,7 @@ export const Component = () => {
                         return (
                           <div
                             key={category}
-                            className="min-w-0 rounded border border-gray-200 bg-white px-3 py-2.5"
+                            className="min-w-0 rounded border border-gray-200 bg-container px-3 py-2.5"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span

@@ -78,7 +78,7 @@ export function QuotaDetailsPanel({
     ? 'border-red-100 bg-red-50'
     : quotaWarning.isLow
       ? 'border-amber-100 bg-amber-50'
-      : 'border-slate-100 bg-gradient-to-br from-slate-50 to-white';
+      : 'border-slate-100 bg-gradient-to-br from-slate-50 to-container';
   const remainingClassName = quotaWarning.isExceeded
     ? 'text-red-700'
     : quotaWarning.isLow
@@ -96,7 +96,7 @@ export function QuotaDetailsPanel({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border bg-white',
+        'overflow-hidden rounded-xl border bg-container',
         panelClassName,
       )}
     >
@@ -278,7 +278,7 @@ function MiniQuotaBars({
     });
 
   return (
-    <div className="flex h-full min-h-[150px] flex-col rounded-lg border border-slate-200/70 bg-white/70 p-3">
+    <div className="flex h-full min-h-[150px] flex-col rounded-lg border border-slate-200/70 bg-container/70 p-3">
       <div className="mb-1 flex items-center justify-between text-[11px] text-gray-500">
         <span>{title}</span>
       </div>
@@ -327,7 +327,7 @@ function MiniQuotaBars({
           })}
         </div>
       ) : (
-        <div className="mt-2 flex flex-1 items-center justify-center rounded bg-white text-gray-400 text-xs">
+        <div className="mt-2 flex flex-1 items-center justify-center rounded bg-container text-gray-400 text-xs">
           {t('user.no_7day_details')}
         </div>
       )}

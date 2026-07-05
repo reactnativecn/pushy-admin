@@ -29,10 +29,10 @@
     opacity: 1;
   }
   .can-drop {
-    background-color: #fff;
+    background-color: var(--ant-color-bg-container);
   }
   .is-over {
-    background-color: #e6f7ff;
+    background-color: var(--ant-color-primary-bg);
   }
 }
 
@@ -59,7 +59,7 @@
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
 .deps-popover-title {
@@ -86,7 +86,7 @@
 .deps-popover-note {
   flex: 0 0 auto;
   margin-top: 12px;
-  color: #6b7280;
+  color: var(--ant-color-text-secondary);
   font-size: 12px;
   line-height: 1.5;
 }

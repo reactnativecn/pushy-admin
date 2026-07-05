@@ -22,6 +22,7 @@ import {
   type InternalMetricsResponse,
 } from '@/services/api';
 import { metricsKeys } from '@/utils/query-keys';
+import { useThemeMode } from '@/utils/theme-mode';
 import {
   API_5XX_EVENT_PAGE_SIZE,
   aggregateDurations,
@@ -103,10 +104,14 @@ function MetricLineCard({
   yTitle: string;
   xTitle?: string;
 }) {
+  const { isDark } = useThemeMode();
   return (
     <Card title={title}>
       {data.length > 0 ? (
-        <Line {...createLineConfig(data, yTitle, valueFormatter, xTitle)} />
+        <Line
+          {...createLineConfig(data, yTitle, valueFormatter, xTitle)}
+          theme={isDark ? 'classicDark' : 'classic'}
+        />
       ) : (
         <div className="flex h-[300px] items-center justify-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />

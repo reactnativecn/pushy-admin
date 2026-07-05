@@ -584,7 +584,7 @@ export const AuditLogs = () => {
   ];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+    <div className="rounded-lg border border-slate-200 bg-container p-4 shadow-sm md:p-5">
       <div className="mb-4">
         <div className="mb-2 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>

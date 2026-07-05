@@ -199,7 +199,7 @@ const ManageDashBoard = () => {
             key: 'packages',
             label: t('manage.tab_packages'),
             children: (
-              <div className="rounded-lg bg-white p-4">
+              <div className="rounded-lg bg-container p-4">
                 <div className="flex items-center gap-2 mb-2">
                   {packageSearchInput}
                 </div>
