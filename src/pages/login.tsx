@@ -6,12 +6,11 @@ import { Link } from 'react-router-dom';
 import { login } from '@/services/auth';
 import { ReactComponent as Logo } from '../assets/logo.svg';
 
-let email: string;
-let password: string;
-
 export const Login = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   return (
     <div style={style.body}>
       <form
@@ -33,7 +32,8 @@ export const Login = () => {
             size="large"
             type="email"
             autoComplete=""
-            onChange={({ target }) => (email = target.value)}
+            value={email}
+            onChange={({ target }) => setEmail(target.value)}
             required
           />
         </Form.Item>
@@ -43,7 +43,8 @@ export const Login = () => {
             placeholder={t('login.password_placeholder')}
             size="large"
             autoComplete=""
-            onChange={({ target }) => (password = target.value)}
+            value={password}
+            onChange={({ target }) => setPassword(target.value)}
             required
           />
         </Form.Item>

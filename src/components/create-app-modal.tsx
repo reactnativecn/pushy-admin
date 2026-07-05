@@ -1,6 +1,6 @@
 import { Form, Input, Modal, message, Select } from 'antd';
 import i18n from '@/i18n';
-import { api } from '@/services/api';
+import { createApp } from '@/services/mutations';
 import PlatformIcon from './platform-icon';
 
 export const showCreateAppModal = ({
@@ -74,7 +74,7 @@ export const showCreateAppModal = ({
       }
 
       try {
-        const id = await api.createApp({ name: trimmedName, platform });
+        const id = await createApp({ name: trimmedName, platform });
         if (typeof id === 'number') {
           await onCreated?.(id);
         }

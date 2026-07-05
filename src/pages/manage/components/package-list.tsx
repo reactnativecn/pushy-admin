@@ -19,11 +19,15 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { type Dispatch, type SetStateAction, useMemo } from 'react';
+import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
-import { api } from '@/services/api';
+import {
+  useDeletePackage,
+  useDeletePackages,
+  useUpdatePackage,
+} from '@/services/mutations';
 import type { Package } from '@/types';
 import { useManageContext } from '../hooks/useManageContext';
 import { Commit } from './commit';
@@ -42,6 +46,7 @@ const PackageList = ({
 }) => {
   const { t } = useTranslation();
   const { app, appId, packageTimestampWarnings } = useManageContext();
+  const deletePackages = useDeletePackages();
   const selectedPackageIdSet = useMemo(
     () => new Set(selectedPackageIds),
     [selectedPackageIds],
@@ -84,6 +89,7 @@ const PackageList = ({
                 removeSelectedPackages(
                   selectedPackages,
                   appId,
+                  deletePackages.mutateAsync,
                   () => {
                     setSelectedPackageIds((prev) =>
                       prev.filter(
@@ -120,6 +126,10 @@ export default PackageList;
 function removeSelectedPackages(
   items: Package[],
   appId: number,
+  deletePackages: (variables: {
+    appId: number;
+    packageIds: number[];
+  }) => Promise<unknown>,
   onSuccess: () => void,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
@@ -143,7 +153,7 @@ function removeSelectedPackages(
     maskClosable: true,
     okButtonProps: { danger: true },
     async onOk() {
-      await api.deletePackages({
+      await deletePackages({
         appId,
         packageIds: items.map((item) => item.id),
       });
@@ -155,6 +165,10 @@ function removeSelectedPackages(
 function remove(
   item: Package,
   appId: number,
+  deletePackage: (variables: {
+    appId: number;
+    packageId: number;
+  }) => Promise<unknown>,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   Modal.confirm({
@@ -167,31 +181,58 @@ function remove(
     maskClosable: true,
     okButtonProps: { danger: true },
     async onOk() {
-      await api.deletePackage({ appId, packageId: item.id });
+      await deletePackage({ appId, packageId: item.id });
     },
   });
 }
 
-function edit(item: Package, appId: number, t: (key: string) => string) {
-  let { note, status } = item;
-  Modal.confirm({
-    icon: null,
-    closable: true,
-    maskClosable: true,
-    content: (
-      <Form layout="vertical" initialValues={item}>
+const EditPackageModal = ({
+  item,
+  appId,
+  onClose,
+}: {
+  item: Package;
+  appId: number;
+  onClose: () => void;
+}) => {
+  const { t } = useTranslation();
+  const [form] = Form.useForm<{
+    note?: string;
+    status?: Package['status'];
+  }>();
+  const updatePackage = useUpdatePackage();
+
+  return (
+    <Modal
+      open
+      maskClosable
+      confirmLoading={updatePackage.isPending}
+      onCancel={onClose}
+      onOk={async () => {
+        const { note, status } = await form.validateFields();
+        try {
+          await updatePackage.mutateAsync({
+            appId,
+            packageId: item.id,
+            params: { note, status },
+          });
+        } catch {
+          // request layer already toasts the error; keep the modal open
+          return;
+        }
+        onClose();
+      }}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{ note: item.note, status: item.status }}
+      >
         <Form.Item name="note" label={t('package_list.note')}>
-          <Input
-            placeholder={t('package_list.add_note')}
-            onChange={({ target }) => (note = target.value)}
-          />
+          <Input placeholder={t('package_list.add_note')} />
         </Form.Item>
         <Form.Item name="status" label={t('package_list.status')}>
-          <Select
-            onSelect={(value: Package['status']) => {
-              status = value;
-            }}
-          >
+          <Select>
             <Select.Option value="normal">
               {t('package_list.status_normal')}
             </Select.Option>
@@ -204,16 +245,9 @@ function edit(item: Package, appId: number, t: (key: string) => string) {
           </Select>
         </Form.Item>
       </Form>
-    ),
-    async onOk() {
-      await api.updatePackage({
-        appId,
-        packageId: item.id,
-        params: { note, status },
-      });
-    },
-  });
-}
+    </Modal>
+  );
+};
 
 const TimestampWarning = ({
   warningTimestamps,
@@ -265,6 +299,8 @@ const Item = ({
 }) => {
   const { t } = useTranslation();
   const { appId } = useManageContext();
+  const deletePackage = useDeletePackage();
+  const [editing, setEditing] = useState(false);
   const hasTimestampWarning = warningTimestamps.length > 0;
   const statusMap: Partial<Record<NonNullable<Package['status']>, string>> = {
     paused: t('package_list.status_map_paused'),
@@ -306,12 +342,14 @@ const Item = ({
               <Button
                 type="link"
                 icon={<EditOutlined />}
-                onClick={() => edit(item, appId, t)}
+                onClick={() => setEditing(true)}
               />
               <Button
                 type="link"
                 icon={<DeleteOutlined />}
-                onClick={() => remove(item, appId, t)}
+                onClick={() =>
+                  remove(item, appId, deletePackage.mutateAsync, t)
+                }
                 danger
               />
             </Row>
@@ -338,6 +376,13 @@ const Item = ({
           }
         />
       </List.Item>
+      {editing && (
+        <EditPackageModal
+          item={item}
+          appId={appId}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </div>
   );
 };

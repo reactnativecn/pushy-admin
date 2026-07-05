@@ -2,7 +2,7 @@ import { DeleteFilled } from '@ant-design/icons';
 import { Button, Form, Input, Modal, Switch, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { rootRouterPath, router } from '@/router';
-import { api } from '@/services/api';
+import { useDeleteApp } from '@/services/mutations';
 import { useUserInfo } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
 
@@ -10,6 +10,7 @@ const SettingModal = () => {
   const { t } = useTranslation();
   const { user } = useUserInfo();
   const { appId } = useManageContext();
+  const deleteApp = useDeleteApp();
   const appKey = Form.useWatch('appKey') as string;
   const ignoreBuildTime = Form.useWatch('ignoreBuildTime') as string;
 
@@ -83,7 +84,7 @@ const SettingModal = () => {
               okText: t('setting_modal.delete_ok'),
               okButtonProps: { danger: true },
               async onOk() {
-                await api.deleteApp(appId);
+                await deleteApp.mutateAsync(appId);
                 Modal.destroyAll();
                 router.navigate(rootRouterPath.apps);
               },

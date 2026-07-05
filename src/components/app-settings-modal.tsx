@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
+import { useDeleteApp, useUpdateApp } from '@/services/mutations';
 import type { App } from '@/types';
 import { useUserInfo } from '@/utils/hooks';
 import { appKeys } from '@/utils/query-keys';
@@ -38,6 +39,7 @@ export function useAppSettingsModal() {
   const [modal, contextHolder] = Modal.useModal();
   const [form] = Form.useForm<AppSettingsFormValues>();
   const screens = Grid.useBreakpoint();
+  const updateApp = useUpdateApp();
 
   const openAppSettings = (app: AppSettingsTarget) => {
     form.resetFields();
@@ -54,11 +56,14 @@ export function useAppSettingsModal() {
       async onOk() {
         try {
           const values = form.getFieldsValue();
-          await api.updateApp(app.id, {
-            name: values.name,
-            downloadUrl: values.downloadUrl,
-            status: values.status,
-            ignoreBuildTime: values.ignoreBuildTime,
+          await updateApp.mutateAsync({
+            appId: app.id,
+            params: {
+              name: values.name,
+              downloadUrl: values.downloadUrl,
+              status: values.status,
+              ignoreBuildTime: values.ignoreBuildTime,
+            },
           });
         } catch (error) {
           message.error((error as Error).message);
@@ -83,6 +88,7 @@ function AppSettingsModalContent({
 }) {
   const { t } = useTranslation();
   const { user } = useUserInfo();
+  const deleteApp = useDeleteApp();
   const { data: app, isLoading } = useQuery({
     queryKey: appKeys.detail(appId),
     queryFn: () => api.getApp(appId),
@@ -170,7 +176,7 @@ function AppSettingsModalContent({
                 okText: t('app_settings_modal.delete_ok'),
                 okButtonProps: { danger: true },
                 async onOk() {
-                  await api.deleteApp(appId);
+                  await deleteApp.mutateAsync(appId);
                   Modal.destroyAll();
                   router.navigate(rootRouterPath.apps);
                 },
