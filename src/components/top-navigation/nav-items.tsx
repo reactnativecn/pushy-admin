@@ -9,7 +9,7 @@ import {
   SunOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Dropdown, Tooltip } from 'antd';
+import { Button, Dropdown } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rootRouterPath } from '@/router';
@@ -104,16 +104,14 @@ function LanguageSwitcher() {
         },
       }}
       placement="bottomRight"
-      trigger={['click']}
+      trigger={['hover', 'click']}
     >
-      <Tooltip placement="bottom" title={t('nav.language')}>
-        <Button
-          aria-label={t('nav.language')}
-          icon={<GlobalOutlined />}
-          shape="circle"
-          type="text"
-        />
-      </Tooltip>
+      <Button
+        aria-label={t('nav.language')}
+        icon={<GlobalOutlined />}
+        shape="circle"
+        type="text"
+      />
     </Dropdown>
   );
 }
@@ -146,16 +144,14 @@ function ThemeSwitcher() {
         },
       }}
       placement="bottomRight"
-      trigger={['click']}
+      trigger={['hover', 'click']}
     >
-      <Tooltip placement="bottom" title={t('nav.theme')}>
-        <Button
-          aria-label={t('nav.theme')}
-          icon={themeModeIcons[mode]}
-          shape="circle"
-          type="text"
-        />
-      </Tooltip>
+      <Button
+        aria-label={t('nav.theme')}
+        icon={themeModeIcons[mode]}
+        shape="circle"
+        type="text"
+      />
     </Dropdown>
   );
 }

@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { UAParser } from 'ua-parser-js';
 import type { AuditLog } from '@/types';
+import { downloadCsv } from '@/utils/csv';
 import dayjs from '@/utils/dayjs';
 import { patchSearchParams } from '@/utils/helper';
 import { useAuditLogs } from '@/utils/hooks';
@@ -374,16 +375,12 @@ export const AuditLogs = () => {
     });
   };
 
-  const handleExportToExcel = async () => {
+  const handleExportCsv = () => {
     if (filteredAuditLogs.length === 0) {
       return;
     }
 
     try {
-      const { default: writeXlsxFile } = await import(
-        'write-excel-file/browser'
-      );
-
       const rows = filteredAuditLogs.map((log) => {
         const date = dayjs(log.createdAt);
         const previewData = getPreviewData(log.data);
@@ -416,65 +413,36 @@ export const AuditLogs = () => {
         };
       });
 
-      type ExportRow = (typeof rows)[number];
-      const columns = [
-        {
-          header: t('audit_logs.col_time'),
-          cell: (row: ExportRow) => row.time,
-          width: 20,
-        },
-        {
-          header: t('audit_logs.col_action'),
-          cell: (row: ExportRow) => row.action,
-          width: 20,
-        },
-        {
-          header: t('audit_logs.detail_method'),
-          cell: (row: ExportRow) => row.method,
-          width: 10,
-        },
-        {
-          header: t('audit_logs.col_path'),
-          cell: (row: ExportRow) => row.path,
-          width: 36,
-        },
-        {
-          header: t('audit_logs.col_status'),
-          cell: (row: ExportRow) => row.status,
-          width: 10,
-        },
-        {
-          header: t('audit_logs.col_payload'),
-          cell: (row: ExportRow) => row.payload,
-          width: 40,
-        },
-        {
-          header: t('audit_logs.col_browser'),
-          cell: (row: ExportRow) => row.browser,
-          width: 20,
-        },
-        {
-          header: t('audit_logs.col_os'),
-          cell: (row: ExportRow) => row.os,
-          width: 20,
-        },
-        {
-          header: t('audit_logs.col_ip_addr'),
-          cell: (row: ExportRow) => row.ip,
-          width: 18,
-        },
-        {
-          header: 'API Key',
-          cell: (row: ExportRow) => row.apiKey,
-          width: 18,
-        },
+      const header = [
+        t('audit_logs.col_time'),
+        t('audit_logs.col_action'),
+        t('audit_logs.detail_method'),
+        t('audit_logs.col_path'),
+        t('audit_logs.col_status'),
+        t('audit_logs.col_payload'),
+        t('audit_logs.col_browser'),
+        t('audit_logs.col_os'),
+        t('audit_logs.col_ip_addr'),
+        'API Key',
       ];
 
-      await writeXlsxFile(rows, {
-        columns,
-        sheet: t('audit_logs.sheet_name'),
-      }).toFile(
-        `${t('audit_logs.sheet_name')}_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`,
+      downloadCsv(
+        `${t('audit_logs.sheet_name')}_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.csv`,
+        [
+          header,
+          ...rows.map((row) => [
+            row.time,
+            row.action,
+            row.method,
+            row.path,
+            row.status,
+            row.payload,
+            row.browser,
+            row.os,
+            row.ip,
+            row.apiKey,
+          ]),
+        ],
       );
     } catch (error) {
       message.error(
@@ -681,7 +649,7 @@ export const AuditLogs = () => {
             <Button
               type="primary"
               icon={<DownloadOutlined />}
-              onClick={handleExportToExcel}
+              onClick={handleExportCsv}
               disabled={filteredAuditLogs.length === 0}
               className="w-full md:w-auto"
             >

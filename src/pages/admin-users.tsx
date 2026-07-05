@@ -149,7 +149,7 @@ const UserDetailDrawer = ({
       width={isMobile ? '100%' : 720}
       onClose={onClose}
       open={open}
-      destroyOnClose
+      destroyOnHidden
     >
       <Spin spinning={isLoading}>
         {detail && (

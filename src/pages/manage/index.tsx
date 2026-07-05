@@ -174,7 +174,7 @@ const ManageDashBoard = () => {
   const packageSearchInput = (
     <Input
       allowClear
-      bordered={false}
+      variant="borderless"
       prefix={<SearchOutlined className="text-gray-400" />}
       placeholder={t('common.search')}
       value={packageSearch}

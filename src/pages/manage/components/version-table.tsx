@@ -446,7 +446,7 @@ export default function VersionTable() {
           {!isMobile && <span>{t('version_table.title')}</span>}
           <Input
             allowClear
-            bordered={false}
+            variant="borderless"
             prefix={<SearchOutlined className="text-gray-400" />}
             placeholder={t('common.search')}
             value={search}
