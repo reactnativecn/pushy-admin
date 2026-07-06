@@ -390,6 +390,7 @@ const TextColumn = ({
   const { appId } = useManageContext();
   const updateVersion = useUpdateVersion();
   const [editing, setEditing] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const { t } = useTranslation();
   let value = record[key] as string;
   if (key === 'createdAt') {
@@ -405,7 +406,10 @@ const TextColumn = ({
             type="link"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              setPopoverOpen(false);
+              setEditing(true);
+            }}
             className="p-0 h-auto text-xs"
           >
             {t('common.edit')}
@@ -435,6 +439,8 @@ const TextColumn = ({
     <div className="group flex items-center justify-between gap-1">
       {showPopover ? (
         <Popover
+          open={popoverOpen}
+          onOpenChange={(open) => setPopoverOpen(open)}
           content={popoverContent}
           title={null}
           trigger="hover"
