@@ -26,7 +26,6 @@ export const rootRouterPath = {
   adminApps: '/admin-apps',
   adminMetrics: '/admin-metrics',
   adminServiceStatus: '/admin-service-status',
-  adminDeploy: '/admin-deploy',
   apiTokens: '/api-tokens',
 };
 
@@ -138,9 +137,9 @@ export const router = createHashRouter([
         ),
       },
       {
+        // 部署面板已并入服务状态页，兼容旧书签
         path: 'admin-deploy',
-        loader: needAuthLoader,
-        element: <AdminRoute load={() => import('./pages/admin-deploy')} />,
+        loader: () => redirect(rootRouterPath.adminServiceStatus),
       },
       {
         path: 'api-tokens',

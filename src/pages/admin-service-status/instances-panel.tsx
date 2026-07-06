@@ -3,12 +3,11 @@ import {
   ReloadOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Alert,
   Button,
   Card,
-  Grid,
   Modal,
   message,
   Popconfirm,
@@ -25,17 +24,11 @@ import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
 import type { SystemDeployStatus, SystemInstance } from '@/types';
 import { adminKeys } from '@/utils/query-keys';
-import {
-  formatBytes,
-  formatUptime,
-  SERVICE_STATUS_TARGETS,
-} from './admin-service-status/metrics';
+import { formatBytes, formatUptime, type ServiceStatusTarget } from './metrics';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface InstanceRow extends SystemInstance {
-  targetKey: string;
-  baseUrl: string;
   deployStatus?: SystemDeployStatus;
 }
 
@@ -59,79 +52,45 @@ function formatDateTime(value: string | null | undefined) {
   return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString();
 }
 
-export const Component = () => {
+export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
   const { t } = useTranslation();
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
   const [updateTarget, setUpdateTarget] = useState<InstanceRow | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
 
+  // 实例状态是节点本机事实（文件注册表），直接问该节点自己的入口
+  const instancesQuery = useQuery({
+    queryKey: adminKeys.systemInstances(target.key),
+    queryFn: () => adminApi.getSystemInstances(target.baseUrl),
+    refetchInterval: 10_000,
+  });
   const npmQuery = useQuery({
-    queryKey: adminKeys.systemNpm(),
-    queryFn: () => adminApi.getSystemNpmInfo(),
+    queryKey: adminKeys.systemNpm(target.key),
+    queryFn: () => adminApi.getSystemNpmInfo(target.baseUrl),
     refetchInterval: 60_000,
   });
-
-  const instanceQueries = useQueries({
-    queries: SERVICE_STATUS_TARGETS.map((target) => ({
-      queryKey: adminKeys.systemInstances(target.key),
-      queryFn: () => adminApi.getSystemInstances(target.baseUrl),
-      refetchInterval: 10_000,
-    })),
-  });
-
-  const isFetching = instanceQueries.some((query) => query.isFetching);
-  const allFailed =
-    instanceQueries.length > 0 &&
-    instanceQueries.every((query) => query.isError);
-
-  // Nodes sharing one Redis report the same instances — dedupe by instance id
-  // and remember which node answered so commands are routed to a node that can
-  // reach that instance's Redis.
-  const rows = useMemo(() => {
-    const byId = new Map<string, InstanceRow>();
-    instanceQueries.forEach((query, index) => {
-      const target = SERVICE_STATUS_TARGETS[index];
-      if (!query.data) {
-        return;
-      }
-      const deployStatuses = query.data.deployStatuses ?? {};
-      for (const instance of query.data.data ?? []) {
-        if (!byId.has(instance.id)) {
-          byId.set(instance.id, {
-            ...instance,
-            targetKey: target.key,
-            baseUrl: target.baseUrl,
-            deployStatus: deployStatuses[instance.id],
-          });
-        }
-      }
-    });
-    return [...byId.values()].sort((left, right) =>
-      left.id.localeCompare(right.id),
-    );
-  }, [instanceQueries]);
-
   const latestVersion = npmQuery.data?.distTags?.latest;
 
-  const refetchAll = () => {
-    npmQuery.refetch();
-    for (const query of instanceQueries) {
-      query.refetch();
-    }
-  };
+  const rows = useMemo(() => {
+    const instances = instancesQuery.data?.data ?? [];
+    const deployStatuses = instancesQuery.data?.deployStatuses ?? {};
+    return instances
+      .map((instance) => ({
+        ...instance,
+        deployStatus: deployStatuses[instance.id],
+      }))
+      .sort((left, right) => left.id.localeCompare(right.id));
+  }, [instancesQuery.data]);
 
   const commandMutation = useMutation({
     mutationFn: (params: {
       instanceId: string;
       action: 'restart' | 'update';
       version?: string;
-      baseUrl: string;
-    }) => adminApi.sendInstanceCommand(params),
+    }) => adminApi.sendInstanceCommand({ ...params, baseUrl: target.baseUrl }),
     onSuccess: () => {
       message.success(t('admin_deploy.command_queued'));
       setUpdateTarget(null);
-      setTimeout(refetchAll, 1000);
+      setTimeout(() => instancesQuery.refetch(), 1000);
     },
     onError: (error) => {
       message.error((error as Error).message);
@@ -171,7 +130,7 @@ export const Component = () => {
             <Text strong>{row.hostname}</Text>
           </Space>
           <Text type="secondary" className="text-xs">
-            pid {row.pid} · {row.targetKey}
+            pid {row.pid}
           </Text>
         </Space>
       ),
@@ -218,7 +177,9 @@ export const Component = () => {
       render: (_, row) => (
         <Space direction="vertical" size={0}>
           <Text className="text-xs">
-            {t('admin_deploy.memory')}: {formatBytes(row.memory.rss)}
+            RSS {formatBytes(row.memory.rss)} · Heap{' '}
+            {formatBytes(row.memory.heapUsed)}/
+            {formatBytes(row.memory.heapTotal)}
           </Text>
           <Text className="text-xs">
             CPU: {row.cpuPercent === null ? '-' : `${row.cpuPercent}%`} · load{' '}
@@ -309,7 +270,6 @@ export const Component = () => {
               commandMutation.mutate({
                 instanceId: row.id,
                 action: 'restart',
-                baseUrl: row.baseUrl,
               })
             }
           >
@@ -327,68 +287,43 @@ export const Component = () => {
   ];
 
   return (
-    <div className="page-section">
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <Title level={4} className="m-0!">
-            {t('admin_deploy.title')}
-          </Title>
-          <Text type="secondary">{t('admin_deploy.description')}</Text>
-        </div>
-        <Button
-          icon={<ReloadOutlined />}
-          loading={isFetching}
-          onClick={refetchAll}
-        >
-          {t('admin_deploy.refresh')}
-        </Button>
-      </div>
-
-      <Card className="mb-4" size="small">
+    <Card
+      className="mb-4"
+      title={t('admin_deploy.title')}
+      extra={
         <Space size="large" wrap>
-          <span>
-            <Text type="secondary">{t('admin_deploy.npm_package')}: </Text>
-            <Text strong>{npmQuery.data?.name ?? '-'}</Text>
-          </span>
           <span>
             <Text type="secondary">{t('admin_deploy.npm_latest')}: </Text>
             {latestVersion ? <Tag color="green">{latestVersion}</Tag> : '-'}
           </span>
-          <span>
-            <Text type="secondary">{t('admin_deploy.npm_fetched_at')}: </Text>
-            <Text>{formatDateTime(npmQuery.data?.fetchedAt)}</Text>
-          </span>
         </Space>
-        {npmQuery.isError && (
-          <Alert
-            className="mt-2"
-            type="warning"
-            showIcon
-            message={t('admin_deploy.npm_unavailable')}
-          />
-        )}
-      </Card>
-
-      {allFailed && (
+      }
+    >
+      {npmQuery.isError && (
         <Alert
-          className="mb-4"
+          className="mb-2"
+          type="warning"
+          showIcon
+          message={t('admin_deploy.npm_unavailable')}
+        />
+      )}
+      {instancesQuery.isError && (
+        <Alert
+          className="mb-2"
           type="error"
           showIcon
           message={t('admin_deploy.instances_unavailable')}
         />
       )}
-
-      <Card>
-        <Table
-          dataSource={rows}
-          columns={columns}
-          rowKey="id"
-          loading={rows.length === 0 && isFetching}
-          size={isMobile ? 'small' : 'middle'}
-          pagination={false}
-          scroll={{ x: 900 }}
-        />
-      </Card>
+      <Table
+        dataSource={rows}
+        columns={columns}
+        rowKey="id"
+        size="small"
+        pagination={false}
+        scroll={{ x: 900 }}
+        locale={{ emptyText: t('admin_deploy.no_instances') }}
+      />
 
       <Modal
         title={
@@ -409,7 +344,6 @@ export const Component = () => {
               instanceId: updateTarget.id,
               action: 'update',
               version: selectedVersion,
-              baseUrl: updateTarget.baseUrl,
             });
           }
         }}
@@ -431,6 +365,6 @@ export const Component = () => {
           <Alert type="info" showIcon message={t('admin_deploy.update_hint')} />
         </Space>
       </Modal>
-    </div>
+    </Card>
   );
-};
+}

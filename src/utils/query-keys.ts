@@ -62,5 +62,5 @@ export const adminKeys = {
   config: () => ['adminConfig'] as const,
   systemInstances: (target: string) =>
     ['adminSystemInstances', target] as const,
-  systemNpm: () => ['adminSystemNpm'] as const,
+  systemNpm: (target: string) => ['adminSystemNpm', target] as const,
 };

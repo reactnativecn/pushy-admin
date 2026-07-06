@@ -1,11 +1,10 @@
 import { Line } from '@ant-design/charts';
 import { ReloadOutlined } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
   Card,
   Empty,
-  Progress,
   Spin,
   Statistic,
   Table,
@@ -21,8 +20,9 @@ import {
   type InternalApi5xxEvent,
   type InternalMetricsResponse,
 } from '@/services/api';
-import { metricsKeys } from '@/utils/query-keys';
+import { adminKeys, metricsKeys } from '@/utils/query-keys';
 import { useThemeMode } from '@/utils/theme-mode';
+import { InstancesPanel } from './instances-panel';
 import {
   API_5XX_EVENT_PAGE_SIZE,
   aggregateDurations,
@@ -36,7 +36,6 @@ import {
   formatCount,
   formatMs,
   formatPercent,
-  formatUptime,
   getAverageMs,
   getCounterLabels,
   type SeriesPoint,
@@ -263,6 +262,7 @@ export function ServiceStatusPanel({
   target: ServiceStatusTarget;
 }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const counterLabels = getCounterLabels(t);
   const [api5xxEventPage, setApi5xxEventPage] = useState(1);
   const api5xxEventOffset = (api5xxEventPage - 1) * API_5XX_EVENT_PAGE_SIZE;
@@ -321,11 +321,6 @@ export function ServiceStatusPanel({
   const cacheServed = l1Hits + redisHits + staleHits;
   const cacheTotal = cacheServed + handlerMisses;
   const cacheHitRate = cacheTotal > 0 ? cacheServed / cacheTotal : 0;
-  const heapPercent =
-    snapshot?.process.memory.heapTotal && snapshot.process.memory.heapTotal > 0
-      ? snapshot.process.memory.heapUsed / snapshot.process.memory.heapTotal
-      : 0;
-
   return (
     <>
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -349,6 +344,12 @@ export function ServiceStatusPanel({
           onClick={() => {
             refetch();
             api5xxEventsQuery.refetch();
+            queryClient.invalidateQueries({
+              queryKey: adminKeys.systemInstances(target.key),
+            });
+            queryClient.invalidateQueries({
+              queryKey: adminKeys.systemNpm(target.key),
+            });
           }}
         >
           {t('admin_service_status.refresh')}
@@ -364,39 +365,9 @@ export function ServiceStatusPanel({
         </Card>
       )}
 
-      <Spin spinning={isFetching && !snapshot}>
-        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card>
-            <Statistic
-              title={t('admin_service_status.uptime')}
-              value={formatUptime(snapshot?.process.uptimeSeconds)}
-            />
-          </Card>
-          <Card>
-            <Statistic
-              title={t('admin_service_status.rss')}
-              value={formatBytes(snapshot?.process.memory.rss)}
-            />
-          </Card>
-          <Card>
-            <Statistic
-              title={t('admin_service_status.heap')}
-              value={formatBytes(snapshot?.process.memory.heapUsed)}
-            />
-            <Progress
-              percent={Number((heapPercent * 100).toFixed(1))}
-              showInfo={false}
-              size="small"
-            />
-          </Card>
-          <Card>
-            <Statistic
-              title={t('admin_service_status.external')}
-              value={formatBytes(snapshot?.process.memory.external)}
-            />
-          </Card>
-        </div>
+      <InstancesPanel target={target} />
 
+      <Spin spinning={isFetching && !snapshot}>
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card>
             <Statistic

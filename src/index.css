@@ -1,3 +1,9 @@
+/*
+ * 层序:antd(cssinjs 以 StyleProvider layer 注入 @layer antd)置于 Tailwind
+ * base 之后(antd 组件样式不被 preflight 重置)、components/utilities 之前
+ * (mb-4 等工具类可覆盖 antd 组件根节点的 margin:0 重置)。
+ */
+@layer theme, base, antd, components, utilities;
 @import "tailwindcss";
 
 /* 暗色模式由 ThemeModeProvider 在 <html> 上切换 .dark 类驱动（默认跟随系统）。 */

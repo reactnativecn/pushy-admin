@@ -148,14 +148,6 @@ export default function TopNavigation({
                         </Link>
                       ),
                     },
-                    {
-                      key: 'admin-deploy',
-                      label: (
-                        <Link to={rootRouterPath.adminDeploy}>
-                          {t('nav.system_deploy')}
-                        </Link>
-                      ),
-                    },
                   ],
                 },
               ]

@@ -1,3 +1,4 @@
+import { StyleProvider } from '@ant-design/cssinjs';
 import { theme as antdTheme, ConfigProvider } from 'antd';
 import enUS from 'antd/locale/en_US';
 import zhCN from 'antd/locale/zh_CN';
@@ -88,11 +89,15 @@ function ThemedApp() {
   }, []);
 
   return (
-    <ConfigProvider locale={antdLocale} theme={theme}>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </ConfigProvider>
+    // layer: antd 样式进入 @layer antd(index.css 声明的层序中低于 Tailwind
+    // utilities),否则 cssinjs 的未分层样式会压掉 mb-4 等工具类
+    <StyleProvider layer>
+      <ConfigProvider locale={antdLocale} theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </ConfigProvider>
+    </StyleProvider>
   );
 }
 

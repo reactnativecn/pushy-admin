@@ -384,10 +384,6 @@
     "col_error": "错误",
     "refresh": "刷新",
     "request_failed": "请求失败",
-    "uptime": "Uptime",
-    "rss": "RSS",
-    "heap": "Heap",
-    "external": "External",
     "api_requests": "API 请求",
     "api_latency": "API 延时",
     "cache_hit": "缓存命中",
@@ -416,14 +412,11 @@
     "info_log_window": "日志"
   },
   "admin_deploy": {
-    "title": "系统部署",
-    "description": "查看各进程实例版本与状态，执行升级、回滚与重启",
-    "refresh": "刷新",
-    "npm_package": "npm 包",
+    "title": "实例与部署",
     "npm_latest": "最新版本",
-    "npm_fetched_at": "版本信息获取时间",
     "npm_unavailable": "无法获取 npm 版本信息",
-    "instances_unavailable": "所有节点均无法获取实例列表",
+    "instances_unavailable": "无法获取实例列表",
+    "no_instances": "该节点暂无在线实例",
     "col_instance": "实例",
     "col_version": "版本",
     "col_uptime": "运行时长",
@@ -432,7 +425,6 @@
     "col_deploy_status": "部署状态",
     "col_action": "操作",
     "latest_hint": "最新: {{version}}",
-    "memory": "内存",
     "idle": "空闲",
     "task_counters": "已处理 {{processed}} · 重试 {{retry}} · 失败 {{failed}}",
     "status_installing": "安装中",
@@ -605,8 +597,7 @@
     "theme": "主题",
     "theme_auto": "跟随系统",
     "theme_light": "浅色",
-    "theme_dark": "深色",
-    "system_deploy": "系统部署"
+    "theme_dark": "深色"
   },
   "app_drawer": {
     "expand": "展开应用列表",
