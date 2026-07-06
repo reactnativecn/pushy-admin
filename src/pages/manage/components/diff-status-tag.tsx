@@ -10,9 +10,10 @@ import { useManageContext } from '../hooks/useManageContext';
 
 const DONE_TAG_VISIBLE_MS = 5000;
 
-// 版本行内的补丁生成状态：生成中带进度轮询展示；失败常驻（仅提示会回退全量
-// 下载，不提供重试）；成功只在本次会话内从“生成中”转为完成时短暂展示，
-// 避免历史版本行常年挂着成功标签。
+// 版本行内的补丁生成状态：生成中带进度轮询展示；失败常驻（受影响的是该原生包
+// 上尚未应用过热更的用户——checkUpdate 会对其返回 upToDate，收不到本次更新；
+// 不提供重试）；成功只在本次会话内从“生成中”转为完成时短暂展示，避免历史
+// 版本行常年挂着成功标签。
 const DiffStatusTag = ({ versionId }: { versionId: number }) => {
   const { t } = useTranslation();
   const { diffStatusByVersion } = useManageContext();

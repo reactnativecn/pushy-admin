@@ -779,10 +779,10 @@
   },
   "diff_status": {
     "generating": "Generating patches {{done}}/{{total}}",
-    "generating_tip": "Incremental patches are being generated for the bound native packages. Until they are ready, users temporarily download the full bundle.",
+    "generating_tip": "Incremental patches are being generated for the bound native packages. Until a patch is ready, users on that package who have not applied any OTA update yet will not receive this release.",
     "done": "Patches ready",
     "failed": "{{num}} patch(es) failed",
-    "failed_tip": "Some incremental patches failed to generate. Affected users will fall back to full bundle downloads; updates still work."
+    "failed_tip": "Some incremental patches failed to generate. Users on the affected package who have not applied any OTA update yet will not receive this release; users already on an OTA version are unaffected."
   },
   "setting_modal": {
     "app_id": "App ID",
