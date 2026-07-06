@@ -54,7 +54,7 @@ function formatDateTime(value: string | null | undefined) {
 
 export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
   const { t } = useTranslation();
-  const [updateTarget, setUpdateTarget] = useState<InstanceRow | null>(null);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
 
   // 实例状态是节点本机事实（文件注册表），直接问该节点自己的入口
@@ -81,15 +81,28 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
       .sort((left, right) => left.id.localeCompare(right.id));
   }, [instancesQuery.data]);
 
-  const commandMutation = useMutation({
-    mutationFn: (params: {
-      instanceId: string;
-      action: 'restart' | 'update';
-      version?: string;
-    }) => adminApi.sendInstanceCommand({ ...params, baseUrl: target.baseUrl }),
+  // 更新/回滚是节点级的：bun i -g 全局装一次，server/worker 一起滚动重启
+  const nodeVersion =
+    rows.find((row) => row.role === 'server')?.version ?? rows[0]?.version;
+
+  const restartMutation = useMutation({
+    mutationFn: (instanceId: string) =>
+      adminApi.restartInstance({ instanceId, baseUrl: target.baseUrl }),
     onSuccess: () => {
       message.success(t('admin_deploy.command_queued'));
-      setUpdateTarget(null);
+      setTimeout(() => instancesQuery.refetch(), 1000);
+    },
+    onError: (error) => {
+      message.error((error as Error).message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (version: string) =>
+      adminApi.updateNode({ version, baseUrl: target.baseUrl }),
+    onSuccess: () => {
+      message.success(t('admin_deploy.command_queued'));
+      setUpdateModalOpen(false);
       setTimeout(() => instancesQuery.refetch(), 1000);
     },
     onError: (error) => {
@@ -105,18 +118,21 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
           <Space>
             <span>{entry.version}</span>
             {entry.version === latestVersion && <Tag color="green">latest</Tag>}
+            {nodeVersion && entry.version === nodeVersion && (
+              <Tag>{t('admin_deploy.current_tag')}</Tag>
+            )}
             <Text type="secondary" className="text-xs">
               {formatDateTime(entry.publishedAt)}
             </Text>
           </Space>
         ),
       })),
-    [npmQuery.data, latestVersion],
+    [npmQuery.data, latestVersion, nodeVersion, t],
   );
 
-  const openUpdateModal = (row: InstanceRow) => {
-    setUpdateTarget(row);
+  const openUpdateModal = () => {
     setSelectedVersion(latestVersion ?? null);
+    setUpdateModalOpen(true);
   };
 
   const columns: ColumnsType<InstanceRow> = [
@@ -173,7 +189,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
     {
       title: t('admin_deploy.col_resources'),
       key: 'resources',
-      responsive: ['md'],
+      responsive: ['lg'],
       render: (_, row) => (
         <Space direction="vertical" size={0}>
           <Text className="text-xs">
@@ -191,7 +207,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
     {
       title: t('admin_deploy.col_current_task'),
       key: 'task',
-      responsive: ['lg'],
+      responsive: ['md'],
       render: (_, row) => {
         const worker = row.extra?.worker;
         if (!worker) {
@@ -254,34 +270,18 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
       title: t('admin_deploy.col_action'),
       key: 'action',
       render: (_, row) => (
-        <Space>
+        <Popconfirm
+          title={t('admin_deploy.restart_confirm', { id: row.id })}
+          onConfirm={() => restartMutation.mutate(row.id)}
+        >
           <Button
             size="small"
-            type="primary"
-            icon={<CloudUploadOutlined />}
-            onClick={() => openUpdateModal(row)}
-            disabled={commandMutation.isPending}
+            icon={<ReloadOutlined />}
+            disabled={restartMutation.isPending}
           >
-            {t('admin_deploy.update')}
+            {t('admin_deploy.restart')}
           </Button>
-          <Popconfirm
-            title={t('admin_deploy.restart_confirm', { id: row.id })}
-            onConfirm={() =>
-              commandMutation.mutate({
-                instanceId: row.id,
-                action: 'restart',
-              })
-            }
-          >
-            <Button
-              size="small"
-              icon={<ReloadOutlined />}
-              disabled={commandMutation.isPending}
-            >
-              {t('admin_deploy.restart')}
-            </Button>
-          </Popconfirm>
-        </Space>
+        </Popconfirm>
       ),
     },
   ];
@@ -291,11 +291,20 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
       className="mb-4"
       title={t('admin_deploy.title')}
       extra={
-        <Space size="large" wrap>
+        <Space size="middle" wrap>
           <span>
             <Text type="secondary">{t('admin_deploy.npm_latest')}: </Text>
             {latestVersion ? <Tag color="green">{latestVersion}</Tag> : '-'}
           </span>
+          <Button
+            size="small"
+            type="primary"
+            icon={<CloudUploadOutlined />}
+            onClick={openUpdateModal}
+            disabled={updateMutation.isPending || rows.length === 0}
+          >
+            {t('admin_deploy.update')}
+          </Button>
         </Space>
       }
     >
@@ -326,32 +335,24 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
       />
 
       <Modal
-        title={
-          updateTarget
-            ? t('admin_deploy.update_modal_title', { id: updateTarget.id })
-            : ''
-        }
-        open={!!updateTarget}
-        onCancel={() => setUpdateTarget(null)}
+        title={t('admin_deploy.update_modal_title', { node: target.label })}
+        open={updateModalOpen}
+        onCancel={() => setUpdateModalOpen(false)}
         okText={t('admin_deploy.update_confirm')}
         okButtonProps={{
           disabled: !selectedVersion,
-          loading: commandMutation.isPending,
+          loading: updateMutation.isPending,
         }}
         onOk={() => {
-          if (updateTarget && selectedVersion) {
-            commandMutation.mutate({
-              instanceId: updateTarget.id,
-              action: 'update',
-              version: selectedVersion,
-            });
+          if (selectedVersion) {
+            updateMutation.mutate(selectedVersion);
           }
         }}
       >
         <Space direction="vertical" className="w-full">
           <Text type="secondary">
             {t('admin_deploy.current_version')}:{' '}
-            <Text code>{updateTarget?.version}</Text>
+            <Text code>{nodeVersion ?? '-'}</Text>
           </Text>
           <Select
             className="w-full"

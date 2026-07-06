@@ -110,21 +110,25 @@ export const adminApi = {
       baseUrl,
       suppressErrorToast: true,
     }),
-  sendInstanceCommand: ({
+  restartInstance: ({
     instanceId,
-    action,
-    version,
     baseUrl,
   }: {
     instanceId: string;
-    action: 'restart' | 'update';
-    version?: string;
     baseUrl?: string;
   }) =>
     request<{ queued: boolean }>(
       'post',
       `/admin/system/instances/${encodeURIComponent(instanceId)}/command`,
-      { action, version },
+      { action: 'restart' },
+      { baseUrl },
+    ),
+  // 更新/回滚是节点级操作:全局安装一次,本机所有进程滚动重启
+  updateNode: ({ version, baseUrl }: { version: string; baseUrl?: string }) =>
+    request<{ queued: boolean }>(
+      'post',
+      '/admin/system/update',
+      { version },
       { baseUrl },
     ),
 };

@@ -430,14 +430,15 @@
     "status_installing": "安装中",
     "status_restarting": "重启中",
     "status_failed": "失败",
-    "update": "更新",
+    "update": "更新 / 回滚",
     "restart": "重启",
     "restart_confirm": "确定重启实例 {{id}}？",
-    "update_modal_title": "更新实例 {{id}}",
+    "update_modal_title": "更新节点 {{node}}",
     "update_confirm": "执行更新",
     "current_version": "当前版本",
+    "current_tag": "当前",
     "select_version": "选择目标版本",
-    "update_hint": "实例将安装所选版本后优雅重启（由 pm2 自动拉起）。选择旧版本即为回滚。",
+    "update_hint": "节点将全局安装所选版本，随后本机全部进程（server/worker）滚动优雅重启（由 pm2 拉起）。选择旧版本即为回滚。",
     "command_queued": "命令已下发，实例将在下一次心跳时执行"
   },
   "admin_users": {

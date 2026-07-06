@@ -430,14 +430,15 @@
     "status_installing": "Installing",
     "status_restarting": "Restarting",
     "status_failed": "Failed",
-    "update": "Update",
+    "update": "Update / Rollback",
     "restart": "Restart",
     "restart_confirm": "Restart instance {{id}}?",
-    "update_modal_title": "Update instance {{id}}",
+    "update_modal_title": "Update node {{node}}",
     "update_confirm": "Update",
     "current_version": "Current version",
+    "current_tag": "current",
     "select_version": "Select target version",
-    "update_hint": "The instance installs the selected version and gracefully restarts (pm2 brings it back up). Selecting an older version rolls back.",
+    "update_hint": "The node installs the selected version once, then all local processes (server/worker) gracefully restart in turn (pm2 brings them back up). Selecting an older version rolls back.",
     "command_queued": "Command queued; the instance applies it on its next heartbeat"
   },
   "admin_users": {
