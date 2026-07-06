@@ -56,14 +56,14 @@ const PackageList = ({
     [dataSource, selectedPackageIdSet],
   );
   const hasSelectedVisiblePackages = selectedPackages.length > 0;
-  // 带上告警的计算窗口（7 天）和被标记的时间戳，让实时页打开时
-  // 就能定位到这些类别（否则默认 24h 窗口 + Top10 图例会把它们藏掉）
+  // 带上告警的计算窗口（24 小时）和被标记的时间戳，让实时页打开时
+  // 就能定位到这些类别（否则 Top10 图例截断会把低量类别藏掉）
   const buildRealtimeMetricsPath = (item: Package, timestamps: string[]) =>
     app?.appKey
       ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
           appKey: app.appKey,
           attribute: 'packageVersion_buildTime',
-          range: '7d',
+          range: '24h',
           focus: timestamps
             .map((timestamp) => `${item.name}_${timestamp}`)
             .join(','),

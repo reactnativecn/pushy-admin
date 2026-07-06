@@ -310,8 +310,9 @@ export const usePackageTimestampWarnings = ({
   app?: App;
   packages: Package[];
 }) => {
+  // 只看最近 24 小时:更早的掉队时间戳多半已自然消失,按周扫描误报偏多
   const [metricsRange] = useState(() => ({
-    start: dayjs().subtract(7, 'day').toISOString(),
+    start: dayjs().subtract(24, 'hour').toISOString(),
     end: dayjs().toISOString(),
   }));
 
