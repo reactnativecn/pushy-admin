@@ -119,10 +119,18 @@ export const Component = () => {
   const [searchParams, setSearchParams] = useSearchParams({
     attribute: 'hash',
   });
-  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
-    dayjs().subtract(24, 'hour'),
-    dayjs(),
-  ]);
+  // 时间窗可由入口链接指定（如原生包时间戳告警按 7 天窗口计算，
+  // 跳转过来必须用同样的窗口才能查到对应数据），默认过去 24 小时
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(() => {
+    const rangeHours: Record<string, number> = {
+      '1h': 1,
+      '6h': 6,
+      '24h': 24,
+      '7d': 24 * 7,
+    };
+    const hours = rangeHours[searchParams.get('range') ?? ''] ?? 24;
+    return [dayjs().subtract(hours, 'hour'), dayjs()];
+  });
   const [manualAppKey, setManualAppKey] = useState('');
   const legendValuesRef = useRef<string[]>([]);
   const { contextHolder, openAppSettings } = useAppSettingsModal();
@@ -319,11 +327,26 @@ export const Component = () => {
     );
   }, [selectedAttribute, attributeOptions]);
 
+  // 入口链接标记的类别（原生包时间戳告警的跳转）强制加入默认图例，
+  // 不受 Top 10 截断影响——它们通常量很小,否则点进来什么都看不到
+  const focusLabels = useMemo(() => {
+    const focusParam = searchParams.get('focus') ?? '';
+    return focusParam
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .map((value) => `${t('realtime_metrics.package_prefix')} ${value}`);
+  }, [searchParams, t]);
+
   const defaultLegendValues = useMemo(() => {
     const topTen = sortedCategories.slice(0, 10);
-    if (!hasTotal) return topTen;
-    return [totalLabel, ...topTen];
-  }, [sortedCategories, hasTotal, totalLabel]);
+    const focusExtras = focusLabels.filter(
+      (label) => categoryTotals.has(label) && !topTen.includes(label),
+    );
+    const selection = [...topTen, ...focusExtras];
+    if (!hasTotal) return selection;
+    return [totalLabel, ...selection];
+  }, [sortedCategories, categoryTotals, focusLabels, hasTotal, totalLabel]);
 
   const colorDomain = useMemo(() => {
     if (hasTotal) {

@@ -56,12 +56,19 @@ const PackageList = ({
     [dataSource, selectedPackageIdSet],
   );
   const hasSelectedVisiblePackages = selectedPackages.length > 0;
-  const realtimeMetricsPath = app?.appKey
-    ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
-        appKey: app.appKey,
-        attribute: 'packageVersion_buildTime',
-      }).toString()}`
-    : undefined;
+  // 带上告警的计算窗口（7 天）和被标记的时间戳，让实时页打开时
+  // 就能定位到这些类别（否则默认 24h 窗口 + Top10 图例会把它们藏掉）
+  const buildRealtimeMetricsPath = (item: Package, timestamps: string[]) =>
+    app?.appKey
+      ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
+          appKey: app.appKey,
+          attribute: 'packageVersion_buildTime',
+          range: '7d',
+          focus: timestamps
+            .map((timestamp) => `${item.name}_${timestamp}`)
+            .join(','),
+        }).toString()}`
+      : undefined;
 
   const togglePackageSelection = (packageId: number, checked: boolean) => {
     setSelectedPackageIds((prev) => {
@@ -107,17 +114,23 @@ const PackageList = ({
           </div>
         ) : undefined
       }
-      renderItem={(item) => (
-        <Item
-          item={item}
-          selected={selectedPackageIdSet.has(item.id)}
-          onSelectedChange={(checked) =>
-            togglePackageSelection(item.id, checked)
-          }
-          warningTimestamps={packageTimestampWarnings.get(item.id) ?? []}
-          realtimeMetricsPath={realtimeMetricsPath}
-        />
-      )}
+      renderItem={(item) => {
+        const warningTimestamps = packageTimestampWarnings.get(item.id) ?? [];
+        return (
+          <Item
+            item={item}
+            selected={selectedPackageIdSet.has(item.id)}
+            onSelectedChange={(checked) =>
+              togglePackageSelection(item.id, checked)
+            }
+            warningTimestamps={warningTimestamps}
+            realtimeMetricsPath={buildRealtimeMetricsPath(
+              item,
+              warningTimestamps,
+            )}
+          />
+        );
+      }}
     />
   );
 };
