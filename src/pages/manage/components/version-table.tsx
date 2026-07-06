@@ -1,4 +1,5 @@
 import {
+  EditOutlined,
   InfoCircleOutlined,
   QrcodeOutlined,
   SearchOutlined,
@@ -233,11 +234,14 @@ function getColumns(t: (key: string) => string): ColumnType<Version>[] {
       title: t('version_table.col_description'),
       dataIndex: 'description',
       responsive: ['md'],
+      width: 250,
       render: (_, record) => (
         <TextColumn
           record={record}
           recordKey="description"
           title={t('version_table.col_description')}
+          className="block max-w-[15rem] md:w-60"
+          showPopover
         />
       ),
     },
@@ -245,11 +249,14 @@ function getColumns(t: (key: string) => string): ColumnType<Version>[] {
       title: t('version_table.col_metadata'),
       dataIndex: 'metaInfo',
       responsive: ['lg'],
+      width: 300,
       render: (_, record) => (
         <TextColumn
           record={record}
           recordKey="metaInfo"
           title={t('version_table.col_metadata')}
+          className="block max-w-[18rem] md:w-72"
+          showPopover
         />
       ),
     },
@@ -352,41 +359,118 @@ const EditFieldModal = ({
   );
 };
 
+const formatMetadata = (val: string | null | undefined) => {
+  if (!val) return '';
+  try {
+    const parsed = JSON.parse(val);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return val;
+  }
+};
+
 const TextColumn = ({
   record,
   recordKey,
   title,
   isEditable = true,
   extra,
+  className,
+  showPopover = false,
 }: {
   record: Version;
   recordKey: EditableVersionKey;
   title?: ReactNode;
   isEditable?: boolean;
   extra?: ReactNode;
+  className?: string;
+  showPopover?: boolean;
 }) => {
   const key = recordKey;
   const { appId } = useManageContext();
   const updateVersion = useUpdateVersion();
   const [editing, setEditing] = useState(false);
+  const { t } = useTranslation();
   let value = record[key] as string;
   if (key === 'createdAt') {
     value = dayjs(value).format('YYYY-MM-DD HH:mm');
   }
-  return (
-    <div>
-      <Typography.Text
-        className="block max-w-[9rem] md:w-40"
-        editable={
-          isEditable
-            ? { editing: false, onStart: () => setEditing(true) }
-            : undefined
-        }
-        ellipsis
+
+  const popoverContent = (
+    <div className="flex flex-col gap-2">
+      {isEditable && (
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-1 mb-1">
+          <span className="font-medium text-xs text-gray-400">{title}</span>
+          <Button
+            type="link"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => setEditing(true)}
+            className="p-0 h-auto text-xs"
+          >
+            {t('common.edit')}
+          </Button>
+        </div>
+      )}
+      <div
+        style={{ maxWidth: '400px', maxHeight: '250px', overflow: 'auto' }}
+        className="whitespace-pre-wrap break-all text-sm"
       >
-        {value}
-      </Typography.Text>
+        {key === 'metaInfo' ? (
+          <pre className="font-mono text-xs bg-gray-50 dark:bg-gray-900/50 p-2 rounded m-0 border border-gray-100 dark:border-gray-800">
+            {formatMetadata(value)}
+          </pre>
+        ) : (
+          value || (
+            <span className="text-gray-400 italic">
+              {t('common.none') || '无'}
+            </span>
+          )
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="group flex items-center justify-between gap-1">
+      {showPopover ? (
+        <Popover
+          content={popoverContent}
+          title={null}
+          trigger="hover"
+          placement="topLeft"
+          overlayStyle={{ maxWidth: '420px' }}
+        >
+          <Typography.Text
+            className={className || 'block max-w-[9rem] md:w-40'}
+            ellipsis
+          >
+            {value || <span className="text-gray-400 italic">-</span>}
+          </Typography.Text>
+        </Popover>
+      ) : (
+        <Typography.Text
+          className={className || 'block max-w-[9rem] md:w-40'}
+          editable={
+            isEditable
+              ? { editing: false, onStart: () => setEditing(true) }
+              : undefined
+          }
+          ellipsis
+        >
+          {value}
+        </Typography.Text>
+      )}
       {extra}
+      {showPopover && isEditable && (
+        <Button
+          type="link"
+          size="small"
+          icon={<EditOutlined />}
+          onClick={() => setEditing(true)}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-0 h-auto shrink-0"
+        />
+      )}
       {editing && (
         <EditFieldModal
           title={title}
