@@ -422,7 +422,6 @@
     "col_uptime": "运行时长",
     "col_resources": "资源占用",
     "col_current_task": "当前任务",
-    "col_deploy_status": "部署状态",
     "col_action": "操作",
     "latest_hint": "最新: {{version}}",
     "idle": "空闲",

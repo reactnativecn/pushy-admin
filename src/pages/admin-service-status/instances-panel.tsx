@@ -38,11 +38,18 @@ const ROLE_COLORS: Record<string, string> = {
   'fc-worker': 'geekblue',
 };
 
-const DEPLOY_STATUS_COLORS: Record<SystemDeployStatus['status'], string> = {
-  installing: 'processing',
-  restarting: 'warning',
-  failed: 'error',
+// installing/restarting 是进行中，failed 只作为事后提示
+const DEPLOY_STATUS_PRIORITY: Record<SystemDeployStatus['status'], number> = {
+  installing: 0,
+  restarting: 1,
+  failed: 2,
 };
+
+function isDeployBusy(
+  status: SystemDeployStatus | undefined,
+): status is SystemDeployStatus {
+  return status != null && status.status !== 'failed';
+}
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) {
@@ -84,6 +91,32 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
   // 更新/回滚是节点级的：bun i -g 全局装一次，server/worker 一起滚动重启
   const nodeVersion =
     rows.find((row) => row.role === 'server')?.version ?? rows[0]?.version;
+
+  // 节点级部署状态直接体现在更新按钮上：进行中优先，其次是最近一次失败
+  const nodeDeployStatus = useMemo(() => {
+    const statuses = rows
+      .map((row) => row.deployStatus)
+      .filter((status): status is SystemDeployStatus => status != null);
+    statuses.sort(
+      (left, right) =>
+        DEPLOY_STATUS_PRIORITY[left.status] -
+          DEPLOY_STATUS_PRIORITY[right.status] ||
+        right.updatedAt.localeCompare(left.updatedAt),
+    );
+    return statuses[0];
+  }, [rows]);
+  const nodeDeployBusy = isDeployBusy(nodeDeployStatus);
+
+  const renderDeployTooltip = (status: SystemDeployStatus) => (
+    <>
+      <div>
+        {t(`admin_deploy.status_${status.status}`)} · {status.action}
+        {status.version ? ` → ${status.version}` : ''}
+      </div>
+      {status.message && <div>{status.message}</div>}
+      <div>{formatDateTime(status.updatedAt)}</div>
+    </>
+  );
 
   const restartMutation = useMutation({
     mutationFn: (instanceId: string) =>
@@ -239,50 +272,33 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
       },
     },
     {
-      title: t('admin_deploy.col_deploy_status'),
-      key: 'deployStatus',
-      render: (_, row) => {
-        const status = row.deployStatus;
-        if (!status) {
-          return '-';
-        }
-        return (
-          <Tooltip
-            title={
-              <>
-                <div>
-                  {status.action}
-                  {status.version ? ` → ${status.version}` : ''}
-                </div>
-                {status.message && <div>{status.message}</div>}
-                <div>{formatDateTime(status.updatedAt)}</div>
-              </>
-            }
-          >
-            <Tag color={DEPLOY_STATUS_COLORS[status.status]}>
-              {t(`admin_deploy.status_${status.status}`)}
-            </Tag>
-          </Tooltip>
-        );
-      },
-    },
-    {
       title: t('admin_deploy.col_action'),
       key: 'action',
-      render: (_, row) => (
-        <Popconfirm
-          title={t('admin_deploy.restart_confirm', { id: row.id })}
-          onConfirm={() => restartMutation.mutate(row.id)}
-        >
-          <Button
-            size="small"
-            icon={<ReloadOutlined />}
-            disabled={restartMutation.isPending}
+      render: (_, row) => {
+        const status = row.deployStatus;
+        const busy = isDeployBusy(status);
+        return (
+          <Popconfirm
+            title={t('admin_deploy.restart_confirm', { id: row.id })}
+            onConfirm={() => restartMutation.mutate(row.id)}
+            disabled={busy}
           >
-            {t('admin_deploy.restart')}
-          </Button>
-        </Popconfirm>
-      ),
+            <Tooltip title={status ? renderDeployTooltip(status) : undefined}>
+              <Button
+                size="small"
+                icon={busy ? undefined : <ReloadOutlined />}
+                loading={busy}
+                danger={status?.status === 'failed'}
+                disabled={restartMutation.isPending}
+              >
+                {busy
+                  ? t(`admin_deploy.status_${status.status}`)
+                  : t('admin_deploy.restart')}
+              </Button>
+            </Tooltip>
+          </Popconfirm>
+        );
+      },
     },
   ];
 
@@ -296,15 +312,27 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
             <Text type="secondary">{t('admin_deploy.npm_latest')}: </Text>
             {latestVersion ? <Tag color="green">{latestVersion}</Tag> : '-'}
           </span>
-          <Button
-            size="small"
-            type="primary"
-            icon={<CloudUploadOutlined />}
-            onClick={openUpdateModal}
-            disabled={updateMutation.isPending || rows.length === 0}
+          <Tooltip
+            title={
+              nodeDeployStatus
+                ? renderDeployTooltip(nodeDeployStatus)
+                : undefined
+            }
           >
-            {t('admin_deploy.update')}
-          </Button>
+            <Button
+              size="small"
+              type="primary"
+              icon={nodeDeployBusy ? undefined : <CloudUploadOutlined />}
+              loading={nodeDeployBusy || updateMutation.isPending}
+              danger={nodeDeployStatus?.status === 'failed'}
+              onClick={openUpdateModal}
+              disabled={rows.length === 0}
+            >
+              {nodeDeployBusy
+                ? t(`admin_deploy.status_${nodeDeployStatus.status}`)
+                : t('admin_deploy.update')}
+            </Button>
+          </Tooltip>
         </Space>
       }
     >
@@ -330,7 +358,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
         rowKey="id"
         size="small"
         pagination={false}
-        scroll={{ x: 900 }}
+        scroll={{ x: 800 }}
         locale={{ emptyText: t('admin_deploy.no_instances') }}
       />
 

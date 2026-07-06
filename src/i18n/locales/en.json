@@ -422,7 +422,6 @@
     "col_uptime": "Uptime",
     "col_resources": "Resources",
     "col_current_task": "Current task",
-    "col_deploy_status": "Deploy status",
     "col_action": "Actions",
     "latest_hint": "latest: {{version}}",
     "idle": "Idle",
