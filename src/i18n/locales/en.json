@@ -750,7 +750,7 @@
     "status_paused": "Paused",
     "status_expired": "Expired",
     "mismatch_title": "Mismatched timestamps detected:",
-    "mismatch_desc": "Updates can still be delivered. A mismatch means the same native package version runs from multiple native builds, so clients may start from different embedded bundles. This reduces diff reuse and can force larger full-bundle downloads.",
+    "mismatch_desc": "The same native package version is running from native builds with different build timestamps. Note: clients whose timestamp does not match the recorded one cannot receive OTA updates, unless the \"Ignore build timestamp\" option (Premium plan and above) is enabled in the app settings. With it enabled, those clients fall back to full-bundle updates, which lowers diff reuse and may increase download size and bandwidth.",
     "view_realtime": "Click here to view real-time data",
     "note_prefix": "Note:",
     "build_time": "Build time:",
