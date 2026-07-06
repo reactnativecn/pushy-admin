@@ -774,7 +774,15 @@
     "full_release": "Full Release",
     "staged_release": "Staged Release",
     "unpublish": "Unpublish",
-    "publish": "Publish"
+    "publish": "Publish",
+    "publish_success": "Published. Generating incremental patches…"
+  },
+  "diff_status": {
+    "generating": "Generating patches {{done}}/{{total}}",
+    "generating_tip": "Incremental patches are being generated for the bound native packages. Until they are ready, users temporarily download the full bundle.",
+    "done": "Patches ready",
+    "failed": "{{num}} patch(es) failed",
+    "failed_tip": "Some incremental patches failed to generate. Affected users will fall back to full bundle downloads; updates still work."
   },
   "setting_modal": {
     "app_id": "App ID",

@@ -774,7 +774,15 @@
     "full_release": "全量发布",
     "staged_release": "灰度发布",
     "unpublish": "取消发布",
-    "publish": "发布"
+    "publish": "发布",
+    "publish_success": "发布成功，正在生成增量补丁…"
+  },
+  "diff_status": {
+    "generating": "补丁生成中 {{done}}/{{total}}",
+    "generating_tip": "正在为绑定的原生包生成增量补丁。生成完成前，用户会临时下载全量包。",
+    "done": "补丁已就绪",
+    "failed": "{{num}} 个补丁生成失败",
+    "failed_tip": "部分增量补丁生成失败，受影响的用户将回退为全量包下载，不影响更新可用性。"
   },
   "setting_modal": {
     "app_id": "App ID",

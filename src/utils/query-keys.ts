@@ -16,6 +16,9 @@ export const packageKeys = {
 
 export const bindingKeys = {
   byApp: (appId: number) => ['bindings', appId] as const,
+  // 独立根 key：绑定 mutation 会对 byApp 前缀做 setQueriesData，不能让
+  // diffStatus 命中同一前缀
+  diffStatus: (appId: number) => ['bindingDiffStatus', appId] as const,
 };
 
 export const userKeys = {

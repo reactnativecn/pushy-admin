@@ -153,6 +153,21 @@ export interface Binding {
   rollout: number;
 }
 
+export type DiffPairStatus = 'pending' | 'done' | 'failed';
+
+export interface BindingDiffStatus {
+  packageId: number;
+  versionId: number;
+  status: DiffPairStatus;
+}
+
+export interface VersionDiffSummary {
+  pending: number;
+  done: number;
+  failed: number;
+  total: number;
+}
+
 export interface AuditLog {
   id: number;
   method: string;

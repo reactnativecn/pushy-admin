@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { hasSession } from '@/services/request';
-import type { App, Package } from '@/types';
+import type { App, Package, VersionDiffSummary } from '@/types';
 import dayjs from '@/utils/dayjs';
 import {
   appKeys,
@@ -299,6 +299,45 @@ export const useBinding = (appId: number) => {
   });
   const bindings = data?.data ?? [];
   return { bindings, isLoading };
+};
+
+const DIFF_STATUS_POLL_MS = 4000;
+
+export const useDiffStatus = ({
+  appId,
+  enabled,
+}: {
+  appId: number;
+  enabled: boolean;
+}) => {
+  const { data } = useQuery({
+    queryKey: bindingKeys.diffStatus(appId),
+    queryFn: () => api.getDiffStatus(appId),
+    enabled,
+    // 只在还有补丁生成中时轮询；到达终态（或旧服务端 404）自动停止
+    refetchInterval: (query) =>
+      query.state.data?.data?.some((item) => item.status === 'pending')
+        ? DIFF_STATUS_POLL_MS
+        : false,
+  });
+
+  const diffStatusByVersion = useMemo(() => {
+    const map = new Map<number, VersionDiffSummary>();
+    for (const item of data?.data ?? []) {
+      const summary = map.get(item.versionId) ?? {
+        pending: 0,
+        done: 0,
+        failed: 0,
+        total: 0,
+      };
+      summary[item.status] += 1;
+      summary.total += 1;
+      map.set(item.versionId, summary);
+    }
+    return map;
+  }, [data?.data]);
+
+  return { diffStatusByVersion };
 };
 
 export const usePackageTimestampWarnings = ({

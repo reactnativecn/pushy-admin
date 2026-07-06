@@ -3,6 +3,7 @@ import type {
   App,
   AuditLog,
   Binding,
+  BindingDiffStatus,
   Package,
   Quota,
   User,
@@ -326,6 +327,14 @@ export const api = {
     request('post', `/app/${appId}/binding/`, params),
   deleteBinding: ({ appId, bindingId }: { appId: number; bindingId: number }) =>
     request('delete', `/app/${appId}/binding/${bindingId}`),
+  // 补丁生成状态；旧版服务端没有该端点，404 时静默降级为不显示
+  getDiffStatus: (appId: number) =>
+    request<{ data: BindingDiffStatus[] }>(
+      'get',
+      `/app/${appId}/binding/diffStatus`,
+      undefined,
+      { suppressErrorToast: true },
+    ),
   // audit logs
   getAuditLogs: ({
     offset = 0,
