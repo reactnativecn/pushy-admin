@@ -637,7 +637,8 @@
     "app_settings": "App Settings",
     "tab_releases": "App Releases",
     "tab_metrics": "Real-time Metrics",
-    "select_app": "Select app"
+    "select_app": "Select app",
+    "tab_health": "Version Health"
   },
   "create_app_modal": {
     "app_name": "App Name",
@@ -887,5 +888,25 @@
     "role_developer_desc": "Upload and publish updates",
     "role_viewer": "Viewer",
     "role_viewer_desc": "Read-only access to apps and versions"
+  },
+  "version_health": {
+    "title": "Version Health",
+    "select_app": "Select an app",
+    "please_select_app": "Please select an app first",
+    "table_title": "Health by version",
+    "trend_title": "Event trend",
+    "column_version": "Update version",
+    "column_rollback_rate": "Rollback rate",
+    "column_download_fail_rate": "Download failure rate",
+    "download_success": "Download success",
+    "download_fail": "Download failed",
+    "patch_fail": "Patch failed",
+    "rollback": "Rollback",
+    "mark_success": "Started OK",
+    "range_24h": "Last 24h",
+    "range_3d": "Last 3 days",
+    "range_7d": "Last 7 days",
+    "window_hint": "Realtime data is kept for 7 days; only devices on SDK v10.47.0+ report events",
+    "no_data": "No data"
   }
 }

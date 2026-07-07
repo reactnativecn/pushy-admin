@@ -1,11 +1,13 @@
 import {
   AppstoreOutlined,
+  HeartOutlined,
   LineChartOutlined,
   SettingFilled,
 } from '@ant-design/icons';
 import { Breadcrumb, Button, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FEATURES } from '@/utils/features';
 import { cn } from '@/utils/helper';
 import PlatformIcon from './platform-icon';
 
@@ -19,19 +21,23 @@ export function AppDetailHeader({
   activeView,
   app,
   appNameFallback,
+  healthDisabled,
   managementDisabled,
   metricsDisabled,
+  onHealthClick,
   onManagementClick,
   onMetricsClick,
   onSettingsClick,
   sectionLabel,
   settingsDisabled,
 }: {
-  activeView: 'management' | 'metrics';
+  activeView: 'management' | 'metrics' | 'health';
   app?: AppDetailHeaderApp;
   appNameFallback?: ReactNode;
+  healthDisabled?: boolean;
   managementDisabled?: boolean;
   metricsDisabled?: boolean;
+  onHealthClick?: () => void;
   onManagementClick?: () => void;
   onMetricsClick?: () => void;
   onSettingsClick?: () => void;
@@ -98,6 +104,15 @@ export function AppDetailHeader({
           label={t('app_detail_header.tab_metrics')}
           onClick={onMetricsClick}
         />
+        {FEATURES.versionHealth && (
+          <AppDetailTab
+            active={activeView === 'health'}
+            disabled={healthDisabled}
+            icon={<HeartOutlined />}
+            label={t('app_detail_header.tab_health')}
+            onClick={onHealthClick}
+          />
+        )}
       </div>
     </div>
   );

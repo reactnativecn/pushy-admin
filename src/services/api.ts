@@ -373,6 +373,32 @@ export const api = {
       'get',
       `/metrics/app?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
     ),
+  // 客户端热更生命周期事件(版本健康度),dict 项形如 `${type}${版本名}`
+  getAppEventsMetrics: (params: {
+    appKey: string;
+    start: string;
+    end: string;
+  }) =>
+    request<{
+      dict: string[];
+      data: Array<{ time: string; data: Array<[number, number]> }>;
+    }>(
+      'get',
+      `/metrics/app/events?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
+    ),
+  getAppEventsDaily: (params: { appKey: string; start: string; end: string }) =>
+    request<{
+      rows: Array<{
+        date: string;
+        hash: string;
+        name: string | null;
+        type: string;
+        count: number;
+      }>;
+    }>(
+      'get',
+      `/metrics/app/events/daily?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
+    ),
   getInternalMetrics: (params?: {
     baseUrl?: string;
     suppressErrorToast?: boolean;

@@ -448,6 +448,12 @@ export const Component = () => {
           rememberRecentApp(selectedApp.id);
           router.navigate(rootRouterPath.versions(String(selectedApp.id)));
         }}
+        onHealthClick={() => {
+          const query = selectedAppKey
+            ? `?appKey=${encodeURIComponent(selectedAppKey)}`
+            : '';
+          router.navigate(`${rootRouterPath.versionHealth}${query}`);
+        }}
         onSettingsClick={
           selectedApp && canManageApp
             ? () => openAppSettings(selectedApp)
