@@ -1,6 +1,14 @@
 import { LogoutOutlined } from '@ant-design/icons';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { Button, Descriptions, Grid, message, Popover, Spin } from 'antd';
+import {
+  Button,
+  Descriptions,
+  Grid,
+  message,
+  Popover,
+  Space,
+  Spin,
+} from 'antd';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { logout } from '@/services/auth';
@@ -14,11 +22,13 @@ import {
 } from './purchase-controls';
 import { QuotaDetailsPanel, type QuotaUsageRow } from './quota-details';
 
+const SUPPORT_EMAIL = 'hi@charmlot.com';
+
 const getInvoiceHint = (t: (key: string) => string) => (
   <div>
     <p>
       {t('user.invoice_hint_before_email')}
-      <a href="mailto:hi@charmlot.com">hi@charmlot.com</a>
+      <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
       {t('user.invoice_hint_after_email')}
     </p>
     <p>
@@ -72,6 +82,9 @@ function UserPanel() {
     );
   }
   const { name, email, tier, quota } = user;
+  const changeEmailHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+    t('user.change_email_subject'),
+  )}&body=${encodeURIComponent(t('user.change_email_body', { email }))}`;
   const defaultQuota = quotas[tier as keyof typeof quotas];
   const currentQuota = quota || defaultQuota;
 
@@ -178,7 +191,12 @@ function UserPanel() {
       >
         <Descriptions.Item label={t('user.username')}>{name}</Descriptions.Item>
         <Descriptions.Item label={t('user.email')}>
-          <span className="break-all">{email}</span>
+          <Space size="small" wrap className="min-w-0">
+            <span className="break-all">{email}</span>
+            <Button href={changeEmailHref} size="small" type="link">
+              {t('user.change_email')}
+            </Button>
+          </Space>
         </Descriptions.Item>
         <Descriptions.Item label={t('user.service_version')}>
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(160px,180px)_160px] sm:items-center">
