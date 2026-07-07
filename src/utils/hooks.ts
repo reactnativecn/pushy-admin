@@ -3,12 +3,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { hasSession } from '@/services/request';
+import { getWorkspaceAccountId } from '@/services/workspace';
 import type { App, Package, VersionDiffSummary } from '@/types';
 import dayjs from '@/utils/dayjs';
 import {
   appKeys,
   auditKeys,
   bindingKeys,
+  memberKeys,
   packageKeys,
   userKeys,
   versionKeys,
@@ -426,5 +428,37 @@ export const useAuditLogs = ({
     isLoading,
     // Also return all audit logs for components that might need them
     allAuditLogs,
+  };
+};
+
+/**
+ * 当前工作空间下的操作权限(镜像服务端角色矩阵,仅用于隐藏 UI 入口,
+ * 真正的判定在服务端)。未切换工作空间 = owner,全量放行;
+ * 工作空间成员按角色收敛:viewer 只读、developer 可发版、admin 可管应用。
+ * 成员关系加载完成前默认拒绝,避免只读角色短暂看到写按钮。
+ */
+export const useWorkspacePermissions = () => {
+  const workspaceAccountId = getWorkspaceAccountId();
+  const { data } = useQuery({
+    queryKey: memberKeys.workspaces(),
+    queryFn: api.listWorkspaces,
+    enabled: !!workspaceAccountId && hasSession(),
+    staleTime: 60_000,
+  });
+  const role = workspaceAccountId
+    ? data?.data?.find(
+        (workspace) =>
+          workspace.account.id === workspaceAccountId &&
+          workspace.status === 'active',
+      )?.role
+    : undefined;
+  const isOwner = !workspaceAccountId;
+  return {
+    /** owner 本人或工作空间角色;加载中为 undefined */
+    role: isOwner ? ('owner' as const) : role,
+    /** 发版类写操作:上传/发布/回滚/编辑与删除版本、原生包 */
+    canPublish: isOwner || role === 'admin' || role === 'developer',
+    /** 应用管理:创建/设置/删除应用 */
+    canManageApp: isOwner || role === 'admin',
   };
 };

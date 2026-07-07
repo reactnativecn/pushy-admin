@@ -12,6 +12,7 @@ import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
+import { useWorkspacePermissions } from '@/utils/hooks';
 import { useThemeMode } from '@/utils/theme-mode';
 
 const { RangePicker } = DatePicker;
@@ -134,6 +135,7 @@ export const Component = () => {
   const [manualAppKey, setManualAppKey] = useState('');
   const legendValuesRef = useRef<string[]>([]);
   const { contextHolder, openAppSettings } = useAppSettingsModal();
+  const { canManageApp } = useWorkspacePermissions();
 
   const {
     apps: selectableApps,
@@ -431,7 +433,7 @@ export const Component = () => {
         rememberRecentApp(app.id);
         patchSearchParams(setSearchParams, { appKey: app.appKey });
       }}
-      onSettings={openAppSettings}
+      onSettings={canManageApp ? openAppSettings : undefined}
     >
       {contextHolder}
       <AppDetailHeader
@@ -447,7 +449,9 @@ export const Component = () => {
           router.navigate(rootRouterPath.versions(String(selectedApp.id)));
         }}
         onSettingsClick={
-          selectedApp ? () => openAppSettings(selectedApp) : undefined
+          selectedApp && canManageApp
+            ? () => openAppSettings(selectedApp)
+            : undefined
         }
         sectionLabel={t('realtime_metrics.title')}
       />

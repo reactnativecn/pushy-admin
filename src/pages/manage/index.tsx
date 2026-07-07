@@ -20,7 +20,7 @@ import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { rootRouterPath, router } from '@/router';
 import type { Package } from '@/types';
 import { rememberRecentApp } from '@/utils/helper';
-import { useApp } from '@/utils/hooks';
+import { useApp, useWorkspacePermissions } from '@/utils/hooks';
 import PackageList from './components/package-list';
 import VersionTable from './components/version-table';
 import { ManageProvider, useManageContext } from './hooks/useManageContext';
@@ -240,6 +240,7 @@ export const Manage = () => {
   const { app } = useApp(id);
   const { apps: appList, isLoading: isAppListLoading } = useAppWorkspaceList();
   const { contextHolder, openAppSettings } = useAppSettingsModal();
+  const { canManageApp } = useWorkspacePermissions();
   const realtimeMetricsPath = app?.appKey
     ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
         appKey: app.appKey,
@@ -258,7 +259,9 @@ export const Manage = () => {
             router.navigate(realtimeMetricsPath);
           }
         }}
-        onSettingsClick={app ? () => openAppSettings(app) : undefined}
+        onSettingsClick={
+          app && canManageApp ? () => openAppSettings(app) : undefined
+        }
         sectionLabel={t('manage.breadcrumb_apps')}
       />
       <ManageDashBoard />
@@ -274,7 +277,7 @@ export const Manage = () => {
         rememberRecentApp(selectedApp.id);
         router.navigate(rootRouterPath.versions(String(selectedApp.id)));
       }}
-      onSettings={openAppSettings}
+      onSettings={canManageApp ? openAppSettings : undefined}
     >
       {content}
     </AppDrawerLayout>

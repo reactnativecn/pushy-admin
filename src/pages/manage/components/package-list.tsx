@@ -29,6 +29,7 @@ import {
   useUpdatePackage,
 } from '@/services/mutations';
 import type { Package } from '@/types';
+import { useWorkspacePermissions } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
 import { Commit } from './commit';
 import { DepsTable } from './deps-table';
@@ -46,6 +47,7 @@ const PackageList = ({
 }) => {
   const { t } = useTranslation();
   const { app, appId, packageTimestampWarnings } = useManageContext();
+  const { canPublish } = useWorkspacePermissions();
   const deletePackages = useDeletePackages();
   const selectedPackageIdSet = useMemo(
     () => new Set(selectedPackageIds),
@@ -86,7 +88,7 @@ const PackageList = ({
       size="small"
       dataSource={dataSource}
       footer={
-        hasSelectedVisiblePackages ? (
+        hasSelectedVisiblePackages && canPublish ? (
           <div className="px-2">
             <Button
               className="w-full sm:w-auto"
@@ -312,6 +314,7 @@ const Item = ({
 }) => {
   const { t } = useTranslation();
   const { appId } = useManageContext();
+  const { canPublish } = useWorkspacePermissions();
   const deletePackage = useDeletePackage();
   const [editing, setEditing] = useState(false);
   const hasTimestampWarning = warningTimestamps.length > 0;
@@ -352,19 +355,23 @@ const Item = ({
                 })}
               />
               <Commit commit={item.commit} />
-              <Button
-                type="link"
-                icon={<EditOutlined />}
-                onClick={() => setEditing(true)}
-              />
-              <Button
-                type="link"
-                icon={<DeleteOutlined />}
-                onClick={() =>
-                  remove(item, appId, deletePackage.mutateAsync, t)
-                }
-                danger
-              />
+              {canPublish && (
+                <>
+                  <Button
+                    type="link"
+                    icon={<EditOutlined />}
+                    onClick={() => setEditing(true)}
+                  />
+                  <Button
+                    type="link"
+                    icon={<DeleteOutlined />}
+                    onClick={() =>
+                      remove(item, appId, deletePackage.mutateAsync, t)
+                    }
+                    danger
+                  />
+                </>
+              )}
             </Row>
           }
           description={
