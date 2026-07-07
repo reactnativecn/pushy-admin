@@ -6,6 +6,7 @@ import {
   LineChartOutlined,
   MenuOutlined,
   SettingOutlined,
+  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { Drawer, Menu } from 'antd';
@@ -29,6 +30,7 @@ import {
   NavControls,
 } from './nav-items';
 import { useManageAppDrawerPlacement } from './use-app-drawer-placement';
+import { WorkspaceSwitcher } from './workspace-switcher';
 
 interface TopNavigationProps {
   isMobile: boolean;
@@ -109,6 +111,11 @@ export default function TopNavigation({
               <Link to={rootRouterPath.apiTokens}>{t('nav.api_tokens')}</Link>
             ),
           },
+          {
+            key: 'members',
+            icon: <TeamOutlined />,
+            label: <Link to={rootRouterPath.members}>{t('nav.members')}</Link>,
+          },
           ...(user.admin
             ? [
                 {
@@ -185,6 +192,9 @@ export default function TopNavigation({
         <LogoH className="h-7 w-auto max-w-[88px] sm:max-w-[130px] md:max-w-[150px]" />
       </Link>
       {showAuthenticatedChrome && user && <AppSwitcher compact={isMobile} />}
+      {showAuthenticatedChrome && user && (
+        <WorkspaceSwitcher compact={isMobile} />
+      )}
       {isMobile ? (
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {showAuthenticatedChrome && user && (

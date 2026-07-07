@@ -266,3 +266,24 @@ export interface SystemNpmInfo {
   fetchedAt: string;
   currentVersion: string;
 }
+
+export type MemberRole = 'admin' | 'developer' | 'viewer';
+export type MemberStatus = 'pending' | 'active';
+
+export interface AccountMember {
+  id: number;
+  role: MemberRole;
+  appIds: number[] | null;
+  status: MemberStatus;
+  createdAt: string;
+  member: { id: number; email: string; name: string };
+}
+
+export interface Workspace {
+  id: number;
+  role: MemberRole;
+  status: MemberStatus;
+  appIds: number[] | null;
+  createdAt: string;
+  account: { id: number; email: string; name: string };
+}

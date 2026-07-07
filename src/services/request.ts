@@ -4,6 +4,7 @@ import { testUrls } from '@/utils/helper';
 import { buildRequest, type HttpMethod } from './build-request';
 import { handleResponse, RequestError, type RequestOptions } from './response';
 import { getToken, usesCookieSession } from './session';
+import { getWorkspaceAccountId } from './workspace';
 
 // Session state lives in ./session; re-export the legacy surface so existing
 // importers (auth, router, hooks, tests) keep working unchanged.
@@ -57,6 +58,7 @@ export default async function request<T extends Record<any, any>>(
     baseUrl,
     params,
     token: getToken(),
+    accountId: getWorkspaceAccountId(),
     // Only send cookies once the server has switched us to a cookie session,
     // so current wildcard-CORS deployments keep working untouched.
     withCredentials: usesCookieSession(),

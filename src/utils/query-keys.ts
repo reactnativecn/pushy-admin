@@ -67,3 +67,8 @@ export const adminKeys = {
     ['adminSystemInstances', target] as const,
   systemNpm: (target: string) => ['adminSystemNpm', target] as const,
 };
+
+export const memberKeys = {
+  list: () => ['members'] as const,
+  workspaces: () => ['workspaces'] as const,
+};

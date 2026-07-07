@@ -210,6 +210,9 @@ export function getSelectedKeys(pathname: string) {
   if (pathname === rootRouterPath.apiTokens) {
     return ['api-tokens'];
   }
+  if (pathname === rootRouterPath.members) {
+    return ['members'];
+  }
   if (pathname === rootRouterPath.auditLogs) {
     return ['audit-logs'];
   }

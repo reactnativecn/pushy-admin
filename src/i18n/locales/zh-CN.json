@@ -597,7 +597,8 @@
     "theme": "主题",
     "theme_auto": "跟随系统",
     "theme_light": "浅色",
-    "theme_dark": "深色"
+    "theme_dark": "深色",
+    "members": "团队"
   },
   "app_drawer": {
     "expand": "展开应用列表",
@@ -826,5 +827,49 @@
     "gray_ignored": "⚠ 灰度被忽略",
     "both_supported": "✓ 支持（cli >= 2.4.0）",
     "note": "注：取消发布不会导致已经更新的用户回滚。"
+  },
+  "workspace": {
+    "own_account": "我的账户",
+    "unknown": "未知工作空间",
+    "pending_invitations": "{{count}} 个待处理邀请"
+  },
+  "members": {
+    "team_title": "团队成员",
+    "workspaces_title": "我加入的团队",
+    "invite": "邀请成员",
+    "invite_title": "邀请团队成员",
+    "invite_email": "对方邮箱",
+    "invite_email_hint": "对方需要先注册账户才能被邀请",
+    "invite_success": "邀请已发送,等待对方确认",
+    "update_success": "成员已更新",
+    "remove_success": "成员已移除",
+    "remove_confirm": "确定移除该成员?其创建的 API token 将立即失效",
+    "accept": "接受",
+    "accept_success": "已加入团队",
+    "decline": "拒绝",
+    "decline_confirm": "确定拒绝该邀请?",
+    "leave": "退出",
+    "leave_confirm": "确定退出该团队?",
+    "leave_success": "已退出团队",
+    "empty": "还没有团队成员,点击右上角邀请",
+    "workspaces_empty": "你还没有加入其他团队",
+    "col_member": "成员",
+    "col_account": "团队(账户)",
+    "col_role": "角色",
+    "col_apps": "应用范围",
+    "col_status": "状态",
+    "col_actions": "操作",
+    "all_apps": "全部应用",
+    "n_apps": "{{count}} 个应用",
+    "apps_hint": "留空 = 全部应用;选择后仅授权所选应用",
+    "status_active": "已加入",
+    "status_pending": "待确认",
+    "status_joined": "已加入",
+    "role_admin": "管理员",
+    "role_admin_desc": "除成员管理与账单外的全部权限",
+    "role_developer": "开发者",
+    "role_developer_desc": "上传与发布热更新",
+    "role_viewer": "只读",
+    "role_viewer_desc": "仅查看应用与版本"
   }
 }

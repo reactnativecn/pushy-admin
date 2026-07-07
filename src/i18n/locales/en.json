@@ -597,7 +597,8 @@
     "theme": "Theme",
     "theme_auto": "Follow system",
     "theme_light": "Light",
-    "theme_dark": "Dark"
+    "theme_dark": "Dark",
+    "members": "Team"
   },
   "app_drawer": {
     "expand": "Expand app list",
@@ -826,5 +827,49 @@
     "switch": "Language",
     "zh": "中文",
     "en": "English"
+  },
+  "workspace": {
+    "own_account": "My Account",
+    "unknown": "Unknown workspace",
+    "pending_invitations": "{{count}} pending invitation(s)"
+  },
+  "members": {
+    "team_title": "Team Members",
+    "workspaces_title": "Teams I Joined",
+    "invite": "Invite Member",
+    "invite_title": "Invite a team member",
+    "invite_email": "Email",
+    "invite_email_hint": "The invitee must have a registered account first",
+    "invite_success": "Invitation sent, waiting for confirmation",
+    "update_success": "Member updated",
+    "remove_success": "Member removed",
+    "remove_confirm": "Remove this member? API tokens they created will stop working immediately",
+    "accept": "Accept",
+    "accept_success": "Joined the team",
+    "decline": "Decline",
+    "decline_confirm": "Decline this invitation?",
+    "leave": "Leave",
+    "leave_confirm": "Leave this team?",
+    "leave_success": "Left the team",
+    "empty": "No team members yet — use Invite in the corner",
+    "workspaces_empty": "You have not joined any other team",
+    "col_member": "Member",
+    "col_account": "Team (account)",
+    "col_role": "Role",
+    "col_apps": "App scope",
+    "col_status": "Status",
+    "col_actions": "Actions",
+    "all_apps": "All apps",
+    "n_apps": "{{count}} app(s)",
+    "apps_hint": "Leave empty for all apps; select to restrict",
+    "status_active": "Active",
+    "status_pending": "Pending",
+    "status_joined": "Joined",
+    "role_admin": "Admin",
+    "role_admin_desc": "Everything except member management and billing",
+    "role_developer": "Developer",
+    "role_developer_desc": "Upload and publish updates",
+    "role_viewer": "Viewer",
+    "role_viewer_desc": "Read-only access to apps and versions"
   }
 }

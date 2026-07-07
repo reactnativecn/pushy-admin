@@ -1,13 +1,16 @@
 import type {
+  AccountMember,
   ApiToken,
   App,
   AuditLog,
   Binding,
   BindingDiffStatus,
+  MemberRole,
   Package,
   Quota,
   User,
   Version,
+  Workspace,
 } from '@/types';
 import request from './request';
 
@@ -401,10 +404,35 @@ export const api = {
       },
     );
   },
+  // members / workspaces
+  listMembers: () =>
+    request<{ data: AccountMember[] }>('get', '/member/list', undefined, {
+      suppressErrorToast: true,
+    }),
+  inviteMember: (params: {
+    email: string;
+    role: MemberRole;
+    appIds?: number[] | null;
+  }) => request<{ id: number }>('post', '/member/invite', params),
+  updateMember: (
+    id: number,
+    params: { role?: MemberRole; appIds?: number[] | null },
+  ) => request('put', `/member/${id}`, params),
+  removeMember: (id: number) => request('delete', `/member/${id}`),
+  listWorkspaces: () =>
+    request<{ data: Workspace[] }>('get', '/member/workspaces', undefined, {
+      suppressErrorToast: true,
+    }),
+  acceptInvite: (accountId: number) =>
+    request('post', '/member/accept', { accountId }),
+  leaveWorkspace: (accountId: number) =>
+    request('post', '/member/leave', { accountId }),
   // API Token
   createApiToken: (params: {
     name: string;
-    permissions: { read?: boolean; write?: boolean; delete?: boolean };
+    permissions?: { read?: boolean; write?: boolean; delete?: boolean };
+    scopes?: string[];
+    appIds?: number[];
     expiresAt?: string;
   }) => request<ApiToken>('post', '/api-token/create', params),
   listApiTokens: () => request<{ data: ApiToken[] }>('get', '/api-token/list'),

@@ -10,6 +10,7 @@ export function buildRequest({
   baseUrl,
   params,
   token,
+  accountId,
   withCredentials,
 }: {
   method: HttpMethod;
@@ -17,6 +18,8 @@ export function buildRequest({
   baseUrl: string;
   params?: Record<string, any>;
   token?: string | null;
+  /** Selected workspace account id; sent as x-account-id when present. */
+  accountId?: number | null;
   /** Send cookies cross-origin — required for httpOnly-cookie sessions. */
   withCredentials?: boolean;
 }): { url: string; options: RequestInit } {
@@ -28,6 +31,9 @@ export function buildRequest({
   let url = `${baseUrl.replace(/\/$/, '')}${path}`;
   if (token) {
     headers['x-accesstoken'] = token;
+  }
+  if (accountId) {
+    headers['x-account-id'] = String(accountId);
   }
   if (params) {
     if (method === 'get') {
