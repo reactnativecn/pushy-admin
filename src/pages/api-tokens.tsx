@@ -1,5 +1,10 @@
 import { CopyOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery as useAppsQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   Button,
   Checkbox,
@@ -9,10 +14,12 @@ import {
   Modal,
   message,
   Popconfirm,
+  Radio,
   Select,
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -21,7 +28,17 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { ApiToken } from '@/types';
-import { apiTokenKeys } from '@/utils/query-keys';
+import { apiTokenKeys, appKeys } from '@/utils/query-keys';
+
+// 与服务端 TOKEN_ALLOWED_SCOPES 一致
+const TOKEN_SCOPES = [
+  'app:read',
+  'app:write',
+  'app:delete',
+  'bundle:upload',
+  'version:publish',
+  'version:delete',
+] as const;
 
 const { Paragraph } = Typography;
 
@@ -33,6 +50,18 @@ function ApiTokensPage() {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [form] = Form.useForm();
+  const permissionMode = Form.useWatch('mode', form) ?? 'classic';
+
+  const { data: appsData } = useAppsQuery({
+    queryKey: appKeys.list(),
+    queryFn: api.appList,
+    enabled: createModalVisible,
+  });
+  const appOptions = (appsData?.data ?? []).map((app) => ({
+    label: app.name,
+    value: app.id,
+  }));
+  const appNameById = new Map(appOptions.map((o) => [o.value, o.label]));
 
   const { data, isLoading } = useQuery({
     queryKey: apiTokenKeys.all(),
@@ -68,20 +97,33 @@ function ApiTokensPage() {
 
   const handleCreate = async (values: {
     name: string;
-    permissions: string[];
+    mode: 'classic' | 'scoped';
+    permissions?: string[];
+    scopes?: string[];
+    appIds?: number[];
     expiresIn?: number;
   }) => {
-    const permissions = {
-      read: values.permissions?.includes('read'),
-      write: values.permissions?.includes('write'),
-      delete: values.permissions?.includes('delete'),
-    };
     const expiresAt = values.expiresIn
       ? dayjs().add(values.expiresIn, 'day').toISOString()
       : undefined;
+    const appIds = values.appIds?.length ? values.appIds : undefined;
+    if (values.mode === 'scoped') {
+      await createMutation.mutateAsync({
+        name: values.name,
+        scopes: values.scopes,
+        appIds,
+        expiresAt,
+      });
+      return;
+    }
     await createMutation.mutateAsync({
       name: values.name,
-      permissions,
+      permissions: {
+        read: values.permissions?.includes('read'),
+        write: values.permissions?.includes('write'),
+        delete: values.permissions?.includes('delete'),
+      },
+      appIds,
       expiresAt,
     });
   };
@@ -123,19 +165,48 @@ function ApiTokensPage() {
       title: t('api_tokens.col_permissions'),
       dataIndex: 'permissions',
       key: 'permissions',
-      render: (permissions: ApiToken['permissions']) => (
-        <Space>
-          {permissions?.read && (
-            <Tag color="blue">{t('api_tokens.perm_read')}</Tag>
-          )}
-          {permissions?.write && (
-            <Tag color="green">{t('api_tokens.perm_write')}</Tag>
-          )}
-          {permissions?.delete && (
-            <Tag color="red">{t('api_tokens.perm_delete')}</Tag>
-          )}
-        </Space>
-      ),
+      render: (permissions: ApiToken['permissions'], record: ApiToken) =>
+        record.scopes?.length ? (
+          <Space wrap size={[4, 4]}>
+            {record.scopes.map((scope) => (
+              <Tag key={scope} color="geekblue" className="font-mono">
+                {scope}
+              </Tag>
+            ))}
+          </Space>
+        ) : (
+          <Space>
+            {permissions?.read && (
+              <Tag color="blue">{t('api_tokens.perm_read')}</Tag>
+            )}
+            {permissions?.write && (
+              <Tag color="green">{t('api_tokens.perm_write')}</Tag>
+            )}
+            {permissions?.delete && (
+              <Tag color="red">{t('api_tokens.perm_delete')}</Tag>
+            )}
+          </Space>
+        ),
+    },
+    {
+      title: t('api_tokens.col_apps'),
+      dataIndex: 'appIds',
+      key: 'appIds',
+      responsive: ['md'],
+      render: (appIds: ApiToken['appIds']) =>
+        appIds?.length ? (
+          <Tooltip
+            title={appIds
+              .map((id) => appNameById.get(id) ?? `#${id}`)
+              .join(', ')}
+          >
+            <Tag color="blue">
+              {t('api_tokens.n_apps', { count: appIds.length })}
+            </Tag>
+          </Tooltip>
+        ) : (
+          <Tag>{t('api_tokens.all_apps')}</Tag>
+        ),
     },
     {
       title: t('api_tokens.col_expires'),
@@ -251,10 +322,59 @@ function ApiTokensPage() {
             />
           </Form.Item>
           <Form.Item
+            label={t('api_tokens.mode')}
+            name="mode"
+            initialValue="classic"
+          >
+            <Radio.Group
+              options={[
+                { label: t('api_tokens.mode_classic'), value: 'classic' },
+                { label: t('api_tokens.mode_scoped'), value: 'scoped' },
+              ]}
+              optionType="button"
+              buttonStyle="solid"
+            />
+          </Form.Item>
+          {permissionMode === 'scoped' && (
+            <Form.Item
+              label={t('api_tokens.scopes')}
+              name="scopes"
+              extra={t('api_tokens.scopes_hint')}
+              rules={[
+                { required: true, message: t('api_tokens.scopes_required') },
+              ]}
+            >
+              <Select
+                mode="multiple"
+                allowClear
+                options={TOKEN_SCOPES.map((scope) => ({
+                  label: `${scope} — ${t(`api_tokens.scope_${scope.replace(':', '_')}`)}`,
+                  value: scope,
+                }))}
+              />
+            </Form.Item>
+          )}
+          <Form.Item
+            label={t('api_tokens.col_apps')}
+            name="appIds"
+            extra={t('api_tokens.apps_hint')}
+          >
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder={t('api_tokens.all_apps')}
+              options={appOptions}
+            />
+          </Form.Item>
+          <Form.Item
             label={t('api_tokens.permissions')}
             name="permissions"
+            hidden={permissionMode !== 'classic'}
             rules={[
-              { required: true, message: t('api_tokens.permissions_required') },
+              {
+                required: permissionMode === 'classic',
+                message: t('api_tokens.permissions_required'),
+              },
             ]}
           >
             <Checkbox.Group>

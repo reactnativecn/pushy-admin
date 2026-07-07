@@ -193,6 +193,9 @@ export interface ApiToken {
     write?: boolean;
     delete?: boolean;
   };
+  scopes?: string[] | null;
+  appIds?: number[] | null;
+  createdBy?: number | null;
   expiresAt: string | null;
   revokedAt: string | null;
   lastUsedAt: string | null;
