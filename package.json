@@ -6,10 +6,10 @@
     "dev:local": "PUBLIC_API=http://localhost:9000 rsbuild dev",
     "build": "NODE_ENV=production rsbuild build",
     "preview": "rsbuild preview",
-    "typecheck": "tsgo --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test",
     "lint": "biome check .",
-    "lint:fix": "tsgo --noEmit -p tsconfig.json && biome check --write .",
+    "lint:fix": "tsc --noEmit -p tsconfig.json && biome check --write .",
     "ci": "bun run typecheck && bun run lint && bun run test"
   },
   "dependencies": {
@@ -44,11 +44,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-router-dom": "^5.3.3",
-    "@typescript/native-preview": "^7.0.0-dev.20260703.1",
     "happy-dom": "^20.10.6",
-    "mitata": "^1.0.34",
     "tailwindcss": "^4.3.2",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.1-rc"
   },
   "trustedDependencies": [
     "core-js"
