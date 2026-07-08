@@ -11,6 +11,12 @@ export default defineConfig({
     entry: {
       index: './src/index.tsx',
     },
+    preEntry: './src/process-shim.ts',
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(
+        process.env.NODE_ENV ?? 'development',
+      ),
+    },
   },
   plugins: [
     pluginReact(),
