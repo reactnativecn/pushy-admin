@@ -896,6 +896,8 @@
     "table_title": "各版本健康指标",
     "trend_title": "事件趋势",
     "column_version": "热更版本",
+    "column_package_version": "原生包版本",
+    "unknown_package_version": "未识别（旧数据）",
     "column_rollback_rate": "回滚率",
     "column_download_fail_rate": "下载失败率",
     "download_success": "下载成功",
@@ -906,7 +908,9 @@
     "range_24h": "近24小时",
     "range_3d": "近3天",
     "range_7d": "近7天",
-    "window_hint": "实时数据保留 7 天;仅统计 SDK v10.47.0+ 的设备",
+    "sdk_requirement_title": "健康度数据仅支持 SDK v10.47.0 及以上版本",
+    "sdk_requirement_description": "v10.47.0 是首个上报热更新生命周期事件的版本；更早版本的设备不会出现在启动成功率、下载失败率和回滚率统计中。",
+    "window_hint": "实时数据保留 7 天",
     "no_data": "暂无数据"
   }
 }

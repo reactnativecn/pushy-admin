@@ -896,6 +896,8 @@
     "table_title": "Health by version",
     "trend_title": "Event trend",
     "column_version": "Update version",
+    "column_package_version": "Native package",
+    "unknown_package_version": "Unknown (legacy data)",
     "column_rollback_rate": "Rollback rate",
     "column_download_fail_rate": "Download failure rate",
     "download_success": "Download success",
@@ -906,7 +908,9 @@
     "range_24h": "Last 24h",
     "range_3d": "Last 3 days",
     "range_7d": "Last 7 days",
-    "window_hint": "Realtime data is kept for 7 days; only devices on SDK v10.47.0+ report events",
+    "sdk_requirement_title": "Health data requires SDK v10.47.0+",
+    "sdk_requirement_description": "v10.47.0 is the first SDK release that reports OTA lifecycle events. Devices on earlier versions are excluded from startup success, download failure, and rollback rates.",
+    "window_hint": "Realtime data is kept for 7 days",
     "no_data": "No data"
   }
 }

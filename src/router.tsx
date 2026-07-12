@@ -124,6 +124,9 @@ export const router = createHashRouter([
           if (!FEATURES.versionHealth) {
             return redirect(rootRouterPath.apps);
           }
+          if (FEATURES.versionHealthMock) {
+            return null;
+          }
           return needAuthLoader(args);
         },
         lazy: () => import('./pages/version-health'),

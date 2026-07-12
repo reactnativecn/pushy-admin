@@ -37,6 +37,7 @@ const FAIL_TYPES: ReadonlySet<EventType> = new Set([
 
 interface VersionHealthRow {
   version: string;
+  packageVersion: string;
   counts: Record<EventType, number>;
   rollbackRate: number | null;
   downloadFailRate: number | null;
@@ -52,17 +53,34 @@ interface TrendPoint {
 function parseEventCategory(raw: string): {
   type: EventType;
   version: string;
+  packageVersion: string;
 } | null {
-  const index = raw.indexOf(CATEGORY_SEPARATOR);
-  if (index < 0) {
+  const firstSeparator = raw.indexOf(CATEGORY_SEPARATOR);
+  if (firstSeparator < 0) {
     return null;
   }
-  const type = raw.slice(0, index) as EventType;
-  const version = raw.slice(index + 1);
+  const secondSeparator = raw.indexOf(CATEGORY_SEPARATOR, firstSeparator + 1);
+  const type = raw.slice(0, firstSeparator) as EventType;
+  const version = raw.slice(
+    firstSeparator + 1,
+    secondSeparator < 0 ? undefined : secondSeparator,
+  );
   if (!EVENT_TYPES.includes(type) || !version) {
     return null;
   }
-  return { type, version };
+  if (secondSeparator < 0) {
+    return { type, version, packageVersion: 'unknown' };
+  }
+  try {
+    return {
+      type,
+      version,
+      packageVersion:
+        decodeURIComponent(raw.slice(secondSeparator + 1)) || 'unknown',
+    };
+  } catch {
+    return null;
+  }
 }
 
 function formatRate(rate: number | null) {
@@ -149,7 +167,14 @@ export const Component = () => {
   );
 
   const { rows, trendData } = useMemo(() => {
-    const versionCounts = new Map<string, Record<EventType, number>>();
+    const versionCounts = new Map<
+      string,
+      {
+        version: string;
+        packageVersion: string;
+        counts: Record<EventType, number>;
+      }
+    >();
     const trendTotals = new Map<string, Map<EventType, number>>();
     if (data?.data && data.dict) {
       for (const bucket of data.data) {
@@ -158,18 +183,26 @@ export const Component = () => {
           if (!parsed) {
             continue;
           }
-          let counts = versionCounts.get(parsed.version);
-          if (!counts) {
-            counts = {
-              download_success: 0,
-              download_fail: 0,
-              patch_fail: 0,
-              rollback: 0,
-              mark_success: 0,
+          const rowKey = JSON.stringify([
+            parsed.version,
+            parsed.packageVersion,
+          ]);
+          let versionEntry = versionCounts.get(rowKey);
+          if (!versionEntry) {
+            versionEntry = {
+              version: parsed.version,
+              packageVersion: parsed.packageVersion,
+              counts: {
+                download_success: 0,
+                download_fail: 0,
+                patch_fail: 0,
+                rollback: 0,
+                mark_success: 0,
+              },
             };
-            versionCounts.set(parsed.version, counts);
+            versionCounts.set(rowKey, versionEntry);
           }
-          counts[parsed.type] += count;
+          versionEntry.counts[parsed.type] += count;
 
           let bucketTotals = trendTotals.get(bucket.time);
           if (!bucketTotals) {
@@ -184,12 +217,13 @@ export const Component = () => {
       }
     }
 
-    const healthRows: VersionHealthRow[] = [...versionCounts.entries()].map(
-      ([version, counts]) => {
+    const healthRows: VersionHealthRow[] = [...versionCounts.values()].map(
+      ({ version, packageVersion, counts }) => {
         const startSamples = counts.rollback + counts.mark_success;
         const downloadSamples = counts.download_fail + counts.download_success;
         return {
           version,
+          packageVersion,
           counts,
           rollbackRate:
             startSamples > 0 ? counts.rollback / startSamples : null,
@@ -249,11 +283,24 @@ export const Component = () => {
       dataIndex: 'version',
       key: 'version',
       ellipsis: true,
+      width: 140,
+    },
+    {
+      title: t('version_health.column_package_version'),
+      dataIndex: 'packageVersion',
+      key: 'packageVersion',
+      ellipsis: true,
+      width: 140,
+      render: (packageVersion: string) =>
+        packageVersion === 'unknown'
+          ? t('version_health.unknown_package_version')
+          : packageVersion,
     },
     ...EVENT_TYPES.map((type) => ({
       title: eventTypeLabels[type],
       key: type,
       align: 'right' as const,
+      width: 110,
       render: (_: unknown, row: VersionHealthRow) => {
         const count = row.counts[type];
         if (count > 0 && FAIL_TYPES.has(type)) {
@@ -266,6 +313,7 @@ export const Component = () => {
       title: t('version_health.column_rollback_rate'),
       key: 'rollbackRate',
       align: 'right' as const,
+      width: 120,
       render: (_: unknown, row: VersionHealthRow) => {
         const label = formatRate(row.rollbackRate);
         if (row.rollbackRate !== null && row.rollbackRate >= 0.5) {
@@ -281,6 +329,7 @@ export const Component = () => {
       title: t('version_health.column_download_fail_rate'),
       key: 'downloadFailRate',
       align: 'right' as const,
+      width: 130,
       render: (_: unknown, row: VersionHealthRow) =>
         formatRate(row.downloadFailRate),
     },
@@ -355,7 +404,8 @@ export const Component = () => {
             />
           </div>
           <div className="text-xs text-gray-400">
-            {t('version_health.window_hint')}
+            {t('version_health.window_hint')} ·{' '}
+            {t('version_health.sdk_requirement_title')}
           </div>
         </div>
 
@@ -373,7 +423,7 @@ export const Component = () => {
               >
                 <Table
                   size="small"
-                  rowKey="version"
+                  rowKey={(row) => `${row.version}:${row.packageVersion}`}
                   columns={columns}
                   dataSource={rows}
                   pagination={false}

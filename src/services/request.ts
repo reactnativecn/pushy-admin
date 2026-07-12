@@ -1,5 +1,7 @@
 import { message } from 'antd';
 import i18n from '@/i18n';
+import { getVersionHealthDevMock } from '@/services/version-health-dev-mock';
+import { FEATURES } from '@/utils/features';
 import { testUrls } from '@/utils/helper';
 import { buildRequest, type HttpMethod } from './build-request';
 import { handleResponse, RequestError, type RequestOptions } from './response';
@@ -34,16 +36,16 @@ const SERVER = {
 // let baseUrl = SERVER.main[0];
 // const baseUrl = `https://p.reactnative.cn/api`;
 
-const getBaseUrl = (async () => {
-  return testUrls(SERVER.main.map((url) => `${url}/status`)).then((ret) => {
-    let baseUrl = SERVER.main[0];
-    if (ret) {
-      // remove /status
-      baseUrl = ret.replace('/status', '');
-    }
-    return baseUrl;
-  });
-})();
+const getBaseUrl = FEATURES.versionHealthMock
+  ? Promise.resolve(SERVER.main[0])
+  : testUrls(SERVER.main.map((url) => `${url}/status`)).then((ret) => {
+      let baseUrl = SERVER.main[0];
+      if (ret) {
+        // remove /status
+        baseUrl = ret.replace('/status', '');
+      }
+      return baseUrl;
+    });
 
 export default async function request<T extends Record<any, any>>(
   method: HttpMethod,
@@ -51,6 +53,13 @@ export default async function request<T extends Record<any, any>>(
   params?: Record<any, any>,
   requestOptions: RequestOptions = {},
 ) {
+  if (FEATURES.versionHealthMock) {
+    const mock = getVersionHealthDevMock(method, path);
+    if (mock !== null) {
+      return mock as unknown as T;
+    }
+  }
+
   const baseUrl = requestOptions.baseUrl ?? (await getBaseUrl);
   const { url, options } = buildRequest({
     method,
