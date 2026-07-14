@@ -290,21 +290,24 @@ export const Component = () => {
       .map(([category]) => category);
   }, [categoryTotals]);
 
-  const hasTotal = useMemo(
-    () => filteredChartData.some((point) => point.isTotal),
-    [filteredChartData],
-  );
-
-  const totalRequests = useMemo(() => {
-    if (!filteredChartData.length) return 0;
-    if (hasTotal) {
-      return filteredChartData.reduce(
-        (sum, point) => (point.isTotal ? sum + point.value : sum),
-        0,
-      );
+  const { hasTotal, totalRequests } = useMemo(() => {
+    let has = false;
+    let totalSum = 0;
+    let nonTotalSum = 0;
+    for (let i = 0; i < filteredChartData.length; i++) {
+      const point = filteredChartData[i];
+      if (point.isTotal) {
+        has = true;
+        totalSum += point.value;
+      } else {
+        nonTotalSum += point.value;
+      }
     }
-    return filteredChartData.reduce((sum, point) => sum + point.value, 0);
-  }, [filteredChartData, hasTotal]);
+    return {
+      hasTotal: has,
+      totalRequests: has ? totalSum : nonTotalSum,
+    };
+  }, [filteredChartData]);
 
   const topCategories = useMemo(() => {
     return sortedCategories
