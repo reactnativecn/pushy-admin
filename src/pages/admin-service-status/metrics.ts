@@ -135,8 +135,9 @@ function addDurationEntry(
   if (entry.count > 0) {
     aggregate.minMs = Math.min(aggregate.minMs, entry.minMs);
   }
-  for (const [bucket, count] of Object.entries(entry.buckets)) {
-    aggregate.buckets[bucket] = (aggregate.buckets[bucket] ?? 0) + count;
+  for (const bucket in entry.buckets) {
+    aggregate.buckets[bucket] =
+      (aggregate.buckets[bucket] ?? 0) + entry.buckets[bucket];
   }
 }
 
