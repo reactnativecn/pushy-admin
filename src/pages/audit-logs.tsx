@@ -102,6 +102,12 @@ function getActionMap(t: TranslateFn): Record<string, string> {
     'POST /user/activate/sendmail': t('audit_logs.action_send_activation'),
     'POST /user/resetpwd/sendmail': t('audit_logs.action_send_reset'),
     'POST /user/resetpwd/reset': t('audit_logs.action_reset_password'),
+    'POST /user/email/change-request': t(
+      'audit_logs.action_request_email_change',
+    ),
+    'POST /user/email/confirm': t('audit_logs.action_confirm_email_change'),
+    'POST /user/email/revert': t('audit_logs.action_revert_email_change'),
+    'POST /user/password/change': t('audit_logs.action_change_password'),
     'POST /app/create': t('audit_logs.action_create_app'),
     'PUT /app/{id}': t('audit_logs.action_update_app'),
     'DELETE /app/{id}': t('audit_logs.action_delete_app'),
