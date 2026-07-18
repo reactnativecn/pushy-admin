@@ -8,6 +8,7 @@ import { useAppList, useUserInfo } from '@/utils/hooks';
 import { userKeys } from '@/utils/query-keys';
 import { PRICING_LINK } from '../../constants/links';
 import { quotas } from '../../constants/quotas';
+import { EmailChangeButton, PasswordChangeButton } from './account-security';
 import {
   RenewalPurchaseButton,
   UpgradePurchaseControls,
@@ -178,7 +179,13 @@ function UserPanel() {
       >
         <Descriptions.Item label={t('user.username')}>{name}</Descriptions.Item>
         <Descriptions.Item label={t('user.email')}>
-          <span className="break-all">{email}</span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="break-all">{email}</span>
+            <EmailChangeButton currentEmail={email} />
+          </div>
+        </Descriptions.Item>
+        <Descriptions.Item label={t('user.password')}>
+          <PasswordChangeButton />
         </Descriptions.Item>
         <Descriptions.Item label={t('user.service_version')}>
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(160px,180px)_160px] sm:items-center">

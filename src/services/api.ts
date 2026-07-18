@@ -199,6 +199,28 @@ export const api = {
     request('post', '/user/register', params),
   resetPwd: (params: { token: string; newPwd: string }) =>
     request('post', '/user/resetpwd/reset', params),
+  requestEmailChange: (params: { newEmail: string; pwd: string }) =>
+    request<{ message: string }>('post', '/user/email/change-request', params, {
+      suppressErrorToast: true,
+    }),
+  confirmEmailChange: (params: { token: string }) =>
+    request<{ token: string; userId: number }>(
+      'post',
+      '/user/email/confirm',
+      params,
+      { suppressErrorToast: true },
+    ),
+  revertEmailChange: (params: { token: string }) =>
+    request<{ userId: number }>('post', '/user/email/revert', params, {
+      suppressErrorToast: true,
+    }),
+  changePassword: (params: { currentPwd: string; newPwd: string }) =>
+    request<{ token: string; userId: number }>(
+      'post',
+      '/user/password/change',
+      params,
+      { suppressErrorToast: true },
+    ),
   // app
   appList: () => request<{ data: App[] }>('get', '/app/list'),
   getApp: (appId: number) => request<App>('get', `/app/${appId}`),

@@ -17,10 +17,12 @@ const MainLayout = () => {
   const isMobile = !screens.md;
   const usesPublicChrome = [
     '/activate',
+    '/change-email',
     '/inactivated',
     '/login',
     '/register',
     '/reset-password',
+    '/revert-email',
     '/welcome',
   ].some(
     (path) =>

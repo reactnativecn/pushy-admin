@@ -16,6 +16,8 @@ export const rootRouterPath = {
   versions: (id: string) => `/apps/${id}`,
   resetPassword: (step: string) => `/reset-password/${step}`,
   activate: '/activate',
+  changeEmail: '/change-email',
+  revertEmail: '/revert-email',
   inactivated: '/inactivated',
   login: '/login',
   welcome: '/welcome',
@@ -78,6 +80,14 @@ export const router = createHashRouter([
       {
         path: 'activate',
         lazy: () => import('./pages/activate'),
+      },
+      {
+        path: 'change-email',
+        lazy: () => import('./pages/email-change'),
+      },
+      {
+        path: 'revert-email',
+        lazy: () => import('./pages/email-change'),
       },
       {
         path: 'inactivated',
