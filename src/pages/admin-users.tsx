@@ -1,4 +1,9 @@
-import { EditOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Badge,
@@ -19,7 +24,8 @@ import {
   Table,
   Typography,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +43,32 @@ import { patchSearchParams } from '@/utils/helper';
 import { adminKeys } from '@/utils/query-keys';
 
 const { Title } = Typography;
+
+const SORTABLE_COLUMNS = new Set([
+  'id',
+  'email',
+  'name',
+  'createdAt',
+  'tier',
+  'status',
+  'tierExpiresAt',
+]);
+
+const statusMeta = (
+  status: string | null | undefined,
+  t: (key: string) => string,
+) => {
+  if (status === 'unverified') {
+    return {
+      cls: 'text-orange-500',
+      label: t('admin_users.status_unverified'),
+    };
+  }
+  if (status === 'dormant') {
+    return { cls: 'text-gray-400', label: t('admin_users.status_dormant') };
+  }
+  return { cls: 'text-green-600', label: t('admin_users.status_normal') };
+};
 
 const getTierOptions = (t: (key: string) => string) => [
   { value: 'free', label: t('admin_users.tier_free') },
@@ -172,12 +204,18 @@ const UserDetailDrawer = ({
               <Descriptions.Item label={translate('admin_users.col_status')}>
                 <Badge
                   status={
-                    detail.user.status === 'normal' ? 'success' : 'warning'
+                    detail.user.status === 'normal'
+                      ? 'success'
+                      : detail.user.status === 'dormant'
+                        ? 'default'
+                        : 'warning'
                   }
                   text={
                     detail.user.status === 'normal'
                       ? translate('admin_users.status_normal')
-                      : translate('admin_users.status_unverified')
+                      : detail.user.status === 'dormant'
+                        ? translate('admin_users.status_dormant')
+                        : translate('admin_users.status_unverified')
                   }
                 />
               </Descriptions.Item>
@@ -190,6 +228,30 @@ const UserDetailDrawer = ({
               >
                 {detail.user.tierExpiresAt
                   ? dayjs(detail.user.tierExpiresAt).format('YYYY-MM-DD HH:mm')
+                  : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label={translate('admin_users.col_created')}>
+                {detail.user.createdAt
+                  ? dayjs(detail.user.createdAt).format('YYYY-MM-DD HH:mm')
+                  : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={translate('admin_users.last_operation')}
+              >
+                {detail.activity?.lastOperationAt
+                  ? dayjs(detail.activity.lastOperationAt).format(
+                      'YYYY-MM-DD HH:mm',
+                    )
+                  : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={translate('admin_users.dormant_marked_at')}
+                span={2}
+              >
+                {detail.activity?.dormantMarkedAt
+                  ? dayjs(detail.activity.dormantMarkedAt).format(
+                      'YYYY-MM-DD HH:mm',
+                    )
                   : '-'}
               </Descriptions.Item>
             </Descriptions>
@@ -359,6 +421,15 @@ export const Component = () => {
     searchParams.get('pageSize'),
     isMobile ? 10 : 20,
   );
+  const statusFilter = searchParams.get('status') ?? undefined;
+  const tierFilter = searchParams.get('tier') ?? undefined;
+  const orderByParam = searchParams.get('orderBy') ?? undefined;
+  const orderBy =
+    orderByParam && SORTABLE_COLUMNS.has(orderByParam)
+      ? orderByParam
+      : undefined;
+  const order =
+    searchParams.get('order') === 'asc' ? 'asc' : orderBy ? 'desc' : undefined;
   const [searchKeyword, setSearchKeyword] = useState(searchQuery);
 
   useEffect(() => {
@@ -384,11 +455,28 @@ export const Component = () => {
   }, [searchKeyword, searchQuery, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: adminKeys.users(searchQuery),
-    queryFn: () => adminApi.searchUsers(searchQuery || undefined),
+    queryKey: [
+      ...adminKeys.users(searchQuery),
+      statusFilter,
+      tierFilter,
+      orderBy,
+      order,
+      currentPage,
+      pageSize,
+    ],
+    queryFn: () =>
+      adminApi.searchUsers({
+        search: searchQuery || undefined,
+        status: statusFilter,
+        tier: tierFilter,
+        orderBy,
+        order,
+        limit: pageSize,
+        offset: (currentPage - 1) * pageSize,
+      }),
   });
 
-  const total = data?.data.length ?? 0;
+  const total = data?.count ?? data?.data.length ?? 0;
   const maxPage = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
@@ -409,6 +497,53 @@ export const Component = () => {
       message.error((error as Error).message);
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => adminApi.deleteUser(id),
+    onSuccess: (result) => {
+      message.success(t('admin_users.user_deleted', { email: result.email }));
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+    },
+    onError: (error) => {
+      message.error((error as Error).message);
+    },
+  });
+
+  const handleDelete = (record: AdminUser) => {
+    Modal.confirm({
+      title: t('admin_users.delete_confirm_title', { email: record.email }),
+      content: t('admin_users.delete_confirm_desc'),
+      okText: t('admin_users.delete'),
+      okButtonProps: { danger: true },
+      cancelText: t('admin_users.cancel'),
+      onOk: () => deleteMutation.mutateAsync(record.id),
+    });
+  };
+
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    filters: Record<string, FilterValue | null>,
+    sorter: SorterResult<AdminUser> | SorterResult<AdminUser>[],
+  ) => {
+    const single = Array.isArray(sorter) ? sorter[0] : sorter;
+    const field =
+      single?.order && typeof single.field === 'string'
+        ? single.field
+        : undefined;
+    patchSearchParams(setSearchParams, {
+      page: String(pagination.current ?? 1),
+      pageSize: String(pagination.pageSize ?? pageSize),
+      status: (filters.status?.[0] as string | undefined) || undefined,
+      tier: (filters.tier?.[0] as string | undefined) || undefined,
+      orderBy: field && SORTABLE_COLUMNS.has(field) ? field : undefined,
+      order:
+        field && single?.order
+          ? single.order === 'ascend'
+            ? 'asc'
+            : 'desc'
+          : undefined,
+    });
+  };
 
   const handleEdit = (record: AdminUser) => {
     setEditingUser(record);
@@ -478,6 +613,9 @@ export const Component = () => {
     );
   };
 
+  const sortOrderOf = (field: string) =>
+    orderBy === field ? (order === 'asc' ? 'ascend' : 'descend') : undefined;
+
   const columns: ColumnsType<AdminUser> = [
     {
       title: t('admin_users.col_id'),
@@ -485,32 +623,42 @@ export const Component = () => {
       key: 'id',
       responsive: ['md'],
       width: 80,
+      sorter: true,
+      sortOrder: sortOrderOf('id'),
     },
     {
       title: t('admin_users.col_email'),
       dataIndex: 'email',
       key: 'email',
+      sorter: true,
+      sortOrder: sortOrderOf('email'),
     },
     {
       title: t('admin_users.col_name'),
       dataIndex: 'name',
       key: 'name',
+      sorter: true,
+      sortOrder: sortOrderOf('name'),
     },
     {
       title: t('admin_users.col_status'),
       dataIndex: 'status',
       key: 'status',
       responsive: ['sm'],
-      width: 100,
-      render: (status: string) => (
-        <span
-          className={status === 'normal' ? 'text-green-600' : 'text-orange-500'}
-        >
-          {status === 'normal'
-            ? t('admin_users.status_normal')
-            : t('admin_users.status_unverified')}
-        </span>
-      ),
+      width: 110,
+      sorter: true,
+      sortOrder: sortOrderOf('status'),
+      filterMultiple: false,
+      filters: [
+        { text: t('admin_users.status_normal'), value: 'normal' },
+        { text: t('admin_users.status_unverified'), value: 'unverified' },
+        { text: t('admin_users.status_dormant'), value: 'dormant' },
+      ],
+      filteredValue: statusFilter ? [statusFilter] : null,
+      render: (status: string | null) => {
+        const meta = statusMeta(status, t);
+        return <span className={meta.cls}>{meta.label}</span>;
+      },
     },
     {
       title: t('admin_users.col_tier'),
@@ -518,14 +666,35 @@ export const Component = () => {
       key: 'tier',
       responsive: ['sm'],
       width: 120,
+      sorter: true,
+      sortOrder: sortOrderOf('tier'),
+      filterMultiple: false,
+      filters: tierOptions.map((option) => ({
+        text: option.label,
+        value: option.value,
+      })),
+      filteredValue: tierFilter ? [tierFilter] : null,
       render: (tier: string) => tierLabelMap.get(tier) || tier || '-',
+    },
+    {
+      title: t('admin_users.col_created'),
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      responsive: ['lg'],
+      width: 160,
+      sorter: true,
+      sortOrder: sortOrderOf('createdAt'),
+      render: (date: string | null) =>
+        date ? dayjs(date).format('YYYY-MM-DD') : '-',
     },
     {
       title: t('admin_users.col_tier_expires'),
       dataIndex: 'tierExpiresAt',
       key: 'tierExpiresAt',
       responsive: ['lg'],
-      width: 180,
+      width: 160,
+      sorter: true,
+      sortOrder: sortOrderOf('tierExpiresAt'),
       render: (date: string | null) =>
         date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
     },
@@ -541,9 +710,9 @@ export const Component = () => {
     {
       title: t('admin_users.col_actions'),
       key: 'action',
-      width: 150,
+      width: 210,
       render: (_value, record) => (
-        <Space size="middle">
+        <Space size="small">
           <Button
             type="link"
             icon={<EyeOutlined />}
@@ -561,6 +730,20 @@ export const Component = () => {
           >
             {t('admin_users.edit')}
           </Button>
+          {(record.status === 'dormant' || record.status === 'unverified') && (
+            <Button
+              type="link"
+              danger
+              icon={<DeleteOutlined />}
+              loading={
+                deleteMutation.isPending &&
+                deleteMutation.variables === record.id
+              }
+              onClick={() => handleDelete(record)}
+            >
+              {t('admin_users.delete')}
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -594,6 +777,7 @@ export const Component = () => {
             columns={columns}
             rowKey="id"
             size={isMobile ? 'small' : 'middle'}
+            onChange={handleTableChange}
             pagination={{
               current: currentPage,
               pageSize,
@@ -604,12 +788,6 @@ export const Component = () => {
               showTotal: isMobile
                 ? undefined
                 : (count) => t('admin_users.users_count', { count }),
-              onChange: (page, nextPageSize) => {
-                patchSearchParams(setSearchParams, {
-                  page: String(page),
-                  pageSize: String(nextPageSize),
-                });
-              },
             }}
             scroll={{ x: 760 }}
           />
@@ -677,6 +855,10 @@ export const Component = () => {
                   {
                     value: 'unverified',
                     label: t('admin_users.form_status_unverified'),
+                  },
+                  {
+                    value: 'dormant',
+                    label: t('admin_users.form_status_dormant'),
                   },
                 ]}
               />

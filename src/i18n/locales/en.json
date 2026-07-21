@@ -550,7 +550,16 @@
     "tier_vip1": "VIP 1",
     "tier_vip2": "VIP 2",
     "tier_vip3": "VIP 3",
-    "tier_custom": "Custom"
+    "tier_custom": "Custom",
+    "status_dormant": "Dormant",
+    "form_status_dormant": "Dormant",
+    "col_created": "Registered At",
+    "last_operation": "Last Operation",
+    "dormant_marked_at": "Dormant Marked At",
+    "delete": "Delete",
+    "user_deleted": "Deleted {{email}}",
+    "delete_confirm_title": "Delete user {{email}}?",
+    "delete_confirm_desc": "This permanently removes the account with all its apps, packages and versions. Storage files are reclaimed by the next cleanup run. This cannot be undone."
   },
   "admin_apps": {
     "app_updated": "App updated",

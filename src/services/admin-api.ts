@@ -20,12 +20,34 @@ export const adminApi = {
     }),
   deleteConfig: (key: string) => request('delete', `/admin/config/${key}`),
   // admin user management
-  searchUsers: (search?: string) =>
-    request<{ data: AdminUser[] }>(
+  searchUsers: (params?: {
+    search?: string;
+    status?: string;
+    tier?: string;
+    orderBy?: string;
+    order?: 'asc' | 'desc';
+    limit?: number;
+    offset?: number;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.set('search', params.search);
+    if (params?.status) queryParams.set('status', params.status);
+    if (params?.tier) queryParams.set('tier', params.tier);
+    if (params?.orderBy) queryParams.set('orderBy', params.orderBy);
+    if (params?.order) queryParams.set('order', params.order);
+    if (params?.limit) queryParams.set('limit', String(params.limit));
+    if (params?.offset !== undefined)
+      queryParams.set('offset', String(params.offset));
+    const query = queryParams.toString();
+    return request<{ data: AdminUser[]; count: number }>(
       'get',
-      search
-        ? `/admin/users?search=${encodeURIComponent(search)}`
-        : '/admin/users',
+      query ? `/admin/users?${query}` : '/admin/users',
+    );
+  },
+  deleteUser: (id: number) =>
+    request<{ id: number; email: string; appCount: number; deleted: boolean }>(
+      'delete',
+      `/admin/users/${id}`,
     ),
   updateUser: (id: number, data: Partial<AdminUser>) =>
     request<AdminUser>('put', `/admin/users/${id}`, data),
@@ -68,7 +90,11 @@ export const adminApi = {
     request<AdminApp>('put', `/admin/apps/${id}`, data),
   getUserDetail: (id: number) =>
     request<{
-      user: AdminUser;
+      user: AdminUser & { createdAt: string; updatedAt: string };
+      activity: {
+        lastOperationAt: string | null;
+        dormantMarkedAt: string | null;
+      };
       quotaDetail: {
         limit: Quota;
         todayRemaining: number;

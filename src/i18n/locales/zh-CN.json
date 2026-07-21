@@ -550,7 +550,16 @@
     "tier_vip1": "大客户VIP1版",
     "tier_vip2": "大客户VIP2版",
     "tier_vip3": "大客户VIP3版",
-    "tier_custom": "定制版"
+    "tier_custom": "定制版",
+    "status_dormant": "休眠",
+    "form_status_dormant": "休眠",
+    "col_created": "注册时间",
+    "last_operation": "最近操作时间",
+    "dormant_marked_at": "系统标记休眠时间",
+    "delete": "删除",
+    "user_deleted": "已删除 {{email}}",
+    "delete_confirm_title": "删除用户 {{email}}?",
+    "delete_confirm_desc": "将永久删除该账号及名下全部应用、原生包与热更版本;存储文件由次日清理任务回收。此操作不可恢复。"
   },
   "admin_apps": {
     "app_updated": "应用信息已更新",
