@@ -4,7 +4,12 @@ import {
   EyeOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   Badge,
   Button,
@@ -474,16 +479,19 @@ export const Component = () => {
         limit: pageSize,
         offset: (currentPage - 1) * pageSize,
       }),
+    // 翻页/筛选切换期间保留上一份数据,total 不会瞬间归零
+    placeholderData: keepPreviousData,
   });
 
   const total = data?.count ?? data?.data.length ?? 0;
   const maxPage = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
-    if (currentPage > maxPage) {
+    // 数据未就绪时 total 不可信,不做越界回拉(否则翻页会被拉回第一页)
+    if (data && currentPage > maxPage) {
       patchSearchParams(setSearchParams, { page: String(maxPage) });
     }
-  }, [currentPage, maxPage, setSearchParams]);
+  }, [data, currentPage, maxPage, setSearchParams]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminUser> }) =>
