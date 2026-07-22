@@ -635,6 +635,7 @@
     "user_management": "User Management",
     "app_management": "App Management",
     "global_metrics": "Global Metrics",
+    "switch_endpoint": "Switch Endpoint",
     "account_settings": "Account Settings",
     "open_menu": "Open menu",
     "menu": "Menu",
@@ -958,5 +959,18 @@
     "sdk_requirement_description": "v10.47.0 is the first SDK release that reports OTA lifecycle events. Devices on earlier versions are excluded from startup success, download failure, and rollback rates.",
     "window_hint": "Realtime data is kept for 7 days",
     "no_data": "No data"
+  },
+  "admin_endpoint": {
+    "title": "Switch API Endpoint",
+    "base_url_label": "Specify Base URL",
+    "base_url_placeholder": "e.g. https://update.react-native.cn/api or http://localhost:9000",
+    "using_default": "Currently using default configuration endpoint",
+    "current_custom": "Current custom endpoint",
+    "test_and_save": "Test & Save",
+    "reset_default": "Reset to Default",
+    "test_success": "Endpoint status test passed, saved and applied",
+    "test_failed": "Endpoint status test failed, unable to connect or unexpected response",
+    "reset_success": "Cleared custom endpoint, reverted to default configuration",
+    "invalid_url": "Please enter a valid URL (must start with http:// or https://)"
   }
 }

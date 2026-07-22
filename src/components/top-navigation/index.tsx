@@ -1,4 +1,5 @@
 import {
+  ApiOutlined,
   AppstoreOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -9,16 +10,18 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Drawer, Menu } from 'antd';
+import { Badge, Drawer, Menu, Tag } from 'antd';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
+import { useCustomBaseUrl } from '@/utils/endpoint';
 import { cn } from '@/utils/helper';
 import { useUserInfo } from '@/utils/hooks';
 import { type ThemeMode, useThemeMode } from '@/utils/theme-mode';
 import { ReactComponent as LogoH } from '../../assets/logo-h.svg';
 import { DailyCheckQuotaUserTrigger } from '../daily-check-quota';
+import { SwitchEndpointModal } from '../switch-endpoint-modal';
 import { AppSwitcher } from './app-switcher';
 import {
   getCurrentLanguage,
@@ -46,7 +49,9 @@ export default function TopNavigation({
   const { pathname } = useLocation();
   const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [endpointModalOpen, setEndpointModalOpen] = useState(false);
   const [appDrawerPlacement] = useManageAppDrawerPlacement();
+  const customBaseUrl = useCustomBaseUrl();
   const selectedKeys = useMemo(() => getSelectedKeys(pathname), [pathname]);
   const shouldShowAppsTopTab =
     showAuthenticatedChrome &&
@@ -121,7 +126,14 @@ export default function TopNavigation({
                 {
                   key: 'admin',
                   icon: <SettingOutlined />,
-                  label: t('nav.admin'),
+                  label: customBaseUrl ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      {t('nav.admin')}
+                      <Badge dot color="#108ee9" />
+                    </span>
+                  ) : (
+                    t('nav.admin')
+                  ),
                   children: [
                     {
                       key: 'admin-config',
@@ -153,6 +165,24 @@ export default function TopNavigation({
                         <Link to={rootRouterPath.adminMetrics}>
                           {t('nav.global_metrics')}
                         </Link>
+                      ),
+                    },
+                    {
+                      key: 'admin-endpoint',
+                      icon: <ApiOutlined />,
+                      label: (
+                        <div className="flex items-center justify-between gap-2">
+                          <span>{t('nav.switch_endpoint')}</span>
+                          {customBaseUrl && (
+                            <Tag
+                              color="processing"
+                              className="font-mono text-xs"
+                              style={{ marginInlineEnd: 0 }}
+                            >
+                              {customBaseUrl}
+                            </Tag>
+                          )}
+                        </div>
                       ),
                     },
                   ],
@@ -229,6 +259,7 @@ export default function TopNavigation({
               void i18n.changeLanguage(language);
             }}
             onThemeChange={setThemeMode}
+            onOpenEndpointModal={() => setEndpointModalOpen(true)}
           />
         </div>
       ) : (
@@ -238,6 +269,11 @@ export default function TopNavigation({
             mode="horizontal"
             selectedKeys={selectedKeys}
             items={[...authenticatedItems, ...externalItems]}
+            onClick={({ key }) => {
+              if (key === 'admin-endpoint') {
+                setEndpointModalOpen(true);
+              }
+            }}
             style={{ height: 64, lineHeight: '64px' }}
           />
           <NavControls />
@@ -254,6 +290,10 @@ export default function TopNavigation({
           )}
         </>
       )}
+      <SwitchEndpointModal
+        open={endpointModalOpen}
+        onClose={() => setEndpointModalOpen(false)}
+      />
     </div>
   );
 }
@@ -263,6 +303,7 @@ function MobileMenuSheet({
   onClose,
   onLanguageChange,
   onThemeChange,
+  onOpenEndpointModal,
   open,
   selectedKeys,
 }: {
@@ -270,6 +311,7 @@ function MobileMenuSheet({
   onClose: () => void;
   onLanguageChange: (language: string) => void;
   onThemeChange: (mode: ThemeMode) => void;
+  onOpenEndpointModal: () => void;
   open: boolean;
   selectedKeys: string[];
 }) {
@@ -289,6 +331,9 @@ function MobileMenuSheet({
         mode="inline"
         onClick={({ key }) => {
           const keyText = String(key);
+          if (keyText === 'admin-endpoint') {
+            onOpenEndpointModal();
+          }
           if (keyText.startsWith('language:')) {
             onLanguageChange(keyText.replace('language:', ''));
           }

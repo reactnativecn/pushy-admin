@@ -3,6 +3,7 @@ import i18n from '@/i18n';
 import { getVersionHealthDevMock } from '@/services/version-health-dev-mock';
 import { FEATURES } from '@/utils/features';
 import { testUrls } from '@/utils/helper';
+import { getCustomBaseUrl } from '@/utils/endpoint';
 import { buildRequest, type HttpMethod } from './build-request';
 import { handleResponse, RequestError, type RequestOptions } from './response';
 import { getToken, usesCookieSession } from './session';
@@ -60,7 +61,8 @@ export default async function request<T extends Record<any, any>>(
     }
   }
 
-  const baseUrl = requestOptions.baseUrl ?? (await getBaseUrl);
+  const baseUrl =
+    requestOptions.baseUrl ?? getCustomBaseUrl() ?? (await getBaseUrl);
   const { url, options } = buildRequest({
     method,
     path,

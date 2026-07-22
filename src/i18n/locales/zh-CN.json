@@ -635,6 +635,7 @@
     "user_management": "用户管理",
     "app_management": "应用管理",
     "global_metrics": "全局统计",
+    "switch_endpoint": "切换端点",
     "account_settings": "账户设置",
     "open_menu": "打开菜单",
     "menu": "菜单",
@@ -958,5 +959,18 @@
     "sdk_requirement_description": "v10.47.0 是首个上报热更新生命周期事件的版本；更早版本的设备不会出现在启动成功率、下载失败率和回滚率统计中。",
     "window_hint": "实时数据保留 7 天",
     "no_data": "暂无数据"
+  },
+  "admin_endpoint": {
+    "title": "切换 API 端点",
+    "base_url_label": "指定 Base URL",
+    "base_url_placeholder": "例如 https://update.react-native.cn/api 或 http://localhost:9000",
+    "using_default": "当前使用默认配置端点",
+    "current_custom": "当前自定义端点",
+    "test_and_save": "测试并保存",
+    "reset_default": "恢复默认",
+    "test_success": "端点 status 测试成功，已保存并生效",
+    "test_failed": "端点 status 测试失败，无法连接或响应异常",
+    "reset_success": "已清空自定义端点，恢复使用默认配置",
+    "invalid_url": "请输入有效的 URL（须以 http:// 或 https:// 开头）"
   }
 }
