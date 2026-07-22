@@ -1,6 +1,8 @@
 import { DeleteFilled } from '@ant-design/icons';
 import { Button, Form, Input, Modal, Switch, Typography } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DangerousConfirmModal } from '@/components/dangerous-confirm-modal';
 import { rootRouterPath, router } from '@/router';
 import { useDeleteApp } from '@/services/mutations';
 import { useUserInfo } from '@/utils/hooks';
@@ -12,7 +14,11 @@ const SettingModal = () => {
   const { appId } = useManageContext();
   const deleteApp = useDeleteApp();
   const appKey = Form.useWatch('appKey') as string;
+  const appName = Form.useWatch('name') as string;
   const ignoreBuildTime = Form.useWatch('ignoreBuildTime') as string;
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const confirmTargetText = appName || appKey || String(appId);
 
   return (
     <>
@@ -78,23 +84,28 @@ const SettingModal = () => {
         <Button
           type="primary"
           icon={<DeleteFilled />}
-          onClick={() => {
-            Modal.confirm({
-              title: t('setting_modal.delete_confirm'),
-              okText: t('setting_modal.delete_ok'),
-              okButtonProps: { danger: true },
-              async onOk() {
-                await deleteApp.mutateAsync(appId);
-                Modal.destroyAll();
-                router.navigate(rootRouterPath.apps);
-              },
-            });
-          }}
+          onClick={() => setShowConfirmModal(true)}
           danger
         >
           {t('setting_modal.delete_button')}
         </Button>
       </Form.Item>
+
+      <DangerousConfirmModal
+        open={showConfirmModal}
+        title="确认删除该应用"
+        description="此操作不可逆！删除应用将清除该应用下所有的更新包版本、依赖及配置历史。"
+        expectedConfirmText={confirmTargetText}
+        dangerButtonText="确认永久删除"
+        loading={deleteApp.isPending}
+        onCancel={() => setShowConfirmModal(false)}
+        onConfirm={async () => {
+          await deleteApp.mutateAsync(appId);
+          setShowConfirmModal(false);
+          Modal.destroyAll();
+          router.navigate(rootRouterPath.apps);
+        }}
+      />
     </>
   );
 };
