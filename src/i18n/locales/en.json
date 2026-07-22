@@ -559,7 +559,15 @@
     "delete": "Delete",
     "user_deleted": "Deleted {{email}}",
     "delete_confirm_title": "Delete user {{email}}?",
-    "delete_confirm_desc": "This permanently removes the account with all its apps, packages and versions. Storage files are reclaimed by the next cleanup run. This cannot be undone."
+    "delete_confirm_desc": "This permanently removes the account with all its apps, packages and versions. Storage files are reclaimed by the next cleanup run. This cannot be undone.",
+    "bulk_cleanup": "Bulk cleanup dormant",
+    "bulk_desc": "Deletes dormant accounts marked at least N days ago (excludes admins). Preview the count first — deletion is irreversible.",
+    "bulk_min_days": "Dormant for at least (days):",
+    "bulk_preview": "Preview",
+    "bulk_matched": "{{count}} account(s) match and will be deleted.",
+    "bulk_delete_now": "Delete {{count}} accounts",
+    "bulk_confirm_title": "Permanently delete {{count}} dormant accounts?",
+    "bulk_deleted": "Deleted {{count}} dormant accounts"
   },
   "admin_apps": {
     "app_updated": "App updated",

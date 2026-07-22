@@ -49,6 +49,25 @@ export const adminApi = {
       'delete',
       `/admin/users/${id}`,
     ),
+  bulkDeleteDormant: (params: {
+    minDormantDays: number;
+    limit?: number;
+    dryRun: boolean;
+  }) =>
+    request<{
+      dryRun: boolean;
+      minDormantDays: number;
+      limit?: number;
+      matched?: number;
+      sample?: Array<{
+        id: number;
+        email: string;
+        dormantMarkedAt: string | null;
+      }>;
+      deleted?: number;
+      failed?: number;
+      deletedEmails?: string[];
+    }>('post', '/admin/users/dormant/bulk-delete', params),
   updateUser: (id: number, data: Partial<AdminUser>) =>
     request<AdminUser>('put', `/admin/users/${id}`, data),
   // admin app management

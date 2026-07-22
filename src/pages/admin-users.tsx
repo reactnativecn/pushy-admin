@@ -412,6 +412,16 @@ export const Component = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [viewingUserId, setViewingUserId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkDays, setBulkDays] = useState(30);
+  const [bulkPreview, setBulkPreview] = useState<{
+    matched: number;
+    sample: Array<{
+      id: number;
+      email: string;
+      dormantMarkedAt: string | null;
+    }>;
+  } | null>(null);
   const [form] = Form.useForm();
   const [quotaValue, setQuotaValue] = useState('');
 
@@ -515,6 +525,27 @@ export const Component = () => {
     onError: (error) => {
       message.error((error as Error).message);
     },
+  });
+
+  const bulkPreviewMutation = useMutation({
+    mutationFn: (minDormantDays: number) =>
+      adminApi.bulkDeleteDormant({ minDormantDays, dryRun: true }),
+    onSuccess: (r) => {
+      setBulkPreview({ matched: r.matched ?? 0, sample: r.sample ?? [] });
+    },
+    onError: (e) => message.error((e as Error).message),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (minDormantDays: number) =>
+      adminApi.bulkDeleteDormant({ minDormantDays, dryRun: false }),
+    onSuccess: (r) => {
+      message.success(t('admin_users.bulk_deleted', { count: r.deleted ?? 0 }));
+      setBulkOpen(false);
+      setBulkPreview(null);
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+    },
+    onError: (e) => message.error((e as Error).message),
   });
 
   const handleDelete = (record: AdminUser) => {
@@ -769,14 +800,25 @@ export const Component = () => {
               {t('admin_users.description')}
             </div>
           </div>
-          <Input
-            placeholder={t('admin_users.search_placeholder')}
-            prefix={<SearchOutlined />}
-            value={searchKeyword}
-            onChange={(event) => setSearchKeyword(event.target.value)}
-            allowClear
-            className="w-full md:w-72"
-          />
+          <Space wrap>
+            {statusFilter === 'dormant' && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => setBulkOpen(true)}
+              >
+                {t('admin_users.bulk_cleanup')}
+              </Button>
+            )}
+            <Input
+              placeholder={t('admin_users.search_placeholder')}
+              prefix={<SearchOutlined />}
+              value={searchKeyword}
+              onChange={(event) => setSearchKeyword(event.target.value)}
+              allowClear
+              className="w-full md:w-72"
+            />
+          </Space>
         </div>
 
         <Spin spinning={isLoading}>
@@ -914,6 +956,99 @@ export const Component = () => {
         onClose={() => setIsDetailOpen(false)}
         isMobile={isMobile}
       />
+
+      {/* 批量清理休眠用户:先预览计数,确认后真删(不可逆) */}
+      <Modal
+        title={t('admin_users.bulk_cleanup')}
+        open={bulkOpen}
+        onCancel={() => {
+          setBulkOpen(false);
+          setBulkPreview(null);
+        }}
+        footer={null}
+        width={isMobile ? 'calc(100vw - 32px)' : 560}
+      >
+        <Space direction="vertical" size="middle" className="w-full">
+          <div className="text-sm text-gray-500">
+            {t('admin_users.bulk_desc')}
+          </div>
+          <Space>
+            <span>{t('admin_users.bulk_min_days')}</span>
+            <Select
+              value={bulkDays}
+              onChange={(v) => {
+                setBulkDays(v);
+                setBulkPreview(null);
+              }}
+              options={[7, 30, 60, 90, 180].map((d) => ({
+                value: d,
+                label: `${d}`,
+              }))}
+              style={{ width: 100 }}
+            />
+            <Button
+              onClick={() => bulkPreviewMutation.mutate(bulkDays)}
+              loading={bulkPreviewMutation.isPending}
+            >
+              {t('admin_users.bulk_preview')}
+            </Button>
+          </Space>
+
+          {bulkPreview && (
+            <>
+              <div>
+                {t('admin_users.bulk_matched', { count: bulkPreview.matched })}
+              </div>
+              {bulkPreview.sample.length > 0 && (
+                <Table
+                  size="small"
+                  dataSource={bulkPreview.sample}
+                  rowKey="id"
+                  pagination={false}
+                  scroll={{ y: 200 }}
+                  columns={[
+                    {
+                      title: t('admin_users.col_email'),
+                      dataIndex: 'email',
+                      key: 'email',
+                    },
+                    {
+                      title: t('admin_users.dormant_marked_at'),
+                      dataIndex: 'dormantMarkedAt',
+                      key: 'dormantMarkedAt',
+                      render: (v: string | null) =>
+                        v ? dayjs(v).format('YYYY-MM-DD') : '-',
+                    },
+                  ]}
+                />
+              )}
+              <Button
+                danger
+                type="primary"
+                block
+                disabled={bulkPreview.matched === 0}
+                loading={bulkDeleteMutation.isPending}
+                onClick={() =>
+                  Modal.confirm({
+                    title: t('admin_users.bulk_confirm_title', {
+                      count: bulkPreview.matched,
+                    }),
+                    content: t('admin_users.delete_confirm_desc'),
+                    okText: t('admin_users.delete'),
+                    okButtonProps: { danger: true },
+                    cancelText: t('admin_users.cancel'),
+                    onOk: () => bulkDeleteMutation.mutateAsync(bulkDays),
+                  })
+                }
+              >
+                {t('admin_users.bulk_delete_now', {
+                  count: bulkPreview.matched,
+                })}
+              </Button>
+            </>
+          )}
+        </Space>
+      </Modal>
     </div>
   );
 };
