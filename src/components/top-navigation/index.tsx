@@ -169,9 +169,8 @@ export default function TopNavigation({
                     },
                     {
                       key: 'admin-endpoint',
-                      icon: <ApiOutlined />,
                       label: (
-                        <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center justify-between gap-2">
                           <span>{t('nav.switch_endpoint')}</span>
                           {customBaseUrl && (
                             <Tag
@@ -182,7 +181,7 @@ export default function TopNavigation({
                               {customBaseUrl}
                             </Tag>
                           )}
-                        </div>
+                        </span>
                       ),
                     },
                   ],
