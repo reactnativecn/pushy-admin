@@ -1,9 +1,9 @@
 import { message } from 'antd';
 import i18n from '@/i18n';
 import { getVersionHealthDevMock } from '@/services/version-health-dev-mock';
+import { getCustomBaseUrl } from '@/utils/endpoint';
 import { FEATURES } from '@/utils/features';
 import { testUrls } from '@/utils/helper';
-import { getCustomBaseUrl } from '@/utils/endpoint';
 import { buildRequest, type HttpMethod } from './build-request';
 import { handleResponse, RequestError, type RequestOptions } from './response';
 import { getToken, usesCookieSession } from './session';

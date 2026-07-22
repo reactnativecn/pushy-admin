@@ -19,7 +19,9 @@ export default defineConfig({
     },
   },
   plugins: [
-    pluginReact(),
+    pluginReact({
+      reactCompiler: true,
+    }),
     pluginSvgr({
       svgrOptions: {
         exportType: 'named',

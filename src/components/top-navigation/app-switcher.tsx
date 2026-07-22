@@ -8,7 +8,7 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { Button, Drawer, Empty, Input, Popover, Tag } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
@@ -49,20 +49,18 @@ export function AppSwitcher({ compact }: { compact: boolean }) {
     useManageAppDrawerPlacement();
   const currentAppId = getCurrentAppId(pathname);
   const currentAppKey = getCurrentAppKey(pathname, search);
-  const { appMap, appKeyMap } = useMemo(() => {
-    const byId = new Map<number, AppItem>();
-    const byKey = new Map<string, AppItem>();
-    for (let i = 0; i < apps.length; i++) {
-      const app = apps[i];
-      if (app.id) {
-        byId.set(app.id, app);
-      }
-      if (app.appKey) {
-        byKey.set(app.appKey, app);
-      }
+  const appMap = new Map<number, AppItem>();
+  const appKeyMap = new Map<string, AppItem>();
+  for (let i = 0; i < apps.length; i++) {
+    const app = apps[i];
+    if (app.id) {
+      appMap.set(app.id, app);
     }
-    return { appMap: byId, appKeyMap: byKey };
-  }, [apps]);
+    if (app.appKey) {
+      appKeyMap.set(app.appKey, app);
+    }
+  }
+
   let currentApp: AppItem | undefined;
   if (currentAppId) {
     currentApp = appMap.get(currentAppId);
@@ -70,11 +68,9 @@ export function AppSwitcher({ compact }: { compact: boolean }) {
     currentApp = appKeyMap.get(currentAppKey);
   }
   const activeAppId = currentApp?.id ?? currentAppId;
-  const recentApps = useMemo(() => {
-    return recentAppIds
-      .map((appId) => appMap.get(appId))
-      .filter((app): app is AppItem => !!app);
-  }, [appMap, recentAppIds]);
+  const recentApps = recentAppIds
+    .map((appId) => appMap.get(appId))
+    .filter((app): app is AppItem => !!app);
   const normalizedQuery = query.trim().toLowerCase();
   const filteredApps = apps.filter((app) => {
     if (!normalizedQuery) {

@@ -15,7 +15,7 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   type Content,
@@ -152,18 +152,15 @@ export const Component = () => {
     }
   };
 
-  const handleDelete = useCallback(
-    async (key: string) => {
-      try {
-        await adminApi.deleteConfig(key);
-        message.success(t('admin_config.deleted'));
-        refetch();
-      } catch (error) {
-        message.error((error as Error).message);
-      }
-    },
-    [refetch, t],
-  );
+  const handleDelete = async (key: string) => {
+    try {
+      await adminApi.deleteConfig(key);
+      message.success(t('admin_config.deleted'));
+      refetch();
+    } catch (error) {
+      message.error((error as Error).message);
+    }
+  };
 
   const columns: ColumnsType<ConfigItem> = [
     {

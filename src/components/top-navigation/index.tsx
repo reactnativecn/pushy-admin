@@ -11,7 +11,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { Badge, Drawer, Menu, Tag } from 'antd';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
@@ -52,7 +52,7 @@ export default function TopNavigation({
   const [endpointModalOpen, setEndpointModalOpen] = useState(false);
   const [appDrawerPlacement] = useManageAppDrawerPlacement();
   const customBaseUrl = useCustomBaseUrl();
-  const selectedKeys = useMemo(() => getSelectedKeys(pathname), [pathname]);
+  const selectedKeys = getSelectedKeys(pathname);
   const shouldShowAppsTopTab =
     showAuthenticatedChrome &&
     user &&

@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import { Empty, Grid, Input, Radio, Tag } from 'antd';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   cn,
@@ -78,16 +78,13 @@ export function AppDrawer({
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredApps = useMemo(() => {
-    if (!normalizedQuery) {
-      return apps;
-    }
-    return apps.filter((app) =>
-      [app.name, app.appKey, app.platform]
-        .filter(Boolean)
-        .some((value) => value?.toLowerCase().includes(normalizedQuery)),
-    );
-  }, [apps, normalizedQuery]);
+  const filteredApps = normalizedQuery
+    ? apps.filter((app) =>
+        [app.name, app.appKey, app.platform]
+          .filter(Boolean)
+          .some((value) => value?.toLowerCase().includes(normalizedQuery)),
+      )
+    : apps;
 
   const ToggleIcon = collapsed
     ? placement === 'right'
