@@ -21,11 +21,6 @@ export default defineConfig({
   performance: {
     chunkSplit: {
       strategy: 'split-by-experience',
-      forceSplitting: {
-        charts: /node_modules[\\/]@ant-design[\\/]charts/,
-        jsoneditor: /node_modules[\\/]vanilla-jsoneditor/,
-        wasm: /node_modules[\\/]hash-wasm/,
-      },
     },
   },
   plugins: [

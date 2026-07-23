@@ -1,5 +1,6 @@
-import { Spin } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { ReloadOutlined } from '@ant-design/icons';
+import { Alert, Button, Spin } from 'antd';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { JSONEditorPropsOptional } from 'vanilla-jsoneditor';
 
 export default function JsonEditor({
@@ -8,9 +9,20 @@ export default function JsonEditor({
 }: JSONEditorPropsOptional & { className?: string }) {
   const refContainer = useRef<HTMLDivElement>(null);
   const refEditor = useRef<any>(null);
-  const [loading, setLoading] = useState(true);
+  const propsRef = useRef(props);
+  propsRef.current = props;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: initial setup
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadCount, setLoadCount] = useState(0);
+
+  const handleRetry = useCallback(() => {
+    setLoadError(false);
+    setLoading(true);
+    setLoadCount((c) => c + 1);
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reload dynamic import on loadCount change
   useEffect(() => {
     let destroyed = false;
 
@@ -23,14 +35,17 @@ export default function JsonEditor({
           target: refContainer.current,
           props: {
             mode: Mode.text,
-            ...props,
+            ...propsRef.current,
           },
         });
         setLoading(false);
       })
       .catch((err) => {
         console.error('Failed to load vanilla-jsoneditor:', err);
-        setLoading(false);
+        if (!destroyed) {
+          setLoadError(true);
+          setLoading(false);
+        }
       });
 
     return () => {
@@ -40,7 +55,7 @@ export default function JsonEditor({
         refEditor.current = null;
       }
     };
-  }, []);
+  }, [loadCount]);
 
   useEffect(() => {
     if (refEditor.current) {
@@ -54,13 +69,37 @@ export default function JsonEditor({
       {loading && (
         <div
           style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 10,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 24,
+            background: 'var(--ant-color-bg-container, #ffffff)',
           }}
         >
           <Spin tip="加载编辑器..." />
+        </div>
+      )}
+      {loadError && (
+        <div style={{ padding: 16 }}>
+          <Alert
+            type="error"
+            showIcon
+            message="JSON 编辑器组件加载失败"
+            description={
+              <Button
+                size="small"
+                type="primary"
+                danger
+                icon={<ReloadOutlined />}
+                onClick={handleRetry}
+                style={{ marginTop: 8 }}
+              >
+                重新加载编辑器
+              </Button>
+            }
+          />
         </div>
       )}
       <div ref={refContainer} />

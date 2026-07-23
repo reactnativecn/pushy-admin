@@ -40,8 +40,12 @@ export function DangerousConfirmModal({
     }
   }, [open]);
 
-  const isMatched =
-    !expectedConfirmText || inputText.trim() === expectedConfirmText.trim();
+  const hasExpectedText =
+    expectedConfirmText !== undefined && expectedConfirmText !== null;
+  const isMatched = hasExpectedText
+    ? expectedConfirmText.trim() !== '' &&
+      inputText.trim() === expectedConfirmText.trim()
+    : true;
 
   return (
     <Modal

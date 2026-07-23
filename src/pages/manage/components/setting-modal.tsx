@@ -18,7 +18,7 @@ const SettingModal = () => {
   const ignoreBuildTime = Form.useWatch('ignoreBuildTime') as string;
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const confirmTargetText = appName || appKey || String(appId);
+  const confirmTargetText = appName?.trim() || '';
 
   return (
     <>

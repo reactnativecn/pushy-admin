@@ -1,68 +1,119 @@
-import { type ComponentProps, lazy, Suspense } from 'react';
+import {
+  type ComponentProps,
+  type ComponentType,
+  lazy,
+  Suspense,
+  useCallback,
+  useState,
+} from 'react';
 import { SectionErrorBoundary } from './section-error-boundary';
 import { ChartSkeleton } from './skeletons';
 
-// 动态按需加载 @ant-design/charts，隔离打包 Chunk
-const LazyArea = lazy(() =>
-  import('@ant-design/charts').then((module) => ({ default: module.Area })),
-);
+type ChartComponentType = 'Area' | 'Line' | 'Pie' | 'DualAxes';
 
-const LazyLine = lazy(() =>
-  import('@ant-design/charts').then((module) => ({ default: module.Line })),
-);
+function createLazyChart<T extends ChartComponentType>(type: T) {
+  return lazy(() =>
+    import('@ant-design/charts').then((module) => ({
+      default: module[type] as ComponentType<any>,
+    })),
+  );
+}
 
-const LazyPie = lazy(() =>
-  import('@ant-design/charts').then((module) => ({ default: module.Pie })),
-);
+interface AsyncChartProps<T extends ChartComponentType> {
+  chartType: T;
+  errorTitle: string;
+  height?: number;
+  chartProps: Record<string, any>;
+}
 
-const LazyDualAxes = lazy(() =>
-  import('@ant-design/charts').then((module) => ({ default: module.DualAxes })),
-);
+function AsyncChartWrapper<T extends ChartComponentType>({
+  chartType,
+  errorTitle,
+  height,
+  chartProps,
+}: AsyncChartProps<T>) {
+  const [retryCount, setRetryCount] = useState(0);
+  const [LazyComponent, setLazyComponent] = useState(() =>
+    createLazyChart(chartType),
+  );
 
-export function AsyncArea(
-  props: ComponentProps<typeof LazyArea> & { height?: number },
-) {
+  const handleReset = useCallback(() => {
+    setLazyComponent(() => createLazyChart(chartType));
+    setRetryCount((c) => c + 1);
+  }, [chartType]);
+
   return (
-    <SectionErrorBoundary title="图表渲染异常">
-      <Suspense fallback={<ChartSkeleton height={props.height || 300} />}>
-        <LazyArea {...props} />
+    <SectionErrorBoundary title={errorTitle} onReset={handleReset}>
+      <Suspense
+        key={retryCount}
+        fallback={<ChartSkeleton height={height || 300} />}
+      >
+        <LazyComponent {...chartProps} />
       </Suspense>
     </SectionErrorBoundary>
   );
 }
 
-export function AsyncLine(
-  props: ComponentProps<typeof LazyLine> & { height?: number },
-) {
+export function AsyncArea({
+  height,
+  ...props
+}: ComponentProps<typeof import('@ant-design/charts')['Area']> & {
+  height?: number;
+}) {
   return (
-    <SectionErrorBoundary title="折线图渲染异常">
-      <Suspense fallback={<ChartSkeleton height={props.height || 300} />}>
-        <LazyLine {...props} />
-      </Suspense>
-    </SectionErrorBoundary>
+    <AsyncChartWrapper
+      chartType="Area"
+      errorTitle="图表渲染异常"
+      height={height}
+      chartProps={props}
+    />
   );
 }
 
-export function AsyncPie(
-  props: ComponentProps<typeof LazyPie> & { height?: number },
-) {
+export function AsyncLine({
+  height,
+  ...props
+}: ComponentProps<typeof import('@ant-design/charts')['Line']> & {
+  height?: number;
+}) {
   return (
-    <SectionErrorBoundary title="饼图渲染异常">
-      <Suspense fallback={<ChartSkeleton height={props.height || 300} />}>
-        <LazyPie {...props} />
-      </Suspense>
-    </SectionErrorBoundary>
+    <AsyncChartWrapper
+      chartType="Line"
+      errorTitle="折线图渲染异常"
+      height={height}
+      chartProps={props}
+    />
   );
 }
 
-export function AsyncDualAxes(
-  props: ComponentProps<typeof LazyDualAxes> & { height?: number },
-) {
+export function AsyncPie({
+  height,
+  ...props
+}: ComponentProps<typeof import('@ant-design/charts')['Pie']> & {
+  height?: number;
+}) {
   return (
-    <SectionErrorBoundary title="双轴图表渲染异常">
-      <Suspense fallback={<ChartSkeleton height={props.height || 300} />}>
-        <LazyDualAxes {...props} />
-      </Suspense>
-    </SectionErrorBoundary>
+    <AsyncChartWrapper
+      chartType="Pie"
+      errorTitle="饼图渲染异常"
+      height={height}
+      chartProps={props}
+    />
+  );
+}
+
+export function AsyncDualAxes({
+  height,
+  ...props
+}: ComponentProps<typeof import('@ant-design/charts')['DualAxes']> & {
+  height?: number;
+}) {
+  return (
+    <AsyncChartWrapper
+      chartType="DualAxes"
+      errorTitle="双轴图表渲染异常"
+      height={height}
+      chartProps={props}
+    />
   );
 }
