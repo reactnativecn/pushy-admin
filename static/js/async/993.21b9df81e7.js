@@ -1,0 +1,1 @@
+"use strict";(self.rspackChunkpushy_admin=self.rspackChunkpushy_admin||[]).push([[993],{19504(n,u,r){r.r(u);var s,e=r(40961);let{render:t,unmountComponentAtNode:a}=s||(s=r.t(e,2));function c(n,u){t(n,u)}function d(n){a(n)}r.d(u,{render:()=>c,unmount:()=>d})}}]);
