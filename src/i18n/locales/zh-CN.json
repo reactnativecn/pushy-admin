@@ -857,6 +857,14 @@
     "failed": "{{num}} 个补丁生成失败",
     "failed_tip": "部分增量补丁生成失败，受影响的用户将回退为全量包下载，不影响更新可用性。"
   },
+  "dangerous_modal": {
+    "warning_title": "高风险操作提示",
+    "confirm_prompt_prefix": "为防止误操作，请输入提示文本",
+    "confirm_prompt_suffix": "以进行确认：",
+    "confirm_placeholder": "请输入对应的确认文本以继续",
+    "confirm_button": "确认执行",
+    "cancel": "取消"
+  },
   "setting_modal": {
     "app_id": "App ID",
     "app_key": "App Key",
@@ -870,7 +878,10 @@
     "delete_app": "删除应用",
     "delete_confirm": "应用删除后无法恢复",
     "delete_ok": "确认删除",
-    "delete_button": "删除"
+    "delete_button": "删除",
+    "delete_title": "确认删除该应用",
+    "delete_desc": "此操作不可逆！删除应用将清除该应用下所有的更新包版本、依赖及配置历史。",
+    "delete_permanent": "确认永久删除"
   },
   "common": {
     "cancel": "取消",

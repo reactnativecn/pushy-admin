@@ -9,6 +9,12 @@ global.localStorage = win.localStorage as any;
 global.addEventListener = win.addEventListener.bind(win) as any;
 global.removeEventListener = win.removeEventListener.bind(win) as any;
 global.dispatchEvent = win.dispatchEvent.bind(win) as any;
+global.getComputedStyle = win.getComputedStyle.bind(win) as any;
+global.Element = win.Element as any;
+global.HTMLElement = win.HTMLElement as any;
+global.SVGElement = win.SVGElement as any;
+global.Node = win.Node as any;
+global.HTMLInputElement = win.HTMLInputElement as any;
 global.StorageEvent = win.StorageEvent as any;
 
 // Mock dependencies that cause side effects or fail on static assets imports
@@ -69,3 +75,16 @@ mock.module('react-router-dom', () => ({
   useLoaderData: () => null,
   useActionData: () => null,
 }));
+
+if (typeof window.matchMedia !== 'function') {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as any;
+}

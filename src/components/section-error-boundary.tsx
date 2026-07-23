@@ -38,7 +38,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
         <Alert
           type="error"
           showIcon
-          message={this.props.title || '局部组件加载或渲染失败'}
+          title={this.props.title || '局部组件加载或渲染失败'}
           description={
             <div style={{ marginTop: 8 }}>
               <p

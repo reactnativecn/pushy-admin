@@ -857,6 +857,14 @@
     "failed": "{{num}} patch(es) failed",
     "failed_tip": "Some incremental patches failed to generate. Affected users will fall back to full bundle downloads; updates still work."
   },
+  "dangerous_modal": {
+    "warning_title": "High-Risk Action",
+    "confirm_prompt_prefix": "To prevent accidental operation, please type",
+    "confirm_prompt_suffix": "to confirm:",
+    "confirm_placeholder": "Type the text to confirm",
+    "confirm_button": "Confirm Action",
+    "cancel": "Cancel"
+  },
   "setting_modal": {
     "app_id": "App ID",
     "app_key": "App Key",
@@ -870,7 +878,10 @@
     "delete_app": "Delete App",
     "delete_confirm": "This app cannot be recovered after deletion.",
     "delete_ok": "Delete App",
-    "delete_button": "Delete"
+    "delete_button": "Delete",
+    "delete_title": "Confirm App Deletion",
+    "delete_desc": "This action cannot be undone! Deleting this app will permanently purge all package versions, dependencies, and configuration history.",
+    "delete_permanent": "Permanently Delete App"
   },
   "common": {
     "cancel": "Cancel",

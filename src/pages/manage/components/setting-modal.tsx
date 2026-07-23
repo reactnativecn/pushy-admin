@@ -1,5 +1,5 @@
 import { DeleteFilled } from '@ant-design/icons';
-import { Button, Form, Input, Modal, Switch, Typography } from 'antd';
+import { Button, Form, Input, Switch, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DangerousConfirmModal } from '@/components/dangerous-confirm-modal';
@@ -18,7 +18,8 @@ const SettingModal = () => {
   const ignoreBuildTime = Form.useWatch('ignoreBuildTime') as string;
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const confirmTargetText = appName?.trim() || '';
+  // 优先使用 appName，如尚未设定或加载中时使用稳定的 appKey 作为二次确认识别串
+  const confirmTargetText = appName?.trim() || appKey?.trim() || '';
 
   return (
     <>
@@ -93,16 +94,15 @@ const SettingModal = () => {
 
       <DangerousConfirmModal
         open={showConfirmModal}
-        title="确认删除该应用"
-        description="此操作不可逆！删除应用将清除该应用下所有的更新包版本、依赖及配置历史。"
+        title={t('setting_modal.delete_title')}
+        description={t('setting_modal.delete_desc')}
         expectedConfirmText={confirmTargetText}
-        dangerButtonText="确认永久删除"
+        dangerButtonText={t('setting_modal.delete_permanent')}
         loading={deleteApp.isPending}
         onCancel={() => setShowConfirmModal(false)}
         onConfirm={async () => {
           await deleteApp.mutateAsync(appId);
           setShowConfirmModal(false);
-          Modal.destroyAll();
           router.navigate(rootRouterPath.apps);
         }}
       />

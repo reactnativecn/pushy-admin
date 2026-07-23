@@ -1,6 +1,7 @@
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Alert, Input, Modal, Typography } from 'antd';
 import { type ReactNode, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -11,6 +12,7 @@ export interface DangerousConfirmModalProps {
   expectedConfirmText?: string;
   confirmPlaceholder?: string;
   dangerButtonText?: string;
+  cancelButtonText?: string;
   loading?: boolean;
   onCancel: () => void;
   onConfirm: () => void | Promise<void>;
@@ -18,19 +20,21 @@ export interface DangerousConfirmModalProps {
 
 /**
  * 高危毁灭性操作二次确认 Guard 弹窗组件
- * 当配置了 expectedConfirmText 时，用户必须在输入框中输入匹配的文本方可点击确认。
+ * 当配置了 expectedConfirmText 时，用户必须在输入框中手动键入完全匹配的文本方可点击确认。
  */
 export function DangerousConfirmModal({
   open,
   title,
   description,
   expectedConfirmText,
-  confirmPlaceholder = '请输入对应的确认名称以继续',
-  dangerButtonText = '确认执行',
+  confirmPlaceholder,
+  dangerButtonText,
+  cancelButtonText,
   loading = false,
   onCancel,
   onConfirm,
 }: DangerousConfirmModalProps) {
+  const { t } = useTranslation();
   const [inputText, setInputText] = useState('');
 
   // 重置输入状态
@@ -46,6 +50,11 @@ export function DangerousConfirmModal({
     ? expectedConfirmText.trim() !== '' &&
       inputText.trim() === expectedConfirmText.trim()
     : true;
+
+  const placeholderText =
+    confirmPlaceholder ?? t('dangerous_modal.confirm_placeholder');
+  const okText = dangerButtonText ?? t('dangerous_modal.confirm_button');
+  const cancelText = cancelButtonText ?? t('dangerous_modal.cancel');
 
   return (
     <Modal
@@ -65,20 +74,20 @@ export function DangerousConfirmModal({
       }
       onCancel={onCancel}
       onOk={onConfirm}
-      okText={dangerButtonText}
+      okText={okText}
       okButtonProps={{
         danger: true,
         type: 'primary',
         disabled: !isMatched,
         loading,
       }}
-      cancelText="取消"
-      destroyOnClose
+      cancelText={cancelText}
+      destroyOnHidden
     >
       <Alert
         type="warning"
         showIcon
-        message="高风险操作提示"
+        title={t('dangerous_modal.warning_title')}
         description={description}
         style={{ marginBottom: 16, marginTop: 12 }}
       />
@@ -86,16 +95,14 @@ export function DangerousConfirmModal({
       {expectedConfirmText && (
         <div style={{ marginTop: 12 }}>
           <p style={{ marginBottom: 8, fontSize: 13 }}>
-            为防止误操作，请输入提示文本{' '}
-            <Text code copyable>
-              {expectedConfirmText}
-            </Text>{' '}
-            以进行确认：
+            {t('dangerous_modal.confirm_prompt_prefix')}{' '}
+            <Text code>{expectedConfirmText}</Text>{' '}
+            {t('dangerous_modal.confirm_prompt_suffix')}
           </p>
           <Input
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder={confirmPlaceholder}
+            placeholder={placeholderText}
             status={inputText && !isMatched ? 'error' : ''}
             autoFocus
           />
