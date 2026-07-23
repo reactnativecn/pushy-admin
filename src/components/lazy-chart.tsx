@@ -65,7 +65,7 @@ export function AsyncArea({
       chartType="Area"
       errorTitle="图表渲染异常"
       height={height}
-      chartProps={props}
+      chartProps={{ ...props, height }}
     />
   );
 }
@@ -81,7 +81,7 @@ export function AsyncLine({
       chartType="Line"
       errorTitle="折线图渲染异常"
       height={height}
-      chartProps={props}
+      chartProps={{ ...props, height }}
     />
   );
 }
@@ -97,7 +97,7 @@ export function AsyncPie({
       chartType="Pie"
       errorTitle="饼图渲染异常"
       height={height}
-      chartProps={props}
+      chartProps={{ ...props, height }}
     />
   );
 }
@@ -113,7 +113,7 @@ export function AsyncDualAxes({
       chartType="DualAxes"
       errorTitle="双轴图表渲染异常"
       height={height}
-      chartProps={props}
+      chartProps={{ ...props, height }}
     />
   );
 }
