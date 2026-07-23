@@ -559,7 +559,15 @@
     "delete": "删除",
     "user_deleted": "已删除 {{email}}",
     "delete_confirm_title": "删除用户 {{email}}?",
-    "delete_confirm_desc": "将永久删除该账号及名下全部应用、原生包与热更版本;存储文件由次日清理任务回收。此操作不可恢复。"
+    "delete_confirm_desc": "将永久删除该账号及名下全部应用、原生包与热更版本;存储文件由次日清理任务回收。此操作不可恢复。",
+    "bulk_cleanup": "批量清理休眠",
+    "bulk_desc": "删除被标记休眠满 N 天的账户(排除管理员)。请先预览计数——删除不可恢复。",
+    "bulk_min_days": "休眠满(天):",
+    "bulk_preview": "预览",
+    "bulk_matched": "匹配到 {{count}} 个账户,将被删除。",
+    "bulk_delete_now": "删除 {{count}} 个账户",
+    "bulk_confirm_title": "永久删除 {{count}} 个休眠账户?",
+    "bulk_deleted": "已删除 {{count}} 个休眠账户"
   },
   "admin_apps": {
     "app_updated": "应用信息已更新",
