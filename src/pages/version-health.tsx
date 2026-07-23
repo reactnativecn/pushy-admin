@@ -1,4 +1,3 @@
-import { Line } from '@ant-design/charts';
 import { useQuery } from '@tanstack/react-query';
 import { Card, DatePicker, Spin, Table, Tag } from 'antd';
 import type { Dayjs } from 'dayjs';
@@ -9,6 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
+import { AsyncLine } from '@/components/lazy-chart';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
@@ -433,7 +433,7 @@ export const Component = () => {
               </Card>
               <Card title={t('version_health.trend_title')} size="small">
                 {trendData.length > 0 ? (
-                  <Line {...lineConfig} />
+                  <AsyncLine {...lineConfig} />
                 ) : (
                   <div className="h-60 flex items-center justify-center text-gray-400">
                     {t('version_health.no_data')}

@@ -1,4 +1,3 @@
-import { Line } from '@ant-design/charts';
 import { useQuery } from '@tanstack/react-query';
 import {
   Card,
@@ -14,6 +13,7 @@ import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { AsyncLine } from '@/components/lazy-chart';
 import { api } from '@/services/api';
 import { patchSearchParams } from '@/utils/helper';
 import { metricsKeys } from '@/utils/query-keys';
@@ -459,7 +459,7 @@ export const Component = () => {
 
           <Card size="small" style={{ marginBottom: 20 }}>
             {lineData.length > 0 ? (
-              <Line {...lineConfig} />
+              <AsyncLine {...lineConfig} />
             ) : (
               <div className="flex h-80 items-center justify-center text-gray-400">
                 {t('admin_metrics.no_data')}
