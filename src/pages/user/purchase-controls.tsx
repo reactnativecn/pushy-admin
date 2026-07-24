@@ -1,9 +1,9 @@
 import { DownOutlined } from '@ant-design/icons';
-import { Button, Popover, Tag, Tooltip } from 'antd';
+import { Button, Popover, Segmented, Tag, Tooltip } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Quota, Tier } from '@/types';
-import { ANNUAL_BILLING_MONTHS } from '@/utils/billing';
+import { ANNUAL_BILLING_MONTHS, resolveMonthlyPrice } from '@/utils/billing';
 import { cn } from '@/utils/helper';
 import {
   canPurchaseCheckUpdateAddon,
@@ -44,6 +44,7 @@ export type PurchaseMenuOption = {
 function PurchaseActionPopover({
   buttonLabel,
   emptyText,
+  headerContent,
   hint,
   loading,
   title,
@@ -53,6 +54,7 @@ function PurchaseActionPopover({
 }: {
   buttonLabel: string;
   emptyText?: string;
+  headerContent?: React.ReactNode;
   hint?: string;
   loading: boolean;
   title?: string;
@@ -83,6 +85,7 @@ function PurchaseActionPopover({
           {hint}
         </div>
       )}
+      {headerContent}
       <div className="flex flex-col gap-1">
         {options.length > 0 ? (
           options.map((option) => (
@@ -307,7 +310,8 @@ export const UpgradePurchaseControls = ({
   tierExpiresAt?: string;
 }) => {
   const { t } = useTranslation();
-  const [loadingTier, setLoadingTier] = useState<PurchasableTier | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('month');
   const upgradeOptions = quotes?.upgrades ?? [];
 
   if (upgradeOptions.length === 0) {
@@ -327,37 +331,92 @@ export const UpgradePurchaseControls = ({
       ? t('user.upgrade_hint_free')
       : t('user.upgrade_hint_paid');
 
+  const headerContent =
+    currentTier === 'free' ? (
+      <div className="px-2 pb-2">
+        <Segmented<'month' | 'year'>
+          block
+          options={[
+            { label: t('user.monthly_pay'), value: 'month' },
+            { label: t('user.annual_pay_tab'), value: 'year' },
+          ]}
+          value={billingCycle}
+          onChange={(val) => setBillingCycle(val)}
+        />
+      </div>
+    ) : undefined;
+
   const menuOptions: PurchaseMenuOption[] = upgradeOptions.map((option) => {
     const quote = option.quote;
     const proration = quote.proration;
     const tier = isPurchasableTier(option.tier) ? option.tier : undefined;
-    const amountText =
-      currentTier === 'free'
-        ? `${t('user.annual_pay')} ${formatMoney(quote.amount)}`
-        : proration
-          ? t('user.upgrade_proration_text', {
-              dailyAmount: formatMoney(proration.dailyAmount),
-              days: proration.days,
-              amount: formatMoney(proration.amount),
-            })
-          : t('user.order_settle');
-    const disabled =
-      quotesLoading || !tier || (currentTier !== 'free' && !proration);
+
+    if (currentTier === 'free') {
+      const billing = quote.billing;
+      const annualPrice = billing?.annualPrice ?? quote.amount;
+      const monthlyPrice =
+        billing?.monthlyPrice ?? resolveMonthlyPrice(annualPrice);
+      const isAnnual = billingCycle === 'year';
+      const months = isAnnual ? ANNUAL_BILLING_MONTHS : 1;
+      const monthlyTotal =
+        billing && isAnnual
+          ? billing.monthlyPrice * billing.billingMonths
+          : monthlyPrice * ANNUAL_BILLING_MONTHS;
+      const tierLabel = tier ? getPurchasableTierLabel(tier, t) : option.key;
+      const displayAmount = isAnnual ? annualPrice : monthlyPrice;
+      const unitText = isAnnual
+        ? t('user.per_year_unit')
+        : t('user.per_month_unit');
+      const optionKey = `${option.key}-${billingCycle}`;
+
+      return {
+        amountText: `${formatMoney(displayAmount)} ${unitText}`,
+        description: isAnnual
+          ? t('user.purchase_annual_desc')
+          : t('user.purchase_monthly_desc'),
+        details: tier ? getQuotaDetailItems(tier, t) : undefined,
+        disabled: quotesLoading || !tier,
+        key: optionKey,
+        onClick: async () => {
+          if (!tier) return;
+          setLoadingPlan(optionKey);
+          try {
+            await purchase(tier, months);
+          } finally {
+            setLoadingPlan(null);
+          }
+        },
+        tag:
+          isAnnual && monthlyTotal > annualPrice
+            ? t('user.about_discount', {
+                discount: formatDiscount((annualPrice / monthlyTotal) * 10),
+              })
+            : undefined,
+        title: tierLabel,
+      };
+    }
+
+    const amountText = proration
+      ? t('user.upgrade_proration_text', {
+          dailyAmount: formatMoney(proration.dailyAmount),
+          days: proration.days,
+          amount: formatMoney(proration.amount),
+        })
+      : t('user.order_settle');
+    const disabled = quotesLoading || !tier || !proration;
 
     return {
       amountText,
-      description:
-        currentTier === 'free' ? t('user.purchase_after_pay') : undefined,
       details: tier ? getQuotaDetailItems(tier, t) : undefined,
       disabled,
       key: option.key,
       onClick: async () => {
         if (!tier) return;
-        setLoadingTier(tier);
+        setLoadingPlan(option.key);
         try {
           await purchase(tier, option.months);
         } finally {
-          setLoadingTier(null);
+          setLoadingPlan(null);
         }
       },
       title: tier ? getPurchasableTierLabel(tier, t) : option.key,
@@ -366,9 +425,10 @@ export const UpgradePurchaseControls = ({
 
   return (
     <PurchaseActionPopover
-      buttonLabel={loadingTier ? t('user.jumping') : t('user.upgrade_button')}
+      buttonLabel={loadingPlan ? t('user.jumping') : t('user.upgrade_button')}
+      headerContent={headerContent}
       hint={hint}
-      loading={loadingTier !== null}
+      loading={loadingPlan !== null}
       title={title}
       widthClassName="w-[560px]"
       options={menuOptions}
