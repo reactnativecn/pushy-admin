@@ -9,8 +9,12 @@ import {
   SERVICE_STATUS_TARGETS,
   type ServiceStatusTargetKey,
 } from './metrics';
+import { QuotaAlertsPanel } from './quota-alerts-panel';
 import { ServiceStatusPanel } from './status-panel';
 import { ServiceTargetSidebar } from './target-sidebar';
+import { UserAnalyticsPanel } from './user-analytics-panel';
+import { VersionHealthOverviewPanel } from './version-health-overview-panel';
+import { WorkerStatsPanel } from './worker-stats-panel';
 
 const { Text, Title } = Typography;
 
@@ -73,6 +77,10 @@ export const Component = () => {
           />
         </div>
       </div>
+      <UserAnalyticsPanel />
+      <VersionHealthOverviewPanel />
+      <QuotaAlertsPanel />
+      <WorkerStatsPanel />
     </div>
   );
 };
