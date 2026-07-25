@@ -1,5 +1,5 @@
 import { useQueries } from '@tanstack/react-query';
-import { Typography } from 'antd';
+import { Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
@@ -11,7 +11,7 @@ import {
 } from './metrics';
 import { QuotaAlertsPanel } from './quota-alerts-panel';
 import { ServiceStatusPanel } from './status-panel';
-import { ServiceTargetSidebar } from './target-sidebar';
+import { ServiceTargetCards } from './target-cards';
 import { UserAnalyticsPanel } from './user-analytics-panel';
 import { VersionHealthOverviewPanel } from './version-health-overview-panel';
 import { WorkerStatsPanel } from './worker-stats-panel';
@@ -19,9 +19,11 @@ import { WorkerStatsPanel } from './worker-stats-panel';
 const { Text, Title } = Typography;
 
 export const Component = () => {
-  const [activeTargetKey, setActiveTargetKey] =
-    useState<ServiceStatusTargetKey>(SERVICE_STATUS_TARGETS[0].key);
+  // null = 未选中：节点面板默认不渲染（连带停掉它的轮询）
+  const [openTargetKey, setOpenTargetKey] =
+    useState<ServiceStatusTargetKey | null>(null);
   const { t } = useTranslation();
+  // 概览指标始终为所有节点轮询——卡片要靠它显示健康状态
   const targetQueries = useQueries({
     queries: SERVICE_STATUS_TARGETS.map((target) => ({
       queryFn: () =>
@@ -33,14 +35,13 @@ export const Component = () => {
       refetchInterval: 30_000,
     })),
   });
-  const activeTargetIndex = Math.max(
-    SERVICE_STATUS_TARGETS.findIndex(
-      (target) => target.key === activeTargetKey,
-    ),
-    0,
+  const openTargetIndex = SERVICE_STATUS_TARGETS.findIndex(
+    (target) => target.key === openTargetKey,
   );
-  const activeTarget = SERVICE_STATUS_TARGETS[activeTargetIndex];
-  const activeQuery = targetQueries[activeTargetIndex];
+  const openTarget =
+    openTargetIndex >= 0 ? SERVICE_STATUS_TARGETS[openTargetIndex] : null;
+  const openQuery =
+    openTargetIndex >= 0 ? targetQueries[openTargetIndex] : null;
   const targetItems = SERVICE_STATUS_TARGETS.map((target, index) => {
     const query = targetQueries[index];
     return {
@@ -60,27 +61,34 @@ export const Component = () => {
         </Title>
         <Text type="secondary">{t('admin_service_status.description')}</Text>
       </div>
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <ServiceTargetSidebar
-          activeKey={activeTarget.key}
-          items={targetItems}
-          onChange={setActiveTargetKey}
-        />
-        <div className="min-w-0">
-          <ServiceStatusPanel
-            error={activeQuery?.error}
-            isFetching={activeQuery?.isFetching ?? false}
-            key={activeTarget.key}
-            refetch={() => activeQuery?.refetch()}
-            snapshot={activeQuery?.data}
-            target={activeTarget}
-          />
-        </div>
-      </div>
+      <ServiceTargetCards items={targetItems} onSelect={setOpenTargetKey} />
       <UserAnalyticsPanel />
       <VersionHealthOverviewPanel />
       <QuotaAlertsPanel />
       <WorkerStatsPanel />
+
+      <Modal
+        destroyOnHidden
+        footer={null}
+        onCancel={() => setOpenTargetKey(null)}
+        open={openTarget != null}
+        title={
+          openTarget ? `${openTarget.label} · ${openTarget.host}` : undefined
+        }
+        width="90vw"
+        styles={{ body: { maxHeight: '78vh', overflowY: 'auto' } }}
+      >
+        {openTarget && (
+          <ServiceStatusPanel
+            error={openQuery?.error}
+            isFetching={openQuery?.isFetching ?? false}
+            key={openTarget.key}
+            refetch={() => openQuery?.refetch()}
+            snapshot={openQuery?.data}
+            target={openTarget}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

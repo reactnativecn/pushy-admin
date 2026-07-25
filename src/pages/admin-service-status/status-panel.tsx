@@ -414,7 +414,7 @@ export function ServiceStatusPanel({
           </Card>
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <MetricLineCard
             data={requestSeries}
             title={t('admin_service_status.chart_api_requests')}

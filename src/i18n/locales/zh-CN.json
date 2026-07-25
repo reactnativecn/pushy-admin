@@ -463,6 +463,7 @@
     "description": "按节点查看内部指标和运行状态。",
     "sidebar_failed": "请求失败",
     "sidebar_loading": "加载中",
+    "card_open_hint": "点击查看该节点详情",
     "sidebar_healthy": "正常",
     "sidebar_req_err": "请求/错",
     "sidebar_latency": "延时",

@@ -463,6 +463,7 @@
     "description": "Inspect internal metrics by node.",
     "sidebar_failed": "Failed",
     "sidebar_loading": "Loading",
+    "card_open_hint": "Click to open node details",
     "sidebar_healthy": "Healthy",
     "sidebar_req_err": "req/err",
     "sidebar_latency": "latency",
