@@ -163,11 +163,15 @@ const UserDetailDrawer = ({
   open,
   onClose,
   isMobile,
+  onDelete,
+  isDeleting,
 }: {
   userId: number | null;
   open: boolean;
   onClose: () => void;
   isMobile: boolean;
+  onDelete?: (record: { id: number; email: string }) => void;
+  isDeleting?: boolean;
 }) => {
   const { t } = useTranslation();
   const { data, isLoading } = useQuery({
@@ -187,6 +191,20 @@ const UserDetailDrawer = ({
       onClose={onClose}
       open={open}
       destroyOnHidden
+      extra={
+        detail?.user &&
+        (detail.user.status === 'dormant' ||
+          detail.user.status === 'unverified') ? (
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            loading={isDeleting}
+            onClick={() => onDelete?.(detail.user)}
+          >
+            {translate('admin_users.delete')}
+          </Button>
+        ) : null
+      }
     >
       <Spin spinning={isLoading}>
         {detail && (
@@ -548,14 +566,19 @@ export const Component = () => {
     onError: (e) => message.error((e as Error).message),
   });
 
-  const handleDelete = (record: AdminUser) => {
+  const handleDelete = (record: { id: number; email: string }) => {
     Modal.confirm({
       title: t('admin_users.delete_confirm_title', { email: record.email }),
       content: t('admin_users.delete_confirm_desc'),
       okText: t('admin_users.delete'),
       okButtonProps: { danger: true },
       cancelText: t('admin_users.cancel'),
-      onOk: () => deleteMutation.mutateAsync(record.id),
+      onOk: async () => {
+        await deleteMutation.mutateAsync(record.id);
+        if (viewingUserId === record.id) {
+          setIsDetailOpen(false);
+        }
+      },
     });
   };
 
@@ -955,6 +978,11 @@ export const Component = () => {
         open={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         isMobile={isMobile}
+        onDelete={handleDelete}
+        isDeleting={
+          deleteMutation.isPending &&
+          deleteMutation.variables === viewingUserId
+        }
       />
 
       {/* 批量清理休眠用户:先预览计数,确认后真删(不可逆) */}
