@@ -980,8 +980,7 @@ export const Component = () => {
         isMobile={isMobile}
         onDelete={handleDelete}
         isDeleting={
-          deleteMutation.isPending &&
-          deleteMutation.variables === viewingUserId
+          deleteMutation.isPending && deleteMutation.variables === viewingUserId
         }
       />
 

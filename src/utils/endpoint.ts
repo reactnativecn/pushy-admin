@@ -15,7 +15,7 @@ export function setCustomBaseUrl(baseUrl: string | null): void {
   if (typeof window === 'undefined') {
     return;
   }
-  if (baseUrl && baseUrl.trim()) {
+  if (baseUrl?.trim()) {
     window.localStorage.setItem(CUSTOM_BASE_URL_STORAGE_KEY, baseUrl.trim());
   } else {
     window.localStorage.removeItem(CUSTOM_BASE_URL_STORAGE_KEY);
