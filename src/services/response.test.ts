@@ -1,11 +1,17 @@
 // biome-ignore format: keep single line for ts-ignore
 // @ts-expect-error
 import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+// Spread the real antd namespace into the mock: bun's mock.module leaks
+// across test files and discovery order differs between macOS and Linux, so a
+// partial antd mock would break later `import { Alert } from 'antd'` binds
+// (seen on cresc-admin CI). The spread keeps the leak harmless.
+import * as antd from 'antd';
 import * as auth from './auth';
 
 const mockMessageError = mock(() => {});
 
 mock.module('antd', () => ({
+  ...antd,
   message: { error: mockMessageError },
 }));
 

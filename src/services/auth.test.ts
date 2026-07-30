@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import * as antdReal from 'antd';
 import {
   clearSession,
   markCookieSession,
@@ -35,7 +36,10 @@ const mockMessage = {
   error: mock(() => {}),
 };
 
+// Spread the real antd namespace: partial module mocks leak across test
+// files in bun and would break later antd named imports (order-dependent).
 mock.module('antd', () => ({
+  ...antdReal,
   message: mockMessage,
 }));
 
