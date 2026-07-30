@@ -836,6 +836,7 @@
     "view_realtime": "Click here to view real-time data",
     "note_prefix": "Note:",
     "build_time": "Build time:",
+    "bundle_hash": "Bundle hash:",
     "status_map_paused": "Paused",
     "status_map_expired": "Expired"
   },

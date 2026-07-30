@@ -17,6 +17,7 @@ import {
   Row,
   Select,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
@@ -387,10 +388,21 @@ const Item = ({
                 </Typography.Paragraph>
               )}
               <div className="text-xs flex flex-col gap-1">
-                <div>
-                  {t('package_list.build_time')}
-                  {item.buildTime}
-                </div>
+                {/* 内容指纹(新 CLI 上传才有)优先于构建时间:它才是精确的
+                    二进制身份;老包回退展示 buildTime */}
+                {item.bundleHash ? (
+                  <div>
+                    {t('package_list.bundle_hash')}
+                    <Tooltip title={item.bundleHash}>
+                      <code>{item.bundleHash.slice(0, 16)}…</code>
+                    </Tooltip>
+                  </div>
+                ) : (
+                  <div>
+                    {t('package_list.build_time')}
+                    {item.buildTime}
+                  </div>
+                )}
               </div>
             </div>
           }

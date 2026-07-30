@@ -836,6 +836,7 @@
     "view_realtime": "点击此处查看实时数据",
     "note_prefix": "注意：",
     "build_time": "构建时间：",
+    "bundle_hash": "内容指纹：",
     "status_map_paused": "已暂停",
     "status_map_expired": "已过期"
   },

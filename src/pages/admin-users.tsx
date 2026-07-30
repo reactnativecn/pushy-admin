@@ -392,8 +392,7 @@ const UserDetailDrawer = ({
                           {
                             title: 'Build',
                             key: 'build',
-                            render: (_, r) =>
-                              `${r.buildNumber || '-'}(${r.buildTime || '-'})`,
+                            render: (_, r) => r.buildTime || '-',
                           },
                           {
                             title: translate('admin_users.col_status'),

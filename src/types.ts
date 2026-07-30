@@ -95,7 +95,8 @@ export interface PackageBase {
 
 export interface Package extends PackageBase {
   buildTime?: string;
-  buildNumber?: string;
+  /** 包内嵌入 JS bundle 的 sha256（新 CLI 上传才有），有则优先于 buildTime 展示 */
+  bundleHash?: string;
   deps?: Record<string, string>;
   commit?: Commit;
   hash: string;
