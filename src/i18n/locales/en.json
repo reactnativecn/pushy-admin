@@ -383,7 +383,11 @@
     "no_data": "No data available",
     "tooltip_count": "{{count}} checks",
     "tooltip_count_percent": "{{count}} checks ({{percent}}%)",
-    "current_dimension_label": "Current dimension: {{dimension}}"
+    "current_dimension_label": "Current dimension: {{dimension}}",
+    "bundle_status": "Content verdict",
+    "bundle_status_matched": "Matched",
+    "bundle_status_rebuiltSameJs": "Rebuilt, same JS",
+    "bundle_status_unknownBundle": "Unknown bundle"
   },
   "admin_metrics": {
     "mode_requests": "Requests",
