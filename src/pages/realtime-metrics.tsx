@@ -26,7 +26,7 @@ interface ChartDataPoint {
   sharePercent?: number;
 }
 
-type MetricAttribute = 'hash' | 'packageVersion_buildTime' | 'bundleStatus';
+type MetricAttribute = 'hash' | 'packageVersion_buildTime';
 
 interface FormattedCategory {
   label: string;
@@ -73,13 +73,15 @@ const formatCategory = (
         isTotal: false,
       };
     }
-    if (key === 'bundleStatus') {
-      // 内容判定结论(bundleHashJudge 开启后才有数据),三个取值直接翻译
+    if (key === 'packageVersion_bundleHash') {
+      // 内容指纹复合键与 buildTime 复合键同属"原生包"面板(新客户端上报
+      // 指纹后取代 buildTime);截断 64 位 hex 便于图例阅读
       return {
-        label: t(`realtime_metrics.bundle_status_${value}`, {
-          defaultValue: value,
-        }),
-        attribute: 'bundleStatus',
+        label: `${t('realtime_metrics.package_prefix')} ${value.replace(
+          /([0-9a-f]{64})$/,
+          (h) => `${h.slice(0, 8)}…`,
+        )}`,
+        attribute: 'packageVersion_buildTime',
         isTotal: false,
       };
     }
@@ -107,10 +109,6 @@ const getAttributeOptions = (t: (key: string) => string) => [
   {
     label: t('realtime_metrics.package'),
     value: 'packageVersion_buildTime' as const,
-  },
-  {
-    label: t('realtime_metrics.bundle_status'),
-    value: 'bundleStatus' as const,
   },
 ];
 
@@ -157,11 +155,9 @@ export const Component = () => {
     isLoading: isLoadingApps,
   } = useAppWorkspaceList();
   const urlAppKey = searchParams.get('appKey') || undefined;
-  const attributeParam = searchParams.get('attribute');
   const selectedAttribute: MetricAttribute =
-    attributeParam === 'packageVersion_buildTime' ||
-    attributeParam === 'bundleStatus'
-      ? attributeParam
+    searchParams.get('attribute') === 'packageVersion_buildTime'
+      ? 'packageVersion_buildTime'
       : 'hash';
 
   const attributeOptions = getAttributeOptions(t);

@@ -383,11 +383,7 @@
     "no_data": "暂无数据",
     "tooltip_count": "{{count}} 次",
     "tooltip_count_percent": "{{count}} 次（{{percent}}%）",
-    "current_dimension_label": "当前维度：{{dimension}}",
-    "bundle_status": "内容判定",
-    "bundle_status_matched": "内容一致 (matched)",
-    "bundle_status_rebuiltSameJs": "重打包但 JS 未变 (rebuiltSameJs)",
-    "bundle_status_unknownBundle": "未注册二进制 (unknownBundle)"
+    "current_dimension_label": "当前维度：{{dimension}}"
   },
   "admin_metrics": {
     "mode_requests": "请求数",
