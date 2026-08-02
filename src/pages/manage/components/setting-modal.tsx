@@ -3,6 +3,7 @@ import { Button, Form, Input, Switch, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DangerousConfirmModal } from '@/components/dangerous-confirm-modal';
+import { IgnoreCheckHelp } from '@/components/ignore-check-help';
 import { rootRouterPath, router } from '@/router';
 import { useDeleteApp } from '@/services/mutations';
 import { useUserInfo } from '@/utils/hooks';
@@ -67,7 +68,12 @@ const SettingModal = () => {
       </Form.Item>
       <Form.Item
         layout="vertical"
-        label={t('setting_modal.ignore_timestamp')}
+        label={
+          <span>
+            {t('setting_modal.ignore_timestamp')}
+            <IgnoreCheckHelp />
+          </span>
+        }
         name="ignoreBuildTime"
         normalize={(value) => (value ? 'enabled' : 'disabled')}
         getValueProps={(value) => ({ value: value === 'enabled' })}

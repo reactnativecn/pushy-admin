@@ -13,6 +13,7 @@ import {
 } from 'antd';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IgnoreCheckHelp } from '@/components/ignore-check-help';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { useDeleteApp, useUpdateApp } from '@/services/mutations';
@@ -153,7 +154,12 @@ function AppSettingsModalContent({
         </Form.Item>
         <Form.Item
           layout="vertical"
-          label={t('app_settings_modal.ignore_timestamp')}
+          label={
+            <span>
+              {t('app_settings_modal.ignore_timestamp')}
+              <IgnoreCheckHelp />
+            </span>
+          }
           name="ignoreBuildTime"
           normalize={(value) => (value ? 'enabled' : 'disabled')}
           getValueProps={(value) => ({ value: value === 'enabled' })}

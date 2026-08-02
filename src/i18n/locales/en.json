@@ -720,12 +720,17 @@
     "hot_updates": "Enable hot updates",
     "enabled": "Enabled",
     "paused": "Paused",
-    "ignore_timestamp": "Ignore build timestamp (Premium and above)",
+    "ignore_timestamp": "Ignore timestamp / bundle hash check",
     "disabled": "Disabled",
     "delete_app": "Delete App",
     "delete_confirm": "Deleted apps cannot be restored",
     "delete_ok": "Delete",
     "delete_button": "Delete"
+  },
+  "ignore_check_help": {
+    "what": "When enabled, update checks no longer verify that the build timestamp or bundle hash reported by clients matches the recorded one, so mismatched clients can still receive OTA updates. Useful when automated builds change the timestamp on every build while the native code stays the same and no new native package is uploaded.",
+    "side_effect": "Side effects: those clients fall back to full-bundle updates, which lowers diff reuse and may take more time and consume more data. If the native code has actually changed, skipping the check may cause crashes after the update due to incompatibility — enable with caution.",
+    "tier": "This option is available for Premium plan and above."
   },
   "error_boundary": {
     "title": "Page Error",
@@ -832,7 +837,7 @@
     "status_paused": "Paused",
     "status_expired": "Expired",
     "mismatch_title": "Mismatched timestamps detected:",
-    "mismatch_desc": "The same native package version is running from native builds with different build timestamps. Note: clients whose timestamp does not match the recorded one cannot receive OTA updates, unless the \"Ignore build timestamp\" option (Premium plan and above) is enabled in the app settings. With it enabled, those clients fall back to full-bundle updates, which lowers diff reuse and may take more time and consume more data.",
+    "mismatch_desc": "The same native package version is running from native builds with different build timestamps. Note: clients whose timestamp does not match the recorded one cannot receive OTA updates, unless the \"Ignore timestamp / bundle hash check\" option (Premium plan and above) is enabled in the app settings. With it enabled, those clients fall back to full-bundle updates, which lowers diff reuse and may take more time and consume more data.",
     "hash_mismatch_title": "Mismatched bundle hashes detected:",
     "hash_mismatch_desc": "Some clients report a bundle hash different from the one recorded for this native package, which usually means a rebuilt binary was shipped without uploading the new package. Those clients cannot match this native package and will not receive OTA updates published for it — please upload a new native package for those builds.",
     "view_realtime": "Click here to view real-time data",
@@ -885,7 +890,7 @@
     "hot_updates": "Enable Hot Updates",
     "enabled": "Enabled",
     "paused": "Paused",
-    "ignore_timestamp": "Ignore build timestamp (Premium and above)",
+    "ignore_timestamp": "Ignore timestamp / bundle hash check",
     "disabled": "Disabled",
     "delete_app": "Delete App",
     "delete_confirm": "This app cannot be recovered after deletion.",
