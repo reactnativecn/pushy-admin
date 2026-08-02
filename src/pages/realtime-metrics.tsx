@@ -345,7 +345,7 @@ export const Component = () => {
     );
   }, [selectedAttribute, attributeOptions]);
 
-  // 入口链接标记的类别（原生包时间戳告警的跳转）强制加入默认图例，
+  // 入口链接标记的类别（原生包时间戳/指纹告警的跳转）强制加入默认图例，
   // 不受 Top 10 截断影响——它们通常量很小,否则点进来什么都看不到
   const focusLabels = useMemo(() => {
     const focusParam = searchParams.get('focus') ?? '';
@@ -353,7 +353,15 @@ export const Component = () => {
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean)
-      .map((value) => `${t('realtime_metrics.package_prefix')} ${value}`);
+      .map(
+        (value) =>
+          // 指纹告警的 focus 值带完整 64 位 hex，
+          // 与图例标签做同样的截断才能匹配上
+          `${t('realtime_metrics.package_prefix')} ${value.replace(
+            /([0-9a-f]{64})$/,
+            (h) => `${h.slice(0, 8)}…`,
+          )}`,
+      );
   }, [searchParams, t]);
 
   const defaultLegendValues = useMemo(() => {

@@ -17,7 +17,8 @@ import {
 } from '@/utils/query-keys';
 
 const METRIC_CATEGORY_SEPARATOR = '\u001f';
-const PACKAGE_METRIC_PREFIX = `packageVersion_buildTime${METRIC_CATEGORY_SEPARATOR}`;
+const BUILD_TIME_METRIC_PREFIX = `packageVersion_buildTime${METRIC_CATEGORY_SEPARATOR}`;
+const BUNDLE_HASH_METRIC_PREFIX = `packageVersion_bundleHash${METRIC_CATEGORY_SEPARATOR}`;
 
 const buildPackageMetricValue = ({
   name,
@@ -33,83 +34,149 @@ const isIgnoredTimestamp = (timestamp: string) => {
   return normalizedTimestamp !== '' && Number(normalizedTimestamp) === 0;
 };
 
-export const getPackageTimestampWarnings = ({
+export interface PackageMetricWarnings {
+  timestamps: string[];
+  hashes: string[];
+}
+
+export const getPackageMetricWarnings = ({
   dict,
   packages,
 }: {
   dict?: string[];
   packages: Package[];
 }) => {
-  const warningTimestamps = new Map<number, Set<string>>();
+  const warnings = new Map<
+    number,
+    { timestamps: Set<string>; hashes: Set<string> }
+  >();
 
   if (!dict?.length || packages.length === 0) {
-    return new Map<number, string[]>();
+    return new Map<number, PackageMetricWarnings>();
   }
 
   const packageCandidates = packages.map((pkg) => ({
     pkg,
-    currentMetricValue: buildPackageMetricValue(pkg),
+    currentBuildTimeValue: buildPackageMetricValue(pkg),
+    currentBundleHashValue: pkg.bundleHash
+      ? `${pkg.name}_${pkg.bundleHash}`
+      : undefined,
   }));
 
-  const exactMatchMap = new Map<string, (typeof packageCandidates)[0]>();
+  const buildTimeExactMap = new Map<string, (typeof packageCandidates)[0]>();
+  const bundleHashExactMap = new Map<string, (typeof packageCandidates)[0]>();
   const nameMatchMap = new Map<string, (typeof packageCandidates)[0]>();
 
   // Sort by name length descending to ensure the longest package name wins in prefix match
   for (const candidate of [...packageCandidates].sort(
     (a, b) => b.pkg.name.length - a.pkg.name.length,
   )) {
-    if (!exactMatchMap.has(candidate.currentMetricValue)) {
-      exactMatchMap.set(candidate.currentMetricValue, candidate);
+    if (!buildTimeExactMap.has(candidate.currentBuildTimeValue)) {
+      buildTimeExactMap.set(candidate.currentBuildTimeValue, candidate);
+    }
+    if (
+      candidate.currentBundleHashValue &&
+      !bundleHashExactMap.has(candidate.currentBundleHashValue)
+    ) {
+      bundleHashExactMap.set(candidate.currentBundleHashValue, candidate);
     }
     if (!nameMatchMap.has(candidate.pkg.name)) {
       nameMatchMap.set(candidate.pkg.name, candidate);
     }
   }
 
+  const matchByName = (metricValue: string) => {
+    let idx = metricValue.lastIndexOf('_');
+    while (idx !== -1) {
+      const matched = nameMatchMap.get(metricValue.slice(0, idx));
+      if (matched) {
+        return matched;
+      }
+      idx = metricValue.lastIndexOf('_', idx - 1);
+    }
+    return undefined;
+  };
+
+  const addWarning = (
+    packageId: number,
+    kind: 'timestamps' | 'hashes',
+    value: string,
+  ) => {
+    const current = warnings.get(packageId) ?? {
+      timestamps: new Set<string>(),
+      hashes: new Set<string>(),
+    };
+    current[kind].add(value);
+    warnings.set(packageId, current);
+  };
+
   for (const entry of dict) {
-    if (!entry.startsWith(PACKAGE_METRIC_PREFIX)) {
+    const isBuildTimeEntry = entry.startsWith(BUILD_TIME_METRIC_PREFIX);
+    const isBundleHashEntry =
+      !isBuildTimeEntry && entry.startsWith(BUNDLE_HASH_METRIC_PREFIX);
+    if (!isBuildTimeEntry && !isBundleHashEntry) {
       continue;
     }
 
-    const metricValue = entry.slice(PACKAGE_METRIC_PREFIX.length);
+    const metricValue = entry.slice(
+      isBuildTimeEntry
+        ? BUILD_TIME_METRIC_PREFIX.length
+        : BUNDLE_HASH_METRIC_PREFIX.length,
+    );
     if (!metricValue) {
       continue;
     }
 
-    let matchedPackage = exactMatchMap.get(metricValue);
-
-    if (!matchedPackage) {
-      let idx = metricValue.lastIndexOf('_');
-      while (idx !== -1) {
-        const potentialName = metricValue.slice(0, idx);
-        matchedPackage = nameMatchMap.get(potentialName);
-        if (matchedPackage) {
-          break;
-        }
-        idx = metricValue.lastIndexOf('_', idx - 1);
+    if (isBuildTimeEntry) {
+      const matchedPackage =
+        buildTimeExactMap.get(metricValue) ?? matchByName(metricValue);
+      if (
+        !matchedPackage ||
+        metricValue === matchedPackage.currentBuildTimeValue
+      ) {
+        continue;
       }
-    }
+      // 指纹包若没有登记 buildTime，则没有可比对的基准时间戳，
+      // 老客户端上报的任何真实时间都不构成告警（身份以指纹为准）
+      if (matchedPackage.pkg.bundleHash && !matchedPackage.pkg.buildTime) {
+        continue;
+      }
 
-    if (!matchedPackage || metricValue === matchedPackage.currentMetricValue) {
-      continue;
-    }
+      const timestamp = metricValue.startsWith(`${matchedPackage.pkg.name}_`)
+        ? metricValue.slice(matchedPackage.pkg.name.length + 1) || 'unknown'
+        : metricValue;
+      if (isIgnoredTimestamp(timestamp)) {
+        continue;
+      }
+      addWarning(matchedPackage.pkg.id, 'timestamps', timestamp);
+    } else {
+      const matchedPackage =
+        bundleHashExactMap.get(metricValue) ?? matchByName(metricValue);
+      // 只有登记了指纹的包才有比对基准；老包上报的指纹无从校验
+      if (
+        !matchedPackage?.pkg.bundleHash ||
+        metricValue === matchedPackage.currentBundleHashValue
+      ) {
+        continue;
+      }
 
-    const timestamp = metricValue.startsWith(`${matchedPackage.pkg.name}_`)
-      ? metricValue.slice(matchedPackage.pkg.name.length + 1) || 'unknown'
-      : metricValue;
-    if (isIgnoredTimestamp(timestamp)) {
-      continue;
+      const hash = metricValue.startsWith(`${matchedPackage.pkg.name}_`)
+        ? metricValue.slice(matchedPackage.pkg.name.length + 1)
+        : metricValue;
+      if (!hash || hash === 'unknown') {
+        continue;
+      }
+      addWarning(matchedPackage.pkg.id, 'hashes', hash);
     }
-    const currentWarningTimestamps =
-      warningTimestamps.get(matchedPackage.pkg.id) ?? new Set<string>();
-    currentWarningTimestamps.add(timestamp);
-    warningTimestamps.set(matchedPackage.pkg.id, currentWarningTimestamps);
   }
 
   return new Map(
-    Array.from(warningTimestamps.entries()).map(([packageId, timestamps]) => [
+    Array.from(warnings.entries()).map(([packageId, packageWarnings]) => [
       packageId,
-      Array.from(timestamps).sort(),
+      {
+        timestamps: Array.from(packageWarnings.timestamps).sort(),
+        hashes: Array.from(packageWarnings.hashes).sort(),
+      },
     ]),
   );
 };
@@ -342,7 +409,7 @@ export const useDiffStatus = ({
   return { diffStatusByVersion };
 };
 
-export const usePackageTimestampWarnings = ({
+export const usePackageMetricWarnings = ({
   appId,
   app,
   packages,
@@ -359,7 +426,7 @@ export const usePackageTimestampWarnings = ({
 
   const { data, isLoading } = useQuery({
     queryKey: [
-      'packageTimestampWarnings',
+      'packageMetricWarnings',
       appId,
       app?.appKey,
       metricsRange.start,
@@ -376,12 +443,12 @@ export const usePackageTimestampWarnings = ({
     staleTime: 1000 * 60 * 5,
   });
 
-  const packageTimestampWarnings = useMemo(() => {
+  const packageMetricWarnings = useMemo(() => {
     if (app?.ignoreBuildTime === 'enabled') {
-      return new Map<number, string[]>();
+      return new Map<number, PackageMetricWarnings>();
     }
 
-    return getPackageTimestampWarnings({
+    return getPackageMetricWarnings({
       dict: data?.dict,
       packages,
     });
@@ -389,7 +456,7 @@ export const usePackageTimestampWarnings = ({
 
   return {
     app,
-    packageTimestampWarnings,
+    packageMetricWarnings,
     isLoading,
   };
 };

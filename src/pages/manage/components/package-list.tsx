@@ -30,7 +30,10 @@ import {
   useUpdatePackage,
 } from '@/services/mutations';
 import type { Package } from '@/types';
-import { useWorkspacePermissions } from '@/utils/hooks';
+import {
+  type PackageMetricWarnings,
+  useWorkspacePermissions,
+} from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
 import { Commit } from './commit';
 import { DepsTable } from './deps-table';
@@ -47,7 +50,7 @@ const PackageList = ({
   setSelectedPackageIds: Dispatch<SetStateAction<number[]>>;
 }) => {
   const { t } = useTranslation();
-  const { app, appId, packageTimestampWarnings } = useManageContext();
+  const { app, appId, packageMetricWarnings } = useManageContext();
   const { canPublish } = useWorkspacePermissions();
   const deletePackages = useDeletePackages();
   const selectedPackageIdSet = useMemo(
@@ -59,16 +62,19 @@ const PackageList = ({
     [dataSource, selectedPackageIdSet],
   );
   const hasSelectedVisiblePackages = selectedPackages.length > 0;
-  // 带上告警的计算窗口（24 小时）和被标记的时间戳，让实时页打开时
+  // 带上告警的计算窗口（24 小时）和被标记的时间戳/指纹，让实时页打开时
   // 就能定位到这些类别（否则 Top10 图例截断会把低量类别藏掉）
-  const buildRealtimeMetricsPath = (item: Package, timestamps: string[]) =>
+  const buildRealtimeMetricsPath = (
+    item: Package,
+    warnings: PackageMetricWarnings,
+  ) =>
     app?.appKey
       ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
           appKey: app.appKey,
           attribute: 'packageVersion_buildTime',
           range: '24h',
-          focus: timestamps
-            .map((timestamp) => `${item.name}_${timestamp}`)
+          focus: [...warnings.timestamps, ...warnings.hashes]
+            .map((value) => `${item.name}_${value}`)
             .join(','),
         }).toString()}`
       : undefined;
@@ -118,7 +124,8 @@ const PackageList = ({
         ) : undefined
       }
       renderItem={(item) => {
-        const warningTimestamps = packageTimestampWarnings.get(item.id) ?? [];
+        const warnings =
+          packageMetricWarnings.get(item.id) ?? EMPTY_METRIC_WARNINGS;
         return (
           <Item
             item={item}
@@ -126,11 +133,8 @@ const PackageList = ({
             onSelectedChange={(checked) =>
               togglePackageSelection(item.id, checked)
             }
-            warningTimestamps={warningTimestamps}
-            realtimeMetricsPath={buildRealtimeMetricsPath(
-              item,
-              warningTimestamps,
-            )}
+            warnings={warnings}
+            realtimeMetricsPath={buildRealtimeMetricsPath(item, warnings)}
           />
         );
       }}
@@ -265,11 +269,16 @@ const EditPackageModal = ({
   );
 };
 
-const TimestampWarning = ({
-  warningTimestamps,
+const EMPTY_METRIC_WARNINGS: PackageMetricWarnings = {
+  timestamps: [],
+  hashes: [],
+};
+
+const MetricWarning = ({
+  warnings,
   realtimeMetricsPath,
 }: {
-  warningTimestamps: string[];
+  warnings: PackageMetricWarnings;
   realtimeMetricsPath: string;
 }) => {
   const { t } = useTranslation();
@@ -278,13 +287,32 @@ const TimestampWarning = ({
       trigger="hover"
       content={
         <div className="max-w-72 text-xs leading-5">
-          <div>{t('package_list.mismatch_title')}</div>
-          <div className="mt-1 break-all text-gray-700">
-            {warningTimestamps.map((timestamp) => (
-              <div key={timestamp}>{timestamp}</div>
-            ))}
-          </div>
-          <div className="mt-2">{t('package_list.mismatch_desc')}</div>
+          {warnings.timestamps.length > 0 && (
+            <div>
+              <div>{t('package_list.mismatch_title')}</div>
+              <div className="mt-1 break-all text-gray-700">
+                {warnings.timestamps.map((timestamp) => (
+                  <div key={timestamp}>{timestamp}</div>
+                ))}
+              </div>
+              <div className="mt-2">{t('package_list.mismatch_desc')}</div>
+            </div>
+          )}
+          {warnings.hashes.length > 0 && (
+            <div className={warnings.timestamps.length > 0 ? 'mt-3' : ''}>
+              <div>{t('package_list.hash_mismatch_title')}</div>
+              <div className="mt-1 break-all text-gray-700">
+                {warnings.hashes.map((hash) => (
+                  <div key={hash}>
+                    <code>
+                      {hash.length > 16 ? `${hash.slice(0, 16)}…` : hash}
+                    </code>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2">{t('package_list.hash_mismatch_desc')}</div>
+            </div>
+          )}
           <div className="mt-1">
             <Link to={realtimeMetricsPath}>
               {t('package_list.view_realtime')}
@@ -304,13 +332,13 @@ const Item = ({
   item,
   selected,
   onSelectedChange,
-  warningTimestamps,
+  warnings,
   realtimeMetricsPath,
 }: {
   item: Package;
   selected: boolean;
   onSelectedChange: (checked: boolean) => void;
-  warningTimestamps: string[];
+  warnings: PackageMetricWarnings;
   realtimeMetricsPath?: string;
 }) => {
   const { t } = useTranslation();
@@ -318,7 +346,8 @@ const Item = ({
   const { canPublish } = useWorkspacePermissions();
   const deletePackage = useDeletePackage();
   const [editing, setEditing] = useState(false);
-  const hasTimestampWarning = warningTimestamps.length > 0;
+  const hasMetricWarning =
+    warnings.timestamps.length > 0 || warnings.hashes.length > 0;
   const statusMap: Partial<Record<NonNullable<Package['status']>, string>> = {
     paused: t('package_list.status_map_paused'),
     expired: t('package_list.status_map_expired'),
@@ -338,9 +367,9 @@ const Item = ({
               <Col flex="auto" className="min-w-0">
                 <div className="flex flex-wrap items-center">
                   <span>{item.name}</span>
-                  {hasTimestampWarning && realtimeMetricsPath && (
-                    <TimestampWarning
-                      warningTimestamps={warningTimestamps}
+                  {hasMetricWarning && realtimeMetricsPath && (
+                    <MetricWarning
+                      warnings={warnings}
                       realtimeMetricsPath={realtimeMetricsPath}
                     />
                   )}
