@@ -5,7 +5,12 @@ import {
   LinkOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   Button,
   Card,
@@ -86,16 +91,17 @@ export const Component = () => {
         limit: pageSize,
         offset: (currentPage - 1) * pageSize,
       }),
+    placeholderData: keepPreviousData,
   });
 
   const total = data?.count ?? data?.data.length ?? 0;
   const maxPage = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
-    if (currentPage > maxPage) {
+    if (data && currentPage > maxPage) {
       patchSearchParams(setSearchParams, { page: String(maxPage) });
     }
-  }, [currentPage, maxPage, setSearchParams]);
+  }, [data, currentPage, maxPage, setSearchParams]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminApp> }) =>

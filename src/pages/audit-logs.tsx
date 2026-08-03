@@ -312,10 +312,10 @@ export const AuditLogs = () => {
   const maxPage = Math.max(1, Math.ceil(filteredAuditLogs.length / pageSize));
 
   useEffect(() => {
-    if (currentPage > maxPage) {
+    if (!isLoading && currentPage > maxPage) {
       patchSearchParams(setSearchParams, { page: String(maxPage) });
     }
-  }, [currentPage, maxPage, setSearchParams]);
+  }, [isLoading, currentPage, maxPage, setSearchParams]);
 
   const selectedLog = selectedLogId
     ? (allAuditLogs.find((log) => String(log.id) === selectedLogId) ?? null)

@@ -1,6 +1,10 @@
 import { Line } from '@ant-design/charts';
 import { ReloadOutlined } from '@ant-design/icons';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   Button,
   Card,
@@ -276,6 +280,7 @@ export function ServiceStatusPanel({
       }),
     queryKey: metricsKeys.internalApi5xxEvents(target.key, api5xxEventOffset),
     refetchInterval: 30_000,
+    placeholderData: keepPreviousData,
   });
   const apiDuration = useMemo(
     () =>
