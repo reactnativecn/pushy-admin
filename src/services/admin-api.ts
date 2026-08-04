@@ -161,19 +161,22 @@ export const adminApi = {
         AdminApp & {
           checkCount: number;
           packagesCount: number;
-          packages: Array<{
-            id: number;
-            name: string;
-            hash: string;
-            status: string;
-            buildTime: string | null;
-            note: string | null;
-            createdAt: string;
-            updatedAt: string;
-          }>;
         }
       >;
     }>('get', `/admin/users/${id}`),
+  getAppPackages: (appId: number) =>
+    request<{
+      data: Array<{
+        id: number;
+        name: string;
+        hash: string;
+        status: string;
+        buildTime: string | null;
+        note: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+    }>('get', `/admin/apps/${appId}/packages`),
   // admin system deploy
   getSystemInstances: (baseUrl?: string) =>
     request<{

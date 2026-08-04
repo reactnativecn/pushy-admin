@@ -2,6 +2,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  LineChartOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import {
@@ -34,7 +35,7 @@ import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   type Content,
   createJSONEditor,
@@ -42,6 +43,7 @@ import {
   type OnChange,
 } from 'vanilla-jsoneditor';
 import { quotas } from '@/constants/quotas';
+import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
 import type { AdminUser, Quota, Tier } from '@/types';
 import { patchSearchParams } from '@/utils/helper';
@@ -156,6 +158,63 @@ const JsonEditorWrapper = ({
   }, [value]);
 
   return <div ref={containerRef} style={{ height }} />;
+};
+
+// Collapse 面板默认首次展开才挂载子内容，借此实现按需拉取包列表
+const AppPackagesTable = ({ appId }: { appId: number }) => {
+  const { t } = useTranslation();
+  const { data, isLoading } = useQuery({
+    queryKey: adminKeys.appPackages(appId),
+    queryFn: () => adminApi.getAppPackages(appId),
+  });
+
+  return (
+    <Table
+      dataSource={data?.data ?? []}
+      rowKey="id"
+      loading={isLoading}
+      pagination={{ pageSize: 5, size: 'small' }}
+      size="small"
+      columns={[
+        {
+          title: 'ID',
+          dataIndex: 'id',
+          key: 'id',
+          width: 60,
+        },
+        {
+          title: t('admin_users.pkg_name'),
+          dataIndex: 'name',
+          key: 'name',
+        },
+        {
+          title: 'Hash',
+          dataIndex: 'hash',
+          key: 'hash',
+          width: 100,
+          render: (h: string) => (
+            <code className="text-xs">{h.slice(0, 8)}</code>
+          ),
+        },
+        {
+          title: 'Build',
+          key: 'build',
+          render: (_, r) => r.buildTime || '-',
+        },
+        {
+          title: t('admin_users.col_status'),
+          dataIndex: 'status',
+          key: 'status',
+          width: 80,
+        },
+        {
+          title: t('admin_users.col_note'),
+          dataIndex: 'note',
+          key: 'note',
+        },
+      ]}
+    />
+  );
 };
 
 const UserDetailDrawer = ({
@@ -355,6 +414,21 @@ const UserDetailDrawer = ({
                             {translate('admin_users.packages_count')}:{' '}
                             <strong>{app.packagesCount}</strong>
                           </span>
+                          <Link
+                            to={`${rootRouterPath.realtimeMetrics}?${new URLSearchParams(
+                              { appKey: app.appKey },
+                            ).toString()}`}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <Button
+                              type="link"
+                              size="small"
+                              icon={<LineChartOutlined />}
+                              className="p-0!"
+                            >
+                              {translate('admin_apps.metrics')}
+                            </Button>
+                          </Link>
                         </Space>
                       </div>
                     }
@@ -363,50 +437,7 @@ const UserDetailDrawer = ({
                       <div className="text-xs text-gray-500 mb-2">
                         App Key: <code>{app.appKey}</code>
                       </div>
-                      <Table
-                        dataSource={app.packages}
-                        rowKey="id"
-                        pagination={{ pageSize: 5, size: 'small' }}
-                        size="small"
-                        columns={[
-                          {
-                            title: 'ID',
-                            dataIndex: 'id',
-                            key: 'id',
-                            width: 60,
-                          },
-                          {
-                            title: translate('admin_users.pkg_name'),
-                            dataIndex: 'name',
-                            key: 'name',
-                          },
-                          {
-                            title: 'Hash',
-                            dataIndex: 'hash',
-                            key: 'hash',
-                            width: 100,
-                            render: (h: string) => (
-                              <code className="text-xs">{h.slice(0, 8)}</code>
-                            ),
-                          },
-                          {
-                            title: 'Build',
-                            key: 'build',
-                            render: (_, r) => r.buildTime || '-',
-                          },
-                          {
-                            title: translate('admin_users.col_status'),
-                            dataIndex: 'status',
-                            key: 'status',
-                            width: 80,
-                          },
-                          {
-                            title: translate('admin_users.col_note'),
-                            dataIndex: 'note',
-                            key: 'note',
-                          },
-                        ]}
-                      />
+                      <AppPackagesTable appId={app.id} />
                     </Space>
                   </Collapse.Panel>
                 ))}

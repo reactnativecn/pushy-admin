@@ -58,6 +58,7 @@ export const adminKeys = {
       ? (['adminUsers'] as const)
       : (['adminUsers', searchQuery] as const),
   userDetail: (userId: number | null) => ['adminUserDetail', userId] as const,
+  appPackages: (appId: number) => ['adminAppPackages', appId] as const,
   apps: (searchQuery?: string, page?: number, pageSize?: number) =>
     searchQuery === undefined
       ? (['adminApps'] as const)
