@@ -289,7 +289,7 @@
     "n_apps": "{{count}} 个应用"
   },
   "mcp": {
-    "title": "外部 Agent / MCP",
+    "title": "MCP 服务",
     "description": "把 Pushy 的只读诊断能力接到你自己的 AI 客户端。",
     "docs_link": "查看接入文档",
     "create_token": "创建 MCP 令牌",
@@ -733,7 +733,7 @@
     "theme_light": "浅色",
     "theme_dark": "深色",
     "members": "团队",
-    "mcp_connections": "外部 Agent / MCP"
+    "mcp_connections": "MCP 服务"
   },
   "app_drawer": {
     "expand": "展开应用列表",
