@@ -31,17 +31,9 @@ import type { McpToken } from '@/types';
 import { useCustomBaseUrl } from '@/utils/endpoint';
 import { appKeys, mcpTokenKeys } from '@/utils/query-keys';
 
-// 与服务端 ALL_MCP_SCOPES 一致;第二批(audit/nodes)需要更高权限,
-// 服务端会再校验一次,这里只是把可选项摆出来。
-const MCP_SCOPES = [
-  'pushy:apps:read',
-  'pushy:diagnose',
-  'pushy:health:read',
-  'pushy:metrics:read',
-  'pushy:quota:read',
-  'pushy:audit:read',
-  'pushy:nodes:read',
-] as const;
+// 只列出当前真有工具支撑的 scope;服务端 ALL_MCP_SCOPES 比这里宽,
+// 新工具上线时再把对应项加进来。
+const MCP_SCOPES = ['pushy:apps:read', 'pushy:diagnose'] as const;
 
 const DEFAULT_SCOPES = ['pushy:apps:read', 'pushy:diagnose'];
 // 服务端硬上限 365 天,不传默认 90 天
