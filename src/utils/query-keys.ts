@@ -40,6 +40,10 @@ export const apiTokenKeys = {
   all: () => ['apiTokens'] as const,
 };
 
+export const mcpTokenKeys = {
+  all: () => ['mcpTokens'] as const,
+};
+
 export const activateKeys = {
   byToken: (token: string | null) => ['activate', token] as const,
 };

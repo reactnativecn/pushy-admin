@@ -1,4 +1,5 @@
 import {
+  ApiOutlined,
   AppstoreOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -113,6 +114,15 @@ export default function TopNavigation({
             icon: <KeyOutlined />,
             label: (
               <Link to={rootRouterPath.apiTokens}>{t('nav.api_tokens')}</Link>
+            ),
+          },
+          {
+            key: 'mcp-connections',
+            icon: <ApiOutlined />,
+            label: (
+              <Link to={rootRouterPath.mcpConnections}>
+                {t('nav.mcp_connections')}
+              </Link>
             ),
           },
           {

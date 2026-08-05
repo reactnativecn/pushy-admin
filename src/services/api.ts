@@ -5,6 +5,7 @@ import type {
   AuditLog,
   Binding,
   BindingDiffStatus,
+  McpToken,
   MemberRole,
   Package,
   Quota,
@@ -487,4 +488,16 @@ export const api = {
   listApiTokens: () => request<{ data: ApiToken[] }>('get', '/api-token/list'),
   revokeApiToken: (tokenId: number) =>
     request<{ message: string }>('delete', `/api-token/${tokenId}`),
+  // MCP 连接(外部 Agent)
+  createMcpToken: (params: {
+    name: string;
+    clientId: string;
+    scopes?: string[];
+    appIds?: number[];
+    expiresAt?: string;
+  }) => request<McpToken>('post', '/mcp-connection/create', params),
+  listMcpTokens: () =>
+    request<{ data: McpToken[] }>('get', '/mcp-connection/list'),
+  revokeMcpToken: (tokenId: number) =>
+    request<{ message: string }>('delete', `/mcp-connection/${tokenId}`),
 };

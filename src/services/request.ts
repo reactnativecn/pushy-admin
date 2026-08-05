@@ -48,6 +48,15 @@ const getBaseUrl = FEATURES.versionHealthMock
       return baseUrl;
     });
 
+/**
+ * 当前会话实际使用的 API 基址(自定义端点优先,否则用探测结果)。
+ * 展示类页面(例如 MCP 端点)需要跟请求走同一个地址,不能自己拼常量:
+ * 生产构建里 process.env.PUBLIC_API 根本不会被替换。
+ */
+export async function resolveApiBaseUrl(): Promise<string> {
+  return getCustomBaseUrl() ?? (await getBaseUrl);
+}
+
 export default async function request<T extends Record<any, any>>(
   method: HttpMethod,
   path: string,

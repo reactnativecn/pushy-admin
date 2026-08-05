@@ -184,6 +184,24 @@ export interface AuditLog {
   createdAt: string;
 }
 
+export interface McpToken {
+  id: number;
+  name: string;
+  clientId: string;
+  /** 明文只在创建响应里出现一次 */
+  token?: string;
+  tokenSuffix: string;
+  scopes: string[];
+  appIds?: number[] | null;
+  createdBy?: number | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+  isExpired: boolean;
+  isRevoked: boolean;
+}
+
 export interface ApiToken {
   id: number;
   name: string;
