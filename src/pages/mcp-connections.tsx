@@ -62,7 +62,11 @@ function McpConnectionsPage() {
   const [apiBase, setApiBase] = useState('');
   useEffect(() => {
     let cancelled = false;
-    resolveApiBaseUrl().then((base) => {
+    // 自定义端点优先;直接读它,依赖数组才是真的(否则 lint 认为多余)
+    const resolving = customBaseUrl
+      ? Promise.resolve(customBaseUrl)
+      : resolveApiBaseUrl();
+    resolving.then((base) => {
       if (!cancelled) {
         setApiBase(base);
       }
