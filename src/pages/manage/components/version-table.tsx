@@ -438,9 +438,7 @@ const TextColumn = ({
           </pre>
         ) : (
           value || (
-            <span className="text-gray-400 italic">
-              {t('common.none') || '无'}
-            </span>
+            <span className="text-gray-400 italic">{t('common.none')}</span>
           )
         )}
       </div>
