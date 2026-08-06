@@ -8,6 +8,7 @@ import {
   MenuOutlined,
   SettingOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { Badge, Drawer, Menu, Tag } from 'antd';
@@ -110,20 +111,29 @@ export default function TopNavigation({
             ),
           },
           {
-            key: 'api-tokens',
-            icon: <KeyOutlined />,
-            label: (
-              <Link to={rootRouterPath.apiTokens}>{t('nav.api_tokens')}</Link>
-            ),
-          },
-          {
-            key: 'mcp-connections',
-            icon: <ApiOutlined />,
-            label: (
-              <Link to={rootRouterPath.mcpConnections}>
-                {t('nav.mcp_connections')}
-              </Link>
-            ),
+            key: 'automation',
+            icon: <ThunderboltOutlined />,
+            label: t('nav.automation'),
+            children: [
+              {
+                key: 'api-tokens',
+                icon: <KeyOutlined />,
+                label: (
+                  <Link to={rootRouterPath.apiTokens}>
+                    {t('nav.api_tokens')}
+                  </Link>
+                ),
+              },
+              {
+                key: 'mcp-connections',
+                icon: <ApiOutlined />,
+                label: (
+                  <Link to={rootRouterPath.mcpConnections}>
+                    {t('nav.mcp_connections')}
+                  </Link>
+                ),
+              },
+            ],
           },
           {
             key: 'members',
