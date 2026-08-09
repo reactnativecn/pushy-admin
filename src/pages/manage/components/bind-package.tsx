@@ -25,6 +25,10 @@ import {
   useUpsertBinding,
   useUpsertBindings,
 } from '@/services/mutations';
+import {
+  getFatalDepsViolation,
+  packageSupportsForceBoot,
+} from '@/utils/helper';
 import { useManageContext } from '../hooks/useManageContext';
 import DiffStatusTag from './diff-status-tag';
 
@@ -353,6 +357,29 @@ const BindPackage = ({
       return;
     }
 
+    // 硬规则预检(服务端为权威并整批拒绝;这里提前挡住,给出逐包原因)
+    const fatal = pkgs
+      .map((pkg) => ({
+        pkg,
+        violation: getFatalDepsViolation(pkg.deps, versionDeps),
+      }))
+      .filter((item) => item.violation !== null);
+    if (fatal.length > 0) {
+      Modal.error({
+        title: t('bind_package.deps_blocked_title'),
+        content: (
+          <div className="space-y-1">
+            {fatal.map(({ pkg, violation }) => (
+              <div key={pkg.id}>
+                {t(`bind_package.deps_${violation}`, { pkg: pkg.name })}
+              </div>
+            ))}
+          </div>
+        ),
+      });
+      return;
+    }
+
     const publish = async () => {
       if (pkgs.length === 1) {
         await upsertBinding.mutateAsync({
@@ -450,15 +477,21 @@ const BindPackage = ({
               onClick: () => publishToPackages(availablePackages, percentage),
             })),
           },
-          {
-            key: 'all-force-boot',
-            label: t('bind_package.full_force_boot'),
-            icon: <ThunderboltOutlined />,
-            onClick: () =>
-              publishToPackages(availablePackages, undefined, {
-                forceBoot: true,
-              }),
-          },
+          ...(availablePackages.every((pkg) =>
+            packageSupportsForceBoot(pkg.deps),
+          )
+            ? [
+                {
+                  key: 'all-force-boot',
+                  label: t('bind_package.full_force_boot'),
+                  icon: <ThunderboltOutlined />,
+                  onClick: () =>
+                    publishToPackages(availablePackages, undefined, {
+                      forceBoot: true,
+                    }),
+                },
+              ]
+            : []),
         ],
       },
       { type: 'divider' },
@@ -485,12 +518,17 @@ const BindPackage = ({
             onClick: () => publishToPackage(p, percentage),
           })),
         },
-        {
-          key: `pkg-${p.id}-force-boot`,
-          label: t('bind_package.full_force_boot'),
-          icon: <ThunderboltOutlined />,
-          onClick: () => publishToPackage(p, undefined, { forceBoot: true }),
-        },
+        ...(packageSupportsForceBoot(p.deps)
+          ? [
+              {
+                key: `pkg-${p.id}-force-boot`,
+                label: t('bind_package.full_force_boot'),
+                icon: <ThunderboltOutlined />,
+                onClick: () =>
+                  publishToPackage(p, undefined, { forceBoot: true }),
+              },
+            ]
+          : []),
       ],
     })),
   );
@@ -543,19 +581,21 @@ const BindPackage = ({
       // forceBoot 挂在绑定上:重发同一绑定(同 rollout)并翻转 config;
       // 语义见 bind_package.force_boot_tip
       const forceBootOn = !!binding.config?.forceBoot;
-      items.push({
-        key: 'force-boot',
-        label: forceBootOn
-          ? t('bind_package.force_boot_off')
-          : t('bind_package.force_boot_on'),
-        icon: <ThunderboltOutlined />,
-        onClick: () =>
-          publishToPackage(
-            p,
-            isFull ? undefined : rolloutConfigNumber,
-            forceBootOn ? undefined : { forceBoot: true },
-          ),
-      });
+      if (packageSupportsForceBoot(p.deps) || forceBootOn) {
+        items.push({
+          key: 'force-boot',
+          label: forceBootOn
+            ? t('bind_package.force_boot_off')
+            : t('bind_package.force_boot_on'),
+          icon: <ThunderboltOutlined />,
+          onClick: () =>
+            publishToPackage(
+              p,
+              isFull ? undefined : rolloutConfigNumber,
+              forceBootOn ? undefined : { forceBoot: true },
+            ),
+        });
+      }
       if (items.length > 0) {
         items.push({ type: 'divider' });
       }

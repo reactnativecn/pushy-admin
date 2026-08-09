@@ -292,3 +292,61 @@ export const isValidExternalUrl = (url: string) => {
     return false;
   }
 };
+
+// ---- 绑定依赖校验(服务端为权威,这里预检提前挡住并给出可读原因) ----
+
+/** 容忍 ^ ~ >= 等 range 前缀,取第一个 x.y.z;解析失败返回 null */
+export function parseDepVersion(raw?: string): [number, number, number] | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+  const matched = raw.match(/(\d+)\.(\d+)\.(\d+)/);
+  if (!matched) {
+    return null;
+  }
+  return [Number(matched[1]), Number(matched[2]), Number(matched[3])];
+}
+
+export function compareDepVersions(
+  a: [number, number, number],
+  b: [number, number, number],
+) {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] !== b[i]) {
+      return a[i] - b[i];
+    }
+  }
+  return 0;
+}
+
+/**
+ * 绑定硬规则(与服务端 bindingDeps 一致):RN 版本不同 / react-native-update
+ * 降级 → 禁止绑定。deps 缺失或解析失败不拦(存量数据,服务端同样放行)。
+ */
+export function getFatalDepsViolation(
+  packageDeps: Record<string, string> | undefined,
+  versionDeps: Record<string, string> | undefined,
+): 'rn_mismatch' | 'rnu_downgrade' | null {
+  const pkgRn = parseDepVersion(packageDeps?.['react-native']);
+  const verRn = parseDepVersion(versionDeps?.['react-native']);
+  if (pkgRn && verRn && compareDepVersions(pkgRn, verRn) !== 0) {
+    return 'rn_mismatch';
+  }
+  const pkgRnu = parseDepVersion(packageDeps?.['react-native-update']);
+  const verRnu = parseDepVersion(versionDeps?.['react-native-update']);
+  if (pkgRnu && verRnu && compareDepVersions(verRnu, pkgRnu) < 0) {
+    return 'rnu_downgrade';
+  }
+  return null;
+}
+
+/**
+ * forceBoot 只对 react-native-update >= 10.51.0 的原生包有意义(原生冷启动
+ * 检测自 10.51.0 起才存在),低于或未知一律不展示入口。
+ */
+export function packageSupportsForceBoot(
+  packageDeps?: Record<string, string>,
+): boolean {
+  const rnu = parseDepVersion(packageDeps?.['react-native-update']);
+  return !!rnu && compareDepVersions(rnu, [10, 51, 0]) >= 0;
+}

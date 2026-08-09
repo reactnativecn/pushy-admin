@@ -923,6 +923,9 @@
     "force_boot_on": "Force boot (rescue)",
     "force_boot_off": "Cancel force boot",
     "force_boot_tip": "Force boot: the client's native cold-start check activates this version right after downloading it (effective next launch), regardless of the in-app update strategy. This is the brick-rescue path — a device stuck on a broken update cannot run JS, so only the native check can activate the fix. Native check only; republishing replaces the binding and clears the mark.",
+    "deps_blocked_title": "Incompatible dependencies — binding blocked",
+    "deps_rn_mismatch": "Package {{pkg}} was built with a different react-native version; hot updates cannot cross RN versions",
+    "deps_rnu_downgrade": "This version would downgrade react-native-update below what package {{pkg}} ships; downgrades are not allowed",
     "unpublish": "Unpublish",
     "publish": "Publish",
     "publish_success": "Published. Generating incremental patches…"
