@@ -152,6 +152,12 @@ export interface Binding {
   versionId: number;
   packageId: number;
   rollout: number;
+  /**
+   * 绑定级配置("这次投放"的属性)。forceBoot = 强制以该版本启动(救砖):
+   * 客户端原生冷启动检测下载后直接激活,无视应用内 updateStrategy;仅作用
+   * 于原生检测。重绑会替换绑定,标记随之自然清除。
+   */
+  config?: { forceBoot?: boolean; [key: string]: unknown } | null;
 }
 
 export type DiffPairStatus = 'pending' | 'done' | 'failed';

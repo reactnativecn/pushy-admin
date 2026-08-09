@@ -4,6 +4,7 @@ import {
   ExperimentOutlined,
   LinkOutlined,
   RestOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -13,6 +14,7 @@ import {
   type MenuProps,
   Modal,
   message,
+  Popover,
   Table,
 } from 'antd';
 import { useMemo, useState } from 'react';
@@ -331,6 +333,7 @@ const BindPackage = ({
     id?: number;
     packageId: number;
     rollout: number | null | undefined;
+    config?: { forceBoot?: boolean } | null;
   }[] = legacyBindings.concat(
     bindings.filter((b) => b.versionId === versionId),
   );
@@ -341,7 +344,11 @@ const BindPackage = ({
     (p) => !matchedPackageIds.has(p.id),
   );
 
-  const publishToPackages = (pkgs: PublishPackage[], rollout?: number) => {
+  const publishToPackages = (
+    pkgs: PublishPackage[],
+    rollout?: number,
+    config?: { forceBoot?: boolean },
+  ) => {
     if (pkgs.length === 0) {
       return;
     }
@@ -353,6 +360,7 @@ const BindPackage = ({
           packageId: pkgs[0].id,
           versionId,
           rollout,
+          config,
         });
       } else {
         await upsertBindings.mutateAsync({
@@ -360,6 +368,7 @@ const BindPackage = ({
           packageIds: pkgs.map((pkg) => pkg.id),
           versionId,
           rollout,
+          config,
         });
       }
       // 绑定成功只是补丁开始生成；提示语要建立“发布≠立刻有补丁”的预期
@@ -412,8 +421,11 @@ const BindPackage = ({
     });
   };
 
-  const publishToPackage = (pkg: PublishPackage, rollout?: number) =>
-    publishToPackages([pkg], rollout);
+  const publishToPackage = (
+    pkg: PublishPackage,
+    rollout?: number,
+    config?: { forceBoot?: boolean },
+  ) => publishToPackages([pkg], rollout, config);
 
   const publishMenuItems: MenuProps['items'] = [];
   if (availablePackages.length > 1) {
@@ -437,6 +449,15 @@ const BindPackage = ({
               label: `${percentage}%`,
               onClick: () => publishToPackages(availablePackages, percentage),
             })),
+          },
+          {
+            key: 'all-force-boot',
+            label: t('bind_package.full_force_boot'),
+            icon: <ThunderboltOutlined />,
+            onClick: () =>
+              publishToPackages(availablePackages, undefined, {
+                forceBoot: true,
+              }),
           },
         ],
       },
@@ -463,6 +484,12 @@ const BindPackage = ({
             label: `${percentage}%`,
             onClick: () => publishToPackage(p, percentage),
           })),
+        },
+        {
+          key: `pkg-${p.id}-force-boot`,
+          label: t('bind_package.full_force_boot'),
+          icon: <ThunderboltOutlined />,
+          onClick: () => publishToPackage(p, undefined, { forceBoot: true }),
         },
       ],
     })),
@@ -513,6 +540,22 @@ const BindPackage = ({
           }, []),
         });
       }
+      // forceBoot 挂在绑定上:重发同一绑定(同 rollout)并翻转 config;
+      // 语义见 bind_package.force_boot_tip
+      const forceBootOn = !!binding.config?.forceBoot;
+      items.push({
+        key: 'force-boot',
+        label: forceBootOn
+          ? t('bind_package.force_boot_off')
+          : t('bind_package.force_boot_on'),
+        icon: <ThunderboltOutlined />,
+        onClick: () =>
+          publishToPackage(
+            p,
+            isFull ? undefined : rolloutConfigNumber,
+            forceBootOn ? undefined : { forceBoot: true },
+          ),
+      });
       if (items.length > 0) {
         items.push({ type: 'divider' });
       }
@@ -541,6 +584,11 @@ const BindPackage = ({
         >
           <span className="font-bold">{p.name}</span>
           <span className="text-xs">{isFull ? '' : `(${rolloutConfig}%)`}</span>
+          {binding.config?.forceBoot ? (
+            <Popover content={t('bind_package.force_boot_tip')}>
+              <ThunderboltOutlined className="text-amber-500" />
+            </Popover>
+          ) : null}
         </Button>
       );
       result.push(
