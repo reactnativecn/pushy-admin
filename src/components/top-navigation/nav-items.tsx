@@ -66,7 +66,7 @@ export function getExternalItems(
       key: 'ai-cresc',
       icon: <OpenAIOutlined />,
       label: (
-        <ExtLink href="https://ai.cresc.dev">
+        <ExtLink href="https://ai.cresc.dev/model-plaza">
           <span style={{ fontWeight: 'bold' }}>{t('nav.ai_promo')}</span>
         </ExtLink>
       ),
