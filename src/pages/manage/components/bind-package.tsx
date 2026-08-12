@@ -448,6 +448,21 @@ const BindPackage = ({
     });
   };
 
+  // forceBoot 越过客户端更新策略,开启前必须让操作者看到完整语义
+  // (说明文案与已开启标记上的 Popover 共用 force_boot_tip)。
+  const confirmForceBoot = (onOk: () => void) => {
+    Modal.confirm({
+      title: t('bind_package.force_boot_confirm_title'),
+      maskClosable: true,
+      okButtonProps: { danger: true },
+      okText: t('bind_package.force_boot_confirm_ok'),
+      cancelText: t('bind_package.cancel'),
+      width: 560,
+      content: t('bind_package.force_boot_tip'),
+      onOk,
+    });
+  };
+
   const publishToPackage = (
     pkg: PublishPackage,
     rollout?: number,
@@ -486,9 +501,11 @@ const BindPackage = ({
                   label: t('bind_package.full_force_boot'),
                   icon: <ThunderboltOutlined />,
                   onClick: () =>
-                    publishToPackages(availablePackages, undefined, {
-                      forceBoot: true,
-                    }),
+                    confirmForceBoot(() =>
+                      publishToPackages(availablePackages, undefined, {
+                        forceBoot: true,
+                      }),
+                    ),
                 },
               ]
             : []),
@@ -525,7 +542,9 @@ const BindPackage = ({
                 label: t('bind_package.full_force_boot'),
                 icon: <ThunderboltOutlined />,
                 onClick: () =>
-                  publishToPackage(p, undefined, { forceBoot: true }),
+                  confirmForceBoot(() =>
+                    publishToPackage(p, undefined, { forceBoot: true }),
+                  ),
               },
             ]
           : []),
@@ -588,12 +607,20 @@ const BindPackage = ({
             ? t('bind_package.force_boot_off')
             : t('bind_package.force_boot_on'),
           icon: <ThunderboltOutlined />,
-          onClick: () =>
-            publishToPackage(
-              p,
-              isFull ? undefined : rolloutConfigNumber,
-              forceBootOn ? undefined : { forceBoot: true },
-            ),
+          onClick: () => {
+            const doPublish = () =>
+              publishToPackage(
+                p,
+                isFull ? undefined : rolloutConfigNumber,
+                forceBootOn ? undefined : { forceBoot: true },
+              );
+            // 取消强制启动只是回到常规语义,无需拦截
+            if (forceBootOn) {
+              doPublish();
+            } else {
+              confirmForceBoot(doPublish);
+            }
+          },
         });
       }
       if (items.length > 0) {
