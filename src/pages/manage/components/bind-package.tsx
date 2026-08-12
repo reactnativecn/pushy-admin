@@ -458,7 +458,11 @@ const BindPackage = ({
       okText: t('bind_package.force_boot_confirm_ok'),
       cancelText: t('bind_package.cancel'),
       width: 560,
-      content: t('bind_package.force_boot_tip'),
+      content: (
+        <div className="whitespace-pre-line">
+          {t('bind_package.force_boot_tip')}
+        </div>
+      ),
       onOk,
     });
   };
@@ -652,7 +656,14 @@ const BindPackage = ({
           <span className="font-bold">{p.name}</span>
           <span className="text-xs">{isFull ? '' : `(${rolloutConfig}%)`}</span>
           {binding.config?.forceBoot ? (
-            <Popover content={t('bind_package.force_boot_tip')}>
+            <Popover
+              overlayStyle={{ maxWidth: 420 }}
+              content={
+                <div className="whitespace-pre-line">
+                  {t('bind_package.force_boot_tip')}
+                </div>
+              }
+            >
               <ThunderboltOutlined className="text-amber-500" />
             </Popover>
           ) : null}

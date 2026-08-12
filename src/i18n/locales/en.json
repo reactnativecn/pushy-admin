@@ -922,7 +922,7 @@
     "full_force_boot": "Full + force boot (rescue)",
     "force_boot_on": "Force boot (rescue)",
     "force_boot_off": "Cancel force boot",
-    "force_boot_tip": "Force boot: the client's native cold-start check activates this version right after downloading it (effective next launch), regardless of the in-app update strategy. This is the brick-rescue path — a device stuck on a broken update cannot run JS, so only the native check can activate the fix. Native check only; republishing replaces the binding and clears the mark.",
+    "force_boot_tip": "When enabled, the client's native cold-start check activates this version right after downloading it, effective on the next launch — the device recovers even if a broken update has killed its JS.\n\nTakes effect when:\n· the native package ships react-native-update ≥ 10.51.0\n· the app has not set disableNativeCheck\n· the device has not rolled this version back (rollback records win)\n\nNative check only — the in-app update flow is unaffected; if the activated version crashes on launch it still rolls back automatically. Republishing this binding clears the flag.",
     "force_boot_confirm_title": "Enable force boot (rescue)?",
     "force_boot_confirm_ok": "Enable force boot",
     "deps_blocked_title": "Incompatible dependencies — binding blocked",
