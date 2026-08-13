@@ -772,38 +772,23 @@ describe('binding deps helpers', () => {
     ).toBeNull();
   });
 
-  test('packageSupportsForceBoot gates on rnu >= 10.51.0', () => {
-    expect(packageSupportsForceBoot({ 'react-native-update': '10.51.0' })).toBe(
+  test('packageSupportsForceBoot gates on rnu >= 10.52.1', () => {
+    // Uniform floor across platforms: full rescue capability (crash-moment
+    // rescue + resumable downloads, and the harmony bridging fix) ships in
+    // 10.52.1.
+    expect(packageSupportsForceBoot({ 'react-native-update': '10.52.1' })).toBe(
       true,
     );
     expect(
-      packageSupportsForceBoot({ 'react-native-update': '^10.52.1' }),
+      packageSupportsForceBoot({ 'react-native-update': '^10.53.0' }),
     ).toBe(true);
-    expect(packageSupportsForceBoot({ 'react-native-update': '10.50.9' })).toBe(
+    expect(packageSupportsForceBoot({ 'react-native-update': '10.52.0' })).toBe(
+      false,
+    );
+    expect(packageSupportsForceBoot({ 'react-native-update': '10.51.0' })).toBe(
       false,
     );
     expect(packageSupportsForceBoot({})).toBe(false);
     expect(packageSupportsForceBoot(undefined)).toBe(false);
-  });
-
-  test('packageSupportsForceBoot needs rnu >= 10.52.1 on harmony', () => {
-    // The native check never armed on harmony before 10.52.1 (TurboModule
-    // bridging bug), so forceBoot would be a directive nothing consumes.
-    expect(
-      packageSupportsForceBoot({ 'react-native-update': '10.51.0' }, 'harmony'),
-    ).toBe(false);
-    expect(
-      packageSupportsForceBoot({ 'react-native-update': '10.52.0' }, 'harmony'),
-    ).toBe(false);
-    expect(
-      packageSupportsForceBoot({ 'react-native-update': '10.52.1' }, 'harmony'),
-    ).toBe(true);
-    // Android/iOS floors are unchanged by the platform argument.
-    expect(
-      packageSupportsForceBoot({ 'react-native-update': '10.51.0' }, 'android'),
-    ).toBe(true);
-    expect(
-      packageSupportsForceBoot({ 'react-native-update': '10.51.0' }, 'ios'),
-    ).toBe(true);
   });
 });

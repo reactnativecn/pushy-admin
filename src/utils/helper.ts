@@ -341,19 +341,13 @@ export function getFatalDepsViolation(
 }
 
 /**
- * forceBoot 只对原生冷启动检测真实可用的原生包有意义:Android/iOS 自
- * 10.51.0 起;鸿蒙因 TurboModule 桥接缺陷在 10.51.0~10.52.0 从未生效,
- * 10.52.1 起才可用。低于门槛或未知一律不展示入口。
+ * forceBoot 只对 react-native-update >= 10.52.1 的原生包展示入口——统一
+ * 以完整救援能力(崩溃时刻救援 + 断点续传,且鸿蒙桥接修复后原生检测真实
+ * 可用)作为门槛,不按平台分叉。低于门槛或未知一律不展示。
  */
 export function packageSupportsForceBoot(
   packageDeps?: Record<string, string>,
-  platform?: 'ios' | 'android' | 'harmony',
 ): boolean {
   const rnu = parseDepVersion(packageDeps?.['react-native-update']);
-  if (!rnu) {
-    return false;
-  }
-  const floor: [number, number, number] =
-    platform === 'harmony' ? [10, 52, 1] : [10, 51, 0];
-  return compareDepVersions(rnu, floor) >= 0;
+  return !!rnu && compareDepVersions(rnu, [10, 52, 1]) >= 0;
 }

@@ -319,7 +319,6 @@ const BindPackage = ({
   const { t } = useTranslation();
   const {
     packages: allPackages,
-    app,
     appId,
     bindings,
     packageMap,
@@ -498,7 +497,7 @@ const BindPackage = ({
             })),
           },
           ...(availablePackages.every((pkg) =>
-            packageSupportsForceBoot(pkg.deps, app?.platform),
+            packageSupportsForceBoot(pkg.deps),
           )
             ? [
                 {
@@ -540,7 +539,7 @@ const BindPackage = ({
             onClick: () => publishToPackage(p, percentage),
           })),
         },
-        ...(packageSupportsForceBoot(p.deps, app?.platform)
+        ...(packageSupportsForceBoot(p.deps)
           ? [
               {
                 key: `pkg-${p.id}-force-boot`,
@@ -605,7 +604,7 @@ const BindPackage = ({
       // forceBoot 挂在绑定上:重发同一绑定(同 rollout)并翻转 config;
       // 语义见 bind_package.force_boot_tip
       const forceBootOn = !!binding.config?.forceBoot;
-      if (packageSupportsForceBoot(p.deps, app?.platform) || forceBootOn) {
+      if (packageSupportsForceBoot(p.deps) || forceBootOn) {
         items.push({
           key: 'force-boot',
           label: forceBootOn
