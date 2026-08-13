@@ -150,16 +150,16 @@ export const adminApi = {
       };
       quotaDetail: {
         limit: Quota;
-        todayRemaining: number;
-        todayUsed: number;
+        todayRemaining: number | null;
+        todayUsed: number | null;
         last7Days: {
           counts: number[];
           avg: number;
-        };
+        } | null;
       };
       apps: Array<
         AdminApp & {
-          checkCount: number;
+          checkCount: number | null;
           packagesCount: number;
         }
       >;
