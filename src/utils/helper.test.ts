@@ -785,4 +785,25 @@ describe('binding deps helpers', () => {
     expect(packageSupportsForceBoot({})).toBe(false);
     expect(packageSupportsForceBoot(undefined)).toBe(false);
   });
+
+  test('packageSupportsForceBoot needs rnu >= 10.52.1 on harmony', () => {
+    // The native check never armed on harmony before 10.52.1 (TurboModule
+    // bridging bug), so forceBoot would be a directive nothing consumes.
+    expect(
+      packageSupportsForceBoot({ 'react-native-update': '10.51.0' }, 'harmony'),
+    ).toBe(false);
+    expect(
+      packageSupportsForceBoot({ 'react-native-update': '10.52.0' }, 'harmony'),
+    ).toBe(false);
+    expect(
+      packageSupportsForceBoot({ 'react-native-update': '10.52.1' }, 'harmony'),
+    ).toBe(true);
+    // Android/iOS floors are unchanged by the platform argument.
+    expect(
+      packageSupportsForceBoot({ 'react-native-update': '10.51.0' }, 'android'),
+    ).toBe(true);
+    expect(
+      packageSupportsForceBoot({ 'react-native-update': '10.51.0' }, 'ios'),
+    ).toBe(true);
+  });
 });
