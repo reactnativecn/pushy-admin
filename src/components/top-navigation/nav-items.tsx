@@ -39,7 +39,7 @@ export function getExternalItems(
     ? 'https://pushy.reactnative.cn/docs/getting-started.html'
     : 'https://reactnative.dev/docs/getting-started';
   const aboutUrl = isChinese
-    ? 'https://reactnative.cn/about.html'
+    ? 'https://reactnative.cn/about'
     : 'https://reactnative.dev/';
 
   return [
@@ -67,7 +67,12 @@ export function getExternalItems(
       icon: <OpenAIOutlined />,
       label: (
         <ExtLink href="https://ai.cresc.dev/model-plaza">
-          <span style={{ fontWeight: 'bold' }}>{t('nav.ai_promo')}</span>
+          <span className="inline-flex flex-col justify-center align-middle text-left leading-tight py-1 gap-1">
+            <span style={{ fontWeight: 'bold' }}>{t('nav.ai_promo')}</span>
+            <span className="text-xs font-normal opacity-80">
+              {t('nav.ai_promo_coupon')}
+            </span>
+          </span>
         </ExtLink>
       ),
     },
