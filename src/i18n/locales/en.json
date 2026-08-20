@@ -669,7 +669,12 @@
     "ignore_build_enabled": "Enabled",
     "ignore_build_disabled": "Disabled",
     "ignore_build_yes": "Yes",
-    "ignore_build_no": "No"
+    "ignore_build_no": "No",
+    "status_normal": "Normal",
+    "status_paused": "Paused",
+    "filter_user_id_placeholder": "Enter user ID",
+    "filter_confirm": "Filter",
+    "filter_reset": "Reset"
   },
   "reset_password": {
     "step_email": "Enter email",

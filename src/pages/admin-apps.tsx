@@ -25,11 +25,13 @@ import {
   Table,
   Typography,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
+import { UserDetailDrawer } from '@/components/user-detail-drawer';
 import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
 import type { AdminApp } from '@/types';
@@ -38,9 +40,29 @@ import { adminKeys } from '@/utils/query-keys';
 
 const { Title } = Typography;
 
+// checkCount 由 Redis 事后统计,不在 SQL 里,因此不参与排序。
+const SORTABLE_COLUMNS = new Set([
+  'id',
+  'name',
+  'appKey',
+  'platform',
+  'userId',
+  'status',
+  'ignoreBuildTime',
+  'createdAt',
+]);
+
+const PLATFORM_VALUES = ['ios', 'android', 'harmony'];
+const STATUS_VALUES = ['normal', 'paused'];
+
 const parsePositiveInt = (value: string | null, fallback: number) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const parseOptionalPositiveInt = (value: string | null) => {
+  const parsed = Number(value);
+  return value && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 };
 
 export const Component = () => {
@@ -50,6 +72,8 @@ export const Component = () => {
   const isMobile = !screens.md;
   const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState<number | null>(null);
   const [editingApp, setEditingApp] = useState<AdminApp | null>(null);
   const [form] = Form.useForm();
 
@@ -59,6 +83,24 @@ export const Component = () => {
     searchParams.get('pageSize'),
     isMobile ? 10 : 20,
   );
+  const platformParam = searchParams.get('platform') ?? undefined;
+  const platformFilter =
+    platformParam && PLATFORM_VALUES.includes(platformParam)
+      ? platformParam
+      : undefined;
+  const statusParam = searchParams.get('status') ?? undefined;
+  const statusFilter =
+    statusParam && STATUS_VALUES.includes(statusParam)
+      ? statusParam
+      : undefined;
+  const userIdFilter = parseOptionalPositiveInt(searchParams.get('userId'));
+  const orderByParam = searchParams.get('orderBy') ?? undefined;
+  const orderBy =
+    orderByParam && SORTABLE_COLUMNS.has(orderByParam)
+      ? orderByParam
+      : undefined;
+  const order =
+    searchParams.get('order') === 'asc' ? 'asc' : orderBy ? 'desc' : undefined;
   const [searchKeyword, setSearchKeyword] = useState(searchQuery);
 
   useEffect(() => {
@@ -84,10 +126,22 @@ export const Component = () => {
   }, [searchKeyword, searchQuery, setSearchParams]);
 
   const { data, isLoading } = useQuery({
-    queryKey: adminKeys.apps(searchQuery, currentPage, pageSize),
+    queryKey: [
+      ...adminKeys.apps(searchQuery, currentPage, pageSize),
+      platformFilter,
+      statusFilter,
+      userIdFilter,
+      orderBy,
+      order,
+    ],
     queryFn: () =>
       adminApi.searchApps({
         search: searchQuery || undefined,
+        platform: platformFilter,
+        status: statusFilter,
+        userId: userIdFilter,
+        orderBy,
+        order,
         limit: pageSize,
         offset: (currentPage - 1) * pageSize,
       }),
@@ -115,6 +169,36 @@ export const Component = () => {
       message.error((error as Error).message);
     },
   });
+
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    filters: Record<string, FilterValue | null>,
+    sorter: SorterResult<AdminApp> | SorterResult<AdminApp>[],
+  ) => {
+    const single = Array.isArray(sorter) ? sorter[0] : sorter;
+    const field =
+      single?.order && typeof single.field === 'string'
+        ? single.field
+        : undefined;
+    // 用户 id 是手输的,先归一化再写回 URL,避免 "0"/"abc" 留下一个不生效的筛选。
+    const nextUserId = parseOptionalPositiveInt(
+      (filters.userId?.[0] as string | undefined) ?? null,
+    );
+    patchSearchParams(setSearchParams, {
+      page: String(pagination.current ?? 1),
+      pageSize: String(pagination.pageSize ?? pageSize),
+      platform: (filters.platform?.[0] as string | undefined) || undefined,
+      status: (filters.status?.[0] as string | undefined) || undefined,
+      userId: nextUserId ? String(nextUserId) : undefined,
+      orderBy: field && SORTABLE_COLUMNS.has(field) ? field : undefined,
+      order:
+        field && single?.order
+          ? single.order === 'ascend'
+            ? 'asc'
+            : 'desc'
+          : undefined,
+    });
+  };
 
   const handleEdit = (record: AdminApp) => {
     setEditingApp(record);
@@ -151,25 +235,34 @@ export const Component = () => {
     }
   };
 
+  const sortOrderOf = (field: string) =>
+    orderBy === field ? (order === 'asc' ? 'ascend' : 'descend') : undefined;
+
   const columns: ColumnsType<AdminApp> = [
     {
       title: t('admin_apps.col_id'),
       dataIndex: 'id',
       key: 'id',
       responsive: ['md'],
-      width: 60,
+      width: 80,
+      sorter: true,
+      sortOrder: sortOrderOf('id'),
     },
     {
       title: t('admin_apps.col_name'),
       dataIndex: 'name',
       key: 'name',
       width: 150,
+      sorter: true,
+      sortOrder: sortOrderOf('name'),
     },
     {
       title: t('admin_apps.col_app_key'),
       dataIndex: 'appKey',
       key: 'appKey',
       width: 220,
+      sorter: true,
+      sortOrder: sortOrderOf('appKey'),
       render: (key: string) => (
         <Space wrap size={[4, 8]}>
           <span className="font-mono text-xs break-all">{key}</span>
@@ -189,7 +282,16 @@ export const Component = () => {
       title: t('admin_apps.col_platform'),
       dataIndex: 'platform',
       key: 'platform',
-      width: 80,
+      width: 110,
+      sorter: true,
+      sortOrder: sortOrderOf('platform'),
+      filterMultiple: false,
+      filters: [
+        { text: 'iOS', value: 'ios' },
+        { text: 'Android', value: 'android' },
+        { text: 'HarmonyOS', value: 'harmony' },
+      ],
+      filteredValue: platformFilter ? [platformFilter] : null,
       render: (platform: string) => (
         <span
           className={
@@ -217,22 +319,100 @@ export const Component = () => {
       dataIndex: 'userId',
       key: 'userId',
       responsive: ['lg'],
-      width: 80,
+      width: 120,
+      sorter: true,
+      sortOrder: sortOrderOf('userId'),
+      // 用户 id 的取值是开放的,用输入框而不是枚举列表来筛选。
+      filteredValue: userIdFilter ? [String(userIdFilter)] : null,
+      filterIcon: (filtered: boolean) => (
+        <SearchOutlined className={filtered ? 'text-blue-500' : undefined} />
+      ),
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
+        <div className="p-2">
+          <Input
+            type="number"
+            placeholder={t('admin_apps.filter_user_id_placeholder')}
+            value={selectedKeys[0] as string | undefined}
+            onChange={(event) =>
+              setSelectedKeys(event.target.value ? [event.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            // 输入框里的按键不该冒泡到下拉面板的键盘导航上
+            onKeyDown={(event) => event.stopPropagation()}
+            className="mb-2 block w-40"
+          />
+          <Space>
+            <Button type="primary" size="small" onClick={() => confirm()}>
+              {t('admin_apps.filter_confirm')}
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                clearFilters?.();
+                confirm();
+              }}
+            >
+              {t('admin_apps.filter_reset')}
+            </Button>
+          </Space>
+        </div>
+      ),
+      render: (userId: number | null) =>
+        userId ? (
+          <Button
+            type="link"
+            className="p-0!"
+            onClick={() => {
+              setViewingUserId(userId);
+              setIsDetailOpen(true);
+            }}
+          >
+            {userId}
+          </Button>
+        ) : (
+          '-'
+        ),
     },
     {
       title: t('admin_apps.col_status'),
       dataIndex: 'status',
       key: 'status',
       responsive: ['md'],
-      width: 80,
-      render: (status: string | null) => status || '-',
+      width: 100,
+      sorter: true,
+      sortOrder: sortOrderOf('status'),
+      filterMultiple: false,
+      filters: [
+        { text: t('admin_apps.status_normal'), value: 'normal' },
+        { text: t('admin_apps.status_paused'), value: 'paused' },
+      ],
+      filteredValue: statusFilter ? [statusFilter] : null,
+      render: (status: string | null) =>
+        status === 'paused' ? (
+          <span className="text-orange-500">
+            {t('admin_apps.status_paused')}
+          </span>
+        ) : status === 'normal' ? (
+          <span className="text-green-600">
+            {t('admin_apps.status_normal')}
+          </span>
+        ) : (
+          status || '-'
+        ),
     },
     {
       title: t('admin_apps.col_ignore_build_time'),
       dataIndex: 'ignoreBuildTime',
       key: 'ignoreBuildTime',
       responsive: ['lg'],
-      width: 120,
+      width: 140,
+      sorter: true,
+      sortOrder: sortOrderOf('ignoreBuildTime'),
       render: (value: string | null) => (
         <span className={value === 'enabled' ? 'text-green-600' : ''}>
           {value === 'enabled'
@@ -249,6 +429,8 @@ export const Component = () => {
       key: 'createdAt',
       responsive: ['lg'],
       width: 160,
+      sorter: true,
+      sortOrder: sortOrderOf('createdAt'),
       render: (date: string | undefined) =>
         date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
     },
@@ -312,6 +494,7 @@ export const Component = () => {
             columns={columns}
             rowKey="id"
             size={isMobile ? 'small' : 'middle'}
+            onChange={handleTableChange}
             pagination={{
               current: currentPage,
               pageSize,
@@ -322,17 +505,18 @@ export const Component = () => {
               showTotal: isMobile
                 ? undefined
                 : (count) => t('admin_apps.apps_count', { count }),
-              onChange: (page, nextPageSize) => {
-                patchSearchParams(setSearchParams, {
-                  page: String(page),
-                  pageSize: String(nextPageSize),
-                });
-              },
             }}
             scroll={{ x: 1000 }}
           />
         </Spin>
       </Card>
+
+      <UserDetailDrawer
+        userId={viewingUserId}
+        open={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        isMobile={isMobile}
+      />
 
       <Modal
         title={t('admin_apps.edit_title', { name: editingApp?.name ?? '' })}

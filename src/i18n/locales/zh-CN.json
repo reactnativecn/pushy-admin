@@ -669,7 +669,12 @@
     "ignore_build_enabled": "启用",
     "ignore_build_disabled": "禁用",
     "ignore_build_yes": "是",
-    "ignore_build_no": "否"
+    "ignore_build_no": "否",
+    "status_normal": "正常",
+    "status_paused": "已暂停",
+    "filter_user_id_placeholder": "输入用户 ID",
+    "filter_confirm": "筛选",
+    "filter_reset": "重置"
   },
   "reset_password": {
     "step_email": "输入绑定邮箱",

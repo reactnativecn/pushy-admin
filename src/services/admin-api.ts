@@ -106,13 +106,39 @@ export const adminApi = {
     request<AdminUser>('put', `/admin/users/${id}`, data),
   // admin app management
   searchApps: (
-    params?: string | { search?: string; limit?: number; offset?: number },
+    params?:
+      | string
+      | {
+          search?: string;
+          platform?: string;
+          status?: string;
+          userId?: number;
+          orderBy?: string;
+          order?: 'asc' | 'desc';
+          limit?: number;
+          offset?: number;
+        },
   ) => {
     const normalizedParams =
       typeof params === 'string' ? { search: params } : params;
     const queryParams = new URLSearchParams();
     if (normalizedParams?.search) {
       queryParams.set('search', normalizedParams.search);
+    }
+    if (normalizedParams?.platform) {
+      queryParams.set('platform', normalizedParams.platform);
+    }
+    if (normalizedParams?.status) {
+      queryParams.set('status', normalizedParams.status);
+    }
+    if (normalizedParams?.userId) {
+      queryParams.set('userId', String(normalizedParams.userId));
+    }
+    if (normalizedParams?.orderBy) {
+      queryParams.set('orderBy', normalizedParams.orderBy);
+    }
+    if (normalizedParams?.order) {
+      queryParams.set('order', normalizedParams.order);
     }
     if (normalizedParams?.limit) {
       queryParams.set('limit', String(normalizedParams.limit));
