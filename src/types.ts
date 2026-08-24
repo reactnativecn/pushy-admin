@@ -230,6 +230,17 @@ export interface ApiToken {
   isRevoked: boolean;
 }
 
+/** GET /status：这台后端是哪份代码在跑。页脚和监控读的是同一个端点。 */
+export interface ServerStatus {
+  version: string;
+  commit: string;
+  buildTime: string;
+  hostname: string;
+  startTime: string;
+  runtimeVersion: string;
+  slot: string;
+}
+
 export type SystemInstanceRole = 'server' | 'worker' | 'fc-worker';
 
 export interface SystemInstance {

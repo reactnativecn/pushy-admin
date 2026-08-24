@@ -32,6 +32,10 @@ export const userKeys = {
     ['accountQuotaPackages', appId] as const,
 };
 
+export const serverKeys = {
+  status: () => ['serverStatus'] as const,
+};
+
 export const auditKeys = {
   all: () => ['auditLogs'] as const,
 };

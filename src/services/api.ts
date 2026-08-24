@@ -9,6 +9,7 @@ import type {
   MemberRole,
   Package,
   Quota,
+  ServerStatus,
   User,
   Version,
   Workspace,
@@ -192,6 +193,11 @@ export const api = {
   activate: (params: { token: string }) =>
     request('post', '/user/activate', params),
   me: () => request<User>('get', '/user/me'),
+  // 不鉴权、也不弹错误提示：页脚少一个版本号不值得打扰任何人。
+  serverStatus: () =>
+    request<ServerStatus>('get', '/status', undefined, {
+      suppressErrorToast: true,
+    }),
   sendEmail: (params: { email: string }) =>
     request('post', '/user/activate/sendmail', params),
   resetpwdSendMail: (params: { email: string }) =>
