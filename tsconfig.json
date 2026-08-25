@@ -11,6 +11,10 @@
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"]
-    }
-  }
+    },
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src", "*.ts", "*.js", "scripts"],
+  "exclude": ["node_modules", "dist", "output", "docs"]
 }

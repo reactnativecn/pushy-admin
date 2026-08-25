@@ -317,7 +317,7 @@ describe('getBillingOptions', () => {
     });
 
     for (let i = 1; i < options.length; i++) {
-      expect(options[i].value).toBeGreaterThan(options[i - 1].value);
+      expect(options[i]!.value).toBeGreaterThan(options[i - 1]!.value);
     }
   });
 

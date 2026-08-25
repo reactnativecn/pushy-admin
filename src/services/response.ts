@@ -7,6 +7,8 @@ export interface PushyResponse {
 
 export class RequestError extends Error {
   status?: number;
+  /** 请求层已经弹过提示（或 401 已触发登出），上层不必再报一次。 */
+  handled = false;
 
   constructor(message: string, status?: number) {
     super(message);
@@ -35,7 +37,9 @@ export async function handleResponse<T extends Record<any, any>>(
     // Throw instead of resolving undefined: callers chain `.then()` to run
     // optimistic cache updates, which must NOT run when the request was
     // rejected as unauthorized.
-    throw new RequestError('Unauthorized', 401);
+    const unauthorized = new RequestError('Unauthorized', 401);
+    unauthorized.handled = true;
+    throw unauthorized;
   }
 
   // Only parse JSON when the server actually returned JSON. A 204/empty body or
@@ -56,6 +60,7 @@ export async function handleResponse<T extends Record<any, any>>(
   );
   if (!requestOptions.suppressErrorToast && error.message) {
     message.error(error.message);
+    error.handled = true;
   }
   throw error;
 }

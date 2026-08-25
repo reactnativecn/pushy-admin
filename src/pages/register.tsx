@@ -17,11 +17,11 @@ export const Register = () => {
   async function submit(values: { [key: string]: string }) {
     delete values.pwd2;
     delete values.agreed;
-    values.pwd = await md5(values.pwd);
+    values.pwd = await md5(values.pwd ?? '');
     setLoading(true);
     try {
       await api.register(values);
-      setUserEmail(values.email);
+      setUserEmail(values.email ?? '');
       router.navigate(rootRouterPath.welcome);
     } catch (_) {
       message.error(t('register.email_exists'));

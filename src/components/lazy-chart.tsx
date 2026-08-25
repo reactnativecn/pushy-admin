@@ -1,3 +1,4 @@
+import type { Area, DualAxes, Line, Pie } from '@ant-design/plots';
 import {
   type ComponentProps,
   type ComponentType,
@@ -11,12 +12,33 @@ import { ChartSkeleton } from './skeletons';
 
 type ChartComponentType = 'Area' | 'Line' | 'Pie' | 'DualAxes';
 
-function createLazyChart<T extends ChartComponentType>(type: T) {
-  return lazy(() =>
-    import('@ant-design/charts').then((module) => ({
-      default: module[type] as ComponentType<any>,
+// 只从 @ant-design/plots 取用，并且每种图表用静态属性名挑导出：
+// @ant-design/charts 只是 `export * from graphs/plots` 的壳，动态 `module[type]`
+// 会让打包器放弃摇树，把整个 G6 图库（约 780KB）一起打进来。
+const chartLoaders: Record<
+  ChartComponentType,
+  () => Promise<{ default: ComponentType<any> }>
+> = {
+  Area: () =>
+    import('@ant-design/plots').then((m) => ({
+      default: m.Area as ComponentType<any>,
     })),
-  );
+  Line: () =>
+    import('@ant-design/plots').then((m) => ({
+      default: m.Line as ComponentType<any>,
+    })),
+  Pie: () =>
+    import('@ant-design/plots').then((m) => ({
+      default: m.Pie as ComponentType<any>,
+    })),
+  DualAxes: () =>
+    import('@ant-design/plots').then((m) => ({
+      default: m.DualAxes as ComponentType<any>,
+    })),
+};
+
+function createLazyChart(type: ChartComponentType) {
+  return lazy(chartLoaders[type]);
 }
 
 interface AsyncChartProps<T extends ChartComponentType> {
@@ -57,9 +79,7 @@ function AsyncChartWrapper<T extends ChartComponentType>({
 export function AsyncArea({
   height,
   ...props
-}: ComponentProps<typeof import('@ant-design/charts')['Area']> & {
-  height?: number;
-}) {
+}: ComponentProps<typeof Area> & { height?: number }) {
   return (
     <AsyncChartWrapper
       chartType="Area"
@@ -73,9 +93,7 @@ export function AsyncArea({
 export function AsyncLine({
   height,
   ...props
-}: ComponentProps<typeof import('@ant-design/charts')['Line']> & {
-  height?: number;
-}) {
+}: ComponentProps<typeof Line> & { height?: number }) {
   return (
     <AsyncChartWrapper
       chartType="Line"
@@ -89,9 +107,7 @@ export function AsyncLine({
 export function AsyncPie({
   height,
   ...props
-}: ComponentProps<typeof import('@ant-design/charts')['Pie']> & {
-  height?: number;
-}) {
+}: ComponentProps<typeof Pie> & { height?: number }) {
   return (
     <AsyncChartWrapper
       chartType="Pie"
@@ -105,9 +121,7 @@ export function AsyncPie({
 export function AsyncDualAxes({
   height,
   ...props
-}: ComponentProps<typeof import('@ant-design/charts')['DualAxes']> & {
-  height?: number;
-}) {
+}: ComponentProps<typeof DualAxes> & { height?: number }) {
   return (
     <AsyncChartWrapper
       chartType="DualAxes"

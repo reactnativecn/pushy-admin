@@ -15,6 +15,7 @@ import {
   userKeys,
   versionKeys,
 } from '@/utils/query-keys';
+import { safeStorage } from '@/utils/storage';
 
 const METRIC_CATEGORY_SEPARATOR = '\u001f';
 const BUILD_TIME_METRIC_PREFIX = `packageVersion_buildTime${METRIC_CATEGORY_SEPARATOR}`;
@@ -185,7 +186,7 @@ const getCooldownRemainingSeconds = (
   storageKey: string,
   durationMs: number,
 ) => {
-  const storedSentAt = window.localStorage.getItem(storageKey);
+  const storedSentAt = safeStorage.get(storageKey);
   const sentAt = Number(storedSentAt);
 
   if (!Number.isFinite(sentAt) || sentAt <= 0) {
@@ -194,7 +195,7 @@ const getCooldownRemainingSeconds = (
 
   const remainingMs = durationMs - (Date.now() - sentAt);
   if (remainingMs <= 0) {
-    window.localStorage.removeItem(storageKey);
+    safeStorage.remove(storageKey);
     return 0;
   }
 
@@ -231,7 +232,7 @@ export const useLocalStorageCooldown = ({
   }, [storageKey, durationMs]);
 
   const startCooldown = () => {
-    window.localStorage.setItem(storageKey, String(Date.now()));
+    safeStorage.set(storageKey, String(Date.now()));
     setRemainingSeconds(Math.ceil(durationMs / 1000));
   };
 

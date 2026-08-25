@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { safeStorage } from '@/utils/storage';
 
 const CUSTOM_BASE_URL_STORAGE_KEY = 'pushy_custom_base_url';
 export const customBaseUrlChangeEvent = 'pushy-custom-base-url-change';
@@ -7,7 +8,7 @@ export function getCustomBaseUrl(): string | null {
   if (typeof window === 'undefined') {
     return null;
   }
-  const val = window.localStorage.getItem(CUSTOM_BASE_URL_STORAGE_KEY);
+  const val = safeStorage.get(CUSTOM_BASE_URL_STORAGE_KEY);
   return val ? val.trim() : null;
 }
 
@@ -16,9 +17,9 @@ export function setCustomBaseUrl(baseUrl: string | null): void {
     return;
   }
   if (baseUrl?.trim()) {
-    window.localStorage.setItem(CUSTOM_BASE_URL_STORAGE_KEY, baseUrl.trim());
+    safeStorage.set(CUSTOM_BASE_URL_STORAGE_KEY, baseUrl.trim());
   } else {
-    window.localStorage.removeItem(CUSTOM_BASE_URL_STORAGE_KEY);
+    safeStorage.remove(CUSTOM_BASE_URL_STORAGE_KEY);
   }
   window.dispatchEvent(
     new CustomEvent(customBaseUrlChangeEvent, {

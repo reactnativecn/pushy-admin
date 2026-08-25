@@ -54,7 +54,7 @@ function staticKeysIn(source: string): string[] {
   ];
   for (const pattern of patterns) {
     for (const match of source.matchAll(pattern)) {
-      keys.push(match[1]);
+      if (match[1]) keys.push(match[1]);
     }
   }
   return keys;

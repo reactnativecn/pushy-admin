@@ -384,7 +384,7 @@ const BindPackage = ({
       if (pkgs.length === 1) {
         await upsertBinding.mutateAsync({
           appId,
-          packageId: pkgs[0].id,
+          packageId: pkgs[0]!.id,
           versionId,
           rollout,
           config,
@@ -417,9 +417,9 @@ const BindPackage = ({
     const content =
       depsChangedPackages.length === 1 ? (
         <DepsChangeConfirmContent
-          packageName={depsChangedPackages[0].pkg.name}
+          packageName={depsChangedPackages[0]!.pkg.name}
           versionDisplayName={versionName || versionId}
-          changes={depsChangedPackages[0].changes}
+          changes={depsChangedPackages[0]!.changes}
         />
       ) : (
         <div className="max-h-96 space-y-6 overflow-y-auto pr-2">

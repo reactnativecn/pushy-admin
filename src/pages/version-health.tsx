@@ -17,7 +17,7 @@ import { useThemeMode } from '@/utils/theme-mode';
 
 const { RangePicker } = DatePicker;
 
-const CATEGORY_SEPARATOR = '';
+const CATEGORY_SEPARATOR = '\u001f';
 
 const EVENT_TYPES = [
   'download_success',

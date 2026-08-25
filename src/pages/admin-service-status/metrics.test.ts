@@ -149,8 +149,8 @@ describe('buildEndpointRows', () => {
     });
 
     expect(rows).toHaveLength(2);
-    expect(rows[0].path).toBe('/b');
-    expect(rows[1].errorRate).toBe(0.5);
+    expect(rows[0]?.path).toBe('/b');
+    expect(rows[1]?.errorRate).toBe(0.5);
   });
 });
 

@@ -30,7 +30,7 @@ jobs:
 
       - name: Build
         run: |
-          bun run build
+          bun run build:check
           cp CNAME dist/
           cp .nojekyll dist/
 

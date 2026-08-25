@@ -51,8 +51,7 @@ export function AppSwitcher({ compact }: { compact: boolean }) {
   const currentAppKey = getCurrentAppKey(pathname, search);
   const appMap = new Map<number, AppItem>();
   const appKeyMap = new Map<string, AppItem>();
-  for (let i = 0; i < apps.length; i++) {
-    const app = apps[i];
+  for (const app of apps) {
     if (app.id) {
       appMap.set(app.id, app);
     }

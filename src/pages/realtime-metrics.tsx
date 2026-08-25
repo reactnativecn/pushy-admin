@@ -309,6 +309,7 @@ export const Component = () => {
     let nonTotalSum = 0;
     for (let i = 0; i < filteredChartData.length; i++) {
       const point = filteredChartData[i];
+      if (!point) continue;
       if (point.isTotal) {
         has = true;
         totalSum += point.value;
@@ -331,7 +332,7 @@ export const Component = () => {
   }, [sortedCategories, categoryTotals]);
 
   const topCategoryMax = useMemo(() => {
-    return topCategories.length > 0 ? topCategories[0][1] : 0;
+    return topCategories[0]?.[1] ?? 0;
   }, [topCategories]);
 
   const dateRangeLabel = useMemo(() => {

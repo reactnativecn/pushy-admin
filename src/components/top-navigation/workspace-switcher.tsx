@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge, Button, Dropdown, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { MEMBER_ROLE_LABEL_KEY } from '@/constants/i18n-keys';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
 import {
@@ -61,7 +62,7 @@ export function WorkspaceSwitcher({ compact }: { compact?: boolean }) {
       label: (
         <span>
           {workspace.account.name}{' '}
-          <Tag className="ml-1">{t(`members.role_${workspace.role}`)}</Tag>
+          <Tag className="ml-1">{t(MEMBER_ROLE_LABEL_KEY[workspace.role])}</Tag>
         </span>
       ),
       onClick: () => switchTo(workspace.account.id),

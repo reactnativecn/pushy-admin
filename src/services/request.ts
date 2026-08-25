@@ -22,7 +22,7 @@ export {
 export type { RequestOptions };
 export { RequestError };
 
-const SERVER = {
+const SERVER: { main: [string, ...string[]] } = {
   main:
     process.env.NODE_ENV === 'production'
       ? [
@@ -98,6 +98,7 @@ export default async function request<T extends Record<any, any>>(
         i18n.t('request.error', { message: (err as Error).message }),
       );
       message.error(i18n.t('request.proxy_hint'));
+      (err as { handled?: boolean }).handled = true;
     }
     throw err;
   }

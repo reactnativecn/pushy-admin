@@ -247,6 +247,12 @@ export const api = {
       'get',
       `/app/${appId}/package/list?limit=1000`,
     ),
+  // 只要数量时别拉 1000 条完整包列表，账户页对每个应用都要问一遍。
+  getPackageCount: (appId: number) =>
+    request<{ data: Package[]; count: number }>(
+      'get',
+      `/app/${appId}/package/list?limit=1`,
+    ).then((response) => response.count ?? response.data?.length ?? 0),
   updatePackage: ({
     appId,
     packageId,

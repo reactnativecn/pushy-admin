@@ -145,29 +145,36 @@ export const router = createHashRouter([
       {
         path: 'admin-config',
         loader: needAuthLoader,
-        element: <AdminRoute load={() => import('./pages/admin-config')} />,
+        element: <AdminRoute />,
+        children: [{ index: true, lazy: () => import('./pages/admin-config') }],
       },
       {
         path: 'admin-users',
         loader: needAuthLoader,
-        element: <AdminRoute load={() => import('./pages/admin-users')} />,
+        element: <AdminRoute />,
+        children: [{ index: true, lazy: () => import('./pages/admin-users') }],
       },
       {
         path: 'admin-apps',
         loader: needAuthLoader,
-        element: <AdminRoute load={() => import('./pages/admin-apps')} />,
+        element: <AdminRoute />,
+        children: [{ index: true, lazy: () => import('./pages/admin-apps') }],
       },
       {
         path: 'admin-metrics',
         loader: needAuthLoader,
-        element: <AdminRoute load={() => import('./pages/admin-metrics')} />,
+        element: <AdminRoute />,
+        children: [
+          { index: true, lazy: () => import('./pages/admin-metrics') },
+        ],
       },
       {
         path: 'admin-service-status',
         loader: needAuthLoader,
-        element: (
-          <AdminRoute load={() => import('./pages/admin-service-status')} />
-        ),
+        element: <AdminRoute />,
+        children: [
+          { index: true, lazy: () => import('./pages/admin-service-status') },
+        ],
       },
       {
         // 部署面板已并入服务状态页，兼容旧书签

@@ -137,7 +137,7 @@ function addDurationEntry(
   }
   for (const bucket in entry.buckets) {
     aggregate.buckets[bucket] =
-      (aggregate.buckets[bucket] ?? 0) + entry.buckets[bucket];
+      (aggregate.buckets[bucket] ?? 0) + (entry.buckets[bucket] ?? 0);
   }
 }
 
@@ -250,12 +250,12 @@ export function buildRequestSeries(
 ): SeriesPoint[] {
   return (snapshot?.buckets ?? []).flatMap((bucket) => [
     {
-      category: counterLabels['api.request.total'],
+      category: counterLabels['api.request.total'] ?? 'api.request.total',
       time: bucket.start,
       value: sumCounters(bucket.counters, 'api.request.total'),
     },
     {
-      category: counterLabels['api.request.error'],
+      category: counterLabels['api.request.error'] ?? 'api.request.error',
       time: bucket.start,
       value: sumCounters(bucket.counters, 'api.request.error'),
     },
