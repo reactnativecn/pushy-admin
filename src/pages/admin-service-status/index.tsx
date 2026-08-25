@@ -3,7 +3,7 @@ import { Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
-import { metricsKeys } from '@/utils/query-keys';
+import { serviceStatusKeys } from '@/utils/query-keys';
 import {
   buildServiceStatusSummary,
   SERVICE_STATUS_TARGETS,
@@ -31,7 +31,7 @@ export const Component = () => {
           baseUrl: target.baseUrl,
           suppressErrorToast: true,
         }),
-      queryKey: metricsKeys.internal(target.key),
+      queryKey: serviceStatusKeys.metrics(target.key),
       refetchInterval: 30_000,
     })),
   });
@@ -83,7 +83,6 @@ export const Component = () => {
             error={openQuery?.error}
             isFetching={openQuery?.isFetching ?? false}
             key={openTarget.key}
-            refetch={() => openQuery?.refetch()}
             snapshot={openQuery?.data}
             target={openTarget}
           />

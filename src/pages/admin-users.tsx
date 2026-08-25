@@ -15,7 +15,6 @@ import {
   Card,
   DatePicker,
   Form,
-  Grid,
   Input,
   Modal,
   message,
@@ -25,24 +24,22 @@ import {
   Table,
   Typography,
 } from 'antd';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import type { FilterValue, SorterResult } from 'antd/es/table/interface';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import {
-  type Content,
-  createJSONEditor,
-  Mode,
-  type OnChange,
-} from 'vanilla-jsoneditor';
 import { UserDetailDrawer } from '@/components/user-detail-drawer';
 import { quotas } from '@/constants/quotas';
+import JsonEditor from '@/pages/manage/components/json-editor';
 import { adminApi } from '@/services/admin-api';
 import type { AdminUser, Quota, Tier } from '@/types';
-import { patchSearchParams } from '@/utils/helper';
 import { adminKeys } from '@/utils/query-keys';
+import { useModalWidth } from '@/utils/responsive';
+import {
+  getTablePagination,
+  usePageClamp,
+  useUrlTableState,
+} from '@/utils/table-state';
 
 const { Title } = Typography;
 
@@ -55,6 +52,9 @@ const SORTABLE_COLUMNS = new Set([
   'status',
   'tierExpiresAt',
 ]);
+
+// 表头单选筛选,值直接同步到同名 URL 参数
+const FILTER_KEYS = ['status', 'tier'] as const;
 
 const statusMeta = (
   status: string | null | undefined,
@@ -86,11 +86,6 @@ const getTierOptions = (t: (key: string) => string) => [
 const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
 const expiryShortcutDays = [7, 30, 365] as const;
 
-const parsePositiveInt = (value: string | null, fallback: number) => {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-};
-
 const getInitialQuotaValue = (record: AdminUser) => {
   if (record.quota) {
     return JSON.stringify(record.quota, null, 2);
@@ -99,68 +94,28 @@ const getInitialQuotaValue = (record: AdminUser) => {
   return record.tier === 'custom' ? defaultPremiumQuotaText : '';
 };
 
-const JsonEditorWrapper = ({
-  height = 200,
-  value,
-  onChange,
-}: {
-  height?: number;
-  value: string;
-  onChange: (value: string) => void;
-}) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<ReturnType<typeof createJSONEditor> | null>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: create the editor only once
-  useEffect(() => {
-    if (containerRef.current && !editorRef.current) {
-      const handleChange: OnChange = (
-        content: Content,
-        _previousContent: Content,
-        { contentErrors },
-      ) => {
-        if (!contentErrors) {
-          if ('json' in content && content.json !== undefined) {
-            onChange(JSON.stringify(content.json, null, 2));
-          } else if ('text' in content) {
-            onChange(content.text);
-          }
-        }
-      };
-
-      editorRef.current = createJSONEditor({
-        target: containerRef.current,
-        props: {
-          content: { text: value },
-          onChange: handleChange,
-          mode: Mode.text,
-        },
-      });
-    }
-
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy();
-        editorRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.updateProps({ content: { text: value } });
-    }
-  }, [value]);
-
-  return <div ref={containerRef} style={{ height }} />;
-};
-
 export const Component = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
-  const [searchParams, setSearchParams] = useSearchParams();
+  const tableState = useUrlTableState({
+    sortableColumns: SORTABLE_COLUMNS,
+    filterKeys: FILTER_KEYS,
+  });
+  const {
+    searchParams,
+    isMobile,
+    page: currentPage,
+    pageSize,
+    searchQuery,
+    searchInput,
+    setSearchInput,
+    orderBy,
+    order,
+    sortOrderOf,
+    handleTableChange,
+  } = tableState;
+  const editModalWidth = useModalWidth(600);
+  const bulkModalWidth = useModalWidth(560);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [viewingUserId, setViewingUserId] = useState<number | null>(null);
@@ -183,46 +138,10 @@ export const Component = () => {
     tierOptions.map((option) => [option.value, option.label]),
   );
 
-  const searchQuery = searchParams.get('search')?.trim() ?? '';
-  const currentPage = parsePositiveInt(searchParams.get('page'), 1);
-  const pageSize = parsePositiveInt(
-    searchParams.get('pageSize'),
-    isMobile ? 10 : 20,
-  );
   const statusFilter = searchParams.get('status') ?? undefined;
   const tierFilter = searchParams.get('tier') ?? undefined;
-  const orderByParam = searchParams.get('orderBy') ?? undefined;
-  const orderBy =
-    orderByParam && SORTABLE_COLUMNS.has(orderByParam)
-      ? orderByParam
-      : undefined;
-  const order =
-    searchParams.get('order') === 'asc' ? 'asc' : orderBy ? 'desc' : undefined;
-  const [searchKeyword, setSearchKeyword] = useState(searchQuery);
 
-  useEffect(() => {
-    setSearchKeyword(searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const trimmedKeyword = searchKeyword.trim();
-    if (trimmedKeyword === searchQuery) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      patchSearchParams(setSearchParams, {
-        search: trimmedKeyword || undefined,
-        page: '1',
-      });
-    }, 300);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [searchKeyword, searchQuery, setSearchParams]);
-
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isPlaceholderData } = useQuery({
     queryKey: [
       ...adminKeys.users(searchQuery),
       statusFilter,
@@ -247,14 +166,7 @@ export const Component = () => {
   });
 
   const total = data?.count ?? data?.data.length ?? 0;
-  const maxPage = Math.max(1, Math.ceil(total / pageSize));
-
-  useEffect(() => {
-    // 数据未就绪时 total 不可信,不做越界回拉(否则翻页会被拉回第一页)
-    if (data && currentPage > maxPage) {
-      patchSearchParams(setSearchParams, { page: String(maxPage) });
-    }
-  }, [data, currentPage, maxPage, setSearchParams]);
+  usePageClamp(tableState, total, data !== undefined && !isPlaceholderData);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminUser> }) =>
@@ -264,9 +176,6 @@ export const Component = () => {
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: adminKeys.users() });
     },
-    onError: (error) => {
-      message.error((error as Error).message);
-    },
   });
 
   const deleteMutation = useMutation({
@@ -274,9 +183,6 @@ export const Component = () => {
     onSuccess: (result) => {
       message.success(t('admin_users.user_deleted', { email: result.email }));
       queryClient.invalidateQueries({ queryKey: adminKeys.users() });
-    },
-    onError: (error) => {
-      message.error((error as Error).message);
     },
   });
 
@@ -286,7 +192,6 @@ export const Component = () => {
     onSuccess: (r) => {
       setBulkPreview({ matched: r.matched ?? 0, sample: r.sample ?? [] });
     },
-    onError: (e) => message.error((e as Error).message),
   });
 
   const bulkDeleteMutation = useMutation({
@@ -298,7 +203,6 @@ export const Component = () => {
       setBulkPreview(null);
       queryClient.invalidateQueries({ queryKey: adminKeys.users() });
     },
-    onError: (e) => message.error((e as Error).message),
   });
 
   const handleDelete = (record: { id: number; email: string }) => {
@@ -314,31 +218,6 @@ export const Component = () => {
           setIsDetailOpen(false);
         }
       },
-    });
-  };
-
-  const handleTableChange = (
-    pagination: TablePaginationConfig,
-    filters: Record<string, FilterValue | null>,
-    sorter: SorterResult<AdminUser> | SorterResult<AdminUser>[],
-  ) => {
-    const single = Array.isArray(sorter) ? sorter[0] : sorter;
-    const field =
-      single?.order && typeof single.field === 'string'
-        ? single.field
-        : undefined;
-    patchSearchParams(setSearchParams, {
-      page: String(pagination.current ?? 1),
-      pageSize: String(pagination.pageSize ?? pageSize),
-      status: (filters.status?.[0] as string | undefined) || undefined,
-      tier: (filters.tier?.[0] as string | undefined) || undefined,
-      orderBy: field && SORTABLE_COLUMNS.has(field) ? field : undefined,
-      order:
-        field && single?.order
-          ? single.order === 'ascend'
-            ? 'asc'
-            : 'desc'
-          : undefined,
     });
   };
 
@@ -362,35 +241,37 @@ export const Component = () => {
   };
 
   const handleSave = async () => {
+    let values: Record<string, any>;
     try {
-      const values = await form.validateFields();
-      if (!editingUser) return;
-
-      const updateData: Partial<AdminUser> = {
-        name: values.name,
-        email: values.email,
-        tier: values.tier,
-        status: values.status,
-        tierExpiresAt: values.tierExpiresAt
-          ? values.tierExpiresAt.toISOString()
-          : null,
-      };
-
-      if (quotaValue.trim()) {
-        try {
-          updateData.quota = JSON.parse(quotaValue);
-        } catch {
-          message.error(t('admin_users.invalid_quota'));
-          return;
-        }
-      } else {
-        updateData.quota = null;
-      }
-
-      updateMutation.mutate({ id: editingUser.id, data: updateData });
-    } catch (error) {
-      message.error((error as Error).message);
+      values = await form.validateFields();
+    } catch {
+      // 校验失败时表单已内联提示,不再额外弹 toast
+      return;
     }
+    if (!editingUser) return;
+
+    const updateData: Partial<AdminUser> = {
+      name: values.name,
+      email: values.email,
+      tier: values.tier,
+      status: values.status,
+      tierExpiresAt: values.tierExpiresAt
+        ? values.tierExpiresAt.toISOString()
+        : null,
+    };
+
+    if (quotaValue.trim()) {
+      try {
+        updateData.quota = JSON.parse(quotaValue);
+      } catch {
+        message.error(t('admin_users.invalid_quota'));
+        return;
+      }
+    } else {
+      updateData.quota = null;
+    }
+
+    updateMutation.mutate({ id: editingUser.id, data: updateData });
   };
 
   const handleExtendTierExpiry = (
@@ -409,9 +290,6 @@ export const Component = () => {
       editingUser?.tierExpiresAt ? dayjs(editingUser.tierExpiresAt) : null,
     );
   };
-
-  const sortOrderOf = (field: string) =>
-    orderBy === field ? (order === 'asc' ? 'ascend' : 'descend') : undefined;
 
   const columns: ColumnsType<AdminUser> = [
     {
@@ -571,8 +449,8 @@ export const Component = () => {
             <Input
               placeholder={t('admin_users.search_placeholder')}
               prefix={<SearchOutlined />}
-              value={searchKeyword}
-              onChange={(event) => setSearchKeyword(event.target.value)}
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
               allowClear
               className="w-full md:w-72"
             />
@@ -586,17 +464,9 @@ export const Component = () => {
             rowKey="id"
             size={isMobile ? 'small' : 'middle'}
             onChange={handleTableChange}
-            pagination={{
-              current: currentPage,
-              pageSize,
-              total,
-              simple: isMobile,
-              showQuickJumper: !isMobile,
-              showSizeChanger: !isMobile,
-              showTotal: isMobile
-                ? undefined
-                : (count) => t('admin_users.users_count', { count }),
-            }}
+            pagination={getTablePagination(tableState, total, (count) =>
+              t('admin_users.users_count', { count }),
+            )}
             scroll={{ x: 760 }}
           />
         </Spin>
@@ -605,7 +475,7 @@ export const Component = () => {
       <Modal
         title={t('admin_users.edit_title', { email: editingUser?.email })}
         open={isModalOpen}
-        width={isMobile ? 'calc(100vw - 32px)' : 600}
+        width={editModalWidth}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>
@@ -699,10 +569,17 @@ export const Component = () => {
               label={t('admin_users.custom_quota_label')}
               className="mb-0!"
             >
-              <JsonEditorWrapper
-                height={isMobile ? 180 : 200}
-                value={quotaValue}
-                onChange={setQuotaValue}
+              <JsonEditor
+                // 编辑器只会撑满它的直接容器,高度要透传到内层 div
+                className={`${isMobile ? 'h-[180px]' : 'h-[200px]'} [&>div:last-child]:h-full`}
+                content={{ text: quotaValue }}
+                onChange={(content) => {
+                  setQuotaValue(
+                    'text' in content
+                      ? content.text
+                      : JSON.stringify(content.json, null, 2),
+                  );
+                }}
               />
             </Form.Item>
           </Space>
@@ -728,7 +605,7 @@ export const Component = () => {
           setBulkPreview(null);
         }}
         footer={null}
-        width={isMobile ? 'calc(100vw - 32px)' : 560}
+        width={bulkModalWidth}
       >
         <Space direction="vertical" size="middle" className="w-full">
           <div className="text-sm text-gray-500">

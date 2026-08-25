@@ -9,10 +9,18 @@ import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { AsyncLine } from '@/components/lazy-chart';
+import { RANGE_PRESET_LABEL_KEY } from '@/constants/i18n-keys';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
+import { buildTimeSeriesLineConfig, getRangePresets } from '@/utils/charts';
 import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
+import {
+  aggregateSeries,
+  attachSharePercent,
+  buildLegendDefaults,
+} from '@/utils/metrics';
+import { metricsKeys } from '@/utils/query-keys';
 import { useThemeMode } from '@/utils/theme-mode';
 
 const { RangePicker } = DatePicker;
@@ -36,10 +44,7 @@ interface FormattedCategory {
 
 const CATEGORY_SEPARATOR = '\u001f';
 
-type ChartController = {
-  emit: (...args: unknown[]) => unknown;
-  on: (...args: unknown[]) => unknown;
-};
+const isTotalPoint = (point: ChartDataPoint) => Boolean(point.isTotal);
 
 const formatCategory = (
   rawCategory: string,
@@ -206,12 +211,11 @@ export const Component = () => {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: [
-      'appMetrics',
+    queryKey: metricsKeys.app(
       selectedAppKey,
       dateRange[0].toISOString(),
       dateRange[1].toISOString(),
-    ],
+    ),
     queryFn: () =>
       api.getAppMetrics({
         appKey: selectedAppKey!,
@@ -240,100 +244,29 @@ export const Component = () => {
     return points;
   }, [data, t]);
 
-  const filteredChartData = useMemo(() => {
-    const selectedPoints = chartData.filter(
-      (point) => point.isTotal || point.attribute === selectedAttribute,
-    );
-    const timeTotals = new Map<
-      string,
-      { total: number; fallback: number; hasTotal: boolean }
-    >();
+  const filteredChartData = useMemo(
+    () =>
+      attachSharePercent(
+        chartData.filter(
+          (point) => point.isTotal || point.attribute === selectedAttribute,
+        ),
+        isTotalPoint,
+      ),
+    [chartData, selectedAttribute],
+  );
 
-    for (const point of selectedPoints) {
-      let entry = timeTotals.get(point.time);
-      if (!entry) {
-        entry = { total: 0, fallback: 0, hasTotal: false };
-        timeTotals.set(point.time, entry);
-      }
-      if (point.isTotal) {
-        entry.total += point.value;
-        entry.hasTotal = true;
-      } else {
-        entry.fallback += point.value;
-      }
-    }
+  const {
+    categoryTotals,
+    sortedCategories,
+    topCategories,
+    hasTotal,
+    total: totalRequests,
+  } = useMemo(
+    () => aggregateSeries(filteredChartData, { isTotal: isTotalPoint }),
+    [filteredChartData],
+  );
 
-    return selectedPoints.map((point) => {
-      if (point.isTotal) {
-        return point;
-      }
-      const entry = timeTotals.get(point.time);
-      const denominator = entry
-        ? entry.hasTotal
-          ? entry.total
-          : entry.fallback
-        : 0;
-      if (denominator <= 0) {
-        return point;
-      }
-      return {
-        ...point,
-        sharePercent: (point.value / denominator) * 100,
-      };
-    });
-  }, [chartData, selectedAttribute]);
-
-  const categoryTotals = useMemo(() => {
-    const totals = new Map<string, number>();
-    for (const point of filteredChartData) {
-      if (point.isTotal) {
-        continue;
-      }
-      totals.set(
-        point.category,
-        (totals.get(point.category) || 0) + point.value,
-      );
-    }
-    return totals;
-  }, [filteredChartData]);
-
-  const sortedCategories = useMemo(() => {
-    return Array.from(categoryTotals.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([category]) => category);
-  }, [categoryTotals]);
-
-  const { hasTotal, totalRequests } = useMemo(() => {
-    let has = false;
-    let totalSum = 0;
-    let nonTotalSum = 0;
-    for (let i = 0; i < filteredChartData.length; i++) {
-      const point = filteredChartData[i];
-      if (!point) continue;
-      if (point.isTotal) {
-        has = true;
-        totalSum += point.value;
-      } else {
-        nonTotalSum += point.value;
-      }
-    }
-    return {
-      hasTotal: has,
-      totalRequests: has ? totalSum : nonTotalSum,
-    };
-  }, [filteredChartData]);
-
-  const topCategories = useMemo(() => {
-    return sortedCategories
-      .slice(0, 10)
-      .map(
-        (category) => [category, categoryTotals.get(category) || 0] as const,
-      );
-  }, [sortedCategories, categoryTotals]);
-
-  const topCategoryMax = useMemo(() => {
-    return topCategories[0]?.[1] ?? 0;
-  }, [topCategories]);
+  const topCategoryMax = topCategories[0]?.[1] ?? 0;
 
   const dateRangeLabel = useMemo(() => {
     return `${dateRange[0].format('YYYY/MM/DD HH:mm')} - ${dateRange[1].format('YYYY/MM/DD HH:mm')}`;
@@ -365,80 +298,26 @@ export const Component = () => {
       );
   }, [searchParams, t]);
 
-  const defaultLegendValues = useMemo(() => {
-    const topTen = sortedCategories.slice(0, 10);
-    const focusExtras = focusLabels.filter(
-      (label) => categoryTotals.has(label) && !topTen.includes(label),
-    );
-    const selection = [...topTen, ...focusExtras];
-    if (!hasTotal) return selection;
-    return [totalLabel, ...selection];
-  }, [sortedCategories, categoryTotals, focusLabels, hasTotal, totalLabel]);
-
-  const colorDomain = useMemo(() => {
-    if (hasTotal) {
-      return [totalLabel, ...sortedCategories];
-    }
-    return sortedCategories;
-  }, [sortedCategories, hasTotal, totalLabel]);
+  const { defaultLegendValues, colorDomain } = useMemo(
+    () =>
+      buildLegendDefaults(sortedCategories, {
+        totalLabel: hasTotal ? totalLabel : undefined,
+        pinned: focusLabels,
+      }),
+    [sortedCategories, focusLabels, hasTotal, totalLabel],
+  );
 
   legendValuesRef.current = defaultLegendValues;
 
-  const lineConfig = {
-    theme: isDark ? 'classicDark' : 'classic',
-    interaction: {
-      legendFilter: true,
-      tooltip: { shared: true },
-    },
+  const lineConfig = buildTimeSeriesLineConfig({
     data: filteredChartData,
-    xField: (d: ChartDataPoint) => new Date(d.time),
-    yField: 'value',
-    colorField: 'category',
-    shapeField: 'smooth',
-    axis: {
-      x: {
-        title: t('realtime_metrics.time'),
-        labelAutoRotate: true,
-        labelFormatter: (value: string) => {
-          const parsed = dayjs(value);
-          return parsed.isValid() ? parsed.format('MM/DD HH:mm') : value;
-        },
-      },
-      y: {},
-    },
-    tooltip: {
-      title: (point: ChartDataPoint) => dayjs(point.time).format('MM/DD HH:mm'),
-      items: [
-        (point: ChartDataPoint) => ({
-          name: point.category,
-          value: formatTooltipItem(point, t),
-        }),
-      ],
-    },
-    legend: {
-      position: 'top',
-    },
-    scale: colorDomain.length
-      ? {
-          color: { domain: colorDomain },
-        }
-      : undefined,
-    onReady: ({ chart }: { chart: ChartController }) => {
-      try {
-        chart.on('afterrender', () => {
-          const values = legendValuesRef.current;
-          if (!values.length) return;
-          chart.emit('legend:filter', {
-            data: { channel: 'color', values },
-          });
-        });
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(error);
-      }
-    },
+    isDark,
     height: 480,
-  };
+    xTitle: t('realtime_metrics.time'),
+    formatTooltipValue: (point) => formatTooltipItem(point, t),
+    colorDomain,
+    legendValuesRef,
+  });
 
   const handleDateChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
     if (dates?.[0] && dates[1]) {
@@ -521,24 +400,10 @@ export const Component = () => {
                 value={dateRange}
                 onChange={handleDateChange}
                 style={{ width: '100%' }}
-                presets={[
-                  {
-                    label: t('realtime_metrics.range_1h'),
-                    value: [dayjs().subtract(1, 'hour'), dayjs()],
-                  },
-                  {
-                    label: t('realtime_metrics.range_6h'),
-                    value: [dayjs().subtract(6, 'hour'), dayjs()],
-                  },
-                  {
-                    label: t('realtime_metrics.range_24h'),
-                    value: [dayjs().subtract(24, 'hour'), dayjs()],
-                  },
-                  {
-                    label: t('realtime_metrics.range_7d'),
-                    value: [dayjs().subtract(7, 'day'), dayjs()],
-                  },
-                ]}
+                presets={getRangePresets(
+                  t,
+                  RANGE_PRESET_LABEL_KEY.realtime_metrics,
+                )}
               />
             </div>
           </div>

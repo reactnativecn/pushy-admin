@@ -1,73 +1,56 @@
-import { CopyOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
-import {
-  useQuery as useAppsQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { KeyOutlined } from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
   Checkbox,
   Form,
-  Grid,
-  Input,
-  Modal,
   message,
-  Popconfirm,
   Radio,
   Select,
   Space,
   Table,
   Tag,
-  Tooltip,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { NewTokenRevealModal } from '@/components/new-token-reveal-modal';
+import { getTokenColumns } from '@/components/token-columns';
+import {
+  TokenAppsFormItem,
+  TokenCreateModal,
+} from '@/components/token-create-modal';
+import { API_TOKEN_SCOPE_DESC_KEY } from '@/constants/i18n-keys';
+import { API_TOKEN_SCOPES } from '@/constants/token-scopes';
 import { api } from '@/services/api';
 import type { ApiToken } from '@/types';
-import { apiTokenKeys, appKeys } from '@/utils/query-keys';
-
-// 与服务端 TOKEN_ALLOWED_SCOPES 一致
-const TOKEN_SCOPES = [
-  'app:read',
-  'app:write',
-  'app:delete',
-  'bundle:upload',
-  'version:publish',
-  'version:delete',
-] as const;
+import { useAppOptions } from '@/utils/app-options';
+import { apiTokenKeys } from '@/utils/query-keys';
+import { useIsMobile } from '@/utils/responsive';
 
 const { Paragraph } = Typography;
 
 function ApiTokensPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+  const isMobile = useIsMobile();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [form] = Form.useForm();
   const permissionMode = Form.useWatch('mode', form) ?? 'classic';
 
-  const { data: appsData } = useAppsQuery({
-    queryKey: appKeys.list(),
-    queryFn: api.appList,
+  const { appOptions, appNameById } = useAppOptions({
     enabled: createModalVisible,
   });
-  const appOptions = (appsData?.data ?? []).map((app) => ({
-    label: app.name,
-    value: app.id,
-  }));
-  const appNameById = new Map(appOptions.map((o) => [o.value, o.label]));
 
   const { data, isLoading } = useQuery({
     queryKey: apiTokenKeys.all(),
     queryFn: api.listApiTokens,
   });
 
+  // 失败提示由 MutationCache 兜底；失败时不关弹窗，让用户改完重试
   const createMutation = useMutation({
     mutationFn: api.createApiToken,
     onSuccess: (result) => {
@@ -79,9 +62,6 @@ function ApiTokensPage() {
         form.resetFields();
       }
     },
-    onError: (error: Error) => {
-      message.error(error.message || t('api_tokens.create_failed'));
-    },
   });
 
   const revokeMutation = useMutation({
@@ -90,12 +70,9 @@ function ApiTokensPage() {
       message.success(t('api_tokens.revoke_success'));
       queryClient.invalidateQueries({ queryKey: apiTokenKeys.all() });
     },
-    onError: (error: Error) => {
-      message.error(error.message || t('api_tokens.revoke_failed'));
-    },
   });
 
-  const handleCreate = async (values: {
+  const handleCreate = (values: {
     name: string;
     mode: 'classic' | 'scoped';
     permissions?: string[];
@@ -108,7 +85,7 @@ function ApiTokensPage() {
       : undefined;
     const appIds = values.appIds?.length ? values.appIds : undefined;
     if (values.mode === 'scoped') {
-      await createMutation.mutateAsync({
+      createMutation.mutate({
         name: values.name,
         scopes: values.scopes,
         appIds,
@@ -116,7 +93,7 @@ function ApiTokensPage() {
       });
       return;
     }
-    await createMutation.mutateAsync({
+    createMutation.mutate({
       name: values.name,
       permissions: {
         read: values.permissions?.includes('read'),
@@ -128,6 +105,31 @@ function ApiTokensPage() {
     });
   };
 
+  const tokenColumns = getTokenColumns<ApiToken>({
+    icon: <KeyOutlined />,
+    appNameById,
+    onRevoke: (id) => revokeMutation.mutate(id),
+    texts: {
+      colName: t('api_tokens.col_name'),
+      revoked: t('api_tokens.revoked'),
+      expired: t('api_tokens.expired'),
+      colToken: t('api_tokens.col_token'),
+      colApps: t('api_tokens.col_apps'),
+      allApps: t('api_tokens.all_apps'),
+      nApps: (count) => t('api_tokens.n_apps', { count }),
+      colExpires: t('api_tokens.col_expires'),
+      never: t('api_tokens.never'),
+      colLastUsed: t('api_tokens.col_last_used'),
+      neverUsed: t('api_tokens.never_used'),
+      colAction: t('api_tokens.col_action'),
+      revokeTitle: t('api_tokens.revoke_title'),
+      revokeDesc: t('api_tokens.revoke_desc'),
+      revokeButton: t('api_tokens.revoke_button'),
+      yes: t('api_tokens.yes'),
+      no: t('api_tokens.no'),
+    },
+  });
+
   const columns: ColumnsType<ApiToken> = [
     {
       title: t('api_tokens.col_id'),
@@ -136,31 +138,8 @@ function ApiTokensPage() {
       responsive: ['md'],
       width: 60,
     },
-    {
-      title: t('api_tokens.col_name'),
-      dataIndex: 'name',
-      key: 'name',
-      render: (name: string, record: ApiToken) => (
-        <Space wrap size={[4, 8]}>
-          <KeyOutlined />
-          {name}
-          {record.isRevoked && <Tag color="red">{t('api_tokens.revoked')}</Tag>}
-          {record.isExpired && !record.isRevoked && (
-            <Tag color="orange">{t('api_tokens.expired')}</Tag>
-          )}
-        </Space>
-      ),
-    },
-    {
-      title: t('api_tokens.col_token'),
-      dataIndex: 'tokenSuffix',
-      key: 'tokenSuffix',
-      render: (tokenSuffix: string) => (
-        <span className="font-mono text-xs text-gray-500 break-all">
-          ****{tokenSuffix}
-        </span>
-      ),
-    },
+    tokenColumns.name,
+    tokenColumns.tokenSuffix,
     {
       title: t('api_tokens.col_permissions'),
       dataIndex: 'permissions',
@@ -188,46 +167,9 @@ function ApiTokensPage() {
           </Space>
         ),
     },
-    {
-      title: t('api_tokens.col_apps'),
-      dataIndex: 'appIds',
-      key: 'appIds',
-      responsive: ['md'],
-      render: (appIds: ApiToken['appIds']) =>
-        appIds?.length ? (
-          <Tooltip
-            title={appIds
-              .map((id) => appNameById.get(id) ?? `#${id}`)
-              .join(', ')}
-          >
-            <Tag color="blue">
-              {t('api_tokens.n_apps', { count: appIds.length })}
-            </Tag>
-          </Tooltip>
-        ) : (
-          <Tag>{t('api_tokens.all_apps')}</Tag>
-        ),
-    },
-    {
-      title: t('api_tokens.col_expires'),
-      dataIndex: 'expiresAt',
-      key: 'expiresAt',
-      responsive: ['sm'],
-      render: (expiresAt: string | null) =>
-        expiresAt
-          ? dayjs(expiresAt).format('YYYY-MM-DD HH:mm')
-          : t('api_tokens.never'),
-    },
-    {
-      title: t('api_tokens.col_last_used'),
-      dataIndex: 'lastUsedAt',
-      key: 'lastUsedAt',
-      responsive: ['lg'],
-      render: (lastUsedAt: string | null) =>
-        lastUsedAt
-          ? dayjs(lastUsedAt).format('YYYY-MM-DD HH:mm')
-          : t('api_tokens.never_used'),
-    },
+    tokenColumns.apps,
+    tokenColumns.expires,
+    tokenColumns.lastUsed,
     {
       title: t('api_tokens.col_created'),
       dataIndex: 'createdAt',
@@ -236,29 +178,7 @@ function ApiTokensPage() {
       render: (createdAt: string) =>
         dayjs(createdAt).format('YYYY-MM-DD HH:mm'),
     },
-    {
-      title: t('api_tokens.col_action'),
-      key: 'action',
-      render: (_: unknown, record: ApiToken) => (
-        <Popconfirm
-          title={t('api_tokens.revoke_title')}
-          description={t('api_tokens.revoke_desc')}
-          onConfirm={() => revokeMutation.mutate(record.id)}
-          okText={t('api_tokens.yes')}
-          cancelText={t('api_tokens.no')}
-          disabled={record.isRevoked}
-        >
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            disabled={record.isRevoked}
-          >
-            {t('api_tokens.revoke_button')}
-          </Button>
-        </Popconfirm>
-      ),
-    },
+    tokenColumns.action,
   ];
 
   return (
@@ -297,174 +217,122 @@ function ApiTokensPage() {
         scroll={{ x: 720 }}
       />
 
-      <Modal
+      <TokenCreateModal
         title={t('api_tokens.create_modal_title')}
         open={createModalVisible}
-        width={isMobile ? 'calc(100vw - 32px)' : 520}
-        onCancel={() => {
-          setCreateModalVisible(false);
-          form.resetFields();
-        }}
-        footer={null}
-        destroyOnHidden
+        width={520}
+        onCancel={() => setCreateModalVisible(false)}
+        form={form}
+        onFinish={handleCreate}
+        loading={createMutation.isPending}
+        submitText={t('api_tokens.create_button')}
+        nameLabel={t('api_tokens.token_name')}
+        nameRequired={t('api_tokens.token_name_required')}
+        namePlaceholder={t('api_tokens.token_name_placeholder')}
       >
-        <Form form={form} layout="vertical" onFinish={handleCreate}>
-          <Form.Item
-            label={t('api_tokens.token_name')}
-            name="name"
-            rules={[
-              { required: true, message: t('api_tokens.token_name_required') },
+        <Form.Item
+          label={t('api_tokens.mode')}
+          name="mode"
+          initialValue="classic"
+        >
+          <Radio.Group
+            options={[
+              { label: t('api_tokens.mode_classic'), value: 'classic' },
+              { label: t('api_tokens.mode_scoped'), value: 'scoped' },
             ]}
-          >
-            <Input
-              placeholder={t('api_tokens.token_name_placeholder')}
-              maxLength={100}
-            />
-          </Form.Item>
+            optionType="button"
+            buttonStyle="solid"
+          />
+        </Form.Item>
+        {permissionMode === 'scoped' && (
           <Form.Item
-            label={t('api_tokens.mode')}
-            name="mode"
-            initialValue="classic"
-          >
-            <Radio.Group
-              options={[
-                { label: t('api_tokens.mode_classic'), value: 'classic' },
-                { label: t('api_tokens.mode_scoped'), value: 'scoped' },
-              ]}
-              optionType="button"
-              buttonStyle="solid"
-            />
-          </Form.Item>
-          {permissionMode === 'scoped' && (
-            <Form.Item
-              label={t('api_tokens.scopes')}
-              name="scopes"
-              extra={t('api_tokens.scopes_hint')}
-              rules={[
-                { required: true, message: t('api_tokens.scopes_required') },
-              ]}
-            >
-              <Select
-                mode="multiple"
-                allowClear
-                options={TOKEN_SCOPES.map((scope) => ({
-                  label: `${scope} — ${t(`api_tokens.scope_${scope.replace(':', '_')}`)}`,
-                  value: scope,
-                }))}
-              />
-            </Form.Item>
-          )}
-          <Form.Item
-            label={t('api_tokens.col_apps')}
-            name="appIds"
-            extra={t('api_tokens.apps_hint')}
+            label={t('api_tokens.scopes')}
+            name="scopes"
+            extra={t('api_tokens.scopes_hint')}
+            rules={[
+              { required: true, message: t('api_tokens.scopes_required') },
+            ]}
           >
             <Select
               mode="multiple"
               allowClear
-              placeholder={t('api_tokens.all_apps')}
-              options={appOptions}
+              options={API_TOKEN_SCOPES.map((scope) => ({
+                label: `${scope} — ${t(API_TOKEN_SCOPE_DESC_KEY[scope])}`,
+                value: scope,
+              }))}
             />
           </Form.Item>
-          <Form.Item
-            label={t('api_tokens.permissions')}
-            name="permissions"
-            hidden={permissionMode !== 'classic'}
-            rules={[
-              {
-                required: permissionMode === 'classic',
-                message: t('api_tokens.permissions_required'),
-              },
+        )}
+        <TokenAppsFormItem
+          label={t('api_tokens.col_apps')}
+          extra={t('api_tokens.apps_hint')}
+          placeholder={t('api_tokens.all_apps')}
+          options={appOptions}
+        />
+        <Form.Item
+          label={t('api_tokens.permissions')}
+          name="permissions"
+          hidden={permissionMode !== 'classic'}
+          rules={[
+            {
+              required: permissionMode === 'classic',
+              message: t('api_tokens.permissions_required'),
+            },
+          ]}
+        >
+          <Checkbox.Group>
+            <Space direction="vertical">
+              <Checkbox value="read">
+                <Trans
+                  i18nKey="api_tokens.perm_read_desc"
+                  components={{ b: <b /> }}
+                />
+              </Checkbox>
+              <Checkbox value="write">
+                <Trans
+                  i18nKey="api_tokens.perm_write_desc"
+                  components={{ b: <b /> }}
+                />
+              </Checkbox>
+              <Checkbox value="delete">
+                <Trans
+                  i18nKey="api_tokens.perm_delete_desc"
+                  components={{ b: <b /> }}
+                />
+              </Checkbox>
+              <div className="text-xs text-gray-500 mt-1">
+                {t('api_tokens.perm_note')}
+              </div>
+            </Space>
+          </Checkbox.Group>
+        </Form.Item>
+        <Form.Item
+          label={t('api_tokens.expiration')}
+          name="expiresIn"
+          initialValue={180}
+        >
+          <Select
+            options={[
+              { value: 0, label: t('api_tokens.exp_never') },
+              { value: 30, label: t('api_tokens.exp_30') },
+              { value: 90, label: t('api_tokens.exp_90') },
+              { value: 180, label: t('api_tokens.exp_180') },
+              { value: 360, label: t('api_tokens.exp_360') },
             ]}
-          >
-            <Checkbox.Group>
-              <Space direction="vertical">
-                <Checkbox value="read">
-                  <Trans
-                    i18nKey="api_tokens.perm_read_desc"
-                    components={{ b: <b /> }}
-                  />
-                </Checkbox>
-                <Checkbox value="write">
-                  <Trans
-                    i18nKey="api_tokens.perm_write_desc"
-                    components={{ b: <b /> }}
-                  />
-                </Checkbox>
-                <Checkbox value="delete">
-                  <Trans
-                    i18nKey="api_tokens.perm_delete_desc"
-                    components={{ b: <b /> }}
-                  />
-                </Checkbox>
-                <div className="text-xs text-gray-500 mt-1">
-                  {t('api_tokens.perm_note')}
-                </div>
-              </Space>
-            </Checkbox.Group>
-          </Form.Item>
-          <Form.Item
-            label={t('api_tokens.expiration')}
-            name="expiresIn"
-            initialValue={180}
-          >
-            <Select
-              options={[
-                { value: 0, label: t('api_tokens.exp_never') },
-                { value: 30, label: t('api_tokens.exp_30') },
-                { value: 90, label: t('api_tokens.exp_90') },
-                { value: 180, label: t('api_tokens.exp_180') },
-                { value: 360, label: t('api_tokens.exp_360') },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item className="mb-0">
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={createMutation.isPending}
-              block
-            >
-              {t('api_tokens.create_button')}
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title={t('api_tokens.created_title')}
-        open={!!newToken}
-        width={isMobile ? 'calc(100vw - 32px)' : 520}
-        onOk={() => setNewToken(null)}
-        onCancel={() => setNewToken(null)}
-        cancelButtonProps={{ style: { display: 'none' } }}
-        okText={t('api_tokens.created_ok')}
-      >
-        <div className="my-4">
-          <Paragraph type="warning" className="mb-2">
-            {t('api_tokens.created_warning')}
-          </Paragraph>
-          <Input.TextArea
-            value={newToken || ''}
-            readOnly
-            autoSize={{ minRows: 2 }}
-            className="font-mono"
           />
-          <Button
-            icon={<CopyOutlined />}
-            className="mt-2 w-full sm:w-auto"
-            block={isMobile}
-            onClick={() => {
-              if (newToken) {
-                navigator.clipboard.writeText(newToken);
-                message.success(t('api_tokens.copied'));
-              }
-            }}
-          >
-            {t('api_tokens.copy_button')}
-          </Button>
-        </div>
-      </Modal>
+        </Form.Item>
+      </TokenCreateModal>
+
+      <NewTokenRevealModal
+        token={newToken}
+        onClose={() => setNewToken(null)}
+        width={520}
+        title={t('api_tokens.created_title')}
+        okText={t('api_tokens.created_ok')}
+        warning={t('api_tokens.created_warning')}
+        copyText={t('api_tokens.copy_button')}
+        copiedText={t('api_tokens.copied')}
+      />
     </div>
   );
 }

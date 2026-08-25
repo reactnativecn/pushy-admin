@@ -3,7 +3,7 @@ import {
   ReloadOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Button,
@@ -19,11 +19,12 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DEPLOY_STATUS_LABEL_KEY } from '@/constants/i18n-keys';
 import { adminApi } from '@/services/admin-api';
 import type { SystemDeployStatus, SystemInstance } from '@/types';
-import { adminKeys } from '@/utils/query-keys';
+import { serviceStatusKeys } from '@/utils/query-keys';
 import { formatBytes, formatUptime, type ServiceStatusTarget } from './metrics';
 
 const { Text } = Typography;
@@ -61,17 +62,41 @@ function formatDateTime(value: string | null | undefined) {
 
 export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
 
+  // 命令入队后实例要等下一次心跳才会带上部署状态，延迟一秒再拉；
+  // 面板关掉（弹窗 destroyOnHidden）时清掉定时器，别对已卸载的组件刷新
+  const refetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (refetchTimerRef.current) {
+        clearTimeout(refetchTimerRef.current);
+      }
+    },
+    [],
+  );
+  const scheduleInstancesRefresh = () => {
+    if (refetchTimerRef.current) {
+      clearTimeout(refetchTimerRef.current);
+    }
+    refetchTimerRef.current = setTimeout(() => {
+      refetchTimerRef.current = null;
+      queryClient.invalidateQueries({
+        queryKey: serviceStatusKeys.instances(target.key),
+      });
+    }, 1000);
+  };
+
   // 实例状态是节点本机事实（文件注册表），直接问该节点自己的入口
   const instancesQuery = useQuery({
-    queryKey: adminKeys.systemInstances(target.key),
+    queryKey: serviceStatusKeys.instances(target.key),
     queryFn: () => adminApi.getSystemInstances(target.baseUrl),
     refetchInterval: 10_000,
   });
   const npmQuery = useQuery({
-    queryKey: adminKeys.systemNpm(target.key),
+    queryKey: serviceStatusKeys.npm(target.key),
     queryFn: () => adminApi.getSystemNpmInfo(target.baseUrl),
     refetchInterval: 60_000,
   });
@@ -110,7 +135,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
   const renderDeployTooltip = (status: SystemDeployStatus) => (
     <>
       <div>
-        {t(`admin_deploy.status_${status.status}`)} · {status.action}
+        {t(DEPLOY_STATUS_LABEL_KEY[status.status])} · {status.action}
         {status.version ? ` → ${status.version}` : ''}
       </div>
       {status.message && <div>{status.message}</div>}
@@ -123,10 +148,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
       adminApi.restartInstance({ instanceId, baseUrl: target.baseUrl }),
     onSuccess: () => {
       message.success(t('admin_deploy.command_queued'));
-      setTimeout(() => instancesQuery.refetch(), 1000);
-    },
-    onError: (error) => {
-      message.error((error as Error).message);
+      scheduleInstancesRefresh();
     },
   });
 
@@ -136,10 +158,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
     onSuccess: () => {
       message.success(t('admin_deploy.command_queued'));
       setUpdateModalOpen(false);
-      setTimeout(() => instancesQuery.refetch(), 1000);
-    },
-    onError: (error) => {
-      message.error((error as Error).message);
+      scheduleInstancesRefresh();
     },
   });
 
@@ -292,7 +311,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
                 disabled={restartMutation.isPending}
               >
                 {busy
-                  ? t(`admin_deploy.status_${status.status}`)
+                  ? t(DEPLOY_STATUS_LABEL_KEY[status.status])
                   : t('admin_deploy.restart')}
               </Button>
             </Tooltip>
@@ -329,7 +348,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
               disabled={rows.length === 0}
             >
               {nodeDeployBusy
-                ? t(`admin_deploy.status_${nodeDeployStatus.status}`)
+                ? t(DEPLOY_STATUS_LABEL_KEY[nodeDeployStatus.status])
                 : t('admin_deploy.update')}
             </Button>
           </Tooltip>

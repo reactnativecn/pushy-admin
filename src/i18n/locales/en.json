@@ -409,7 +409,8 @@
     "apikey_prefix": "API Key:",
     "start_date": "Start date",
     "end_date": "End date",
-    "sheet_name": "Audit Logs"
+    "sheet_name": "Audit Logs",
+    "capped_notice": "Only the latest {{loaded}} of {{total}} logs in this date range are loaded. Narrow the date range to see older entries."
   },
   "realtime_metrics": {
     "update_checks": "Update Checks",
@@ -635,6 +636,7 @@
   "admin_apps": {
     "app_updated": "App updated",
     "copied": "Copied",
+    "copy_failed": "Copy failed, please copy manually",
     "col_id": "ID",
     "col_name": "Name",
     "col_app_key": "App Key",
@@ -981,7 +983,8 @@
     "loading": "Loading...",
     "copied": "Copied",
     "none": "None",
-    "search": "Search"
+    "search": "Search",
+    "copy_failed": "Copy failed, please copy manually"
   },
   "publish_feature_table": {
     "version_header_line1": "react-native-update Version",

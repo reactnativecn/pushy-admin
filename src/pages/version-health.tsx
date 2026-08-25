@@ -9,10 +9,13 @@ import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { AsyncLine } from '@/components/lazy-chart';
+import { RANGE_PRESET_LABEL_KEY } from '@/constants/i18n-keys';
 import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
+import { buildTimeSeriesLineConfig, getRangePresets } from '@/utils/charts';
 import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
+import { metricsKeys } from '@/utils/query-keys';
 import { useThemeMode } from '@/utils/theme-mode';
 
 const { RangePicker } = DatePicker;
@@ -140,12 +143,11 @@ export const Component = () => {
   }, [selectableAppKeys, setSearchParams, urlAppKey]);
 
   const { data, isLoading } = useQuery({
-    queryKey: [
-      'appEventsMetrics',
+    queryKey: metricsKeys.appEvents(
       selectedAppKey,
       dateRange[0].toISOString(),
       dateRange[1].toISOString(),
-    ],
+    ),
     queryFn: () =>
       api.getAppEventsMetrics({
         appKey: selectedAppKey!,
@@ -253,29 +255,13 @@ export const Component = () => {
     return { rows: healthRows, trendData: points };
   }, [data, eventTypeLabels]);
 
-  const lineConfig = {
-    theme: isDark ? 'classicDark' : 'classic',
+  // 事件类型只有五条线，tooltip 不合并、图例不做默认筛选
+  const lineConfig = buildTimeSeriesLineConfig({
     data: trendData,
-    xField: (d: TrendPoint) => new Date(d.time),
-    yField: 'value',
-    colorField: 'category',
-    shapeField: 'smooth',
-    axis: {
-      x: {
-        labelAutoRotate: true,
-        labelFormatter: (value: string) => {
-          const parsed = dayjs(value);
-          return parsed.isValid() ? parsed.format('MM/DD HH:mm') : value;
-        },
-      },
-      y: {},
-    },
-    tooltip: {
-      title: (point: TrendPoint) => dayjs(point.time).format('MM/DD HH:mm'),
-    },
-    legend: { position: 'top' },
+    isDark,
     height: 360,
-  };
+    sharedTooltip: false,
+  });
 
   const columns = [
     {
@@ -387,20 +373,10 @@ export const Component = () => {
                 }
               }}
               style={{ width: '100%' }}
-              presets={[
-                {
-                  label: t('version_health.range_24h'),
-                  value: [dayjs().subtract(24, 'hour'), dayjs()],
-                },
-                {
-                  label: t('version_health.range_3d'),
-                  value: [dayjs().subtract(3, 'day'), dayjs()],
-                },
-                {
-                  label: t('version_health.range_7d'),
-                  value: [dayjs().subtract(7, 'day'), dayjs()],
-                },
-              ]}
+              presets={getRangePresets(
+                t,
+                RANGE_PRESET_LABEL_KEY.version_health,
+              )}
             />
           </div>
           <div className="text-xs text-gray-400">

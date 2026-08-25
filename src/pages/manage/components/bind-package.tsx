@@ -19,6 +19,7 @@ import {
 } from 'antd';
 import { useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { DEPS_VIOLATION_MESSAGE_KEY } from '@/constants/i18n-keys';
 import {
   useDeleteBinding,
   useUpdatePackage,
@@ -358,12 +359,16 @@ const BindPackage = ({
     }
 
     // 硬规则预检(服务端为权威并整批拒绝;这里提前挡住,给出逐包原因)
-    const fatal = pkgs
-      .map((pkg) => ({
-        pkg,
-        violation: getFatalDepsViolation(pkg.deps, versionDeps),
-      }))
-      .filter((item) => item.violation !== null);
+    const fatal: {
+      pkg: PublishPackage;
+      violation: keyof typeof DEPS_VIOLATION_MESSAGE_KEY;
+    }[] = [];
+    for (const pkg of pkgs) {
+      const violation = getFatalDepsViolation(pkg.deps, versionDeps);
+      if (violation) {
+        fatal.push({ pkg, violation });
+      }
+    }
     if (fatal.length > 0) {
       Modal.error({
         title: t('bind_package.deps_blocked_title'),
@@ -371,7 +376,7 @@ const BindPackage = ({
           <div className="space-y-1">
             {fatal.map(({ pkg, violation }) => (
               <div key={pkg.id}>
-                {t(`bind_package.deps_${violation}`, { pkg: pkg.name })}
+                {t(DEPS_VIOLATION_MESSAGE_KEY[violation], { pkg: pkg.name })}
               </div>
             ))}
           </div>

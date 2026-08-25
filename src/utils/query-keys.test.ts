@@ -6,8 +6,10 @@ import {
   appKeys,
   auditKeys,
   bindingKeys,
+  emailChangeKeys,
   metricsKeys,
   packageKeys,
+  serviceStatusKeys,
   userKeys,
   versionKeys,
 } from './query-keys';
@@ -134,12 +136,95 @@ describe('domain key factories', () => {
       'b',
       'pv',
     ]);
-    expect(metricsKeys.internal('main')).toEqual(['internalMetrics', 'main']);
-    expect(metricsKeys.internalApi5xxEvents('main', 20)).toEqual([
-      'internalApi5xxEvents',
-      'main',
-      20,
+    expect(metricsKeys.app('k', 'a', 'b')).toEqual([
+      'appMetrics',
+      'k',
+      'a',
+      'b',
     ]);
+    expect(metricsKeys.app(undefined, 'a', 'b')).toEqual([
+      'appMetrics',
+      undefined,
+      'a',
+      'b',
+    ]);
+    expect(metricsKeys.appEvents('k', 'a', 'b')).toEqual([
+      'appEventsMetrics',
+      'k',
+      'a',
+      'b',
+    ]);
+    expect(metricsKeys.packageWarnings(3, 'k', 'a', 'b')).toEqual([
+      'packageMetricWarnings',
+      3,
+      'k',
+      'a',
+      'b',
+    ]);
+  });
+
+  describe('serviceStatusKeys', () => {
+    test('per-target keys share the target prefix', () => {
+      const prefix = serviceStatusKeys.target('jd1');
+      expect(prefix).toEqual(['serviceStatus', 'jd1']);
+      for (const key of [
+        serviceStatusKeys.metrics('jd1'),
+        serviceStatusKeys.api5xxEvents('jd1', 20),
+        serviceStatusKeys.instances('jd1'),
+        serviceStatusKeys.npm('jd1'),
+      ]) {
+        // 面板的刷新按钮靠这个前缀一次性 invalidate 四个查询
+        expect(key.slice(0, prefix.length)).toEqual(prefix);
+      }
+      expect(serviceStatusKeys.api5xxEvents('jd1', 20)).toEqual([
+        'serviceStatus',
+        'jd1',
+        'api5xxEvents',
+        20,
+      ]);
+    });
+
+    test('global panels do not match any target prefix', () => {
+      const globals = [
+        serviceStatusKeys.analyticsOverview(7),
+        serviceStatusKeys.growthStats(7),
+        serviceStatusKeys.versionHealthOverview(7),
+        serviceStatusKeys.quotaAlerts(),
+        serviceStatusKeys.workerTaskStats(7),
+      ];
+      for (const key of globals) {
+        expect(key[0]).toBe('serviceStatus');
+        expect(key[1]).toBe('global');
+      }
+      expect(serviceStatusKeys.quotaAlerts()).toEqual([
+        'serviceStatus',
+        'global',
+        'quotaAlerts',
+      ]);
+      expect(serviceStatusKeys.workerTaskStats(7)).toEqual([
+        'serviceStatus',
+        'global',
+        'workerTaskStats',
+        7,
+      ]);
+    });
+
+    test('all() is a prefix of every service status key', () => {
+      expect(serviceStatusKeys.all()).toEqual(['serviceStatus']);
+      expect(serviceStatusKeys.npm('p')[0]).toBe('serviceStatus');
+    });
+  });
+
+  test('emailChangeKeys', () => {
+    expect(emailChangeKeys.all()).toEqual(['emailChange']);
+    expect(emailChangeKeys.byToken('confirm', 'tok')).toEqual([
+      'emailChange',
+      'confirm',
+      'tok',
+    ]);
+    expect(emailChangeKeys.byToken('revert', 'tok').slice(0, 1)).toEqual(
+      emailChangeKeys.all(),
+    );
   });
 
   describe('adminKeys.users partial matching', () => {

@@ -35,6 +35,7 @@ declare module 'bun:test' {
     toHaveBeenCalled(): void;
     toHaveBeenCalledTimes(expected: number): void;
     toHaveLength(expected: number): void;
+    toMatchObject(expected: object): void;
     toThrow(expected?: unknown): void;
   };
   type ExpectMatchers = ExpectAssertions & {

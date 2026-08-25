@@ -135,6 +135,7 @@ const PackageList = ({
             }
             warnings={warnings}
             realtimeMetricsPath={buildRealtimeMetricsPath(item, warnings)}
+            canPublish={canPublish}
           />
         );
       }}
@@ -334,16 +335,18 @@ const Item = ({
   onSelectedChange,
   warnings,
   realtimeMetricsPath,
+  canPublish,
 }: {
   item: Package;
   selected: boolean;
   onSelectedChange: (checked: boolean) => void;
   warnings: PackageMetricWarnings;
   realtimeMetricsPath?: string;
+  /** 由列表层查一次权限后传下来，避免每个条目各挂一个 query observer */
+  canPublish: boolean;
 }) => {
   const { t } = useTranslation();
   const { appId } = useManageContext();
-  const { canPublish } = useWorkspacePermissions();
   const deletePackage = useDeletePackage();
   const [editing, setEditing] = useState(false);
   const hasMetricWarning =

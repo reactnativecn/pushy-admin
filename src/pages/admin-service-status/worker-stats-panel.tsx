@@ -4,6 +4,7 @@ import { Card, Space, Statistic, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
+import { serviceStatusKeys } from '@/utils/query-keys';
 import { formatBytes, formatCount, formatMs } from './metrics';
 
 const { Text } = Typography;
@@ -27,7 +28,7 @@ const distText = (
 export const WorkerStatsPanel = () => {
   const { t } = useTranslation();
   const statsQuery = useQuery({
-    queryKey: ['workerTaskStats'],
+    queryKey: serviceStatusKeys.workerTaskStats(7),
     queryFn: () => adminApi.getWorkerTaskStats(7),
     refetchInterval: 60_000,
     retry: false,

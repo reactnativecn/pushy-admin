@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
+import { QUOTA_ALERT_KIND_LABEL_KEY } from '@/constants/i18n-keys';
 import { adminApi } from '@/services/admin-api';
+import { serviceStatusKeys } from '@/utils/query-keys';
 import { formatCount } from './metrics';
 
 const { Text } = Typography;
@@ -17,7 +19,7 @@ const KIND_COLORS: Record<QuotaAlert['kind'], string> = {
 export const QuotaAlertsPanel = () => {
   const { t } = useTranslation();
   const alertsQuery = useQuery({
-    queryKey: ['quotaAlerts'],
+    queryKey: serviceStatusKeys.quotaAlerts(),
     queryFn: () => adminApi.getQuotaAlerts(),
     refetchInterval: 10 * 60_000,
     retry: false,
@@ -33,7 +35,7 @@ export const QuotaAlertsPanel = () => {
       dataIndex: 'kind',
       render: (kind: QuotaAlert['kind']) => (
         <Tag color={KIND_COLORS[kind]}>
-          {t(`user_analytics.quota_kind_${kind}`)}
+          {t(QUOTA_ALERT_KIND_LABEL_KEY[kind])}
         </Tag>
       ),
       title: '',

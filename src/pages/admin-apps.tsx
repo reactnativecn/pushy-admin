@@ -15,7 +15,6 @@ import {
   Button,
   Card,
   Form,
-  Grid,
   Input,
   Modal,
   message,
@@ -25,18 +24,23 @@ import {
   Table,
   Typography,
 } from 'antd';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import type { FilterValue, SorterResult } from 'antd/es/table/interface';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { UserDetailDrawer } from '@/components/user-detail-drawer';
 import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
 import type { AdminApp } from '@/types';
-import { patchSearchParams } from '@/utils/helper';
 import { adminKeys } from '@/utils/query-keys';
+import { useModalWidth } from '@/utils/responsive';
+import {
+  getTablePagination,
+  parseOptionalPositiveInt,
+  usePageClamp,
+  useUrlTableState,
+} from '@/utils/table-state';
 
 const { Title } = Typography;
 
@@ -55,34 +59,46 @@ const SORTABLE_COLUMNS = new Set([
 const PLATFORM_VALUES = ['ios', 'android', 'harmony'];
 const STATUS_VALUES = ['normal', 'paused'];
 
-const parsePositiveInt = (value: string | null, fallback: number) => {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-};
+// 表头筛选列,值同步到同名 URL 参数
+const FILTER_KEYS = ['platform', 'status', 'userId'] as const;
 
-const parseOptionalPositiveInt = (value: string | null) => {
-  const parsed = Number(value);
-  return value && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+// 用户 id 是手输的,先归一化再写回 URL,避免 "0"/"abc" 留下一个不生效的筛选。
+const normalizeFilter = (key: string, value: string | undefined) => {
+  if (key !== 'userId') {
+    return value;
+  }
+  const userId = parseOptionalPositiveInt(value ?? null);
+  return userId ? String(userId) : undefined;
 };
 
 export const Component = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
-  const [searchParams, setSearchParams] = useSearchParams();
+  const tableState = useUrlTableState({
+    sortableColumns: SORTABLE_COLUMNS,
+    filterKeys: FILTER_KEYS,
+    normalizeFilter,
+  });
+  const {
+    searchParams,
+    isMobile,
+    page: currentPage,
+    pageSize,
+    searchQuery,
+    searchInput,
+    setSearchInput,
+    orderBy,
+    order,
+    sortOrderOf,
+    handleTableChange,
+  } = tableState;
+  const modalWidth = useModalWidth(600);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [viewingUserId, setViewingUserId] = useState<number | null>(null);
   const [editingApp, setEditingApp] = useState<AdminApp | null>(null);
   const [form] = Form.useForm();
 
-  const searchQuery = searchParams.get('search')?.trim() ?? '';
-  const currentPage = parsePositiveInt(searchParams.get('page'), 1);
-  const pageSize = parsePositiveInt(
-    searchParams.get('pageSize'),
-    isMobile ? 10 : 20,
-  );
   const platformParam = searchParams.get('platform') ?? undefined;
   const platformFilter =
     platformParam && PLATFORM_VALUES.includes(platformParam)
@@ -94,38 +110,8 @@ export const Component = () => {
       ? statusParam
       : undefined;
   const userIdFilter = parseOptionalPositiveInt(searchParams.get('userId'));
-  const orderByParam = searchParams.get('orderBy') ?? undefined;
-  const orderBy =
-    orderByParam && SORTABLE_COLUMNS.has(orderByParam)
-      ? orderByParam
-      : undefined;
-  const order =
-    searchParams.get('order') === 'asc' ? 'asc' : orderBy ? 'desc' : undefined;
-  const [searchKeyword, setSearchKeyword] = useState(searchQuery);
 
-  useEffect(() => {
-    setSearchKeyword(searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const trimmedKeyword = searchKeyword.trim();
-    if (trimmedKeyword === searchQuery) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      patchSearchParams(setSearchParams, {
-        search: trimmedKeyword || undefined,
-        page: '1',
-      });
-    }, 300);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [searchKeyword, searchQuery, setSearchParams]);
-
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isPlaceholderData } = useQuery({
     queryKey: [
       ...adminKeys.apps(searchQuery, currentPage, pageSize),
       platformFilter,
@@ -145,17 +131,12 @@ export const Component = () => {
         limit: pageSize,
         offset: (currentPage - 1) * pageSize,
       }),
+    // 翻页/筛选切换期间保留上一份数据,total 不会瞬间归零
     placeholderData: keepPreviousData,
   });
 
   const total = data?.count ?? data?.data.length ?? 0;
-  const maxPage = Math.max(1, Math.ceil(total / pageSize));
-
-  useEffect(() => {
-    if (data && currentPage > maxPage) {
-      patchSearchParams(setSearchParams, { page: String(maxPage) });
-    }
-  }, [data, currentPage, maxPage, setSearchParams]);
+  usePageClamp(tableState, total, data !== undefined && !isPlaceholderData);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<AdminApp> }) =>
@@ -165,40 +146,7 @@ export const Component = () => {
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: adminKeys.apps() });
     },
-    onError: (error) => {
-      message.error((error as Error).message);
-    },
   });
-
-  const handleTableChange = (
-    pagination: TablePaginationConfig,
-    filters: Record<string, FilterValue | null>,
-    sorter: SorterResult<AdminApp> | SorterResult<AdminApp>[],
-  ) => {
-    const single = Array.isArray(sorter) ? sorter[0] : sorter;
-    const field =
-      single?.order && typeof single.field === 'string'
-        ? single.field
-        : undefined;
-    // 用户 id 是手输的,先归一化再写回 URL,避免 "0"/"abc" 留下一个不生效的筛选。
-    const nextUserId = parseOptionalPositiveInt(
-      (filters.userId?.[0] as string | undefined) ?? null,
-    );
-    patchSearchParams(setSearchParams, {
-      page: String(pagination.current ?? 1),
-      pageSize: String(pagination.pageSize ?? pageSize),
-      platform: (filters.platform?.[0] as string | undefined) || undefined,
-      status: (filters.status?.[0] as string | undefined) || undefined,
-      userId: nextUserId ? String(nextUserId) : undefined,
-      orderBy: field && SORTABLE_COLUMNS.has(field) ? field : undefined,
-      order:
-        field && single?.order
-          ? single.order === 'ascend'
-            ? 'asc'
-            : 'desc'
-          : undefined,
-    });
-  };
 
   const handleEdit = (record: AdminApp) => {
     setEditingApp(record);
@@ -215,28 +163,37 @@ export const Component = () => {
   };
 
   const handleSave = async () => {
+    let values: Record<string, any>;
     try {
-      const values = await form.validateFields();
-      if (!editingApp) return;
-
-      const updateData: Partial<AdminApp> = {
-        name: values.name,
-        appKey: values.appKey || undefined,
-        platform: values.platform,
-        userId: values.userId || null,
-        downloadUrl: values.downloadUrl || null,
-        status: values.status || null,
-        ignoreBuildTime: values.ignoreBuildTime || null,
-      };
-
-      updateMutation.mutate({ id: editingApp.id, data: updateData });
-    } catch (error) {
-      message.error((error as Error).message);
+      values = await form.validateFields();
+    } catch {
+      // 校验失败时表单已内联提示,不再额外弹 toast
+      return;
     }
+    if (!editingApp) return;
+
+    const updateData: Partial<AdminApp> = {
+      name: values.name,
+      appKey: values.appKey || undefined,
+      platform: values.platform,
+      userId: values.userId || null,
+      downloadUrl: values.downloadUrl || null,
+      status: values.status || null,
+      ignoreBuildTime: values.ignoreBuildTime || null,
+    };
+
+    updateMutation.mutate({ id: editingApp.id, data: updateData });
   };
 
-  const sortOrderOf = (field: string) =>
-    orderBy === field ? (order === 'asc' ? 'ascend' : 'descend') : undefined;
+  const copyAppKey = async (key: string) => {
+    // 非安全上下文没有 clipboard,写入也可能被权限拒绝,失败要告诉用户
+    try {
+      await navigator.clipboard.writeText(key);
+      message.success(t('admin_apps.copied'));
+    } catch {
+      message.error(t('admin_apps.copy_failed'));
+    }
+  };
 
   const columns: ColumnsType<AdminApp> = [
     {
@@ -270,10 +227,7 @@ export const Component = () => {
             type="text"
             size="small"
             icon={<CopyOutlined />}
-            onClick={() => {
-              navigator.clipboard.writeText(key);
-              message.success(t('admin_apps.copied'));
-            }}
+            onClick={() => copyAppKey(key)}
           />
         </Space>
       ),
@@ -481,8 +435,8 @@ export const Component = () => {
           <Input
             placeholder={t('admin_apps.search_placeholder')}
             prefix={<SearchOutlined />}
-            value={searchKeyword}
-            onChange={(event) => setSearchKeyword(event.target.value)}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
             allowClear
             className="w-full md:w-72"
           />
@@ -495,17 +449,9 @@ export const Component = () => {
             rowKey="id"
             size={isMobile ? 'small' : 'middle'}
             onChange={handleTableChange}
-            pagination={{
-              current: currentPage,
-              pageSize,
-              total,
-              simple: isMobile,
-              showQuickJumper: !isMobile,
-              showSizeChanger: !isMobile,
-              showTotal: isMobile
-                ? undefined
-                : (count) => t('admin_apps.apps_count', { count }),
-            }}
+            pagination={getTablePagination(tableState, total, (count) =>
+              t('admin_apps.apps_count', { count }),
+            )}
             scroll={{ x: 1000 }}
           />
         </Spin>
@@ -521,7 +467,7 @@ export const Component = () => {
       <Modal
         title={t('admin_apps.edit_title', { name: editingApp?.name ?? '' })}
         open={isModalOpen}
-        width={isMobile ? 'calc(100vw - 32px)' : 600}
+        width={modalWidth}
         onCancel={() => setIsModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setIsModalOpen(false)}>

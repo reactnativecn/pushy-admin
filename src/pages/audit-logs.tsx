@@ -5,11 +5,11 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import {
+  Alert,
   Button,
   DatePicker,
   Descriptions,
   Drawer,
-  Grid,
   Input,
   message,
   Select,
@@ -20,20 +20,26 @@ import {
 } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
 import type { Dayjs } from 'dayjs';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
 import { UAParser } from 'ua-parser-js';
 import type { AuditLog } from '@/types';
 import { downloadCsv } from '@/utils/csv';
 import dayjs from '@/utils/dayjs';
 import { patchSearchParams } from '@/utils/helper';
 import { useAuditLogs } from '@/utils/hooks';
+import {
+  getTablePagination,
+  usePageClamp,
+  useUrlTableState,
+} from '@/utils/table-state';
 
 const { RangePicker } = DatePicker;
 const { Paragraph, Text, Title } = Typography;
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
+
+/** 动作 key(`METHOD /normalized/path`)-> 翻译后的动作名 */
+type ActionMap = Record<string, string>;
 
 type AuditStatusFilter = 'all' | 'success' | 'client-error' | 'server-error';
 
@@ -94,7 +100,8 @@ const normalizePath = (path: string): string => {
   return path.replace(/\/\d+/g, '/{id}').replace(/\/$/, '');
 };
 
-function getActionMap(t: TranslateFn): Record<string, string> {
+// 每次渲染只构建一次,再传给筛选 / 列渲染 / 导出,别在上千行的 filter 里反复建表
+function getActionMap(t: TranslateFn): ActionMap {
   return {
     'POST /user/login': t('audit_logs.action_login'),
     'POST /user/register': t('audit_logs.action_register'),
@@ -132,24 +139,19 @@ function getActionMap(t: TranslateFn): Record<string, string> {
 const getActionKey = (method: string, path: string): string =>
   `${method.toUpperCase()} ${normalizePath(path)}`;
 
-function getActionOptions(t: TranslateFn) {
-  return Object.entries(getActionMap(t))
+function getActionOptions(actionMap: ActionMap) {
+  return Object.entries(actionMap)
     .map(([value, label]) => ({ label, value }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 const getActionLabel = (
-  t: TranslateFn,
+  actionMap: ActionMap,
   method: string,
   path: string,
 ): string => {
   const key = getActionKey(method, path);
-  return getActionMap(t)[key] || `${method.toUpperCase()} ${path}`;
-};
-
-const parsePositiveInt = (value: string | null, fallback: number) => {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+  return actionMap[key] || `${method.toUpperCase()} ${path}`;
 };
 
 const parseStatusFilter = (value: string | null): AuditStatusFilter => {
@@ -204,10 +206,10 @@ const matchesStatusFilter = (
   return code >= 500;
 };
 
-const buildSearchText = (t: TranslateFn, log: AuditLog) => {
+const buildSearchText = (actionMap: ActionMap, log: AuditLog) => {
   return [
     log.id,
-    getActionLabel(t, log.method, log.path),
+    getActionLabel(actionMap, log.method, log.path),
     log.method,
     log.path,
     log.statusCode,
@@ -223,56 +225,35 @@ const buildSearchText = (t: TranslateFn, log: AuditLog) => {
 
 export const AuditLogs = () => {
   const { t } = useTranslation();
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [searchInput, setSearchInput] = useState(
-    searchParams.get('query')?.trim() ?? '',
-  );
+  const tableState = useUrlTableState({ searchParam: 'query' });
+  const {
+    searchParams,
+    setSearchParams,
+    isMobile,
+    searchQuery,
+    searchInput,
+    setSearchInput,
+    handleTableChange,
+  } = tableState;
 
-  const currentPage = parsePositiveInt(searchParams.get('page'), 1);
-  const pageSize = parsePositiveInt(
-    searchParams.get('pageSize'),
-    isMobile ? 10 : 20,
-  );
-  const query = searchParams.get('query')?.trim().toLowerCase() ?? '';
+  const query = searchQuery.toLowerCase();
   const selectedAction = searchParams.get('action') ?? undefined;
   const statusFilter = parseStatusFilter(searchParams.get('status'));
   const dateRange = parseDateRange(searchParams);
   const selectedLogId = searchParams.get('logId');
 
   const statusFilterOptions = getStatusFilterOptions(t);
-  const actionOptions = getActionOptions(t);
+  const actionMap = getActionMap(t);
+  const actionOptions = getActionOptions(actionMap);
 
-  useEffect(() => {
-    setSearchInput(searchParams.get('query')?.trim() ?? '');
-  }, [searchParams]);
-
-  useEffect(() => {
-    const trimmedKeyword = searchInput.trim();
-    const normalizedQuery = searchParams.get('query')?.trim() ?? '';
-    if (trimmedKeyword === normalizedQuery) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      patchSearchParams(setSearchParams, {
-        query: trimmedKeyword || undefined,
-        page: '1',
-      });
-    }, 300);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [searchInput, searchParams, setSearchParams]);
-
-  const { allAuditLogs = [], isLoading } = useAuditLogs({
-    offset: 0,
-    limit: 1000,
+  // 日期范围交给服务端,这样缩小范围就能看到被条数上限挡在外面的旧日志
+  const { auditLogs, total, isLoading, isPlaceholderData } = useAuditLogs({
+    startDate: dateRange?.[0]?.startOf('day').toISOString(),
+    endDate: dateRange?.[1]?.endOf('day').toISOString(),
   });
+  const isCapped = total > auditLogs.length;
 
-  const filteredAuditLogs = allAuditLogs.filter((log) => {
+  const filteredAuditLogs = auditLogs.filter((log) => {
     if (
       selectedAction &&
       getActionKey(log.method, log.path) !== selectedAction
@@ -284,7 +265,7 @@ export const AuditLogs = () => {
       return false;
     }
 
-    if (query && !buildSearchText(t, log).includes(query)) {
+    if (query && !buildSearchText(actionMap, log).includes(query)) {
       return false;
     }
 
@@ -309,16 +290,14 @@ export const AuditLogs = () => {
     return true;
   });
 
-  const maxPage = Math.max(1, Math.ceil(filteredAuditLogs.length / pageSize));
-
-  useEffect(() => {
-    if (!isLoading && currentPage > maxPage) {
-      patchSearchParams(setSearchParams, { page: String(maxPage) });
-    }
-  }, [isLoading, currentPage, maxPage, setSearchParams]);
+  usePageClamp(
+    tableState,
+    filteredAuditLogs.length,
+    !isLoading && !isPlaceholderData,
+  );
 
   const selectedLog = selectedLogId
-    ? (allAuditLogs.find((log) => String(log.id) === selectedLogId) ?? null)
+    ? (auditLogs.find((log) => String(log.id) === selectedLogId) ?? null)
     : null;
 
   const disabledDate = (current: Dayjs | null) => {
@@ -401,7 +380,7 @@ export const AuditLogs = () => {
 
         return {
           time: date.format('YYYY-MM-DD HH:mm:ss'),
-          action: getActionLabel(t, log.method, log.path),
+          action: getActionLabel(actionMap, log.method, log.path),
           method: log.method.toUpperCase(),
           path: log.path,
           status: log.statusCode,
@@ -472,7 +451,11 @@ export const AuditLogs = () => {
       title: t('audit_logs.col_action'),
       width: 210,
       render: (_value, record) => {
-        const actionLabel = getActionLabel(t, record.method, record.path);
+        const actionLabel = getActionLabel(
+          actionMap,
+          record.method,
+          record.path,
+        );
         const isDelete = record.method.toUpperCase() === 'DELETE';
         return (
           <span className={isDelete ? 'text-error' : undefined}>
@@ -660,9 +643,20 @@ export const AuditLogs = () => {
         <div className="text-sm text-gray-500">
           {t('audit_logs.matching_logs', {
             filtered: filteredAuditLogs.length,
-            total: allAuditLogs.length,
+            total: auditLogs.length,
           })}
         </div>
+        {isCapped && (
+          <Alert
+            type="warning"
+            showIcon
+            className="mt-2"
+            message={t('audit_logs.capped_notice', {
+              loaded: auditLogs.length,
+              total,
+            })}
+          />
+        )}
       </div>
 
       <Table
@@ -670,23 +664,12 @@ export const AuditLogs = () => {
         columns={columns}
         dataSource={filteredAuditLogs}
         loading={isLoading}
-        pagination={{
-          current: currentPage,
-          pageSize,
-          total: filteredAuditLogs.length,
-          showSizeChanger: !isMobile,
-          showQuickJumper: !isMobile,
-          simple: isMobile,
-          showTotal: isMobile
-            ? undefined
-            : (count) => t('audit_logs.records_count', { count }),
-          onChange: (page, nextPageSize) => {
-            patchSearchParams(setSearchParams, {
-              page: String(page),
-              pageSize: String(nextPageSize),
-            });
-          },
-        }}
+        onChange={handleTableChange}
+        pagination={getTablePagination(
+          tableState,
+          filteredAuditLogs.length,
+          (count) => t('audit_logs.records_count', { count }),
+        )}
         size={isMobile ? 'small' : 'middle'}
         scroll={{ x: isMobile ? 860 : 1320 }}
         onRow={(record) => ({
@@ -725,7 +708,7 @@ export const AuditLogs = () => {
                   key: 'action',
                   label: t('audit_logs.detail_action'),
                   children: getActionLabel(
-                    t,
+                    actionMap,
                     selectedLog.method,
                     selectedLog.path,
                   ),

@@ -378,15 +378,25 @@ export const api = {
     offset = 0,
     limit = 20,
     startDate,
+    endDate,
   }: {
     offset?: number;
     limit?: number;
     startDate?: string;
-  }) =>
-    request<{ data: AuditLog[]; count: number }>(
+    endDate?: string;
+  }) => {
+    const params = new URLSearchParams({
+      offset: String(offset),
+      limit: String(limit),
+    });
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    // 总数字段两代服务端叫法不同(count / total),都保留
+    return request<{ data: AuditLog[]; count?: number; total?: number }>(
       'get',
-      `/audit/logs?offset=${offset}&limit=${limit}&startDate=${startDate}`,
-    ),
+      `/audit/logs?${params.toString()}`,
+    );
+  },
   // global metrics
   getGlobalMetrics: (params: {
     start: string;

@@ -11,6 +11,7 @@ import {
   auditKeys,
   bindingKeys,
   memberKeys,
+  metricsKeys,
   packageKeys,
   userKeys,
   versionKeys,
@@ -426,13 +427,12 @@ export const usePackageMetricWarnings = ({
   }));
 
   const { data, isLoading } = useQuery({
-    queryKey: [
-      'packageMetricWarnings',
+    queryKey: metricsKeys.packageWarnings(
       appId,
       app?.appKey,
       metricsRange.start,
       metricsRange.end,
-    ],
+    ),
     queryFn: () =>
       api.getAppMetrics({
         appKey: app?.appKey as string,
@@ -462,40 +462,53 @@ export const usePackageMetricWarnings = ({
   };
 };
 
+/** 审计日志只保留 180 天,默认从这个下限开始拉 */
+export const AUDIT_LOG_RETENTION_DAYS = 180;
+
+/**
+ * 一次最多向服务端要多少条。服务端还有自己的上限(Go 版是 100),
+ * 真正拿到多少以响应为准,页面按 total 与实际条数的差判断是否被截断。
+ */
+export const AUDIT_LOG_FETCH_LIMIT = 1000;
+
+/**
+ * 审计日志:日期范围交给服务端过滤,关键字 / 动作 / 状态码这些服务端不支持的
+ * 筛选留在前端,在拉回的这一窗口内做。所以这里不做服务端分页——
+ * 分页后前端筛选只能作用于当前页,导出也只能导一页,反而更糟。
+ */
 export const useAuditLogs = ({
-  offset = 0,
-  limit = 20,
+  startDate,
+  endDate,
 }: {
-  offset?: number;
-  limit?: number;
-}) => {
-  // Fetch all audit logs (up to 1000) from backend and cache them
-  const { data, isLoading } = useQuery({
-    queryKey: auditKeys.all(),
+  startDate?: string;
+  endDate?: string;
+} = {}) => {
+  const { data, isLoading, isPlaceholderData } = useQuery({
+    queryKey: [...auditKeys.all(), startDate ?? null, endDate ?? null],
     staleTime: 3000,
+    // 切换日期范围时保留上一份列表,筛选计数不会闪成 0
+    placeholderData: keepPreviousData,
     queryFn: () =>
       api.getAuditLogs({
         offset: 0,
-        limit: 1000,
-        startDate: dayjs().subtract(180, 'day').toISOString(),
+        limit: AUDIT_LOG_FETCH_LIMIT,
+        // 默认下限在 queryFn 里算,放进 key 会每次渲染都变
+        startDate:
+          startDate ??
+          dayjs().subtract(AUDIT_LOG_RETENTION_DAYS, 'day').toISOString(),
+        endDate,
       }),
   });
 
-  // Implement frontend pagination
-  const allAuditLogs = data?.data ?? [];
-  const totalCount = data?.count ?? 0;
-
-  // Calculate pagination
-  const startIndex = offset;
-  const endIndex = offset + limit;
-  const paginatedAuditLogs = allAuditLogs.slice(startIndex, endIndex);
+  const auditLogs = data?.data ?? [];
+  const total = data?.total ?? data?.count ?? auditLogs.length;
 
   return {
-    auditLogs: paginatedAuditLogs,
-    count: totalCount,
+    auditLogs,
+    /** 该日期范围内服务端的总条数,可能大于 auditLogs.length */
+    total,
     isLoading,
-    // Also return all audit logs for components that might need them
-    allAuditLogs,
+    isPlaceholderData,
   };
 };
 

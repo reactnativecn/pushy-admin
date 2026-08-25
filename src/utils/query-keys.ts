@@ -55,9 +55,44 @@ export const activateKeys = {
 export const metricsKeys = {
   global: (startDate: string, endDate: string, mode: 'pv' | 'uv') =>
     ['globalMetrics', startDate, endDate, mode] as const,
-  internal: (target: string) => ['internalMetrics', target] as const,
-  internalApi5xxEvents: (target: string, offset: number) =>
-    ['internalApi5xxEvents', target, offset] as const,
+  app: (appKey: string | undefined, startDate: string, endDate: string) =>
+    ['appMetrics', appKey, startDate, endDate] as const,
+  appEvents: (appKey: string | undefined, startDate: string, endDate: string) =>
+    ['appEventsMetrics', appKey, startDate, endDate] as const,
+  packageWarnings: (
+    appId: number,
+    appKey: string | undefined,
+    startDate: string,
+    endDate: string,
+  ) => ['packageMetricWarnings', appId, appKey, startDate, endDate] as const,
+};
+
+// 服务状态页：全站概览面板挂在 'global' 下，单节点的四个查询挂在节点 key 下，
+// 面板的刷新按钮只要对 target(key) 前缀做一次 invalidate
+export const serviceStatusKeys = {
+  all: () => ['serviceStatus'] as const,
+  analyticsOverview: (days: number) =>
+    ['serviceStatus', 'global', 'analyticsOverview', days] as const,
+  growthStats: (days: number) =>
+    ['serviceStatus', 'global', 'growthStats', days] as const,
+  versionHealthOverview: (days: number) =>
+    ['serviceStatus', 'global', 'versionHealthOverview', days] as const,
+  quotaAlerts: () => ['serviceStatus', 'global', 'quotaAlerts'] as const,
+  workerTaskStats: (days: number) =>
+    ['serviceStatus', 'global', 'workerTaskStats', days] as const,
+  target: (target: string) => ['serviceStatus', target] as const,
+  metrics: (target: string) => ['serviceStatus', target, 'metrics'] as const,
+  api5xxEvents: (target: string, offset: number) =>
+    ['serviceStatus', target, 'api5xxEvents', offset] as const,
+  instances: (target: string) =>
+    ['serviceStatus', target, 'instances'] as const,
+  npm: (target: string) => ['serviceStatus', target, 'npm'] as const,
+};
+
+export const emailChangeKeys = {
+  all: () => ['emailChange'] as const,
+  byToken: (mode: 'confirm' | 'revert', token: string) =>
+    ['emailChange', mode, token] as const,
 };
 
 export const adminKeys = {
@@ -72,12 +107,15 @@ export const adminKeys = {
       ? (['adminApps'] as const)
       : (['adminApps', searchQuery, page, pageSize] as const),
   config: () => ['adminConfig'] as const,
-  systemInstances: (target: string) =>
-    ['adminSystemInstances', target] as const,
-  systemNpm: (target: string) => ['adminSystemNpm', target] as const,
 };
 
 export const memberKeys = {
   list: () => ['members'] as const,
   workspaces: () => ['workspaces'] as const,
+};
+
+export const endpointKeys = {
+  // 带上自定义端点，切换端点后自动重新解析基址
+  apiBase: (customBaseUrl: string | null) =>
+    ['apiBase', customBaseUrl] as const,
 };

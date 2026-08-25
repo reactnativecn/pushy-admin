@@ -409,7 +409,8 @@
     "apikey_prefix": "API Key：",
     "start_date": "开始日期",
     "end_date": "结束日期",
-    "sheet_name": "操作日志"
+    "sheet_name": "操作日志",
+    "capped_notice": "该日期范围内共 {{total}} 条日志，仅载入最近 {{loaded}} 条；缩小日期范围可查看更早的记录。"
   },
   "realtime_metrics": {
     "update_checks": "查询热更次数",
@@ -635,6 +636,7 @@
   "admin_apps": {
     "app_updated": "应用信息已更新",
     "copied": "已复制",
+    "copy_failed": "复制失败，请手动复制",
     "col_id": "ID",
     "col_name": "名称",
     "col_app_key": "App Key",
@@ -981,7 +983,8 @@
     "loading": "加载中...",
     "copied": "已复制",
     "none": "无",
-    "search": "搜索"
+    "search": "搜索",
+    "copy_failed": "复制失败，请手动复制"
   },
   "language": {
     "switch": "语言",

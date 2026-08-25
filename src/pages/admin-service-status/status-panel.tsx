@@ -1,4 +1,3 @@
-import { Line } from '@ant-design/charts';
 import { ReloadOutlined } from '@ant-design/icons';
 import {
   keepPreviousData,
@@ -19,12 +18,14 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AsyncLine } from '@/components/lazy-chart';
 import {
   api,
   type InternalApi5xxEvent,
   type InternalMetricsResponse,
 } from '@/services/api';
-import { adminKeys, metricsKeys } from '@/utils/query-keys';
+import { buildTimeSeriesLineConfig } from '@/utils/charts';
+import { serviceStatusKeys } from '@/utils/query-keys';
 import { useThemeMode } from '@/utils/theme-mode';
 import { InstancesPanel } from './instances-panel';
 import {
@@ -49,55 +50,10 @@ import {
 
 const { Paragraph, Text, Title } = Typography;
 
-function createLineConfig(
-  data: SeriesPoint[],
-  yTitle: string,
-  valueFormatter: (value: number) => string = formatCount,
-  xTitle?: string,
-) {
-  return {
-    axis: {
-      x: {
-        labelAutoRotate: true,
-        labelFormatter: (value: string) => {
-          const parsed = dayjs(value);
-          return parsed.isValid() ? parsed.format('HH:mm') : value;
-        },
-        title: xTitle ?? 'Time',
-      },
-      y: {
-        title: yTitle,
-      },
-    },
-    colorField: 'category',
-    data,
-    height: 300,
-    interaction: {
-      legendFilter: true,
-      tooltip: { shared: true },
-    },
-    legend: {
-      position: 'top',
-    },
-    shapeField: 'smooth',
-    tooltip: {
-      items: [
-        (point: SeriesPoint) => ({
-          name: point.category,
-          value: valueFormatter(point.value),
-        }),
-      ],
-      title: (point: SeriesPoint) => dayjs(point.time).format('MM/DD HH:mm'),
-    },
-    xField: (datum: SeriesPoint) => new Date(datum.time),
-    yField: 'value',
-  };
-}
-
 function MetricLineCard({
   data,
   title,
-  valueFormatter,
+  valueFormatter = formatCount,
   yTitle,
   xTitle,
 }: {
@@ -111,9 +67,18 @@ function MetricLineCard({
   return (
     <Card title={title}>
       {data.length > 0 ? (
-        <Line
-          {...createLineConfig(data, yTitle, valueFormatter, xTitle)}
-          theme={isDark ? 'classicDark' : 'classic'}
+        <AsyncLine
+          {...buildTimeSeriesLineConfig({
+            data,
+            isDark,
+            height: 300,
+            xTitle: xTitle ?? 'Time',
+            yTitle,
+            // 节点指标只保留最近一段，刻度不用带日期
+            axisTimeFormat: 'HH:mm',
+            formatTooltipValue: (point: SeriesPoint) =>
+              valueFormatter(point.value),
+          })}
         />
       ) : (
         <div className="flex h-[300px] items-center justify-center">
@@ -255,13 +220,11 @@ function getApi5xxEventColumns(
 export function ServiceStatusPanel({
   error,
   isFetching,
-  refetch,
   snapshot,
   target,
 }: {
   error: unknown;
   isFetching: boolean;
-  refetch: () => unknown;
   snapshot?: InternalMetricsResponse;
   target: ServiceStatusTarget;
 }) {
@@ -278,7 +241,7 @@ export function ServiceStatusPanel({
         offset: api5xxEventOffset,
         suppressErrorToast: true,
       }),
-    queryKey: metricsKeys.internalApi5xxEvents(target.key, api5xxEventOffset),
+    queryKey: serviceStatusKeys.api5xxEvents(target.key, api5xxEventOffset),
     refetchInterval: 30_000,
     placeholderData: keepPreviousData,
   });
@@ -346,16 +309,12 @@ export function ServiceStatusPanel({
         <Button
           icon={<ReloadOutlined />}
           loading={isFetching || api5xxEventsQuery.isFetching}
-          onClick={() => {
-            refetch();
-            api5xxEventsQuery.refetch();
+          // 该节点的快照、5xx 事件、实例、npm 信息共用一个前缀，一次失效全部重拉
+          onClick={() =>
             queryClient.invalidateQueries({
-              queryKey: adminKeys.systemInstances(target.key),
-            });
-            queryClient.invalidateQueries({
-              queryKey: adminKeys.systemNpm(target.key),
-            });
-          }}
+              queryKey: serviceStatusKeys.target(target.key),
+            })
+          }
         >
           {t('admin_service_status.refresh')}
         </Button>

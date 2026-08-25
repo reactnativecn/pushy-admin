@@ -5,6 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { adminApi } from '@/services/admin-api';
+import { serviceStatusKeys } from '@/utils/query-keys';
 import { formatCount, formatPercent } from './metrics';
 
 const { Text } = Typography;
@@ -30,7 +31,7 @@ function healthTag(row: VersionHealthOverviewRow, t: (key: string) => string) {
 export const VersionHealthOverviewPanel = () => {
   const { t } = useTranslation();
   const overviewQuery = useQuery({
-    queryKey: ['versionHealthOverview'],
+    queryKey: serviceStatusKeys.versionHealthOverview(7),
     queryFn: () => adminApi.getVersionHealthOverview(7),
     refetchInterval: 5 * 60_000,
     retry: false,

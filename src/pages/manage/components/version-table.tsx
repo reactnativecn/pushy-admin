@@ -33,6 +33,7 @@ import { TEST_QR_CODE_DOC } from '@/constants/links';
 import { useDeleteVersions, useUpdateVersion } from '@/services/mutations';
 import type { Version } from '@/types';
 import { useVersions, useWorkspacePermissions } from '@/utils/hooks';
+import { safeStorage } from '@/utils/storage';
 import { useManageContext } from '../hooks/useManageContext';
 import BindPackage from './bind-package';
 import { Commit } from './commit';
@@ -59,9 +60,17 @@ function getDeepLinkError(deepLink: string, t: (key: string) => string) {
   return '';
 }
 
+// 沿用 ManageContext 时期的 key，老用户已存的 deep link 不会丢
+const deepLinkStorageKey = (appId: number) => `${appId}_deeplink`;
+
 const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   const { t } = useTranslation();
-  const { appId, deepLink, setDeepLink } = useManageContext();
+  const { appId } = useManageContext();
+  // deep link 只有这个弹层用到，状态放本地：每敲一个字只重渲染当前行的二维码，
+  // 不再经 ManageContext 波及整张表。各行之间靠 localStorage 共享，弹层打开时回读。
+  const [deepLink, setDeepLink] = useState(
+    () => safeStorage.get(deepLinkStorageKey(appId)) ?? '',
+  );
   const [enableDeepLink, setEnableDeepLink] = useState(!!deepLink);
   const normalizedDeepLink = deepLink.trim();
   const deepLinkError = enableDeepLink
@@ -72,7 +81,7 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
 
   useEffect(() => {
     if (isDeepLinkValid) {
-      window.localStorage.setItem(`${appId}_deeplink`, normalizedDeepLink);
+      safeStorage.set(deepLinkStorageKey(appId), normalizedDeepLink);
     }
   }, [appId, isDeepLinkValid, normalizedDeepLink]);
 
@@ -86,6 +95,15 @@ const TestQrCode = ({ name, hash }: { name?: string; hash: string }) => {
   return (
     <Popover
       className="ant-typography-edit"
+      onOpenChange={(open) => {
+        // 别的行可能刚改过 deep link，打开时以持久化的值为准；没存过就保留本行草稿
+        if (open) {
+          const stored = safeStorage.get(deepLinkStorageKey(appId));
+          if (stored !== null) {
+            setDeepLink(stored);
+          }
+        }
+      }}
       content={
         <div className="w-72 sm:w-80">
           <div className="text-center my-2 mx-auto">
@@ -220,6 +238,7 @@ function getColumns(
           record={record}
           recordKey="name"
           title={t('version_table.col_version')}
+          canPublish={canPublish}
           extra={
             <>
               <DepsTable
@@ -243,6 +262,7 @@ function getColumns(
           record={record}
           recordKey="description"
           title={t('version_table.col_description')}
+          canPublish={canPublish}
           className="block max-w-[15rem] md:w-60"
           showPopover
         />
@@ -258,6 +278,7 @@ function getColumns(
           record={record}
           recordKey="metaInfo"
           title={t('version_table.col_metadata')}
+          canPublish={canPublish}
           className="block max-w-[18rem] md:w-72"
           showPopover
         />
@@ -295,7 +316,12 @@ function getColumns(
       dataIndex: 'createdAt',
       responsive: ['md'],
       render: (_, record) => (
-        <TextColumn record={record} recordKey="createdAt" isEditable={false} />
+        <TextColumn
+          record={record}
+          recordKey="createdAt"
+          isEditable={false}
+          canPublish={canPublish}
+        />
       ),
     },
   ];
@@ -383,6 +409,7 @@ const TextColumn = ({
   recordKey,
   title,
   isEditable = true,
+  canPublish,
   extra,
   className,
   showPopover = false,
@@ -391,6 +418,8 @@ const TextColumn = ({
   recordKey: EditableVersionKey;
   title?: ReactNode;
   isEditable?: boolean;
+  /** 由表格层查一次权限后传下来，避免每个单元格各挂一个 query observer */
+  canPublish: boolean;
   extra?: ReactNode;
   className?: string;
   showPopover?: boolean;
@@ -401,7 +430,6 @@ const TextColumn = ({
   const [editing, setEditing] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const { t } = useTranslation();
-  const { canPublish } = useWorkspacePermissions();
   // 只读角色隐藏所有编辑入口
   isEditable = isEditable && canPublish;
   let value = record[key] as string;

@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+import { matchQuery, useQuery } from '@tanstack/react-query';
 import { Button, Result } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
@@ -7,11 +7,15 @@ import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
 import { clearSession, setToken } from '@/services/request';
 import { clearWorkspace } from '@/services/workspace';
+import { emailChangeKeys } from '@/utils/query-keys';
 import { queryClient } from '@/utils/queryClient';
 
+// 换绑后旧账号的缓存全部作废，只留本页自己的查询——否则它会被 reset 后
+// 重新跑一遍，令牌已用过就会报错
 function resetPreviousAccountQueries() {
   return queryClient.resetQueries({
-    predicate: (query) => query.queryKey[0] !== 'emailChange',
+    predicate: (query) =>
+      !matchQuery({ queryKey: emailChangeKeys.all() }, query),
   });
 }
 
@@ -22,7 +26,7 @@ function EmailChangeResult() {
   const isRevert = pathname === rootRouterPath.revertEmail;
   const mode = isRevert ? 'revert' : 'confirm';
   const { isLoading, error } = useQuery({
-    queryKey: ['emailChange', mode, token],
+    queryKey: emailChangeKeys.byToken(mode, token),
     enabled: !!token,
     retry: false,
     queryFn: async () => {

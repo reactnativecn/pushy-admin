@@ -14,8 +14,16 @@ import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { AsyncLine } from '@/components/lazy-chart';
+import { RANGE_PRESET_LABEL_KEY } from '@/constants/i18n-keys';
 import { api } from '@/services/api';
+import { buildTimeSeriesLineConfig, getRangePresets } from '@/utils/charts';
 import { patchSearchParams } from '@/utils/helper';
+import {
+  aggregateSeries,
+  attachSharePercent,
+  buildLegendDefaults,
+  buildTotalSeries,
+} from '@/utils/metrics';
 import { metricsKeys } from '@/utils/query-keys';
 import { useThemeMode } from '@/utils/theme-mode';
 
@@ -88,11 +96,6 @@ const formatTooltipItem = (point: ChartDataPoint) => {
     return countLabel;
   }
   return `${countLabel} (${point.sharePercent.toFixed(1)}%)`;
-};
-
-type ChartController = {
-  emit: (...args: unknown[]) => unknown;
-  on: (...args: unknown[]) => unknown;
 };
 
 const parseMode = (value: string | null): MetricMode =>
@@ -197,80 +200,39 @@ export const Component = () => {
     return points;
   }, [metricsData]);
 
-  const prefixFilteredChartData = useMemo(() => {
-    if (!chartData.length) return [];
-    const selectedPoints = chartData.filter(
-      (point) => getCategoryPrefix(point.category) === selectedKeyPrefix,
-    );
+  // 全站指标没有服务端总量点，占比分母就是各类别在该时间桶内的求和
+  const prefixFilteredChartData = useMemo(
+    () =>
+      attachSharePercent(
+        chartData.filter(
+          (point) => getCategoryPrefix(point.category) === selectedKeyPrefix,
+        ),
+      ),
+    [chartData, selectedKeyPrefix],
+  );
 
-    const totalsByTime = new Map<string, number>();
-    for (const point of selectedPoints) {
-      totalsByTime.set(
-        point.time,
-        (totalsByTime.get(point.time) || 0) + point.value,
-      );
-    }
+  const {
+    sortedCategories,
+    topCategories,
+    total: displayTotal,
+  } = useMemo(
+    () => aggregateSeries(prefixFilteredChartData),
+    [prefixFilteredChartData],
+  );
 
-    return selectedPoints.map((point) => {
-      const denominator = totalsByTime.get(point.time) || 0;
-      if (denominator <= 0) {
-        return point;
-      }
-      return {
-        ...point,
-        sharePercent: (point.value / denominator) * 100,
-      };
-    });
-  }, [chartData, selectedKeyPrefix]);
+  // 总量线由各类别求和合成，随分类线一起画
+  const totalSeriesData = useMemo(
+    () => buildTotalSeries(prefixFilteredChartData, TOTAL_SERIES_LABEL),
+    [prefixFilteredChartData],
+  );
 
-  const categoryTotals = useMemo(() => {
-    const totals = new Map<string, number>();
-    for (const point of prefixFilteredChartData) {
-      totals.set(
-        point.category,
-        (totals.get(point.category) || 0) + point.value,
-      );
-    }
-    return totals;
-  }, [prefixFilteredChartData]);
-
-  const sortedCategories = useMemo(() => {
-    return Array.from(categoryTotals.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([category]) => category);
-  }, [categoryTotals]);
-
-  const totalSeriesData = useMemo(() => {
-    if (!prefixFilteredChartData.length) return [];
-
-    const totalsByTime = new Map<string, number>();
-    for (const point of prefixFilteredChartData) {
-      totalsByTime.set(
-        point.time,
-        (totalsByTime.get(point.time) || 0) + point.value,
-      );
-    }
-
-    return Array.from(totalsByTime.entries())
-      .map(([time, value]) => ({
-        time,
-        value,
-        category: TOTAL_SERIES_LABEL,
-      }))
-      .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf());
-  }, [prefixFilteredChartData]);
-
-  const defaultLegendValues = useMemo(() => {
-    const topTen = sortedCategories.slice(0, 10);
-    if (totalSeriesData.length === 0) return topTen;
-    return [TOTAL_SERIES_LABEL, ...topTen];
-  }, [sortedCategories, totalSeriesData]);
-
-  const colorDomain = useMemo(() => {
-    if (sortedCategories.length === 0) return [];
-    if (totalSeriesData.length === 0) return sortedCategories;
-    return [TOTAL_SERIES_LABEL, ...sortedCategories];
-  }, [sortedCategories, totalSeriesData]);
+  const { defaultLegendValues, colorDomain } = useMemo(
+    () =>
+      buildLegendDefaults(sortedCategories, {
+        totalLabel: totalSeriesData.length ? TOTAL_SERIES_LABEL : undefined,
+      }),
+    [sortedCategories, totalSeriesData],
+  );
 
   const lineData = useMemo(() => {
     if (!prefixFilteredChartData.length && !totalSeriesData.length) return [];
@@ -282,86 +244,16 @@ export const Component = () => {
   const totalPv = useMemo(() => getMetricsTotal(pvMetrics), [pvMetrics]);
   const totalUv = useMemo(() => getMetricsTotal(uvMetrics), [uvMetrics]);
 
-  const displayTotals = useMemo(() => {
-    if (!prefixFilteredChartData.length) {
-      return { total: 0, categories: new Map<string, number>() };
-    }
-
-    let total = 0;
-    const categories = new Map<string, number>();
-    for (const point of prefixFilteredChartData) {
-      total += point.value;
-      categories.set(
-        point.category,
-        (categories.get(point.category) || 0) + point.value,
-      );
-    }
-
-    return { total, categories };
-  }, [prefixFilteredChartData]);
-
-  const topCategories = useMemo(() => {
-    return Array.from(displayTotals.categories.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-  }, [displayTotals.categories]);
-
-  const lineConfig = {
-    theme: isDark ? 'classicDark' : 'classic',
-    interaction: {
-      legendFilter: true,
-      tooltip: { shared: true },
-    },
+  const lineConfig = buildTimeSeriesLineConfig({
     data: lineData,
-    xField: (datum: ChartDataPoint) => new Date(datum.time),
-    yField: 'value',
-    colorField: 'category',
-    shapeField: 'smooth',
-    axis: {
-      x: {
-        title: t('admin_metrics.time'),
-        labelAutoRotate: true,
-        labelFormatter: (value: string) => {
-          const parsed = dayjs(value);
-          return parsed.isValid() ? parsed.format('MM/DD HH:mm') : value;
-        },
-      },
-      y: {
-        title: modeLabels[mode],
-      },
-    },
-    tooltip: {
-      title: (point: ChartDataPoint) => dayjs(point.time).format('MM/DD HH:mm'),
-      items: [
-        (point: ChartDataPoint) => ({
-          name: point.category,
-          value: formatTooltipItem(point),
-        }),
-      ],
-    },
-    legend: {
-      position: 'top',
-    },
-    scale: colorDomain.length
-      ? {
-          color: { domain: colorDomain },
-        }
-      : undefined,
-    onReady: ({ chart }: { chart: ChartController }) => {
-      try {
-        chart.on('afterrender', () => {
-          const values = legendValuesRef.current;
-          if (!values.length) return;
-          chart.emit('legend:filter', {
-            data: { channel: 'color', values },
-          });
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    },
+    isDark,
     height: 480,
-  };
+    xTitle: t('admin_metrics.time'),
+    yTitle: modeLabels[mode],
+    formatTooltipValue: formatTooltipItem,
+    colorDomain,
+    legendValuesRef,
+  });
 
   const handleDateChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
     patchSearchParams(setSearchParams, {
@@ -415,28 +307,7 @@ export const Component = () => {
               value={[rangeStart, rangeEnd]}
               onChange={handleDateChange}
               className="w-full md:w-auto"
-              presets={[
-                {
-                  label: t('admin_metrics.range_1h'),
-                  value: [dayjs().subtract(1, 'hour'), dayjs()],
-                },
-                {
-                  label: t('admin_metrics.range_6h'),
-                  value: [dayjs().subtract(6, 'hour'), dayjs()],
-                },
-                {
-                  label: t('admin_metrics.range_24h'),
-                  value: [dayjs().subtract(24, 'hour'), dayjs()],
-                },
-                {
-                  label: t('admin_metrics.range_7d'),
-                  value: [dayjs().subtract(7, 'day'), dayjs()],
-                },
-                {
-                  label: t('admin_metrics.range_30d'),
-                  value: [dayjs().subtract(30, 'day'), dayjs()],
-                },
-              ]}
+              presets={getRangePresets(t, RANGE_PRESET_LABEL_KEY.admin_metrics)}
             />
           </div>
         </div>
@@ -483,8 +354,8 @@ export const Component = () => {
                     </div>
                     <div className="text-xs text-gray-500">
                       {t('admin_metrics.share')}{' '}
-                      {displayTotals.total > 0
-                        ? ((value / displayTotals.total) * 100).toFixed(1)
+                      {displayTotal > 0
+                        ? ((value / displayTotal) * 100).toFixed(1)
                         : '0.0'}
                       %
                     </div>

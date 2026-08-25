@@ -4,6 +4,7 @@ import { Card, Space, Statistic, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
+import { serviceStatusKeys } from '@/utils/query-keys';
 import { formatCount } from './metrics';
 
 const { Text } = Typography;
@@ -24,13 +25,13 @@ const hitRate = (hit: Record<string, number>): number | null => {
 export const UserAnalyticsPanel = () => {
   const { t } = useTranslation();
   const overviewQuery = useQuery({
-    queryKey: ['analyticsOverview'],
+    queryKey: serviceStatusKeys.analyticsOverview(7),
     queryFn: () => adminApi.getAnalyticsOverview(7),
     refetchInterval: 60_000,
     retry: false,
   });
   const growthQuery = useQuery({
-    queryKey: ['growthStats'],
+    queryKey: serviceStatusKeys.growthStats(7),
     queryFn: () => adminApi.getGrowthStats(7),
     refetchInterval: 10 * 60_000,
     retry: false,
