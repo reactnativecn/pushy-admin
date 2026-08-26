@@ -7,10 +7,10 @@
 
 | 仓库 | 已提交 | 待办 |
 |---|---|---|
-| pushy-admin | `a0a7830`（第一批）、`950ee19`（第二批） | 第三批（见下）；未推送 |
-| cresc-admin | `0a02bd5`（第一批移植） | 第二批移植、第三批；未推送 |
+| pushy-admin | `a0a7830`（第一批）、`950ee19`（第二批）、`089ec01` + `e17de14`（第三批） | 无，已推送 |
+| cresc-admin | `0a02bd5`（第一批）、`9d22e51`（第二批）、第三批（223 tests，产物 4598 KB） | 无，已推送 |
 
-验证基线（pushy-admin `950ee19`）：`bun run ci` 通过，281 tests；`CI=true bun run build:check` 产物 initial 1294 KB / async 3401 KB / total 4695 KB（改造前 5664 KB min、1761 KB gzip → 约 4824 KB / 1509 KB gzip）。
+验证基线（pushy-admin `e17de14`）：`bun run ci` 通过，400 tests；`CI=true bun run build:check` 产物 initial 1296 KB / async 3402 KB / total 4697 KB（改造前 5664 KB min、1761 KB gzip → 约 4824 KB / 1509 KB gzip）。
 
 ## 已完成
 
@@ -29,7 +29,7 @@
 - biome：`noUnusedImports` / `noUnusedVariables` = error
 - 新 `scripts/check-bundle-size.mjs`（initial 1400KB / async chunk 1600KB / total 5200KB）；`ci.yml`、`gh-pages.yml` 改跑 `build:check`
 
-### 第二批 `950ee19`：页面级重构（cresc **未**移植）
+### 第二批 `950ee19`：页面级重构（cresc 已移植 `9d22e51`，serviceStatusKeys 按 cresc 单节点/Cloud Run 形态重排）
 
 **A. audit-logs / admin-users / admin-apps / admin-config**
 - 新 `src/utils/table-state.ts`（+ `table-state.test.ts`）：`parsePositiveInt` / `parseOptionalPositiveInt` / `getDefaultPageSize(isMobile)` / `useUrlTableState({ searchParam, sortableColumns, filterKeys, normalizeFilter })` → `{ searchParams, setSearchParams, isMobile, page, pageSize, searchQuery, searchInput, setSearchInput, orderBy, order, sortOrderOf, handleTableChange }` / `usePageClamp(state, total, ready)`（ready = `!isPlaceholderData`，修掉读 placeholder 数据夹页的 bug）/ `getTablePagination(state, total, showTotal)`
@@ -63,29 +63,19 @@
 - `bind-package.tsx`：`DEPS_VIOLATION_MESSAGE_KEY` 查表
 - 全局：所有 `onError: (e) => message.error(e.message)` 删除（MutationCache 兜底）；`globals.d.ts` 的手写 `bun:test` 类型补 `toMatchObject`
 
-## 剩余工作（按顺序做）
+### 第三批 `089ec01` + `e17de14`：收尾 + 页面逻辑测试（cresc 已移植；差异：admin-users 用静态 tierOptions、audit-logs 无 alipayCallback 且 CSV 表头是固定常量 AUDIT_CSV_HEADER、bind-package 变更类型保持大写、无 instances-panel）
+- 新 `src/utils/selected-app.ts`：`useSelectedAppFromUrl()` → `{ selectableApps, isAdmin, isLoadingApps, selectedAppKey, selectedApp, selectApp }`；realtime-metrics / version-health 改用
+- `router.tsx` +`appViewPath(path, appKey?)`；三个页面的 ?appKey 跳转统一用它
+- `helper.ts` +`filterAppsByQuery(apps, query)`（app-drawer、apps 页共用）+ 测试
+- `version-table.tsx` 分页改 `getTablePagination` + `useIsMobile`
+- 页面纯逻辑抽到同级 `*.logic.ts`：audit-logs（normalizePath / getActionMap / parseDateRange / isAuditDateDisabled / getDateRangePatch / buildAuditCsvRow …）、admin-metrics（getMetricsTotal / parseDateRange / getCategoryPrefix / buildChartPoints）、admin-users（parseQuotaInput / getExtendedTierExpiry / statusMeta …）、admin-apps（normalizeFilter / parsePlatformFilter …）、bind-package（getDepsChanges / getBindingRolloutState / canToggleForceBoot …）、useManageContext（getUnusedPackages / shouldLoadDiffStatus）、instances-panel（pickNodeDeployStatus …）、members（getMemberPermissions / canManageMember）、`user/quota-usage.ts`（buildQuotaUsageRows）；`table-state.ts` +`parseSortState` / `buildTableChangePatch`
+- 新增 119 个测试（281 → 400）；nav-items 测试需本地 `mock.module('@/router')`（auth.test 的 mock 会跨文件泄漏）
 
-### 1. pushy-admin 第三批（未开始，工作区干净）
-1. **version-table 分页复用**：`src/pages/manage/components/version-table.tsx` ~544（`Grid.useBreakpoint` → `useIsMobile()`）和 ~591 的 `pagination={{ ... }}` 改成 `{ ...getTablePagination({ isMobile, page: offset / pageSize + 1, pageSize }, count, (total) => t('version_table.total_versions', { total })), onChange(page, size) { ... } }`（该表用本地 offset/pageSize 而非 URL，所以只复用配置，不用 `useUrlTableState`）。
-2. **应用选择页面壳去重**（审计第 21 项）：`realtime-metrics.tsx` ~160-201 与 `version-health.tsx` ~108-143 有相同的 `selectableAppKeys` / `selectedAppKey`（admin 可任意 key，否则必须在列表内）/ `selectedApp` / 「无选择时默认第一个 app 写入 URL」effect。抽 `useSelectedAppFromUrl()`（建议新文件 `src/utils/selected-app.ts`，基于 `useAppWorkspaceList` + `useSearchParams` + `patchSearchParams`），返回 `{ selectableApps, isAdmin, isLoadingApps, selectedAppKey, selectedApp, selectApp(appKey) }`。两页的 `AppDrawerLayout onSelect` 里 `rememberRecentApp + patchSearchParams` 也一样，可一并收进 hook。`manage/index.tsx` ~236-296 的 `AppDetailHeader` 跳转拼 URL 逻辑与两页 header 相似，可抽 `buildAppViewPath(view, appKey)` 放 `router.tsx` 旁。
-3. **app 列表过滤去重**：`src/components/app-drawer.tsx` ~79-86 与 `src/pages/apps.tsx` ~49-55 相同的 `filteredApps`，抽 `filterAppsByQuery(apps, query)` 到 `src/utils/helper.ts` 并加测试。
-4. **页面纯逻辑测试**（审计第 23 项，最耗时，可派 agent）：把下列内联逻辑抽成纯函数并测——`audit-logs.tsx`（`normalizePath` / `getActionKey` / `matchesStatusFilter` / `parseDateRange` / 180 天 `disabledDate` 与范围夹紧 / CSV 行映射）、`admin-metrics.tsx`（`getMetricsTotal` / `parseDateRange` 含 start>end 回退 / `getCategoryPrefix`）、`bind-package.tsx`（`getDepsChanges` / `getDepsChangeSummary` / rollout 菜单规则 / forceBoot rnu>=10.52.1 门槛）、`admin-users.tsx`（`getInitialQuotaValue` / `statusMeta` / 配额 JSON 解析）、`useManageContext.tsx`（`unusedPackages`）、`instances-panel.tsx`（`nodeDeployStatus` 优先级排序）、`user/index.tsx`（配额行计算）、`nav-items.tsx`（`getSelectedKeys`）、`members.tsx`（`canManage` / `isOwner`）、`version-table.tsx`（`getDeepLinkError` / `formatMetadata`）、`realtime-metrics.tsx`（`formatCategory`）。注意 `src/globals.d.ts` 手写了 `bun:test` 类型，需要新 matcher 时在那里加签名。
-5. 收尾：`bun run ci` + `CI=true bun run build:check`，提交。
+## 剩余工作
 
-### 2. cresc-admin：移植第二批 `950ee19`（未开始）
-按上面「第二批」逐条移植，方法：在 pushy-admin 里 `git show 950ee19 -- <file>` 看 hunk，先 `diff <(git show 950ee19~1:<file>) ../cresc-admin/<file>` 判断分叉程度——接近相同的文件（utils/charts.ts、metrics.ts、table-state.ts、responsive.ts、app-options.ts、token-*.tsx、new-token-reveal-modal.tsx 等新文件）直接复制 + 注释翻英文；分叉的页面手工套 hunk。已知差异：
-- cresc 用全局 ambient 类型 `src/types.d.ts`，去掉 `import type { X } from '@/types'`
-- 注释英文；`query-keys.ts` 更小；i18n 结构相同、英文文案可能不同
-- cresc **没有** `admin-service-status/instances-panel.tsx`、`target-cards.tsx`（有 `cloudrun-panel.tsx`），对应的 query key / onError 改动套到 cloudrun-panel；跳过 `DEPLOY_STATUS_LABEL_KEY`（若无 deploy status 类型）
-- MCP scope 名可能不同（pushy 是 `pushy:apps:read` / `pushy:diagnose`），用 cresc 自己的 scope 串和 i18n key
-- 审计日志：先确认 cresc-server 的 audit 接口是否接受 `endDate`、返回 `total`；不支持就保留旧参数只做前端部分
-- `globals.d.ts` 同样补 `toMatchObject`
-- 验证：`bun run typecheck`、`bunx biome check .`、`bun test`、`CI=true bun run build:check`；然后提交（规则：admin 改动验证后直接 commit）
+三批全部完成并推送 main（gh-pages workflow 会跑 `build:check` 再部署；失败会由 `ci-failure-email.yml` 开 issue）。推送后确认两边 Actions 绿灯即可。
 
-### 3. cresc-admin：第三批同步 + 两边推 main
-pushy 第三批完成后同样移植；最后 `git push` 两个仓库的 main（gh-pages workflow 会自动 build:check + 部署，`ci-failure-email.yml` 失败会开 issue）。
-
-### 4. 审计里有意未做 / 需人工决定
+### 审计里有意未做 / 需人工决定
 - `netlify.toml` 的缓存头在 GitHub Pages 上不生效，若 Netlify 已不用可删（未确认，未动）
 - `daily-check-quota.tsx` / `user/index.tsx` 的 ``t(`user.purchasable_tiers.${tier}`)`` 是刻意的服务端 tier 回退逻辑，保留
 - `lazy-chart.tsx` 的中文 UI 文案（`errorTitle="图表渲染异常"` 等）两仓库都有，cresc 侧值得补 i18n
