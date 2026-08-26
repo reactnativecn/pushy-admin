@@ -2,15 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, DatePicker, Input, Radio, Spin } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { AppDetailHeader } from '@/components/app-detail-header';
-import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
+import { AppDrawerLayout } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { AsyncLine } from '@/components/lazy-chart';
 import { RANGE_PRESET_LABEL_KEY } from '@/constants/i18n-keys';
-import { rootRouterPath, router } from '@/router';
+import { appViewPath, rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { buildTimeSeriesLineConfig, getRangePresets } from '@/utils/charts';
 import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
@@ -21,6 +21,7 @@ import {
   buildLegendDefaults,
 } from '@/utils/metrics';
 import { metricsKeys } from '@/utils/query-keys';
+import { useSelectedAppFromUrl } from '@/utils/selected-app';
 import { useThemeMode } from '@/utils/theme-mode';
 
 const { RangePicker } = DatePicker;
@@ -155,11 +156,13 @@ export const Component = () => {
   const { canManageApp } = useWorkspacePermissions();
 
   const {
-    apps: selectableApps,
+    selectableApps,
     isAdmin,
-    isLoading: isLoadingApps,
-  } = useAppWorkspaceList();
-  const urlAppKey = searchParams.get('appKey') || undefined;
+    isLoadingApps,
+    selectedAppKey,
+    selectedApp,
+    selectApp,
+  } = useSelectedAppFromUrl();
   const selectedAttribute: MetricAttribute =
     searchParams.get('attribute') === 'packageVersion_buildTime'
       ? 'packageVersion_buildTime'
@@ -167,38 +170,6 @@ export const Component = () => {
 
   const attributeOptions = getAttributeOptions(t);
   const totalLabel = t('realtime_metrics.update_checks');
-
-  const selectableAppKeys = useMemo(
-    () =>
-      selectableApps
-        .map((app) => app.appKey)
-        .filter((appKey): appKey is string => Boolean(appKey)),
-    [selectableApps],
-  );
-  const selectedAppKey = useMemo(() => {
-    if (!urlAppKey) {
-      return undefined;
-    }
-    if (isAdmin || selectableAppKeys.includes(urlAppKey)) {
-      return urlAppKey;
-    }
-    return undefined;
-  }, [isAdmin, selectableAppKeys, urlAppKey]);
-  const selectedApp = useMemo(() => {
-    if (!selectedAppKey) {
-      return undefined;
-    }
-    return selectableApps.find((app) => app.appKey === selectedAppKey);
-  }, [selectableApps, selectedAppKey]);
-
-  // Default to first app if no selection
-  useEffect(() => {
-    if (!urlAppKey && selectableAppKeys.length > 0) {
-      patchSearchParams(setSearchParams, {
-        appKey: selectableAppKeys[0],
-      });
-    }
-  }, [selectableAppKeys, setSearchParams, urlAppKey]);
 
   // Admin manual appKey input
   const handleManualAppKeySubmit = () => {
@@ -330,13 +301,7 @@ export const Component = () => {
       apps={selectableApps}
       currentAppKey={selectedAppKey}
       isLoading={isLoadingApps}
-      onSelect={(app) => {
-        if (!app.appKey) {
-          return;
-        }
-        rememberRecentApp(app.id);
-        patchSearchParams(setSearchParams, { appKey: app.appKey });
-      }}
+      onSelect={selectApp}
       onSettings={canManageApp ? openAppSettings : undefined}
     >
       {contextHolder}
@@ -353,10 +318,9 @@ export const Component = () => {
           router.navigate(rootRouterPath.versions(String(selectedApp.id)));
         }}
         onHealthClick={() => {
-          const query = selectedAppKey
-            ? `?appKey=${encodeURIComponent(selectedAppKey)}`
-            : '';
-          router.navigate(`${rootRouterPath.versionHealth}${query}`);
+          router.navigate(
+            appViewPath(rootRouterPath.versionHealth, selectedAppKey),
+          );
         }}
         onSettingsClick={
           selectedApp && canManageApp

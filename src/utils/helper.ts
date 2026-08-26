@@ -348,3 +348,25 @@ export function packageSupportsForceBoot(
   const rnu = parseDepVersion(packageDeps?.['react-native-update']);
   return !!rnu && compareDepVersions(rnu, [10, 52, 1]) >= 0;
 }
+
+/** 应用列表的关键字过滤：名称、appKey、平台任一命中即可（抽屉和列表页共用）。 */
+export const filterAppsByQuery = <
+  T extends {
+    name?: string | null;
+    appKey?: string | null;
+    platform?: string | null;
+  },
+>(
+  apps: T[],
+  query: string,
+): T[] => {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return apps;
+  }
+  return apps.filter((app) =>
+    [app.name, app.appKey, app.platform]
+      .filter(Boolean)
+      .some((value) => value?.toLowerCase().includes(normalizedQuery)),
+  );
+};

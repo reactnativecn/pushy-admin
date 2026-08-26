@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import {
   cn,
+  filterAppsByQuery,
   getFatalDepsViolation,
   getManageAppDrawerCollapsed,
   getManageAppDrawerPlacement,
@@ -790,5 +791,27 @@ describe('binding deps helpers', () => {
     );
     expect(packageSupportsForceBoot({})).toBe(false);
     expect(packageSupportsForceBoot(undefined)).toBe(false);
+  });
+});
+
+describe('filterAppsByQuery', () => {
+  const apps = [
+    { id: 1, name: 'Shop', appKey: 'abc123', platform: 'ios' },
+    { id: 2, name: 'Blog', appKey: 'xyz789', platform: 'android' },
+    { id: 3, name: null, appKey: null, platform: 'harmony' },
+  ];
+
+  test('空关键字原样返回', () => {
+    expect(filterAppsByQuery(apps, '   ')).toBe(apps);
+  });
+
+  test('名称 / appKey / 平台任一命中，忽略大小写与首尾空格', () => {
+    expect(filterAppsByQuery(apps, ' shop ').map((a) => a.id)).toEqual([1]);
+    expect(filterAppsByQuery(apps, 'XYZ').map((a) => a.id)).toEqual([2]);
+    expect(filterAppsByQuery(apps, 'harm').map((a) => a.id)).toEqual([3]);
+  });
+
+  test('空字段不参与匹配', () => {
+    expect(filterAppsByQuery(apps, 'null')).toEqual([]);
   });
 });

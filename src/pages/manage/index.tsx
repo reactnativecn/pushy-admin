@@ -17,7 +17,7 @@ import './manage.css';
 import { AppDetailHeader } from '@/components/app-detail-header';
 import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
-import { rootRouterPath, router } from '@/router';
+import { appViewPath, rootRouterPath, router } from '@/router';
 import type { Package } from '@/types';
 import { rememberRecentApp } from '@/utils/helper';
 import { useApp, useWorkspacePermissions } from '@/utils/hooks';
@@ -242,14 +242,10 @@ export const Manage = () => {
   const { contextHolder, openAppSettings } = useAppSettingsModal();
   const { canManageApp } = useWorkspacePermissions();
   const realtimeMetricsPath = app?.appKey
-    ? `${rootRouterPath.realtimeMetrics}?${new URLSearchParams({
-        appKey: app.appKey,
-      }).toString()}`
+    ? appViewPath(rootRouterPath.realtimeMetrics, app.appKey)
     : undefined;
   const versionHealthPath = app?.appKey
-    ? `${rootRouterPath.versionHealth}?${new URLSearchParams({
-        appKey: app.appKey,
-      }).toString()}`
+    ? appViewPath(rootRouterPath.versionHealth, app.appKey)
     : undefined;
   const content = (
     <ManageProvider appId={id} app={app}>

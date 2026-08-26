@@ -35,6 +35,10 @@ export const rootRouterPath = {
   members: '/members',
 };
 
+// 指标/健康度页都靠 ?appKey 定位应用，跳转时统一在这里拼，别各页自己 encode。
+export const appViewPath = (path: string, appKey?: string | null) =>
+  appKey ? `${path}?${new URLSearchParams({ appKey })}` : path;
+
 export const needAuthLoader = ({ request }: { request: Request }) => {
   if (!hasSession()) {
     const { pathname, search } = new URL(request.url);

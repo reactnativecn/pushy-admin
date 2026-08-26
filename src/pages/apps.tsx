@@ -12,7 +12,7 @@ import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { showCreateAppModal } from '@/components/create-app-modal';
 import PlatformIcon from '@/components/platform-icon';
 import { rootRouterPath, router } from '@/router';
-import { cn, rememberRecentApp } from '@/utils/helper';
+import { cn, filterAppsByQuery, rememberRecentApp } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
 
 const { Title } = Typography;
@@ -44,15 +44,7 @@ export const Component = () => {
   const { contextHolder, openAppSettings } = useAppSettingsModal();
   const { canManageApp } = useWorkspacePermissions();
   const [query, setQuery] = useState('');
-  const normalizedQuery = query.trim().toLowerCase();
-
-  const filteredApps = normalizedQuery
-    ? apps.filter((app) =>
-        [app.name, app.appKey, app.platform]
-          .filter(Boolean)
-          .some((value) => value?.toLowerCase().includes(normalizedQuery)),
-      )
-    : apps;
+  const filteredApps = filterAppsByQuery(apps, query);
 
   const pausedCount = apps.filter((app) => app.status === 'paused').length;
   const totalChecks = apps.reduce((sum, app) => {
