@@ -31,52 +31,20 @@ import {
   packageSupportsForceBoot,
 } from '@/utils/helper';
 import { useManageContext } from '../hooks/useManageContext';
+import {
+  canForceBootAll,
+  canToggleForceBoot,
+  type DepChangeFilters,
+  type DepChangeRow,
+  type DepChangeSummary,
+  type DepChangeType,
+  getBindingRolloutState,
+  getDepsChangedPackages,
+  getDepsChangeSummary,
+  type PublishPackage,
+  ROLLOUT_PERCENTAGES,
+} from './bind-package.logic';
 import DiffStatusTag from './diff-status-tag';
-
-type DepChangeType = 'added' | 'removed' | 'changed';
-
-type DepChangeRow = {
-  key: string;
-  dependency: string;
-  oldVersion: string;
-  newVersion: string;
-  changeType: DepChangeType;
-};
-
-type DepChangeSummary = {
-  added: number;
-  removed: number;
-  changed: number;
-};
-
-type DepChangeFilters = Record<DepChangeType, boolean>;
-
-type PublishPackage = {
-  id: number;
-  name: string;
-  deps?: Record<string, string>;
-};
-
-type DepsChangePackage = {
-  pkg: PublishPackage;
-  changes: DepChangeRow[];
-};
-
-function getDepsChangeSummary(changes: DepChangeRow[]): DepChangeSummary {
-  return changes.reduce(
-    (acc, item) => {
-      if (item.changeType === 'added') {
-        acc.added += 1;
-      } else if (item.changeType === 'removed') {
-        acc.removed += 1;
-      } else {
-        acc.changed += 1;
-      }
-      return acc;
-    },
-    { added: 0, removed: 0, changed: 0 },
-  );
-}
 
 function getDepsChangeColumns({
   summary,
@@ -251,57 +219,6 @@ const DepsChangeConfirmContent = ({
   );
 };
 
-function getDepsChanges(
-  oldDeps?: Record<string, string>,
-  newDeps?: Record<string, string>,
-): DepChangeRow[] | null {
-  if (!oldDeps || !newDeps) {
-    return null;
-  }
-  const rows: DepChangeRow[] = [];
-  const keys = Array.from(
-    new Set([...Object.keys(oldDeps || {}), ...Object.keys(newDeps || {})]),
-  ).sort((a, b) => a.localeCompare(b));
-  for (const key of keys) {
-    const oldValue = oldDeps[key];
-    const newValue = newDeps[key];
-    if (oldValue === undefined && newValue !== undefined) {
-      rows.push({
-        key,
-        dependency: key,
-        oldVersion: '-',
-        newVersion: newValue,
-        changeType: 'added',
-      });
-      continue;
-    }
-    if (oldValue !== undefined && newValue === undefined) {
-      rows.push({
-        key,
-        dependency: key,
-        oldVersion: oldValue,
-        newVersion: '-',
-        changeType: 'removed',
-      });
-      continue;
-    }
-    if (
-      oldValue !== newValue &&
-      oldValue !== undefined &&
-      newValue !== undefined
-    ) {
-      rows.push({
-        key,
-        dependency: key,
-        oldVersion: oldValue,
-        newVersion: newValue,
-        changeType: 'changed',
-      });
-    }
-  }
-  return rows;
-}
-
 const BindPackage = ({
   versionId,
   config,
@@ -407,13 +324,7 @@ const BindPackage = ({
       message.success(t('bind_package.publish_success'));
     };
 
-    const depsChangedPackages = pkgs.reduce<DepsChangePackage[]>((acc, pkg) => {
-      const changes = getDepsChanges(pkg.deps, versionDeps);
-      if (changes?.length) {
-        acc.push({ pkg, changes });
-      }
-      return acc;
-    }, []);
+    const depsChangedPackages = getDepsChangedPackages(pkgs, versionDeps);
     if (depsChangedPackages.length === 0) {
       void publish();
       return;
@@ -495,15 +406,13 @@ const BindPackage = ({
             key: 'all-gray',
             label: t('bind_package.staged_release'),
             icon: <ExperimentOutlined />,
-            children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
+            children: ROLLOUT_PERCENTAGES.map((percentage) => ({
               key: `all-gray-${percentage}`,
               label: `${percentage}%`,
               onClick: () => publishToPackages(availablePackages, percentage),
             })),
           },
-          ...(availablePackages.every((pkg) =>
-            packageSupportsForceBoot(pkg.deps),
-          )
+          ...(canForceBootAll(availablePackages)
             ? [
                 {
                   key: 'all-force-boot',
@@ -538,7 +447,7 @@ const BindPackage = ({
           key: `pkg-${p.id}-gray`,
           label: t('bind_package.staged_release'),
           icon: <ExperimentOutlined />,
-          children: [1, 2, 5, 10, 20, 50].map((percentage) => ({
+          children: ROLLOUT_PERCENTAGES.map((percentage) => ({
             key: `pkg-${p.id}-gray-${percentage}`,
             label: `${percentage}%`,
             onClick: () => publishToPackage(p, percentage),
@@ -571,11 +480,11 @@ const BindPackage = ({
         continue;
       }
       const rolloutConfig = binding.rollout;
-      const isFull =
-        rolloutConfig === 100 ||
-        rolloutConfig === undefined ||
-        rolloutConfig === null;
-      const rolloutConfigNumber = Number(rolloutConfig);
+      const {
+        isFull,
+        rolloutNumber: rolloutConfigNumber,
+        stagedOptions,
+      } = getBindingRolloutState(rolloutConfig);
       const items: MenuProps['items'] = isFull
         ? []
         : [
@@ -587,29 +496,22 @@ const BindPackage = ({
             },
           ];
 
-      if (rolloutConfigNumber < 50 && !isFull) {
+      if (stagedOptions.length > 0) {
         items.push({
           key: 'gray',
           label: t('bind_package.staged_release'),
           icon: <ExperimentOutlined />,
-          children: [1, 2, 5, 10, 20, 50].reduce<
-            NonNullable<MenuProps['items']>
-          >((acc, percentage) => {
-            if (percentage > rolloutConfigNumber) {
-              acc.push({
-                key: `${percentage}`,
-                label: `${percentage}%`,
-                onClick: () => publishToPackage(p, percentage),
-              });
-            }
-            return acc;
-          }, []),
+          children: stagedOptions.map((percentage) => ({
+            key: `${percentage}`,
+            label: `${percentage}%`,
+            onClick: () => publishToPackage(p, percentage),
+          })),
         });
       }
       // forceBoot 挂在绑定上:重发同一绑定(同 rollout)并翻转 config;
       // 语义见 bind_package.force_boot_tip
       const forceBootOn = !!binding.config?.forceBoot;
-      if (packageSupportsForceBoot(p.deps) || forceBootOn) {
+      if (canToggleForceBoot(p.deps, forceBootOn)) {
         items.push({
           key: 'force-boot',
           label: forceBootOn

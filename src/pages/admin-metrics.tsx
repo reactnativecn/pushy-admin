@@ -9,7 +9,6 @@ import {
   Typography,
 } from 'antd';
 import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -26,110 +25,23 @@ import {
 } from '@/utils/metrics';
 import { metricsKeys } from '@/utils/query-keys';
 import { useThemeMode } from '@/utils/theme-mode';
+import {
+  buildChartPoints,
+  createDefaultDateRange,
+  formatTooltipItem,
+  getCategoryPrefix,
+  getMetricsTotal,
+  getModeLabels,
+  type MetricMode,
+  metricKeyOptions,
+  parseDateRange,
+  parseKeyPrefix,
+  parseMode,
+  TOTAL_SERIES_LABEL,
+} from './admin-metrics.logic';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
-
-type MetricMode = 'pv' | 'uv';
-type MetricKeyPrefix = 'rn' | 'os' | 'rnu';
-
-interface ChartDataPoint {
-  time: string;
-  value: number;
-  category: string;
-  sharePercent?: number;
-}
-
-interface MetricsResponse {
-  dict: string[];
-  data: Array<{ time: string; data: Array<[number, number]> }>;
-}
-
-const TOTAL_SERIES_LABEL = 'total';
-const DEFAULT_RANGE_HOURS = 24;
-
-const getModeLabels = (
-  t: (key: string) => string,
-): Record<MetricMode, string> => ({
-  pv: t('admin_metrics.mode_requests'),
-  uv: t('admin_metrics.mode_users'),
-});
-
-const metricKeyOptions = [
-  { label: 'rn', value: 'rn' },
-  { label: 'os', value: 'os' },
-  { label: 'rnu', value: 'rnu' },
-] satisfies Array<{ label: string; value: MetricKeyPrefix }>;
-
-const getCategoryPrefix = (category: string) => {
-  const separatorIndex = category.indexOf(':');
-  if (separatorIndex === -1) return category.trim();
-  return category.slice(0, separatorIndex).trim();
-};
-
-const getMetricsTotal = (metrics?: MetricsResponse) => {
-  if (!metrics?.data || !metrics.dict) return 0;
-
-  let total = 0;
-  for (const bucket of metrics.data) {
-    let bucketTotal = 0;
-    for (const [dictIndex, count] of bucket.data) {
-      const key = metrics.dict[dictIndex];
-      if (key === '_total') {
-        bucketTotal = count;
-        break;
-      }
-      bucketTotal += count;
-    }
-    total += bucketTotal;
-  }
-
-  return total;
-};
-
-const formatTooltipItem = (point: ChartDataPoint) => {
-  const countLabel = point.value.toLocaleString();
-  if (
-    point.category === TOTAL_SERIES_LABEL ||
-    point.sharePercent === undefined
-  ) {
-    return countLabel;
-  }
-  return `${countLabel} (${point.sharePercent.toFixed(1)}%)`;
-};
-
-const parseMode = (value: string | null): MetricMode =>
-  value === 'uv' ? 'uv' : 'pv';
-
-const parseKeyPrefix = (value: string | null): MetricKeyPrefix =>
-  metricKeyOptions.some((option) => option.value === value)
-    ? (value as MetricKeyPrefix)
-    : 'rn';
-
-const createDefaultDateRange = (): [Dayjs, Dayjs] => {
-  const end = dayjs();
-  return [end.subtract(DEFAULT_RANGE_HOURS, 'hour'), end];
-};
-
-const parseDateRange = (
-  searchParams: URLSearchParams,
-  fallbackRange: [Dayjs, Dayjs],
-): [Dayjs, Dayjs] => {
-  const [fallbackStart, fallbackEnd] = fallbackRange;
-  const parsedStart = searchParams.get('start')
-    ? dayjs(searchParams.get('start'))
-    : fallbackStart;
-  const parsedEnd = searchParams.get('end')
-    ? dayjs(searchParams.get('end'))
-    : fallbackEnd;
-
-  const start = parsedStart.isValid() ? parsedStart : fallbackStart;
-  const end = parsedEnd.isValid() ? parsedEnd : fallbackEnd;
-  if (start.isAfter(end)) {
-    return [end.subtract(DEFAULT_RANGE_HOURS, 'hour'), end];
-  }
-  return [start, end];
-};
 
 export const Component = () => {
   const { t } = useTranslation();
@@ -173,32 +85,7 @@ export const Component = () => {
   const metricsData = mode === 'pv' ? pvMetrics : uvMetrics;
   const isChartLoading = mode === 'pv' ? isLoadingPv : isLoadingUv;
 
-  const chartData = useMemo(() => {
-    if (!metricsData?.data || !metricsData?.dict) return [];
-
-    const points: ChartDataPoint[] = [];
-    for (const bucket of metricsData.data) {
-      for (const [dictIndex, count] of bucket.data) {
-        const rawCategory = metricsData.dict[dictIndex] || '';
-        if (rawCategory === '_total') {
-          continue;
-        }
-
-        let category = rawCategory.replace('\u001f', ': ');
-        if (rawCategory.endsWith('\u001f')) {
-          category = rawCategory.replace('\u001f', ': unknown');
-        }
-
-        points.push({
-          time: bucket.time,
-          value: count,
-          category,
-        });
-      }
-    }
-
-    return points;
-  }, [metricsData]);
+  const chartData = useMemo(() => buildChartPoints(metricsData), [metricsData]);
 
   // 全站指标没有服务端总量点，占比分母就是各类别在该时间桶内的求和
   const prefixFilteredChartData = useMemo(

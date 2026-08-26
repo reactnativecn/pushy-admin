@@ -29,7 +29,6 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserDetailDrawer } from '@/components/user-detail-drawer';
-import { quotas } from '@/constants/quotas';
 import JsonEditor from '@/pages/manage/components/json-editor';
 import { adminApi } from '@/services/admin-api';
 import type { AdminUser, Quota, Tier } from '@/types';
@@ -40,59 +39,19 @@ import {
   usePageClamp,
   useUrlTableState,
 } from '@/utils/table-state';
+import {
+  defaultPremiumQuotaText,
+  expiryShortcutDays,
+  FILTER_KEYS,
+  getExtendedTierExpiry,
+  getInitialQuotaValue,
+  getTierOptions,
+  parseQuotaInput,
+  SORTABLE_COLUMNS,
+  statusMeta,
+} from './admin-users.logic';
 
 const { Title } = Typography;
-
-const SORTABLE_COLUMNS = new Set([
-  'id',
-  'email',
-  'name',
-  'createdAt',
-  'tier',
-  'status',
-  'tierExpiresAt',
-]);
-
-// 表头单选筛选,值直接同步到同名 URL 参数
-const FILTER_KEYS = ['status', 'tier'] as const;
-
-const statusMeta = (
-  status: string | null | undefined,
-  t: (key: string) => string,
-) => {
-  if (status === 'unverified') {
-    return {
-      cls: 'text-orange-500',
-      label: t('admin_users.status_unverified'),
-    };
-  }
-  if (status === 'dormant') {
-    return { cls: 'text-gray-400', label: t('admin_users.status_dormant') };
-  }
-  return { cls: 'text-green-600', label: t('admin_users.status_normal') };
-};
-
-const getTierOptions = (t: (key: string) => string) => [
-  { value: 'free', label: t('admin_users.tier_free') },
-  { value: 'standard', label: t('admin_users.tier_standard') },
-  { value: 'premium', label: t('admin_users.tier_premium') },
-  { value: 'pro', label: t('admin_users.tier_pro') },
-  { value: 'vip1', label: t('admin_users.tier_vip1') },
-  { value: 'vip2', label: t('admin_users.tier_vip2') },
-  { value: 'vip3', label: t('admin_users.tier_vip3') },
-  { value: 'custom', label: t('admin_users.tier_custom') },
-];
-
-const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
-const expiryShortcutDays = [7, 30, 365] as const;
-
-const getInitialQuotaValue = (record: AdminUser) => {
-  if (record.quota) {
-    return JSON.stringify(record.quota, null, 2);
-  }
-
-  return record.tier === 'custom' ? defaultPremiumQuotaText : '';
-};
 
 export const Component = () => {
   const { t } = useTranslation();
@@ -260,16 +219,12 @@ export const Component = () => {
         : null,
     };
 
-    if (quotaValue.trim()) {
-      try {
-        updateData.quota = JSON.parse(quotaValue);
-      } catch {
-        message.error(t('admin_users.invalid_quota'));
-        return;
-      }
-    } else {
-      updateData.quota = null;
+    const parsedQuota = parseQuotaInput(quotaValue);
+    if (!parsedQuota) {
+      message.error(t('admin_users.invalid_quota'));
+      return;
     }
+    updateData.quota = parsedQuota.quota;
 
     updateMutation.mutate({ id: editingUser.id, data: updateData });
   };
@@ -277,11 +232,10 @@ export const Component = () => {
   const handleExtendTierExpiry = (
     days: (typeof expiryShortcutDays)[number],
   ) => {
-    const currentValue = form.getFieldValue('tierExpiresAt');
-    const currentExpiry = currentValue ? dayjs(currentValue) : null;
-    const baseDate = currentExpiry?.isValid() ? currentExpiry : dayjs();
-
-    form.setFieldValue('tierExpiresAt', baseDate.add(days, 'day'));
+    form.setFieldValue(
+      'tierExpiresAt',
+      getExtendedTierExpiry(form.getFieldValue('tierExpiresAt'), days),
+    );
   };
 
   const handleResetTierExpiry = () => {

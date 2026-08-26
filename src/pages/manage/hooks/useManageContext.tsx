@@ -7,6 +7,10 @@ import {
   usePackageMetricWarnings,
   usePackages,
 } from '@/utils/hooks';
+import {
+  getUnusedPackages,
+  shouldLoadDiffStatus,
+} from './useManageContext.logic';
 
 export const defaultManageContext = {
   appId: 0,
@@ -35,10 +39,6 @@ export const ManageContext = createContext<{
 
 export const useManageContext = () => useContext(ManageContext);
 
-function hasLegacyVersionBinding(pkg: Package) {
-  return pkg.versions !== null && pkg.versions !== undefined;
-}
-
 export const ManageProvider = ({
   children,
   appId,
@@ -55,18 +55,10 @@ export const ManageProvider = ({
   } = usePackages(appId);
 
   const { bindings, isLoading: bindingsLoading } = useBinding(appId);
-  const unusedPackages = useMemo(() => {
-    if (bindingsLoading) {
-      return [];
-    }
-
-    const boundPackageIds = new Set(
-      bindings.map((binding) => binding.packageId),
-    );
-    return packages.filter(
-      (pkg) => !hasLegacyVersionBinding(pkg) && !boundPackageIds.has(pkg.id),
-    );
-  }, [bindings, bindingsLoading, packages]);
+  const unusedPackages = useMemo(
+    () => getUnusedPackages(packages, bindings, bindingsLoading),
+    [bindings, bindingsLoading, packages],
+  );
   const { packageMetricWarnings, isLoading: packageMetricWarningsLoading } =
     usePackageMetricWarnings({
       appId,
@@ -76,10 +68,12 @@ export const ManageProvider = ({
 
   const { diffStatusByVersion } = useDiffStatus({
     appId,
-    enabled:
-      !bindingsLoading &&
-      !packagesLoading &&
-      (bindings.length > 0 || packages.some(hasLegacyVersionBinding)),
+    enabled: shouldLoadDiffStatus({
+      bindings,
+      bindingsLoading,
+      packages,
+      packagesLoading,
+    }),
   });
 
   const value = useMemo(

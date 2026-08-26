@@ -38,6 +38,7 @@ import { useAppOptions } from '@/utils/app-options';
 import { useUserInfo } from '@/utils/hooks';
 import { memberKeys } from '@/utils/query-keys';
 import { useIsMobile } from '@/utils/responsive';
+import { canManageMember, getMemberPermissions } from './members.logic';
 
 const ROLE_COLORS: Record<MemberRole, string> = {
   admin: 'gold',
@@ -64,17 +65,10 @@ function MembersPage() {
     queryFn: api.listWorkspaces,
   });
   const workspaces = workspacesData?.data ?? [];
-  const currentMembership = workspaceAccountId
-    ? workspaces.find(
-        (workspace) =>
-          workspace.account.id === workspaceAccountId &&
-          workspace.status === 'active',
-      )
-    : undefined;
-  // owner of the current account, or an admin member of the workspace
-  const canManage = !workspaceAccountId || currentMembership?.role === 'admin';
-  // admin members may not appoint/modify/remove admins — owner only
-  const isOwner = !workspaceAccountId;
+  const { canManage, isOwner } = getMemberPermissions(
+    workspaces,
+    workspaceAccountId,
+  );
 
   const {
     data: membersData,
@@ -167,9 +161,8 @@ function MembersPage() {
       key: 'role',
       width: 160,
       render: (_, record) => {
-        // admin 成员的角色只有 owner 能改
         const editable =
-          canManage && (isOwner || record.role !== 'admin') && user;
+          canManageMember(record.role, { canManage, isOwner }) && user;
         if (!editable) {
           return <RoleTag role={record.role} />;
         }
@@ -219,7 +212,7 @@ function MembersPage() {
       key: 'actions',
       width: 90,
       render: (_, record) => {
-        const removable = canManage && (isOwner || record.role !== 'admin');
+        const removable = canManageMember(record.role, { canManage, isOwner });
         if (!removable) {
           return null;
         }

@@ -23,42 +23,25 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DEPLOY_STATUS_LABEL_KEY } from '@/constants/i18n-keys';
 import { adminApi } from '@/services/admin-api';
-import type { SystemDeployStatus, SystemInstance } from '@/types';
+import type { SystemDeployStatus } from '@/types';
 import { serviceStatusKeys } from '@/utils/query-keys';
+import {
+  buildInstanceRows,
+  formatDateTime,
+  getNodeVersion,
+  type InstanceRow,
+  isDeployBusy,
+  pickNodeDeployStatus,
+} from './instances-panel.logic';
 import { formatBytes, formatUptime, type ServiceStatusTarget } from './metrics';
 
 const { Text } = Typography;
-
-interface InstanceRow extends SystemInstance {
-  deployStatus?: SystemDeployStatus;
-}
 
 const ROLE_COLORS: Record<string, string> = {
   server: 'blue',
   worker: 'purple',
   'fc-worker': 'geekblue',
 };
-
-// installing/restarting 是进行中，failed 只作为事后提示
-const DEPLOY_STATUS_PRIORITY: Record<SystemDeployStatus['status'], number> = {
-  installing: 0,
-  restarting: 1,
-  failed: 2,
-};
-
-function isDeployBusy(
-  status: SystemDeployStatus | undefined,
-): status is SystemDeployStatus {
-  return status != null && status.status !== 'failed';
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return '-';
-  }
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString();
-}
 
 export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
   const { t } = useTranslation();
@@ -102,34 +85,12 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
   });
   const latestVersion = npmQuery.data?.distTags?.latest;
 
-  const rows = useMemo(() => {
-    const instances = instancesQuery.data?.data ?? [];
-    const deployStatuses = instancesQuery.data?.deployStatuses ?? {};
-    return instances
-      .map((instance) => ({
-        ...instance,
-        deployStatus: deployStatuses[instance.id],
-      }))
-      .sort((left, right) => left.id.localeCompare(right.id));
-  }, [instancesQuery.data]);
-
-  // 更新/回滚是节点级的：bun i -g 全局装一次，server/worker 一起滚动重启
-  const nodeVersion =
-    rows.find((row) => row.role === 'server')?.version ?? rows[0]?.version;
-
-  // 节点级部署状态直接体现在更新按钮上：进行中优先，其次是最近一次失败
-  const nodeDeployStatus = useMemo(() => {
-    const statuses = rows
-      .map((row) => row.deployStatus)
-      .filter((status): status is SystemDeployStatus => status != null);
-    statuses.sort(
-      (left, right) =>
-        DEPLOY_STATUS_PRIORITY[left.status] -
-          DEPLOY_STATUS_PRIORITY[right.status] ||
-        right.updatedAt.localeCompare(left.updatedAt),
-    );
-    return statuses[0];
-  }, [rows]);
+  const rows = useMemo(
+    () => buildInstanceRows(instancesQuery.data),
+    [instancesQuery.data],
+  );
+  const nodeVersion = getNodeVersion(rows);
+  const nodeDeployStatus = useMemo(() => pickNodeDeployStatus(rows), [rows]);
   const nodeDeployBusy = isDeployBusy(nodeDeployStatus);
 
   const renderDeployTooltip = (status: SystemDeployStatus) => (
