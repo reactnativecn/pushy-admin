@@ -1,12 +1,14 @@
 import { ReloadOutlined } from '@ant-design/icons';
 import { Alert, Button, Spin } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { JSONEditorPropsOptional } from 'vanilla-jsoneditor';
 
 export default function JsonEditor({
   className,
   ...props
 }: JSONEditorPropsOptional & { className?: string }) {
+  const { t } = useTranslation();
   const refContainer = useRef<HTMLDivElement>(null);
   const refEditor = useRef<any>(null);
   const propsRef = useRef(props);
@@ -78,7 +80,7 @@ export default function JsonEditor({
             background: 'var(--ant-color-bg-container, #ffffff)',
           }}
         >
-          <Spin tip="加载编辑器..." />
+          <Spin tip={t('json_editor.loading')} />
         </div>
       )}
       {loadError && (
@@ -86,7 +88,7 @@ export default function JsonEditor({
           <Alert
             type="error"
             showIcon
-            message="JSON 编辑器组件加载失败"
+            message={t('json_editor.load_failed')}
             description={
               <Button
                 size="small"
@@ -96,7 +98,7 @@ export default function JsonEditor({
                 onClick={handleRetry}
                 style={{ marginTop: 8 }}
               >
-                重新加载编辑器
+                {t('json_editor.reload')}
               </Button>
             }
           />

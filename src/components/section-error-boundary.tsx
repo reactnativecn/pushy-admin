@@ -1,6 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import i18n from '@/i18n';
 
 interface Props {
   children: ReactNode;
@@ -38,7 +39,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
         <Alert
           type="error"
           showIcon
-          title={this.props.title || '局部组件加载或渲染失败'}
+          title={this.props.title || i18n.t('error_boundary.section_title')}
           description={
             <div style={{ marginTop: 8 }}>
               <p
@@ -48,7 +49,8 @@ export class SectionErrorBoundary extends Component<Props, State> {
                   color: 'rgba(0, 0, 0, 0.65)',
                 }}
               >
-                {this.state.error?.message || '未知渲染错误'}
+                {this.state.error?.message ||
+                  i18n.t('error_boundary.section_unknown_error')}
               </p>
               <Button
                 size="small"
@@ -58,7 +60,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReset}
                 style={{ marginTop: 8 }}
               >
-                重试组件
+                {i18n.t('error_boundary.retry_section')}
               </Button>
             </div>
           }

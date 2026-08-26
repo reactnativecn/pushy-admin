@@ -800,7 +800,14 @@
     "title": "Page Error",
     "unknown_error": "An unknown error occurred",
     "retry": "Retry",
-    "back_home": "Back to Home"
+    "back_home": "Back to Home",
+    "section_title": "This section failed to load or render",
+    "section_unknown_error": "Unknown render error",
+    "retry_section": "Retry section",
+    "chart_error": "Chart failed to render",
+    "line_chart_error": "Line chart failed to render",
+    "pie_chart_error": "Pie chart failed to render",
+    "dual_axes_chart_error": "Dual-axis chart failed to render"
   },
   "daily_check_quota": {
     "tier": "Plan:",
@@ -1126,5 +1133,10 @@
     "vh_warning": "Watch",
     "vh_critical": "Critical",
     "vh_empty": "No client events in the last 7 days"
+  },
+  "json_editor": {
+    "loading": "Loading editor...",
+    "load_failed": "Failed to load the JSON editor",
+    "reload": "Reload editor"
   }
 }

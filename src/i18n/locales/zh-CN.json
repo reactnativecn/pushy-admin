@@ -800,7 +800,14 @@
     "title": "页面出错了",
     "unknown_error": "发生了未知错误",
     "retry": "重试",
-    "back_home": "返回首页"
+    "back_home": "返回首页",
+    "section_title": "局部组件加载或渲染失败",
+    "section_unknown_error": "未知渲染错误",
+    "retry_section": "重试组件",
+    "chart_error": "图表渲染异常",
+    "line_chart_error": "折线图渲染异常",
+    "pie_chart_error": "饼图渲染异常",
+    "dual_axes_chart_error": "双轴图表渲染异常"
   },
   "daily_check_quota": {
     "tier": "套餐：",
@@ -1126,5 +1133,10 @@
     "vh_warning": "关注",
     "vh_critical": "异常",
     "vh_empty": "近 7 天无客户端事件"
+  },
+  "json_editor": {
+    "loading": "加载编辑器...",
+    "load_failed": "JSON 编辑器组件加载失败",
+    "reload": "重新加载编辑器"
   }
 }

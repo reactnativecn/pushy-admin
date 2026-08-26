@@ -51,7 +51,7 @@ describe('SectionErrorBoundary', () => {
       </SectionErrorBoundary>,
     );
 
-    const retryBtn = screen.getByText('重试组件').closest('button')!;
+    const retryBtn = screen.getByRole('button');
     fireEvent.click(retryBtn);
 
     expect(onResetMock).toHaveBeenCalledTimes(1);

@@ -76,8 +76,8 @@
 三批全部完成并推送 main（gh-pages workflow 会跑 `build:check` 再部署；失败会由 `ci-failure-email.yml` 开 issue）。推送后确认两边 Actions 绿灯即可。
 
 ### 审计里有意未做 / 需人工决定
-- `netlify.toml` 的缓存头在 GitHub Pages 上不生效，若 Netlify 已不用可删（未确认，未动）
+- `netlify.toml` 已删除（GitHub Pages 上不生效，两仓库都已不用 Netlify）
 - `daily-check-quota.tsx` / `user/index.tsx` 的 ``t(`user.purchasable_tiers.${tier}`)`` 是刻意的服务端 tier 回退逻辑，保留
-- `lazy-chart.tsx` 的中文 UI 文案（`errorTitle="图表渲染异常"` 等）两仓库都有，cresc 侧值得补 i18n
+- `lazy-chart.tsx` / `section-error-boundary.tsx` / `json-editor.tsx` 的中文 UI 文案已接入 i18n（`error_boundary.section_*` / `*_chart_error`、`json_editor.*`），两仓库都做了
 - 57 处 `useMemo/useCallback` 在 React Compiler 下多余但无害，未清理
 - `cresc-admin` 的 `node_modules/@ant-design/{charts,graphs}`、`@antv/g6` 目录是 bun 没清的残留，已不在 lockfile 与产物中

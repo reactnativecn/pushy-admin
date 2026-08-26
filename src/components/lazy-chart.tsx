@@ -7,6 +7,7 @@ import {
   useCallback,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SectionErrorBoundary } from './section-error-boundary';
 import { ChartSkeleton } from './skeletons';
 
@@ -80,10 +81,11 @@ export function AsyncArea({
   height,
   ...props
 }: ComponentProps<typeof Area> & { height?: number }) {
+  const { t } = useTranslation();
   return (
     <AsyncChartWrapper
       chartType="Area"
-      errorTitle="图表渲染异常"
+      errorTitle={t('error_boundary.chart_error')}
       height={height}
       chartProps={{ ...props, height }}
     />
@@ -94,10 +96,11 @@ export function AsyncLine({
   height,
   ...props
 }: ComponentProps<typeof Line> & { height?: number }) {
+  const { t } = useTranslation();
   return (
     <AsyncChartWrapper
       chartType="Line"
-      errorTitle="折线图渲染异常"
+      errorTitle={t('error_boundary.line_chart_error')}
       height={height}
       chartProps={{ ...props, height }}
     />
@@ -108,10 +111,11 @@ export function AsyncPie({
   height,
   ...props
 }: ComponentProps<typeof Pie> & { height?: number }) {
+  const { t } = useTranslation();
   return (
     <AsyncChartWrapper
       chartType="Pie"
-      errorTitle="饼图渲染异常"
+      errorTitle={t('error_boundary.pie_chart_error')}
       height={height}
       chartProps={{ ...props, height }}
     />
@@ -122,10 +126,11 @@ export function AsyncDualAxes({
   height,
   ...props
 }: ComponentProps<typeof DualAxes> & { height?: number }) {
+  const { t } = useTranslation();
   return (
     <AsyncChartWrapper
       chartType="DualAxes"
-      errorTitle="双轴图表渲染异常"
+      errorTitle={t('error_boundary.dual_axes_chart_error')}
       height={height}
       chartProps={{ ...props, height }}
     />
