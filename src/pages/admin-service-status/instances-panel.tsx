@@ -19,10 +19,10 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DEPLOY_STATUS_LABEL_KEY } from '@/constants/i18n-keys';
-import { adminApi } from '@/services/admin-api';
+import { adminApi, type NodeTelemetrySnapshot } from '@/services/admin-api';
 import type { SystemDeployStatus } from '@/types';
 import { serviceStatusKeys } from '@/utils/query-keys';
 import {
@@ -33,7 +33,12 @@ import {
   isDeployBusy,
   pickNodeDeployStatus,
 } from './instances-panel.logic';
-import { formatBytes, formatUptime, type ServiceStatusTarget } from './metrics';
+import {
+  formatBytes,
+  formatUptime,
+  SERVICE_STATUS_AGGREGATOR_BASE_URL,
+  type ServiceStatusTarget,
+} from './metrics';
 
 const { Text } = Typography;
 
@@ -43,51 +48,33 @@ const ROLE_COLORS: Record<string, string> = {
   'fc-worker': 'geekblue',
 };
 
-export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
+export function InstancesPanel({
+  nodeSnapshot,
+  target,
+}: {
+  nodeSnapshot?: NodeTelemetrySnapshot;
+  target: ServiceStatusTarget;
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
 
-  // 命令入队后实例要等下一次心跳才会带上部署状态，延迟一秒再拉；
-  // 面板关掉（弹窗 destroyOnHidden）时清掉定时器，别对已卸载的组件刷新
-  const refetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
-      if (refetchTimerRef.current) {
-        clearTimeout(refetchTimerRef.current);
-      }
-    },
-    [],
-  );
-  const scheduleInstancesRefresh = () => {
-    if (refetchTimerRef.current) {
-      clearTimeout(refetchTimerRef.current);
-    }
-    refetchTimerRef.current = setTimeout(() => {
-      refetchTimerRef.current = null;
-      queryClient.invalidateQueries({
-        queryKey: serviceStatusKeys.instances(target.key),
-      });
-    }, 1000);
-  };
-
-  // 实例状态是节点本机事实（文件注册表），直接问该节点自己的入口
-  const instancesQuery = useQuery({
-    queryKey: serviceStatusKeys.instances(target.key),
-    queryFn: () => adminApi.getSystemInstances(target.baseUrl),
-    refetchInterval: 10_000,
-  });
   const npmQuery = useQuery({
-    queryKey: serviceStatusKeys.npm(target.key),
-    queryFn: () => adminApi.getSystemNpmInfo(target.baseUrl),
+    queryKey: serviceStatusKeys.npm(),
+    queryFn: () =>
+      adminApi.getSystemNpmInfo(SERVICE_STATUS_AGGREGATOR_BASE_URL),
     refetchInterval: 60_000,
   });
   const latestVersion = npmQuery.data?.distTags?.latest;
 
   const rows = useMemo(
-    () => buildInstanceRows(instancesQuery.data),
-    [instancesQuery.data],
+    () =>
+      buildInstanceRows({
+        data: nodeSnapshot?.instances,
+        deployStatuses: nodeSnapshot?.deployStatuses,
+      }),
+    [nodeSnapshot],
   );
   const nodeVersion = getNodeVersion(rows);
   const nodeDeployStatus = useMemo(() => pickNodeDeployStatus(rows), [rows]);
@@ -109,7 +96,9 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
       adminApi.restartInstance({ instanceId, baseUrl: target.baseUrl }),
     onSuccess: () => {
       message.success(t('admin_deploy.command_queued'));
-      scheduleInstancesRefresh();
+      queryClient.invalidateQueries({
+        queryKey: serviceStatusKeys.nodeSnapshots(),
+      });
     },
   });
 
@@ -119,7 +108,9 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
     onSuccess: () => {
       message.success(t('admin_deploy.command_queued'));
       setUpdateModalOpen(false);
-      scheduleInstancesRefresh();
+      queryClient.invalidateQueries({
+        queryKey: serviceStatusKeys.nodeSnapshots(),
+      });
     },
   });
 
@@ -324,7 +315,7 @@ export function InstancesPanel({ target }: { target: ServiceStatusTarget }) {
           message={t('admin_deploy.npm_unavailable')}
         />
       )}
-      {instancesQuery.isError && (
+      {!nodeSnapshot && (
         <Alert
           className="mb-2"
           type="error"

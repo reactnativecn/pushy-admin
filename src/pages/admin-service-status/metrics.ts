@@ -40,6 +40,9 @@ export type ServiceStatusSummary = {
   requestText: string;
 };
 
+export const SERVICE_STATUS_AGGREGATOR_BASE_URL =
+  'https://s1.reactnative.cn/api';
+
 export const SERVICE_STATUS_TARGETS = [
   {
     key: 'jd1',
@@ -76,6 +79,18 @@ export const SERVICE_STATUS_TARGETS = [
     label: 'p',
     host: 'p.reactnative.cn',
     baseUrl: 'https://p.reactnative.cn/api',
+  },
+  {
+    key: 'xa',
+    label: 'xa',
+    host: 'xa.reactnative.cn',
+    baseUrl: 'https://xa.reactnative.cn/api',
+  },
+  {
+    key: 'zj',
+    label: 'zj',
+    host: 'zj.reactnative.cn',
+    baseUrl: 'https://zj.reactnative.cn/api',
   },
 ] as const;
 

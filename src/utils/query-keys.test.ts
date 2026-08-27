@@ -171,9 +171,8 @@ describe('domain key factories', () => {
         serviceStatusKeys.metrics('jd1'),
         serviceStatusKeys.api5xxEvents('jd1', 20),
         serviceStatusKeys.instances('jd1'),
-        serviceStatusKeys.npm('jd1'),
       ]) {
-        // 面板的刷新按钮靠这个前缀一次性 invalidate 四个查询
+        // 节点日志与兼容查询仍共享目标前缀。
         expect(key.slice(0, prefix.length)).toEqual(prefix);
       }
       expect(serviceStatusKeys.api5xxEvents('jd1', 20)).toEqual([
@@ -211,7 +210,11 @@ describe('domain key factories', () => {
 
     test('all() is a prefix of every service status key', () => {
       expect(serviceStatusKeys.all()).toEqual(['serviceStatus']);
-      expect(serviceStatusKeys.npm('p')[0]).toBe('serviceStatus');
+      expect(serviceStatusKeys.npm()).toEqual(['serviceStatus', 'npm']);
+      expect(serviceStatusKeys.nodeSnapshots()).toEqual([
+        'serviceStatus',
+        'nodeSnapshots',
+      ]);
     });
   });
 

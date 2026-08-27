@@ -67,10 +67,11 @@ export const metricsKeys = {
   ) => ['packageMetricWarnings', appId, appKey, startDate, endDate] as const,
 };
 
-// 服务状态页：全站概览面板挂在 'global' 下，单节点的四个查询挂在节点 key 下，
-// 面板的刷新按钮只要对 target(key) 前缀做一次 invalidate
+// 服务状态页：全站概览挂在 global，Redis 聚合快照与 npm 是全局查询；
+// 只有按需读取的节点日志和兼容查询挂在节点 key 下。
 export const serviceStatusKeys = {
   all: () => ['serviceStatus'] as const,
+  nodeSnapshots: () => ['serviceStatus', 'nodeSnapshots'] as const,
   analyticsOverview: (days: number) =>
     ['serviceStatus', 'global', 'analyticsOverview', days] as const,
   growthStats: (days: number) =>
@@ -86,7 +87,7 @@ export const serviceStatusKeys = {
     ['serviceStatus', target, 'api5xxEvents', offset] as const,
   instances: (target: string) =>
     ['serviceStatus', target, 'instances'] as const,
-  npm: (target: string) => ['serviceStatus', target, 'npm'] as const,
+  npm: () => ['serviceStatus', 'npm'] as const,
 };
 
 export const emailChangeKeys = {

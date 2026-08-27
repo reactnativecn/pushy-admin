@@ -19,6 +19,7 @@ import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncLine } from '@/components/lazy-chart';
+import type { NodeTelemetrySnapshot } from '@/services/admin-api';
 import {
   api,
   type InternalApi5xxEvent,
@@ -220,11 +221,13 @@ function getApi5xxEventColumns(
 export function ServiceStatusPanel({
   error,
   isFetching,
+  nodeSnapshot,
   snapshot,
   target,
 }: {
   error: unknown;
   isFetching: boolean;
+  nodeSnapshot?: NodeTelemetrySnapshot;
   snapshot?: InternalMetricsResponse;
   target: ServiceStatusTarget;
 }) {
@@ -303,18 +306,25 @@ export function ServiceStatusPanel({
                 {dayjs(snapshot.generatedAt).format('YYYY-MM-DD HH:mm:ss')}
               </Tag>
             )}
+            {nodeSnapshot?.hostname && <Tag>{nodeSnapshot.hostname}</Tag>}
             {snapshot?.process.pid && <Tag>PID {snapshot.process.pid}</Tag>}
           </div>
         </div>
         <Button
           icon={<ReloadOutlined />}
           loading={isFetching || api5xxEventsQuery.isFetching}
-          // 该节点的快照、5xx 事件、实例、npm 信息共用一个前缀，一次失效全部重拉
-          onClick={() =>
+          // 快照/npm 是全局查询，5xx 日志仍按节点挂载；显式刷新三者。
+          onClick={() => {
+            queryClient.invalidateQueries({
+              queryKey: serviceStatusKeys.nodeSnapshots(),
+            });
             queryClient.invalidateQueries({
               queryKey: serviceStatusKeys.target(target.key),
-            })
-          }
+            });
+            queryClient.invalidateQueries({
+              queryKey: serviceStatusKeys.npm(),
+            });
+          }}
         >
           {t('admin_service_status.refresh')}
         </Button>
@@ -329,7 +339,7 @@ export function ServiceStatusPanel({
         </Card>
       )}
 
-      <InstancesPanel target={target} />
+      <InstancesPanel nodeSnapshot={nodeSnapshot} target={target} />
 
       <Spin spinning={isFetching && !snapshot}>
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

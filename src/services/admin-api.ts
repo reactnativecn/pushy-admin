@@ -7,7 +7,26 @@ import type {
   SystemInstance,
   SystemNpmInfo,
 } from '@/types';
+import type { InternalMetricsResponse } from './api';
 import request from './request';
+
+export type NodeTelemetrySnapshot = {
+  version: number;
+  nodeId: string;
+  hostname: string;
+  publishedAt: string;
+  metrics: InternalMetricsResponse;
+  instances: SystemInstance[];
+  deployStatuses: Record<string, SystemDeployStatus>;
+};
+
+export type NodeTelemetryBatch = {
+  data: Array<{
+    nodeId: string;
+    snapshot: NodeTelemetrySnapshot | null;
+  }>;
+  generatedAt: string;
+};
 
 export const adminApi = {
   getWorkerTaskStats: (days = 7) =>
@@ -212,6 +231,13 @@ export const adminApi = {
       baseUrl,
       suppressErrorToast: true,
     }),
+  getNodeSnapshots: (nodeIds: string[], baseUrl?: string) =>
+    request<NodeTelemetryBatch>(
+      'get',
+      `/admin/system/node-snapshots?nodes=${encodeURIComponent(nodeIds.join(','))}`,
+      undefined,
+      { baseUrl, suppressErrorToast: true },
+    ),
   getSystemNpmInfo: (baseUrl?: string) =>
     request<SystemNpmInfo>('get', '/admin/system/npm', undefined, {
       baseUrl,

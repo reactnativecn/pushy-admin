@@ -9,6 +9,7 @@ import {
   formatPercent,
   formatUptime,
   getAverageMs,
+  SERVICE_STATUS_TARGETS,
   sumCounters,
 } from './metrics';
 
@@ -58,6 +59,21 @@ describe('sumCounters', () => {
         (entry) => entry.labels.path === '/a',
       ),
     ).toBe(10);
+  });
+});
+
+describe('service status targets', () => {
+  it('includes all eight production origins', () => {
+    expect(SERVICE_STATUS_TARGETS.map((target) => target.key)).toEqual([
+      'jd1',
+      'jd2',
+      'jd3',
+      'jd4',
+      's1',
+      'p',
+      'xa',
+      'zj',
+    ]);
   });
 });
 
