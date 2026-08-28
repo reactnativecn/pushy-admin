@@ -23,7 +23,7 @@ export function ServiceTargetCards({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+    <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {items.map(({ hasData, isError, isFetching, summary, target }) => {
         const statusTitle = isError
           ? t('admin_service_status.sidebar_failed')
