@@ -5,6 +5,11 @@ import dayjs from 'dayjs';
 
 export type MetricMode = 'pv' | 'uv';
 export type MetricKeyPrefix = 'rn' | 'os' | 'rnu';
+export type MetricsTab =
+  | 'requests'
+  | 'request-regions'
+  | 'write-regions'
+  | 'write-clients';
 
 export interface ChartDataPoint {
   time: string;
@@ -18,8 +23,29 @@ export interface MetricsResponse {
   data: Array<{ time: string; data: Array<[number, number]> }>;
 }
 
+export interface DailyDistributionRow {
+  date: string;
+  values: Record<string, number>;
+}
+
+export interface DistributionPoint extends ChartDataPoint {
+  count: number;
+}
+
 export const TOTAL_SERIES_LABEL = 'total';
 export const DEFAULT_RANGE_HOURS = 24;
+
+const metricsTabs: MetricsTab[] = [
+  'requests',
+  'request-regions',
+  'write-regions',
+  'write-clients',
+];
+
+export const parseMetricsTab = (value: string | null): MetricsTab =>
+  metricsTabs.includes(value as MetricsTab)
+    ? (value as MetricsTab)
+    : 'requests';
 
 export const getModeLabels = (
   t: (key: string) => string,
@@ -88,6 +114,34 @@ export const buildChartPoints = (metrics?: MetricsResponse) => {
 
   return points;
 };
+
+// 地区和客户端图按天显示占比；count 单独保留给 tooltip，避免小流量类别
+// 在百分比图中失去实际量级。
+export const buildDistributionPoints = (
+  rows?: DailyDistributionRow[],
+): DistributionPoint[] => {
+  if (!rows) return [];
+  const points: DistributionPoint[] = [];
+  for (const row of rows) {
+    const entries = Object.entries(row.values || {}).filter(
+      ([, count]) => Number.isFinite(count) && count > 0,
+    );
+    const total = entries.reduce((sum, [, count]) => sum + count, 0);
+    if (total <= 0) continue;
+    for (const [rawCategory, count] of entries) {
+      points.push({
+        time: row.date,
+        category: rawCategory.trim() || 'unknown',
+        value: (count / total) * 100,
+        count,
+      });
+    }
+  }
+  return points;
+};
+
+export const formatDistributionTooltip = (point: DistributionPoint) =>
+  `${point.value.toFixed(1)}% (${point.count.toLocaleString()})`;
 
 export const formatTooltipItem = (point: ChartDataPoint) => {
   const countLabel = point.value.toLocaleString();

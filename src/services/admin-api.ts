@@ -10,6 +10,13 @@ import type {
 import type { InternalMetricsResponse } from './api';
 import request from './request';
 
+export type WriteOperationDimension = 'path' | 'region' | 'client';
+
+export type WriteOperationDay = {
+  date: string;
+  values: Record<string, number>;
+};
+
 export type NodeTelemetrySnapshot = {
   version: number;
   nodeId: string;
@@ -40,6 +47,13 @@ export const adminApi = {
     request<{ data: GlobalAnalyticsDay[] }>(
       'get',
       `/admin/analytics/overview?days=${days}`,
+      undefined,
+      { suppressErrorToast: true },
+    ),
+  getWriteOperationAnalytics: (dimension: WriteOperationDimension, days = 30) =>
+    request<{ data: WriteOperationDay[] }>(
+      'get',
+      `/admin/analytics/write-operations?days=${days}&dimension=${dimension}`,
       undefined,
       { suppressErrorToast: true },
     ),

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, setSystemTime, test } from 'bun:test';
 import dayjs from 'dayjs';
 import {
   buildChartPoints,
+  buildDistributionPoints,
   createDefaultDateRange,
   DEFAULT_RANGE_HOURS,
   formatTooltipItem,
@@ -10,8 +11,46 @@ import {
   type MetricsResponse,
   parseDateRange,
   parseKeyPrefix,
+  parseMetricsTab,
   parseMode,
 } from './admin-metrics.logic';
+
+describe('distribution tabs and points', () => {
+  test('parses only known tab keys', () => {
+    expect(parseMetricsTab('write-clients')).toBe('write-clients');
+    expect(parseMetricsTab('request-regions')).toBe('request-regions');
+    expect(parseMetricsTab('unknown')).toBe('requests');
+    expect(parseMetricsTab(null)).toBe('requests');
+  });
+
+  test('turns each day into percentages while preserving counts', () => {
+    expect(
+      buildDistributionPoints([
+        { date: '2026-08-11', values: { 广东: 3, 北京: 1, invalid: 0 } },
+        { date: '2026-08-10', values: { '': 2, broken: Number.NaN } },
+      ]),
+    ).toEqual([
+      {
+        time: '2026-08-11',
+        category: '广东',
+        value: 75,
+        count: 3,
+      },
+      {
+        time: '2026-08-11',
+        category: '北京',
+        value: 25,
+        count: 1,
+      },
+      {
+        time: '2026-08-10',
+        category: 'unknown',
+        value: 100,
+        count: 2,
+      },
+    ]);
+  });
+});
 
 describe('getCategoryPrefix', () => {
   test('takes the part before the colon, trimmed', () => {

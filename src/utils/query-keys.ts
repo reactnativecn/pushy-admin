@@ -65,6 +65,10 @@ export const metricsKeys = {
     startDate: string,
     endDate: string,
   ) => ['packageMetricWarnings', appId, appKey, startDate, endDate] as const,
+  customerRegions: (days: number) =>
+    ['globalMetrics', 'customerRegions', days] as const,
+  writeOperations: (dimension: 'region' | 'client', days: number) =>
+    ['globalMetrics', 'writeOperations', dimension, days] as const,
 };
 
 // 服务状态页：全站概览挂在 global，Redis 聚合快照与 npm 是全局查询；
