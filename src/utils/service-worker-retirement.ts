@@ -60,7 +60,8 @@ export function isLegacyPushyRegistration(
       try {
         const scriptUrl = new URL(worker.scriptURL, normalizedOrigin);
         return (
-          scriptUrl.origin === normalizedOrigin && scriptUrl.pathname === '/sw.js'
+          scriptUrl.origin === normalizedOrigin &&
+          scriptUrl.pathname === '/sw.js'
         );
       } catch {
         return false;
