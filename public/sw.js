@@ -1,4 +1,5 @@
-const CACHE_NAME = 'pushy-admin-v2';
+const CACHE_NAME = 'pushy-admin-v3';
+const MAX_CACHE_ENTRIES = 80;
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1']);
 const IS_LOCAL_HOST = LOCAL_HOSTNAMES.has(self.location.hostname);
 
@@ -27,6 +28,13 @@ self.addEventListener('activate', (event) => {
 const isNavigationRequest = (request) =>
   request.mode === 'navigate' ||
   (request.headers.get('accept') || '').includes('text/html');
+
+const trimCache = async (cache) => {
+  const keys = await cache.keys();
+  const excess = keys.length - MAX_CACHE_ENTRIES;
+  if (excess <= 0) return;
+  await Promise.all(keys.slice(0, excess).map((request) => cache.delete(request)));
+};
 
 // Fetch: keep HTML/API fresh; cache only fingerprinted static assets.
 self.addEventListener('fetch', (event) => {
@@ -58,15 +66,16 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(request);
       if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response.ok && url.origin === self.location.origin) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      });
+
+      const response = await fetch(request);
+      if (response.ok && url.origin === self.location.origin) {
+        await cache.put(request, response.clone());
+        await trimCache(cache);
+      }
+      return response;
     }),
   );
 });
