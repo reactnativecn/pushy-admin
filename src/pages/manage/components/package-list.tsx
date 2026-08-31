@@ -1,23 +1,29 @@
 // import { useDrag } from "react-dnd";
 
 import {
+  BarcodeOutlined,
+  ClockCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   ExclamationCircleFilled,
+  JavaScriptOutlined,
+  PullRequestOutlined,
 } from '@ant-design/icons';
 import {
   Button,
   Checkbox,
   Col,
+  Dropdown,
   Form,
   Input,
   List,
+  type MenuProps,
   Modal,
+  message,
   Popover,
   Row,
   Select,
   Tag,
-  Tooltip,
   Typography,
 } from 'antd';
 import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
@@ -35,8 +41,8 @@ import {
   useWorkspacePermissions,
 } from '@/utils/hooks';
 import { useManageContext } from '../hooks/useManageContext';
-import { Commit } from './commit';
-import { DepsTable } from './deps-table';
+import { CommitModal } from './commit';
+import { DepsModal } from './deps-table';
 
 const PackageList = ({
   dataSource,
@@ -200,6 +206,7 @@ function remove(
       </Typography.Paragraph>
     ),
     maskClosable: true,
+    keyboard: true,
     okButtonProps: { danger: true },
     async onOk() {
       await deletePackage({ appId, packageId: item.id });
@@ -227,6 +234,13 @@ const EditPackageModal = ({
     <Modal
       open
       maskClosable
+      keyboard
+      destroyOnClose
+      title={
+        <span className="font-semibold text-base text-[var(--ant-color-text)]">
+          {t('common.edit')}
+        </span>
+      }
       confirmLoading={updatePackage.isPending}
       onCancel={onClose}
       onOk={async () => {
@@ -248,6 +262,7 @@ const EditPackageModal = ({
         form={form}
         layout="vertical"
         initialValues={{ note: item.note, status: item.status }}
+        className="pt-2"
       >
         <Form.Item name="note" label={t('package_list.note')}>
           <Input placeholder={t('package_list.add_note')} />
@@ -287,22 +302,28 @@ const MetricWarning = ({
     <Popover
       trigger="hover"
       content={
-        <div className="max-w-72 text-xs leading-5">
+        <div className="max-w-72 text-xs leading-5 text-[var(--ant-color-text)]">
           {warnings.timestamps.length > 0 && (
             <div>
-              <div>{t('package_list.mismatch_title')}</div>
-              <div className="mt-1 break-all text-gray-700">
+              <div className="font-medium">
+                {t('package_list.mismatch_title')}
+              </div>
+              <div className="mt-1 break-all text-[var(--ant-color-text-secondary)]">
                 {warnings.timestamps.map((timestamp) => (
                   <div key={timestamp}>{timestamp}</div>
                 ))}
               </div>
-              <div className="mt-2">{t('package_list.mismatch_desc')}</div>
+              <div className="mt-2 text-[var(--ant-color-text-secondary)]">
+                {t('package_list.mismatch_desc')}
+              </div>
             </div>
           )}
           {warnings.hashes.length > 0 && (
             <div className={warnings.timestamps.length > 0 ? 'mt-3' : ''}>
-              <div>{t('package_list.hash_mismatch_title')}</div>
-              <div className="mt-1 break-all text-gray-700">
+              <div className="font-medium">
+                {t('package_list.hash_mismatch_title')}
+              </div>
+              <div className="mt-1 break-all text-[var(--ant-color-text-secondary)]">
                 {warnings.hashes.map((hash) => (
                   <div key={hash}>
                     <code>
@@ -311,11 +332,16 @@ const MetricWarning = ({
                   </div>
                 ))}
               </div>
-              <div className="mt-2">{t('package_list.hash_mismatch_desc')}</div>
+              <div className="mt-2 text-[var(--ant-color-text-secondary)]">
+                {t('package_list.hash_mismatch_desc')}
+              </div>
             </div>
           )}
-          <div className="mt-1">
-            <Link to={realtimeMetricsPath}>
+          <div className="mt-2 pt-1 border-t border-[var(--ant-color-border-secondary)]">
+            <Link
+              to={realtimeMetricsPath}
+              className="text-[var(--ant-color-primary)] hover:underline"
+            >
               {t('package_list.view_realtime')}
             </Link>
           </div>
@@ -326,6 +352,169 @@ const MetricWarning = ({
         <ExclamationCircleFilled />
       </span>
     </Popover>
+  );
+};
+
+const PackageNameCell = ({
+  item,
+  canPublish,
+  onDelete,
+  onEdit,
+}: {
+  item: Package;
+  canPublish: boolean;
+  onDelete: () => void;
+  onEdit: () => void;
+}) => {
+  const { t } = useTranslation();
+  const [modalType, setModalType] = useState<'deps' | 'commit' | null>(null);
+
+  const infoItem = item.bundleHash
+    ? {
+        key: 'hash',
+        icon: <BarcodeOutlined className="mt-1 self-start shrink-0" />,
+        label: (
+          <div className="flex flex-col gap-0.5 py-0.5 max-w-[240px]">
+            <span className="text-[11px] text-[var(--ant-color-text-secondary)]">
+              {t('package_list.bundle_hash').replace(/[:：]$/, '')}
+            </span>
+            <span className="font-mono text-xs text-[var(--ant-color-text)] break-all leading-snug">
+              {item.bundleHash}
+            </span>
+          </div>
+        ),
+      }
+    : item.buildTime
+      ? {
+          key: 'buildTime',
+          icon: <ClockCircleOutlined className="mt-1 self-start shrink-0" />,
+          label: (
+            <div className="flex flex-col gap-0.5 py-0.5 max-w-[240px]">
+              <span className="text-[11px] text-[var(--ant-color-text-secondary)]">
+                {t('package_list.build_time').replace(/[:：]$/, '')}
+              </span>
+              <span className="text-xs text-[var(--ant-color-text)] break-all leading-snug">
+                {item.buildTime}
+              </span>
+            </div>
+          ),
+        }
+      : null;
+
+  const menuItems: MenuProps['items'] = [
+    {
+      type: 'group',
+      label: (
+        <span className="font-semibold text-xs text-[var(--ant-color-text)] max-w-[240px] truncate block">
+          {item.name}
+        </span>
+      ),
+    },
+    {
+      type: 'divider',
+    },
+    ...(canPublish
+      ? [
+          {
+            key: 'edit',
+            icon: <EditOutlined />,
+            label: t('common.edit'),
+          },
+        ]
+      : []),
+    {
+      key: 'deps',
+      icon: <JavaScriptOutlined />,
+      label: t('deps_table.js_deps_heading'),
+    },
+    {
+      key: 'commit',
+      icon: <PullRequestOutlined />,
+      label: t('commit.title'),
+    },
+    ...(infoItem
+      ? [
+          {
+            type: 'divider' as const,
+          },
+          infoItem,
+        ]
+      : []),
+    ...(canPublish
+      ? [
+          {
+            type: 'divider' as const,
+          },
+          {
+            key: 'delete',
+            icon: <DeleteOutlined />,
+            label: t('common.delete'),
+            danger: true,
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <div className="flex-1 min-w-0">
+      <Dropdown
+        menu={{
+          items: menuItems,
+          onClick: async ({ key }) => {
+            if (key === 'edit') {
+              onEdit();
+            } else if (key === 'delete') {
+              onDelete();
+            } else if (key === 'hash' && item.bundleHash) {
+              try {
+                await navigator.clipboard.writeText(item.bundleHash);
+                message.success(t('admin_apps.copied'));
+              } catch {
+                message.error(t('admin_apps.copy_failed'));
+              }
+            } else if (key === 'buildTime' && item.buildTime) {
+              try {
+                await navigator.clipboard.writeText(item.buildTime);
+                message.success(t('admin_apps.copied'));
+              } catch {
+                message.error(t('admin_apps.copy_failed'));
+              }
+            } else if (key === 'deps' || key === 'commit') {
+              setModalType(key);
+            }
+          },
+        }}
+        trigger={['hover']}
+        placement="bottomLeft"
+      >
+        <div className="w-full cursor-pointer py-1 px-1.5 -mx-1.5 rounded hover:bg-[var(--ant-color-fill-secondary)] transition-colors">
+          <Typography.Text
+            strong
+            className="block max-w-[14rem] md:max-w-xs truncate text-[var(--ant-color-text)]"
+          >
+            {item.name}
+          </Typography.Text>
+        </div>
+      </Dropdown>
+
+      {modalType === 'deps' && (
+        <DepsModal
+          open
+          onClose={() => setModalType(null)}
+          deps={item.deps}
+          name={t('deps_table.native_package_with_name', {
+            name: item.name,
+          })}
+        />
+      )}
+      {modalType === 'commit' && (
+        <CommitModal
+          open
+          onClose={() => setModalType(null)}
+          commit={item.commit}
+        />
+      )}
+    </div>
   );
 };
 
@@ -368,8 +557,15 @@ const Item = ({
                 />
               </Col>
               <Col flex="auto" className="min-w-0">
-                <div className="flex flex-wrap items-center">
-                  <span>{item.name}</span>
+                <div className="flex items-center">
+                  <PackageNameCell
+                    item={item}
+                    canPublish={canPublish}
+                    onEdit={() => setEditing(true)}
+                    onDelete={() =>
+                      remove(item, appId, deletePackage.mutateAsync, t)
+                    }
+                  />
                   {hasMetricWarning && realtimeMetricsPath && (
                     <MetricWarning
                       warnings={warnings}
@@ -377,34 +573,12 @@ const Item = ({
                     />
                   )}
                   {item.status && item.status !== 'normal' && (
-                    <Tag className="ml-2">{statusMap[item.status]}</Tag>
+                    <Tag className="ml-2 shrink-0">
+                      {statusMap[item.status]}
+                    </Tag>
                   )}
                 </div>
               </Col>
-              <DepsTable
-                deps={item.deps}
-                name={t('deps_table.native_package_with_name', {
-                  name: item.name,
-                })}
-              />
-              <Commit commit={item.commit} />
-              {canPublish && (
-                <>
-                  <Button
-                    type="link"
-                    icon={<EditOutlined />}
-                    onClick={() => setEditing(true)}
-                  />
-                  <Button
-                    type="link"
-                    icon={<DeleteOutlined />}
-                    onClick={() =>
-                      remove(item, appId, deletePackage.mutateAsync, t)
-                    }
-                    danger
-                  />
-                </>
-              )}
             </Row>
           }
           description={
@@ -419,15 +593,15 @@ const Item = ({
                   {item.note}
                 </Typography.Paragraph>
               )}
-              <div className="text-xs flex flex-col gap-1">
+              <div className="text-xs flex flex-col gap-1 text-[var(--ant-color-text-secondary)]">
                 {/* 内容指纹(新 CLI 上传才有)优先于构建时间:它才是精确的
                     二进制身份;老包回退展示 buildTime */}
                 {item.bundleHash ? (
                   <div>
-                    {t('package_list.bundle_hash')}
-                    <Tooltip title={item.bundleHash}>
-                      <code>{item.bundleHash.slice(0, 16)}…</code>
-                    </Tooltip>
+                    {t('package_list.bundle_hash')}{' '}
+                    <code className="text-[var(--ant-color-text)]">
+                      {item.bundleHash.slice(0, 16)}…
+                    </code>
                   </div>
                 ) : (
                   <div>

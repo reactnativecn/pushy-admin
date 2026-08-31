@@ -1,44 +1,27 @@
 import { PullRequestOutlined } from '@ant-design/icons';
-import { Button, Popover } from 'antd';
+import { Button, Modal } from 'antd';
 import gitUrlParse from 'git-url-parse';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Commit as CommitType } from '@/types';
 import dayjs from '@/utils/dayjs';
 
-const popoverOverlayStyle: React.CSSProperties = {
-  maxWidth: 288,
-  maxHeight: 240,
-  overflowY: 'auto',
-};
-
-export const Commit = ({ commit }: { commit?: CommitType }) => {
+export const CommitModal = ({
+  open,
+  onClose,
+  commit,
+}: {
+  open: boolean;
+  onClose: () => void;
+  commit?: CommitType;
+}) => {
   const { t } = useTranslation();
 
-  if (!commit) {
-    return (
-      <Popover
-        className="ant-typography-edit"
-        overlayInnerStyle={popoverOverlayStyle}
-        content={
-          <div>
-            <div className="text-center my-1 mx-auto">
-              <div className="font-bold">{t('commit.title')}:</div>
-              <div className="text-gray-500">{t('commit.description')}</div>
-            </div>
-          </div>
-        }
-      >
-        <Button type="link" icon={<PullRequestOutlined />} onClick={() => {}} />
-      </Popover>
-    );
-  }
-
-  const { origin, hash, message, author } = commit;
   let url = '';
-  if (origin) {
+  if (commit?.origin) {
     try {
-      const { owner, name, source } = gitUrlParse(origin);
-      url = `https://${source}/${owner}/${name}/commit/${hash}`;
+      const { owner, name, source } = gitUrlParse(commit.origin);
+      url = `https://${source}/${owner}/${name}/commit/${commit.hash}`;
     } catch (error) {
       console.error(error);
     }
@@ -56,46 +39,90 @@ export const Commit = ({ commit }: { commit?: CommitType }) => {
     }
   }
 
-  const time = dayjs(+commit.timestamp * 1000);
+  const time = commit?.timestamp ? dayjs(+commit.timestamp * 1000) : null;
 
   return (
-    <Popover
-      className="ant-typography-edit"
-      overlayInnerStyle={popoverOverlayStyle}
-      content={
-        <div>
-          <div className="my-1 mx-auto">
-            <div className="font-bold">{t('commit.title_with_commit')}:</div>
-            <div>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      maskClosable
+      keyboard
+      destroyOnClose
+      footer={null}
+      width={540}
+      title={
+        <span className="font-semibold text-base text-[var(--ant-color-text)]">
+          {t('commit.title')}
+        </span>
+      }
+    >
+      {!commit ? (
+        <div className="py-8 text-center text-sm text-[var(--ant-color-text-secondary)]">
+          {t('commit.description')}
+        </div>
+      ) : (
+        <div className="max-h-[60vh] overflow-y-auto space-y-3.5 py-2 pr-1 text-sm text-[var(--ant-color-text)]">
+          <div className="flex items-baseline gap-2">
+            <span className="w-16 shrink-0 font-medium text-[var(--ant-color-text-secondary)]">
               {t('commit.author')}
-              {author}
+            </span>
+            <span className="font-mono text-[var(--ant-color-text)]">
+              {commit.author}
+            </span>
+          </div>
+          {time && (
+            <div className="flex items-baseline gap-2">
+              <span className="w-16 shrink-0 font-medium text-[var(--ant-color-text-secondary)]">
+                {t('commit.time')}
+              </span>
+              <span className="text-[var(--ant-color-text)]">
+                {time.fromNow()}（{time.format('YYYY-MM-DD HH:mm:ss')}）
+              </span>
             </div>
-            <div>
-              {t('commit.time')}
-              {time.fromNow()}（{time.format('YYYY-MM-DD HH:mm:ss')}）
-            </div>
-            <div className="break-all">
+          )}
+          <div className="flex flex-col gap-1.5">
+            <span className="font-medium text-[var(--ant-color-text-secondary)]">
               {t('commit.summary')}
-              {message}
+            </span>
+            <div className="max-h-52 overflow-y-auto whitespace-pre-wrap break-all rounded bg-[var(--ant-color-fill-quaternary)] border border-[var(--ant-color-border-secondary)] p-3 font-mono text-xs text-[var(--ant-color-text)] leading-relaxed">
+              {commit.message}
             </div>
-            <hr />
+          </div>
+          <div className="border-t border-[var(--ant-color-border-secondary)] pt-3 flex items-center justify-between">
+            <span className="text-xs text-[var(--ant-color-text-tertiary)]">
+              Git Commit
+            </span>
             {url ? (
               <a
-                className="text-xs"
+                className="font-mono text-xs text-[var(--ant-color-primary)] hover:underline"
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {hash}
+                {commit.hash}
               </a>
             ) : (
-              <span className="text-xs">{hash}</span>
+              <span className="font-mono text-xs text-[var(--ant-color-text)]">
+                {commit.hash}
+              </span>
             )}
           </div>
         </div>
-      }
-    >
-      <Button type="link" icon={<PullRequestOutlined />} onClick={() => {}} />
-    </Popover>
+      )}
+    </Modal>
+  );
+};
+
+export const Commit = ({ commit }: { commit?: CommitType }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        type="link"
+        icon={<PullRequestOutlined />}
+        onClick={() => setOpen(true)}
+      />
+      <CommitModal open={open} onClose={() => setOpen(false)} commit={commit} />
+    </>
   );
 };
