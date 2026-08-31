@@ -5,7 +5,7 @@ interface ServiceWorkerRegistrationLike {
 }
 
 interface ServiceWorkerContainerLike {
-  getRegistrations: () => Promise<ServiceWorkerRegistrationLike[]>;
+  getRegistrations: () => Promise<readonly ServiceWorkerRegistrationLike[]>;
 }
 
 interface CacheStorageLike {
