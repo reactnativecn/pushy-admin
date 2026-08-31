@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { clearSession } from '@/services/request';
 import { clearWorkspace } from '@/services/workspace';
 import {
+  isEndpointSelectionUnchanged,
   normalizeEndpointUrl,
   setCustomBaseUrl,
   testEndpointStatus,
@@ -35,10 +36,7 @@ export function SwitchEndpointModal({
     nextUrl: string | null,
     successMessage: string,
   ) => {
-    const currentNormalized = currentCustomUrl
-      ? normalizeEndpointUrl(currentCustomUrl)
-      : null;
-    if (currentNormalized === nextUrl) {
+    if (isEndpointSelectionUnchanged(currentCustomUrl, nextUrl)) {
       message.success(successMessage);
       onClose();
       return;
