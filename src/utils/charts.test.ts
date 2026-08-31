@@ -37,7 +37,7 @@ describe('buildTimeSeriesLineConfig', () => {
     ).toBe('classicDark');
   });
 
-  test('formats the x axis with the requested time format', () => {
+  test('formats the x axis and tooltip with their requested time formats', () => {
     const local = dayjs(data[0]!.time);
     const config = buildTimeSeriesLineConfig({
       data,
@@ -52,6 +52,7 @@ describe('buildTimeSeriesLineConfig', () => {
       isDark: false,
       height: 1,
       axisTimeFormat: 'HH:mm',
+      tooltipTimeFormat: 'MM/DD',
     });
     expect(short.axis.x.labelFormatter(data[0]!.time)).toBe(
       local.format('HH:mm'),
@@ -59,6 +60,7 @@ describe('buildTimeSeriesLineConfig', () => {
     // 无法解析的刻度原样返回
     expect(config.axis.x.labelFormatter('not a date')).toBe('not a date');
     expect(config.tooltip.title(data[0]!)).toBe(local.format('MM/DD HH:mm'));
+    expect(short.tooltip.title(data[0]!)).toBe(local.format('MM/DD'));
   });
 
   test('wires titles, tooltip formatter and color domain', () => {

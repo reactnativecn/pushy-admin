@@ -24,6 +24,8 @@ export interface TimeSeriesLineOptions<P extends TimeSeriesPoint> {
   yTitle?: string;
   /** x 轴刻度的时间格式，默认 'MM/DD HH:mm'；节点面板只看当天用 'HH:mm'。 */
   axisTimeFormat?: string;
+  /** tooltip 标题的时间格式，默认 'MM/DD HH:mm'；日级图可只显示日期。 */
+  tooltipTimeFormat?: string;
   /** tooltip 单项的值文本；不传则交给 G2 默认渲染。 */
   formatTooltipValue?: (point: P) => string;
   /** 多条线同时命中时合并到一个 tooltip，默认开启。 */
@@ -38,7 +40,7 @@ export interface TimeSeriesLineOptions<P extends TimeSeriesPoint> {
 }
 
 const DEFAULT_AXIS_TIME_FORMAT = 'MM/DD HH:mm';
-const TOOLTIP_TIME_FORMAT = 'MM/DD HH:mm';
+const DEFAULT_TOOLTIP_TIME_FORMAT = 'MM/DD HH:mm';
 
 /**
  * 各指标页共用的时间序列折线图配置：主题跟随暗色模式、x 轴按时间格式化、
@@ -51,6 +53,7 @@ export function buildTimeSeriesLineConfig<P extends TimeSeriesPoint>({
   xTitle,
   yTitle,
   axisTimeFormat = DEFAULT_AXIS_TIME_FORMAT,
+  tooltipTimeFormat = DEFAULT_TOOLTIP_TIME_FORMAT,
   formatTooltipValue,
   sharedTooltip = true,
   colorDomain,
@@ -79,7 +82,7 @@ export function buildTimeSeriesLineConfig<P extends TimeSeriesPoint>({
       y: yTitle === undefined ? {} : { title: yTitle },
     },
     tooltip: {
-      title: (point: P) => dayjs(point.time).format(TOOLTIP_TIME_FORMAT),
+      title: (point: P) => dayjs(point.time).format(tooltipTimeFormat),
       ...(formatTooltipValue
         ? {
             items: [
