@@ -7,6 +7,7 @@ import {
   DEFAULT_RANGE_HOURS,
   formatTooltipItem,
   getCategoryPrefix,
+  getDistributionCategoryOrder,
   getMetricsTotal,
   type MetricsResponse,
   parseDateRange,
@@ -50,6 +51,17 @@ describe('distribution tabs and points', () => {
       },
     ]);
   });
+
+  test('ranks legend categories by real volume instead of equal-weight daily share', () => {
+    const points = buildDistributionPoints([
+      { date: '2026-08-10', values: { x: 1 } },
+      { date: '2026-08-11', values: { x: 100, y: 900 } },
+    ]);
+
+    // Percentage sums would rank x first (100% + 10% versus y's 90%), but
+    // the actual window volumes are y=900 and x=101.
+    expect(getDistributionCategoryOrder(points)).toEqual(['y', 'x']);
+  });
 });
 
 describe('getCategoryPrefix', () => {
@@ -72,7 +84,7 @@ describe('getMetricsTotal', () => {
 
   test('sums every category when no _total is present', () => {
     const metrics: MetricsResponse = {
-      dict: ['rn0.72', 'rn0.73'],
+      dict: ['rn\u001f0.72', 'rn\u001f0.73'],
       data: [
         {
           time: 't1',
@@ -89,7 +101,7 @@ describe('getMetricsTotal', () => {
 
   test('a _total entry overrides the running sum for its bucket', () => {
     const metrics: MetricsResponse = {
-      dict: ['rn0.72', '_total', 'rn0.73'],
+      dict: ['rn\u001f0.72', '_total', 'rn\u001f0.73'],
       data: [
         // 前面已累加 3,遇到 _total 后以 10 为准,后面的 100 不再计入
         {
@@ -114,7 +126,7 @@ describe('buildChartPoints', () => {
 
   test('splits dict keys on the separator and skips _total', () => {
     const metrics: MetricsResponse = {
-      dict: ['rn0.72', '_total', 'os', 'plain'],
+      dict: ['rn\u001f0.72', '_total', 'os\u001f', 'plain'],
       data: [
         {
           time: 't1',

@@ -140,6 +140,26 @@ export const buildDistributionPoints = (
   return points;
 };
 
+/**
+ * 图例 Top N 按窗口内真实请求数排序，而不是把每天的百分比等权相加。
+ * 后者会让低流量日的 100% 压过高流量日的大类，和“累计流量最高”文案不符。
+ */
+export const getDistributionCategoryOrder = (
+  points: readonly DistributionPoint[],
+): string[] => {
+  const totals = new Map<string, number>();
+  for (const point of points) {
+    totals.set(point.category, (totals.get(point.category) ?? 0) + point.count);
+  }
+  return Array.from(totals.entries())
+    .sort(([leftCategory, leftCount], [rightCategory, rightCount]) =>
+      rightCount === leftCount
+        ? leftCategory.localeCompare(rightCategory)
+        : rightCount - leftCount,
+    )
+    .map(([category]) => category);
+};
+
 export const formatDistributionTooltip = (point: DistributionPoint) =>
   `${point.value.toFixed(1)}% (${point.count.toLocaleString()})`;
 

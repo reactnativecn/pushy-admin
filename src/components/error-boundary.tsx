@@ -2,12 +2,14 @@ import { Button, Result } from 'antd';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useRouteError } from 'react-router-dom';
+import {
+  CHUNK_ERROR_RELOAD_KEY,
+  shouldReloadChunkError,
+} from '@/utils/chunk-recovery';
 
 interface ChunkError extends Error {
   __webpack_chunkName?: string;
 }
-
-const CHUNK_ERROR_RELOAD_KEY = 'pushy_chunk_error_reload_attempted';
 
 const isLocalHost = () => {
   const { hostname } = window.location;
@@ -34,22 +36,25 @@ export function ErrorBoundary() {
 
   useEffect(() => {
     if (!isChunkError) {
-      window.sessionStorage.removeItem(CHUNK_ERROR_RELOAD_KEY);
       return;
     }
 
+    const currentVersion = process.env.PUBLIC_UI_VERSION || 'unknown';
+    const attemptedVersion = window.sessionStorage.getItem(
+      CHUNK_ERROR_RELOAD_KEY,
+    );
     if (
       process.env.NODE_ENV === 'production' &&
       !isLocalHost() &&
-      !window.sessionStorage.getItem(CHUNK_ERROR_RELOAD_KEY)
+      shouldReloadChunkError(attemptedVersion, currentVersion)
     ) {
-      window.sessionStorage.setItem(CHUNK_ERROR_RELOAD_KEY, '1');
+      window.sessionStorage.setItem(CHUNK_ERROR_RELOAD_KEY, currentVersion);
       window.location.reload();
     }
   }, [isChunkError]);
 
   const handleRetry = () => {
-    navigate(-1);
+    window.location.reload();
   };
 
   const handleGoHome = () => {

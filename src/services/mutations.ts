@@ -8,6 +8,11 @@ import {
 } from '@/utils/query-keys';
 import { queryClient } from '@/utils/queryClient';
 import { api } from './api';
+import {
+  removeAppFromListCache,
+  updateAppDetailCache,
+  updateAppInListCache,
+} from './mutation-cache';
 
 type UpdateAppParams = Omit<App, 'appKey' | 'checkCount' | 'id' | 'platform'>;
 
@@ -20,36 +25,23 @@ type UpdatePackageParams = {
 // --- cache updaters (single place that knows the cache shapes) ---
 
 const removeAppFromList = (appId: number) => {
-  queryClient.setQueryData(
-    appKeys.list(),
-    (old?: { data?: App[] } | undefined) => ({
-      data: old?.data?.filter((i) => i.id !== appId) ?? [],
-    }),
+  queryClient.setQueryData(appKeys.list(), (old?: { data?: App[] }) =>
+    removeAppFromListCache(old, appId),
   );
-};
-
-const addAppToList = (app: { id: number; name: string; platform: string }) => {
-  queryClient.setQueryData(
-    appKeys.list(),
-    (old?: { data?: App[] } | undefined) => ({
-      data: [...(old?.data || []), app],
-    }),
-  );
+  queryClient.removeQueries({ queryKey: appKeys.detail(appId), exact: true });
 };
 
 const applyAppUpdate = (appId: number, params: UpdateAppParams) => {
-  queryClient.setQueryData(appKeys.detail(appId), (old: App | undefined) => ({
-    ...old,
-    ...params,
-  }));
-  queryClient.setQueryData(
-    appKeys.list(),
-    (old?: { data?: App[] } | undefined) => ({
-      data:
-        old?.data?.map((i) => (i.id === appId ? { ...i, ...params } : i)) ?? [],
-    }),
+  queryClient.setQueryData(appKeys.detail(appId), (old: App | undefined) =>
+    updateAppDetailCache(old, params),
+  );
+  queryClient.setQueryData(appKeys.list(), (old?: { data?: App[] }) =>
+    updateAppInListCache(old, appId, params),
   );
 };
+
+const revalidateAppList = () =>
+  queryClient.invalidateQueries({ queryKey: appKeys.list() });
 
 const applyPackageUpdate = (
   appId: number,
@@ -147,7 +139,9 @@ const removeBindingFromList = (appId: number, bindingId: number) => {
 
 export const createApp = async (params: { name: string; platform: string }) => {
   const id = await api.createApp(params);
-  addAppToList({ ...params, id });
+  // The create endpoint returns only an id. Refetch the canonical entity list
+  // instead of inserting an object without appKey/status into a fresh cache.
+  await revalidateAppList();
   return id;
 };
 
@@ -156,7 +150,10 @@ export const createApp = async (params: { name: string; platform: string }) => {
 export const useDeleteApp = () =>
   useMutation({
     mutationFn: (appId: number) => api.deleteApp(appId),
-    onSuccess: (_data, appId) => removeAppFromList(appId),
+    onSuccess: async (_data, appId) => {
+      removeAppFromList(appId);
+      await revalidateAppList();
+    },
   });
 
 export const useUpdateApp = () =>
@@ -168,7 +165,13 @@ export const useUpdateApp = () =>
       appId: number;
       params: UpdateAppParams;
     }) => api.updateApp(appId, params),
-    onSuccess: (_data, { appId, params }) => applyAppUpdate(appId, params),
+    onSuccess: async (_data, { appId, params }) => {
+      applyAppUpdate(appId, params);
+      await Promise.all([
+        revalidateAppList(),
+        queryClient.invalidateQueries({ queryKey: appKeys.detail(appId) }),
+      ]);
+    },
   });
 
 export const useUpdatePackage = () =>

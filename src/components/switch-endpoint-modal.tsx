@@ -1,11 +1,16 @@
 import { Button, Form, Input, Modal, message, Tag } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { clearSession } from '@/services/request';
+import { clearWorkspace } from '@/services/workspace';
 import {
+  isEndpointSelectionUnchanged,
+  normalizeEndpointUrl,
   setCustomBaseUrl,
   testEndpointStatus,
   useCustomBaseUrl,
 } from '@/utils/endpoint';
+import { queryClient } from '@/utils/queryClient';
 
 interface SwitchEndpointModalProps {
   onClose: () => void;
@@ -27,25 +32,40 @@ export function SwitchEndpointModal({
     }
   }, [open, currentCustomUrl]);
 
-  const handleSave = async () => {
-    const trimmed = urlInput.trim();
-    if (!trimmed) {
-      handleReset();
+  const applyEndpointChange = (
+    nextUrl: string | null,
+    successMessage: string,
+  ) => {
+    if (isEndpointSelectionUnchanged(currentCustomUrl, nextUrl)) {
+      message.success(successMessage);
+      onClose();
       return;
     }
 
-    if (!/^https?:\/\//i.test(trimmed)) {
+    // An API origin is an authentication boundary. Drop the old token,
+    // workspace and cached responses before publishing the new endpoint so no
+    // request can carry credentials or data across servers.
+    clearSession();
+    clearWorkspace();
+    queryClient.clear();
+    setCustomBaseUrl(nextUrl);
+    message.success(successMessage);
+    onClose();
+    window.location.reload();
+  };
+
+  const handleSave = async () => {
+    const normalizedUrl = normalizeEndpointUrl(urlInput);
+    if (!normalizedUrl) {
       message.error(t('admin_endpoint.invalid_url'));
       return;
     }
 
     setTesting(true);
     try {
-      const ok = await testEndpointStatus(trimmed);
+      const ok = await testEndpointStatus(normalizedUrl);
       if (ok) {
-        setCustomBaseUrl(trimmed);
-        message.success(t('admin_endpoint.test_success'));
-        onClose();
+        applyEndpointChange(normalizedUrl, t('admin_endpoint.test_success'));
       } else {
         message.error(t('admin_endpoint.test_failed'));
       }
@@ -57,10 +77,8 @@ export function SwitchEndpointModal({
   };
 
   const handleReset = () => {
-    setCustomBaseUrl(null);
     setUrlInput('');
-    message.success(t('admin_endpoint.reset_success'));
-    onClose();
+    applyEndpointChange(null, t('admin_endpoint.reset_success'));
   };
 
   return (

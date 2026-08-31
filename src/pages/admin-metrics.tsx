@@ -36,6 +36,7 @@ import {
   formatDistributionTooltip,
   formatTooltipItem,
   getCategoryPrefix,
+  getDistributionCategoryOrder,
   getMetricsTotal,
   getModeLabels,
   type MetricMode,
@@ -62,7 +63,10 @@ const DistributionPanel = ({
   const { isDark } = useThemeMode();
   const legendValuesRef = useRef<string[]>([]);
   const points = useMemo(() => buildDistributionPoints(rows), [rows]);
-  const { sortedCategories } = useMemo(() => aggregateSeries(points), [points]);
+  const sortedCategories = useMemo(
+    () => getDistributionCategoryOrder(points),
+    [points],
+  );
   const { defaultLegendValues, colorDomain } = useMemo(
     () => buildLegendDefaults(sortedCategories),
     [sortedCategories],
@@ -76,6 +80,7 @@ const DistributionPanel = ({
     xTitle: t('admin_metrics.time'),
     yTitle: t('admin_metrics.share_percent'),
     axisTimeFormat: 'MM/DD',
+    tooltipTimeFormat: 'MM/DD',
     formatTooltipValue: formatDistributionTooltip,
     colorDomain,
     legendValuesRef,
