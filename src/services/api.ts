@@ -183,6 +183,38 @@ export type InternalApi5xxEventsResponse = {
   total: number;
 };
 
+export type ClientErrorIssueSummary = {
+  id: number;
+  versionId: number;
+  hash: string;
+  versionName: string;
+  errorName: string;
+  message: string;
+  fatal: boolean;
+  occurrenceCount: number;
+  packageVersion?: string;
+  os?: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  sourceMapAvailable: boolean;
+};
+
+export type ClientErrorIssueDetail = ClientErrorIssueSummary & {
+  fingerprint: string;
+  rawStack: string;
+  componentStack?: string;
+  rnu?: string;
+  rn?: string;
+  context?: Record<string, unknown>;
+};
+
+export type VersionSourceMapLocation = {
+  versionId: number;
+  hash: string;
+  sourceMapKey: string;
+  url: string;
+};
+
 export const api = {
   login: (params: { email: string; pwd: string }) =>
     request<{ token?: string }>('post', '/user/login', params, {
@@ -444,6 +476,37 @@ export const api = {
     }>(
       'get',
       `/metrics/app/events/daily?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
+    ),
+  getClientErrors: (params: {
+    appId: number;
+    start: string;
+    end: string;
+    offset?: number;
+    limit?: number;
+    hash?: string;
+    fatal?: boolean;
+  }) => {
+    const query = new URLSearchParams({
+      start: params.start,
+      end: params.end,
+      offset: String(params.offset ?? 0),
+      limit: String(params.limit ?? 20),
+    });
+    if (params.hash) query.set('hash', params.hash);
+    if (params.fatal !== undefined) query.set('fatal', String(params.fatal));
+    return request<{ data: ClientErrorIssueSummary[]; count: number }>(
+      'get',
+      `/app/${params.appId}/errors?${query.toString()}`,
+    );
+  },
+  getClientError: (appId: number, issueId: number) =>
+    request<ClientErrorIssueDetail>('get', `/app/${appId}/errors/${issueId}`),
+  getVersionSourceMap: (appId: number, versionId: number) =>
+    request<VersionSourceMapLocation>(
+      'get',
+      `/app/${appId}/version/${versionId}/sourceMap`,
+      undefined,
+      { suppressErrorToast: true },
     ),
   getInternalMetrics: (params?: {
     baseUrl?: string;

@@ -17,6 +17,7 @@ import { useWorkspacePermissions } from '@/utils/hooks';
 import { metricsKeys } from '@/utils/query-keys';
 import { useSelectedAppFromUrl } from '@/utils/selected-app';
 import { useThemeMode } from '@/utils/theme-mode';
+import { VersionHealthErrors } from './version-health-errors';
 
 const { RangePicker } = DatePicker;
 
@@ -378,6 +379,12 @@ export const Component = () => {
                   </div>
                 )}
               </Card>
+              <VersionHealthErrors
+                key={`${selectedApp?.id}:${dateRange[0].valueOf()}:${dateRange[1].valueOf()}`}
+                appId={selectedApp?.id}
+                start={dateRange[0].toISOString()}
+                end={dateRange[1].toISOString()}
+              />
             </>
           )}
         </Spin>
