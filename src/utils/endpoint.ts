@@ -39,6 +39,24 @@ export function normalizeEndpointUrl(value: string): string | null {
   }
 }
 
+/**
+ * Compare a normalized endpoint choice with the persisted selection. An
+ * invalid, non-null legacy value is deliberately not equal to the default
+ * selection so resetting still removes it from storage and clears old state.
+ */
+export function isEndpointSelectionUnchanged(
+  currentCustomUrl: string | null,
+  nextUrl: string | null,
+): boolean {
+  if (nextUrl === null) {
+    return currentCustomUrl === null;
+  }
+  return (
+    currentCustomUrl !== null &&
+    normalizeEndpointUrl(currentCustomUrl) === nextUrl
+  );
+}
+
 export function getCustomBaseUrl(): string | null {
   if (typeof window === 'undefined') {
     return null;
