@@ -10,13 +10,22 @@ self.addEventListener('install', () => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      const keys = await caches.keys();
-      await Promise.allSettled(
-        keys
-          .filter((key) => key.startsWith(LEGACY_CACHE_PREFIX))
-          .map((key) => caches.delete(key)),
-      );
-      await self.registration.unregister();
+      try {
+        const keys = await caches.keys();
+        await Promise.allSettled(
+          keys
+            .filter((key) => key.startsWith(LEGACY_CACHE_PREFIX))
+            .map((key) => caches.delete(key)),
+        );
+      } catch {
+        // Cache enumeration is best-effort; retirement must still continue.
+      }
+
+      try {
+        await self.registration.unregister();
+      } catch {
+        // A later page load will retry retirement through the application code.
+      }
     })(),
   );
 });
