@@ -1,8 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  isEndpointSelectionUnchanged,
-  normalizeEndpointUrl,
-} from './endpoint';
+import { isEndpointSelectionUnchanged, normalizeEndpointUrl } from './endpoint';
 
 describe('normalizeEndpointUrl', () => {
   test('canonicalizes HTTPS endpoints and preserves an API path', () => {
@@ -47,18 +44,18 @@ describe('isEndpointSelectionUnchanged', () => {
   });
 
   test('requires reset for an invalid non-null endpoint left by an older release', () => {
-    expect(
-      isEndpointSelectionUnchanged('http://api.example.com', null),
-    ).toBe(false);
+    expect(isEndpointSelectionUnchanged('http://api.example.com', null)).toBe(
+      false,
+    );
     expect(isEndpointSelectionUnchanged('not a url', null)).toBe(false);
   });
 
   test('detects real changes between default and custom endpoints', () => {
-    expect(
-      isEndpointSelectionUnchanged(null, 'https://example.com/api'),
-    ).toBe(false);
-    expect(
-      isEndpointSelectionUnchanged('https://example.com/api', null),
-    ).toBe(false);
+    expect(isEndpointSelectionUnchanged(null, 'https://example.com/api')).toBe(
+      false,
+    );
+    expect(isEndpointSelectionUnchanged('https://example.com/api', null)).toBe(
+      false,
+    );
   });
 });
