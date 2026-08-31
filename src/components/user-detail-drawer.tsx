@@ -97,6 +97,8 @@ export const UserDetailDrawer = ({
   });
 
   const translate = (key: string) => t(key);
+  const renderChecks = (value: number | null | undefined) =>
+    value == null ? '-' : t('admin_users.checks_value', { value });
 
   const detail = data;
 
@@ -201,41 +203,35 @@ export const UserDetailDrawer = ({
               column={2}
             >
               <Descriptions.Item label={translate('admin_users.pv_limit')}>
-                {t('admin_users.checks_value', {
-                  value: detail.quotaDetail.limit.pv,
-                })}
+                {renderChecks(detail.quotaDetail.limit.pv)}
               </Descriptions.Item>
               <Descriptions.Item label={translate('admin_users.today_used')}>
-                {t('admin_users.checks_value', {
-                  value: detail.quotaDetail.todayUsed,
-                })}
+                {renderChecks(detail.quotaDetail.todayUsed)}
               </Descriptions.Item>
               <Descriptions.Item
                 label={translate('admin_users.today_remaining')}
               >
-                {t('admin_users.checks_value', {
-                  value: detail.quotaDetail.todayRemaining,
-                })}
+                {renderChecks(detail.quotaDetail.todayRemaining)}
               </Descriptions.Item>
               <Descriptions.Item label={translate('admin_users.avg_7_days')}>
-                {t('admin_users.checks_value', {
-                  value: detail.quotaDetail.last7Days.avg,
-                })}
+                {renderChecks(detail.quotaDetail.last7Days?.avg)}
               </Descriptions.Item>
               <Descriptions.Item
                 label={translate('admin_users.last_7_days_details')}
                 span={2}
               >
-                {detail.quotaDetail.last7Days.counts
-                  .slice()
-                  .reverse()
-                  .map((c, i) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length ordered day list, index is the stable identity
-                    <span key={i} className="mr-3 inline-block">
-                      {t('admin_users.day_label', { day: i + 1 })}:{' '}
-                      <strong>{c}</strong>
-                    </span>
-                  ))}
+                {detail.quotaDetail.last7Days
+                  ? detail.quotaDetail.last7Days.counts
+                      .slice()
+                      .reverse()
+                      .map((count, index) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length ordered day list, index is the stable identity
+                        <span key={index} className="mr-3 inline-block">
+                          {t('admin_users.day_label', { day: index + 1 })}:{' '}
+                          <strong>{count}</strong>
+                        </span>
+                      ))
+                  : '-'}
               </Descriptions.Item>
               <Descriptions.Item label={translate('admin_users.app_limit')}>
                 {detail.apps.length} / {detail.quotaDetail.limit.app}
@@ -265,7 +261,7 @@ export const UserDetailDrawer = ({
                         </span>
                         <Space size="middle">
                           <span>
-                            PV: <strong>{app.checkCount}</strong>
+                            PV: <strong>{app.checkCount ?? '-'}</strong>
                           </span>
                           <span>
                             {translate('admin_users.packages_count')}:{' '}
