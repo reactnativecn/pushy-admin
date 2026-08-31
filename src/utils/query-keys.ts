@@ -83,6 +83,8 @@ export const clientErrorKeys = {
     ['clientErrors', appId, 'list', start, end, offset, limit, fatal] as const,
   detail: (appId: number | undefined, issueId: number | undefined) =>
     ['clientErrors', appId, 'detail', issueId] as const,
+  symbolicated: (appId: number | undefined, issueId: number | undefined) =>
+    ['clientErrors', appId, 'symbolicated', issueId] as const,
 };
 
 // 服务状态页：全站概览挂在 global，Redis 聚合快照与 npm 是全局查询；

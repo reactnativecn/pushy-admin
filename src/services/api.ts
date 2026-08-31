@@ -208,11 +208,24 @@ export type ClientErrorIssueDetail = ClientErrorIssueSummary & {
   context?: Record<string, unknown>;
 };
 
-export type VersionSourceMapLocation = {
-  versionId: number;
-  hash: string;
-  sourceMapKey: string;
-  url: string;
+export type SymbolicatedSnippetLine = {
+  number: number;
+  text: string;
+};
+
+export type SymbolicatedSnippet = {
+  source: string;
+  line: number;
+  column: number;
+  lines: SymbolicatedSnippetLine[];
+};
+
+/** 服务端符号化结果：页面直接渲染，无需再下载 sourcemap。 */
+export type SymbolicatedError = {
+  stack: string;
+  mappedFrames: number;
+  totalFrames: number;
+  firstSnippet?: SymbolicatedSnippet;
 };
 
 export const api = {
@@ -501,10 +514,12 @@ export const api = {
   },
   getClientError: (appId: number, issueId: number) =>
     request<ClientErrorIssueDetail>('get', `/app/${appId}/errors/${issueId}`),
-  getVersionSourceMap: (appId: number, versionId: number) =>
-    request<VersionSourceMapLocation>(
+  // 失败场景（无 sourcemap / 存储暂不可用 / 旧服务端没有该路由）由错误详情
+  // 抽屉就地提示，不值得全局弹一次 toast。
+  getSymbolicatedError: (appId: number, issueId: number) =>
+    request<SymbolicatedError>(
       'get',
-      `/app/${appId}/version/${versionId}/sourceMap`,
+      `/app/${appId}/errors/${issueId}/symbolicated`,
       undefined,
       { suppressErrorToast: true },
     ),

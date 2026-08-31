@@ -13,47 +13,15 @@ import {
   Typography,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  api,
-  type ClientErrorIssueDetail,
-  type ClientErrorIssueSummary,
-} from '@/services/api';
+import { api, type ClientErrorIssueSummary } from '@/services/api';
 import { clientErrorKeys } from '@/utils/query-keys';
-import type { SymbolicationResult } from '@/utils/symbolicate-stack';
-import { symbolicateInWorker } from '@/utils/symbolication-worker-client';
 
 const { Paragraph, Text } = Typography;
 const PAGE_SIZE = 20;
-const MAX_SOURCE_MAP_BYTES = 128 * 1024 * 1024;
 
 type FatalFilter = 'all' | 'fatal' | 'handled';
-type SymbolicationState =
-  | { status: 'idle' | 'loading' }
-  | { status: 'success'; result: SymbolicationResult }
-  | { status: 'error'; message: string };
-
-async function loadAndSymbolicate(
-  appId: number,
-  detail: ClientErrorIssueDetail,
-): Promise<SymbolicationResult> {
-  const location = await api.getVersionSourceMap(appId, detail.versionId);
-  if (!location.url) throw new Error('source map has no download URL');
-  const response = await fetch(location.url, { credentials: 'omit' });
-  if (!response.ok) {
-    throw new Error(`source map download failed (${response.status})`);
-  }
-  const declaredSize = Number(response.headers.get('content-length') || 0);
-  if (declaredSize > MAX_SOURCE_MAP_BYTES) {
-    throw new Error('source map is too large for browser symbolication');
-  }
-  const sourceMap = await response.text();
-  if (sourceMap.length > MAX_SOURCE_MAP_BYTES) {
-    throw new Error('source map is too large for browser symbolication');
-  }
-  return symbolicateInWorker(detail.rawStack, sourceMap);
-}
 
 export function VersionHealthErrors({
   appId,
@@ -68,9 +36,6 @@ export function VersionHealthErrors({
   const [page, setPage] = useState(1);
   const [fatalFilter, setFatalFilter] = useState<FatalFilter>('all');
   const [selectedIssueId, setSelectedIssueId] = useState<number>();
-  const [symbolication, setSymbolication] = useState<SymbolicationState>({
-    status: 'idle',
-  });
   const fatal = fatalFilter === 'all' ? undefined : fatalFilter === 'fatal';
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -94,30 +59,20 @@ export function VersionHealthErrors({
     enabled: appId !== undefined && selectedIssueId !== undefined,
   });
 
-  useEffect(() => {
-    const detail = detailQuery.data;
-    if (!appId || !detail?.sourceMapAvailable) {
-      setSymbolication({ status: 'idle' });
-      return;
-    }
-    let cancelled = false;
-    setSymbolication({ status: 'loading' });
-    loadAndSymbolicate(appId, detail)
-      .then((result) => {
-        if (!cancelled) setSymbolication({ status: 'success', result });
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setSymbolication({
-            status: 'error',
-            message: error instanceof Error ? error.message : String(error),
-          });
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [appId, detailQuery.data]);
+  // 符号化在服务端完成（归档的 sourcemap 在无 CORS 的 CDN 上，浏览器拿不到，
+  // 页面也只需要渲染结果）；这里只取回展示内容。失败不重试：常见失败是
+  // 版本没归档 map（404）或存储暂不可用（502），重试不会变好。
+  const symbolicationQuery = useQuery({
+    queryKey: clientErrorKeys.symbolicated(appId, selectedIssueId),
+    queryFn: () => api.getSymbolicatedError(appId!, selectedIssueId!),
+    enabled:
+      appId !== undefined &&
+      selectedIssueId !== undefined &&
+      detailQuery.data?.sourceMapAvailable === true,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const symbolicated = symbolicationQuery.data;
 
   const columns = useMemo<TableColumnsType<ClientErrorIssueSummary>>(
     () => [
@@ -174,10 +129,7 @@ export function VersionHealthErrors({
   );
 
   const detail = detailQuery.data;
-  const displayedStack =
-    symbolication.status === 'success'
-      ? symbolication.result.stack
-      : detail?.rawStack;
+  const displayedStack = symbolicated?.stack ?? detail?.rawStack;
 
   return (
     <>
@@ -281,7 +233,7 @@ export function VersionHealthErrors({
               ]}
             />
 
-            {symbolication.status === 'loading' && (
+            {symbolicationQuery.isLoading && detail.sourceMapAvailable && (
               <Alert
                 type="info"
                 showIcon
@@ -295,23 +247,25 @@ export function VersionHealthErrors({
                 message={t('version_health.error_no_source_map')}
               />
             )}
-            {symbolication.status === 'error' && (
+            {symbolicationQuery.isError && (
               <Alert
                 type="warning"
                 showIcon
                 message={t('version_health.error_symbolication_failed')}
-                description={symbolication.message}
+                description={
+                  symbolicationQuery.error instanceof Error
+                    ? symbolicationQuery.error.message
+                    : undefined
+                }
               />
             )}
-            {symbolication.status === 'success' && (
+            {symbolicated && (
               <Alert
-                type={
-                  symbolication.result.mappedFrames > 0 ? 'success' : 'warning'
-                }
+                type={symbolicated.mappedFrames > 0 ? 'success' : 'warning'}
                 showIcon
                 message={t('version_health.error_symbolicated', {
-                  mapped: symbolication.result.mappedFrames,
-                  total: symbolication.result.totalFrames,
+                  mapped: symbolicated.mappedFrames,
+                  total: symbolicated.totalFrames,
                 })}
               />
             )}
@@ -325,40 +279,38 @@ export function VersionHealthErrors({
               </pre>
             </section>
 
-            {symbolication.status === 'success' &&
-              symbolication.result.stack !== detail.rawStack && (
-                <Collapse
-                  size="small"
-                  items={[
-                    {
-                      key: 'raw-stack',
-                      label: t('version_health.error_raw_stack'),
-                      children: (
-                        <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all text-xs">
-                          {detail.rawStack}
-                        </pre>
-                      ),
-                    },
-                  ]}
-                />
-              )}
+            {symbolicated && symbolicated.stack !== detail.rawStack && (
+              <Collapse
+                size="small"
+                items={[
+                  {
+                    key: 'raw-stack',
+                    label: t('version_health.error_raw_stack'),
+                    children: (
+                      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all text-xs">
+                        {detail.rawStack}
+                      </pre>
+                    ),
+                  },
+                ]}
+              />
+            )}
 
-            {symbolication.status === 'success' &&
-              symbolication.result.firstSnippet && (
-                <section>
-                  <div className="mb-2 font-medium">
-                    {t('version_health.error_source_context')}
-                  </div>
-                  <pre className="overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">
-                    {symbolication.result.firstSnippet.lines
-                      .map(
-                        (line) =>
-                          `${line.number === symbolication.result.firstSnippet?.line ? '>' : ' '} ${String(line.number).padStart(4)} | ${line.text}`,
-                      )
-                      .join('\n')}
-                  </pre>
-                </section>
-              )}
+            {symbolicated?.firstSnippet && (
+              <section>
+                <div className="mb-2 font-medium">
+                  {t('version_health.error_source_context')}
+                </div>
+                <pre className="overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">
+                  {symbolicated.firstSnippet.lines
+                    .map(
+                      (line) =>
+                        `${line.number === symbolicated.firstSnippet?.line ? '>' : ' '} ${String(line.number).padStart(4)} | ${line.text}`,
+                    )
+                    .join('\n')}
+                </pre>
+              </section>
+            )}
 
             {detail.componentStack && (
               <section>
