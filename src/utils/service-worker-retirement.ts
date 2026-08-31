@@ -13,7 +13,9 @@ interface CacheStorageLike {
   keys: () => Promise<string[]>;
 }
 
-const getServiceWorkerContainer = (): ServiceWorkerContainerLike | undefined => {
+const getServiceWorkerContainer = ():
+  | ServiceWorkerContainerLike
+  | undefined => {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
     return undefined;
   }
@@ -51,13 +53,15 @@ export async function retireLegacyPwaState({
 
   if (cacheStorage) {
     cleanupTasks.push(
-      cacheStorage.keys().then((keys) =>
-        Promise.allSettled(
-          keys
-            .filter((key) => key.startsWith(LEGACY_PUSHY_CACHE_PREFIX))
-            .map((key) => cacheStorage.delete(key)),
+      cacheStorage
+        .keys()
+        .then((keys) =>
+          Promise.allSettled(
+            keys
+              .filter((key) => key.startsWith(LEGACY_PUSHY_CACHE_PREFIX))
+              .map((key) => cacheStorage.delete(key)),
+          ),
         ),
-      ),
     );
   }
 
