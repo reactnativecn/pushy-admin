@@ -217,7 +217,7 @@ export const adminApi = {
         } | null;
       };
       apps: Array<
-        AdminApp & {
+        Omit<AdminApp, 'checkCount'> & {
           checkCount: number | null;
           packagesCount: number;
         }
