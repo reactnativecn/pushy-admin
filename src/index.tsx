@@ -15,6 +15,7 @@ import { router } from './router';
 import { themeConfig } from './theme';
 import { showNotices } from './utils/notice';
 import { queryClient } from './utils/queryClient';
+import { retireLegacyPwaState } from './utils/service-worker-retirement';
 import { ThemeModeProvider, useThemeMode } from './utils/theme-mode';
 
 const antdLocaleMap: Record<string, typeof zhCN> = {
@@ -22,53 +23,13 @@ const antdLocaleMap: Record<string, typeof zhCN> = {
   'zh-CN': zhCN,
 };
 
-const isLocalHost = () => {
-  const { hostname } = window.location;
-  return (
-    hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname === '0.0.0.0' ||
-    hostname === '::1'
-  );
-};
-
-const shouldEnablePwa = process.env.NODE_ENV === 'production' && !isLocalHost();
-
-const hasServiceWorker = () =>
-  typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
-
-const clearLocalPwaState = () => {
-  if (hasServiceWorker()) {
-    navigator.serviceWorker
-      .getRegistrations()
-      .then((registrations) =>
-        Promise.all(
-          registrations.map((registration) => registration.unregister()),
-        ),
-      )
-      .catch(() => {
-        // SW cleanup failed, app continues normally.
-      });
-  }
-
-  if (typeof caches !== 'undefined') {
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
-      .catch(() => {
-        // Cache cleanup failed, app continues normally.
-      });
-  }
-};
-
-if (hasServiceWorker() && shouldEnablePwa) {
+// pushy-admin does not offer a useful offline mode. Keep removing registrations
+// and caches left by older releases instead of maintaining a second cache layer
+// on top of fingerprinted HTTP assets.
+if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // SW registration failed, app continues normally
-    });
+    void retireLegacyPwaState();
   });
-} else if (isLocalHost()) {
-  window.addEventListener('load', clearLocalPwaState);
 }
 
 function ThemedApp() {
