@@ -13,8 +13,21 @@ const RESULT_COLORS: Record<string, string> = {
   diffed: 'green',
   skipped: 'default',
   empty: 'orange',
-  failed: 'red',
+  failed: 'volcano',
   retry: 'gold',
+};
+
+const FAILURE_COLORS: Record<string, string> = {
+  target_missing: 'gold',
+  transient_dependency: 'gold',
+  timeout: 'gold',
+  archive_compression_ratio: 'orange',
+  archive_entry_bytes: 'orange',
+  archive_declared_bytes: 'orange',
+  archive_total_bytes: 'orange',
+  archive_output_bytes: 'orange',
+  source_missing: 'default',
+  source_and_target_missing: 'default',
 };
 
 const distText = (
@@ -41,6 +54,39 @@ export const WorkerStatsPanel = () => {
     return null;
   }
 
+  const resultTags = (distribution: Record<string, number>) => (
+    <Space size={4} wrap>
+      {Object.entries(distribution)
+        .sort((left, right) => right[1] - left[1])
+        .map(([result, count]) => (
+          <Tag color={RESULT_COLORS[result]} key={result}>
+            {t(`worker_stats.result_${result}`, { defaultValue: result })}{' '}
+            {count}
+          </Tag>
+        ))}
+    </Space>
+  );
+
+  const failureTags = (distribution?: Record<string, number>) => {
+    if (!distribution || Object.keys(distribution).length === 0) {
+      return '-';
+    }
+    return (
+      <Space size={4} wrap>
+        {Object.entries(distribution)
+          .sort((left, right) => right[1] - left[1])
+          .map(([failure, count]) => (
+            <Tag color={FAILURE_COLORS[failure] ?? 'default'} key={failure}>
+              {t(`worker_stats.failure_${failure}`, {
+                defaultValue: failure,
+              })}{' '}
+              {count}
+            </Tag>
+          ))}
+      </Space>
+    );
+  };
+
   const columns: ColumnsType<WorkerTaskDaySummary> = [
     { dataIndex: 'date', title: t('worker_stats.col_date'), width: 110 },
     {
@@ -52,16 +98,14 @@ export const WorkerStatsPanel = () => {
     },
     {
       dataIndex: 'byResult',
-      render: (byResult: Record<string, number>) => (
-        <Space size={4} wrap>
-          {Object.entries(byResult).map(([result, count]) => (
-            <Tag color={RESULT_COLORS[result]} key={result}>
-              {result} {count}
-            </Tag>
-          ))}
-        </Space>
-      ),
+      render: resultTags,
       title: t('worker_stats.col_by_result'),
+    },
+    {
+      dataIndex: 'byFailure',
+      render: failureTags,
+      title: t('worker_stats.col_by_failure'),
+      width: 300,
     },
     {
       align: 'right',
@@ -107,13 +151,7 @@ export const WorkerStatsPanel = () => {
               title={t('worker_stats.today_count')}
               value={today.count}
             />
-            <Space size={4} wrap>
-              {Object.entries(today.byResult).map(([result, count]) => (
-                <Tag color={RESULT_COLORS[result]} key={result}>
-                  {result} {count}
-                </Tag>
-              ))}
-            </Space>
+            {resultTags(today.byResult)}
           </Card>
           <Card size="small">
             <Statistic
@@ -159,6 +197,14 @@ export const WorkerStatsPanel = () => {
               {today.artifactBytes ? formatBytes(today.artifactBytes.max) : '-'}
             </Text>
           </Card>
+        </div>
+      )}
+      {today && Object.keys(today.byFailure ?? {}).length > 0 && (
+        <div className="mb-4">
+          <Text className="mr-2" type="secondary">
+            {t('worker_stats.today_failures')}
+          </Text>
+          {failureTags(today.byFailure)}
         </div>
       )}
       <Table
