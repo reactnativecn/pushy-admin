@@ -14,8 +14,12 @@ const apps: App[] = [
 describe('app mutation cache updaters', () => {
   test('leave missing caches missing instead of synthesizing partial data', () => {
     expect(removeAppFromListCache(undefined, 1)).toBeUndefined();
-    expect(updateAppInListCache(undefined, 1, { name: 'renamed' })).toBeUndefined();
-    expect(updateAppDetailCache(undefined, { name: 'renamed' })).toBeUndefined();
+    expect(
+      updateAppInListCache(undefined, 1, { name: 'renamed' }),
+    ).toBeUndefined();
+    expect(
+      updateAppDetailCache(undefined, { name: 'renamed' }),
+    ).toBeUndefined();
   });
 
   test('remove only the requested app from an existing list', () => {

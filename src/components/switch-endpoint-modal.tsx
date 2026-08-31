@@ -67,10 +67,7 @@ export function SwitchEndpointModal({
     try {
       const ok = await testEndpointStatus(normalizedUrl);
       if (ok) {
-        applyEndpointChange(
-          normalizedUrl,
-          t('admin_endpoint.test_success'),
-        );
+        applyEndpointChange(normalizedUrl, t('admin_endpoint.test_success'));
       } else {
         message.error(t('admin_endpoint.test_failed'));
       }

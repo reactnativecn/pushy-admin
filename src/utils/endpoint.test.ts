@@ -22,7 +22,9 @@ describe('normalizeEndpointUrl', () => {
   });
 
   test('rejects embedded credentials, query strings, fragments and non-http URLs', () => {
-    expect(normalizeEndpointUrl('https://user:pass@example.com/api')).toBeNull();
+    expect(
+      normalizeEndpointUrl('https://user:pass@example.com/api'),
+    ).toBeNull();
     expect(normalizeEndpointUrl('https://example.com/api?token=1')).toBeNull();
     expect(normalizeEndpointUrl('https://example.com/api#section')).toBeNull();
     expect(normalizeEndpointUrl('ftp://example.com/api')).toBeNull();
