@@ -217,7 +217,7 @@ const ManageDashBoard = () => {
       <Layout.Sider
         theme="light"
         className="manage-sider h-full rounded-lg p-4 pt-0"
-        width={280}
+        width={220}
         style={{ marginRight: 16, maxWidth: '100%' }}
       >
         <div className="flex shrink-0 items-center gap-2 py-4">
