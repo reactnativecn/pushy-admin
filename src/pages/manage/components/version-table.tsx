@@ -327,7 +327,8 @@ const VersionNameCell = ({
         <div className="w-full cursor-pointer py-1 px-1.5 -mx-1.5 rounded hover:bg-[var(--ant-color-fill-secondary)] transition-colors">
           <Typography.Text
             strong
-            className="block max-w-[14rem] md:max-w-xs truncate text-[var(--ant-color-text)]"
+            title={record.name}
+            className="block text-[var(--ant-color-text)] truncate"
           >
             {record.name}
           </Typography.Text>
@@ -387,16 +388,15 @@ function removeSelectedVersions({
   selected: number[];
   versions: Version[];
   appId: number;
-  deleteVersions: (variables: {
+  deleteVersions: (vars: {
     appId: number;
     versionIds: number[];
   }) => Promise<unknown>;
   t: (key: string) => string;
 }) {
   const versionNames: string[] = [];
-  const selectedSet = new Set(selected);
   for (const v of versions) {
-    if (selectedSet.has(v.id)) {
+    if (selected.includes(v.id)) {
       versionNames.push(v.name);
     }
   }
@@ -425,6 +425,7 @@ function getColumns(
     {
       title: t('version_table.col_version'),
       dataIndex: 'name',
+      width: 160,
       render: (_, record) => (
         <VersionNameCell record={record} canPublish={canPublish} />
       ),
@@ -433,14 +434,14 @@ function getColumns(
       title: t('version_table.col_description'),
       dataIndex: 'description',
       responsive: ['md'],
-      width: 250,
+      width: 220,
       render: (_, record) => (
         <TextColumn
           record={record}
           recordKey="description"
           title={t('version_table.col_description')}
           canPublish={canPublish}
-          className="block max-w-[15rem] md:w-60"
+          className="block max-w-[13rem] md:w-52"
           showPopover
         />
       ),
@@ -449,7 +450,7 @@ function getColumns(
       title: t('version_table.col_metadata'),
       dataIndex: 'metaInfo',
       responsive: ['lg'],
-      width: 150,
+      width: 140,
       render: (_, record) => (
         <TextColumn
           record={record}
@@ -472,7 +473,6 @@ function getColumns(
         </Popover>
       ),
       dataIndex: 'packages',
-      width: '100%',
       render: (_, record) =>
         canPublish ? (
           <BindPackage
@@ -492,6 +492,7 @@ function getColumns(
       title: t('version_table.col_uploaded'),
       dataIndex: 'createdAt',
       responsive: ['md'],
+      width: 160,
       render: (_, record) => (
         <TextColumn
           record={record}
