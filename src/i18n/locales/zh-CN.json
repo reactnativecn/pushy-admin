@@ -682,7 +682,9 @@
     "status_paused": "已暂停",
     "filter_user_id_placeholder": "输入用户 ID",
     "filter_confirm": "筛选",
-    "filter_reset": "重置"
+    "filter_reset": "重置",
+    "view_user_detail": "查看用户详情",
+    "no_owner": "无归属用户"
   },
   "reset_password": {
     "step_email": "输入绑定邮箱",

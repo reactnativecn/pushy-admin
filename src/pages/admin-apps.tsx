@@ -181,9 +181,35 @@ export const Component = () => {
       title: t('admin_apps.col_name'),
       dataIndex: 'name',
       key: 'name',
-      width: 150,
+      width: isMobile ? 180 : 150,
       sorter: true,
       sortOrder: sortOrderOf('name'),
+      render: (name: string, record: AdminApp) => (
+        <div>
+          <div className="font-medium">{name}</div>
+          {isMobile && (
+            <div className="mt-0.5">
+              {record.userId ? (
+                <Button
+                  type="link"
+                  size="small"
+                  className="h-auto p-0! text-xs text-blue-500"
+                  onClick={() => {
+                    setViewingUserId(record.userId);
+                    setIsDetailOpen(true);
+                  }}
+                >
+                  UID: {record.userId}
+                </Button>
+              ) : (
+                <span className="text-xs text-gray-400">
+                  {t('admin_apps.no_owner')}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       title: t('admin_apps.col_app_key'),
@@ -244,7 +270,6 @@ export const Component = () => {
       title: t('admin_apps.col_user_id'),
       dataIndex: 'userId',
       key: 'userId',
-      responsive: ['lg'],
       width: 120,
       sorter: true,
       sortOrder: sortOrderOf('userId'),
@@ -434,6 +459,7 @@ export const Component = () => {
         open={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         isMobile={isMobile}
+        zIndex={1050}
       />
 
       <Modal
@@ -487,7 +513,24 @@ export const Component = () => {
             </Form.Item>
             <Form.Item
               name="userId"
-              label={t('admin_apps.form_user_id')}
+              label={
+                <div className="flex w-full items-center justify-between">
+                  <span>{t('admin_apps.form_user_id')}</span>
+                  {editingApp?.userId ? (
+                    <Button
+                      type="link"
+                      size="small"
+                      className="h-auto p-0! text-xs font-normal"
+                      onClick={() => {
+                        setViewingUserId(editingApp.userId);
+                        setIsDetailOpen(true);
+                      }}
+                    >
+                      {t('admin_apps.view_user_detail')}
+                    </Button>
+                  ) : null}
+                </div>
+              }
               className="mb-0!"
             >
               <Input

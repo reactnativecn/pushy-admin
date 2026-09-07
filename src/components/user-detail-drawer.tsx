@@ -81,6 +81,7 @@ export const UserDetailDrawer = ({
   isMobile,
   onDelete,
   isDeleting,
+  zIndex,
 }: {
   userId: number | null;
   open: boolean;
@@ -88,6 +89,7 @@ export const UserDetailDrawer = ({
   isMobile: boolean;
   onDelete?: (record: { id: number; email: string }) => void;
   isDeleting?: boolean;
+  zIndex?: number;
 }) => {
   const { t } = useTranslation();
   const { data, isLoading } = useQuery({
@@ -106,6 +108,7 @@ export const UserDetailDrawer = ({
     <Drawer
       title={translate('admin_users.detail_title')}
       width={isMobile ? '100%' : 720}
+      zIndex={zIndex}
       onClose={onClose}
       open={open}
       destroyOnHidden
@@ -130,7 +133,7 @@ export const UserDetailDrawer = ({
             <Descriptions
               title={translate('admin_users.basic_info')}
               bordered
-              column={2}
+              column={isMobile ? 1 : 2}
             >
               <Descriptions.Item label="ID">{detail.user.id}</Descriptions.Item>
               <Descriptions.Item label={translate('admin_users.col_name')}>
@@ -200,7 +203,7 @@ export const UserDetailDrawer = ({
             <Descriptions
               title={translate('admin_users.quota_usage')}
               bordered
-              column={2}
+              column={isMobile ? 1 : 2}
             >
               <Descriptions.Item label={translate('admin_users.pv_limit')}>
                 {renderChecks(detail.quotaDetail.limit.pv)}
