@@ -18,6 +18,8 @@ import {
   QRCode,
   Spin,
   Table,
+  Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
@@ -244,6 +246,38 @@ const removeVersion = (
   });
 };
 
+/**
+ * Outcome of the CLI's Hermes base equivalence check for this version.
+ * Nothing is shown for versions without a report (older CLIs, plain JS) or
+ * built without a base: the tag exists to make a rejected or unverifiable
+ * base visible, which the chain fields alone cannot tell apart from "no base".
+ */
+const HermesBaseTag = ({ record }: { record: Version }) => {
+  const { t } = useTranslation();
+  const outcome = record.hermesBaseOutcome;
+  if (!outcome || outcome === 'none') return null;
+  const color =
+    outcome === 'used' ? 'green' : outcome === 'rejected' ? 'red' : 'orange';
+  const label = t(`version_table.hermes_base_${outcome.replace('-', '_')}`);
+  const tip =
+    outcome === 'used'
+      ? t('version_table.hermes_base_used_tip', {
+          id: record.baseVersionId ?? '?',
+        })
+      : `${t(`version_table.hermes_base_${outcome.replace('-', '_')}_tip`)}${
+          record.hermesBaseDetail ? `\n${record.hermesBaseDetail}` : ''
+        }`;
+  return (
+    <Tooltip
+      title={<span className="whitespace-pre-wrap break-all">{tip}</span>}
+    >
+      <Tag color={color} className="mt-0.5 text-[11px] leading-4 px-1 mr-0">
+        {label}
+      </Tag>
+    </Tooltip>
+  );
+};
+
 const VersionNameCell = ({
   record,
   canPublish,
@@ -334,6 +368,7 @@ const VersionNameCell = ({
           >
             {record.name}
           </Typography.Text>
+          <HermesBaseTag record={record} />
         </div>
       </Dropdown>
 

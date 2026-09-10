@@ -126,6 +126,18 @@ export interface Version {
   };
   deps?: Record<string, string>;
   commit?: Commit;
+  /** Hermes delta-mode chain (reported by react-native-update-cli ≥ 2.23) */
+  bytecodeVersion?: number;
+  baseVersionId?: number;
+  bundleHash?: string;
+  /**
+   * Result of the CLI's Hermes base equivalence check:
+   * used (shipped with -base-bytecode), rejected (disassembly differed,
+   * base dropped), dump-failed (check could not run, base dropped), none
+   */
+  hermesBaseOutcome?: 'used' | 'rejected' | 'dump-failed' | 'none';
+  /** first difference / failure reason behind hermesBaseOutcome */
+  hermesBaseDetail?: string;
 }
 
 export interface AppDetail extends App {

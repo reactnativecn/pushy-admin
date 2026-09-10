@@ -878,6 +878,12 @@
     "col_publish": "Publish to Native Package",
     "col_publish_info": "(Info)",
     "col_uploaded": "Uploaded",
+    "hermes_base_used": "Hermes delta",
+    "hermes_base_used_tip": "Compiled with -base-bytecode against version #{{id}}; the bytecode was verified equivalent to a plain compile, so patches stay small.",
+    "hermes_base_rejected": "Hermes base rejected",
+    "hermes_base_rejected_tip": "The CLI compiled against a base but its bytecode differed from a plain compile, so the plain compile was published instead. First difference:",
+    "hermes_base_dump_failed": "Hermes base unverified",
+    "hermes_base_dump_failed_tip": "The CLI could not verify the base compile (disassembly or plain compile failed), so the plain compile was published instead. Reason:",
     "title": "OTA Versions",
     "total_versions": "Total {{total}} versions",
     "delete_button": "Delete"

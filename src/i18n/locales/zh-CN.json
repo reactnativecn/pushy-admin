@@ -878,6 +878,12 @@
     "col_publish": "发布到原生包",
     "col_publish_info": "(功能说明)",
     "col_uploaded": "上传时间",
+    "hermes_base_used": "Hermes 增量",
+    "hermes_base_used_tip": "以版本 #{{id}} 为 base（-base-bytecode）编译，字节码已校验与普通编译等价，热更 patch 更小。",
+    "hermes_base_rejected": "Hermes base 被拒",
+    "hermes_base_rejected_tip": "CLI 曾以 base 编译，但字节码与普通编译不等价，已改为发布普通编译结果。首处差异：",
+    "hermes_base_dump_failed": "Hermes base 未校验",
+    "hermes_base_dump_failed_tip": "CLI 无法校验 base 编译（反汇编或普通编译失败），已改为发布普通编译结果。原因：",
     "title": "热更包",
     "total_versions": "共 {{total}} 个版本",
     "delete_button": "删除"
