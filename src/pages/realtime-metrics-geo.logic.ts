@@ -52,17 +52,24 @@ export const parseGeoWindow = (value: string | null): GeoWindow =>
 /**
  * days 由服务端按最新在前返回；窗口取前 N 天求和。未知地区参与总量和排名
  * （它往往就是最大的一项，藏起来会让占比失真），但单独给出计数。
+ * labelOf 把服务端标签换成展示名（见 utils/region）；按展示名汇总，同一
+ * 国家的代码写法和老数据的中文写法才会合成一行。未知标签不经过它。
  */
 export const summarizeGeo = (
   days: readonly AppGeoDay[] | undefined,
   window: GeoWindow,
   limit = GEO_TOP_LIMIT,
+  labelOf: (region: string) => string = (region) => region,
 ): GeoSummary => {
   const totals = new Map<string, number>();
   for (const day of (days ?? []).slice(0, GEO_WINDOW_DAYS[window])) {
     for (const [rawRegion, count] of Object.entries(day.regions ?? {})) {
       if (!Number.isFinite(count) || count <= 0) continue;
-      const region = rawRegion.trim() || UNKNOWN_REGION;
+      const trimmed = rawRegion.trim();
+      const region =
+        !trimmed || trimmed === UNKNOWN_REGION
+          ? UNKNOWN_REGION
+          : labelOf(trimmed) || UNKNOWN_REGION;
       totals.set(region, (totals.get(region) ?? 0) + count);
     }
   }

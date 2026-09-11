@@ -54,6 +54,27 @@ describe('summarizeGeo', () => {
     });
   });
 
+  it('sums by display label so codes and legacy names merge, unknown untouched', () => {
+    const summary = summarizeGeo(
+      [
+        {
+          date: '2026-09-11',
+          requests: 10,
+          regions: { ID: 4, 印度尼西亚: 3, 广东: 2, 未知: 1 },
+        },
+      ],
+      'today',
+      undefined,
+      (region) => (region === 'ID' ? '印度尼西亚' : region),
+    );
+    expect(summary.top.map((item) => [item.region, item.count])).toEqual([
+      ['印度尼西亚', 7],
+      ['广东', 2],
+      ['未知', 1],
+    ]);
+    expect(summary.unknown).toBe(1);
+  });
+
   it('is empty-safe', () => {
     expect(summarizeGeo(undefined, '30d')).toEqual({
       total: 0,

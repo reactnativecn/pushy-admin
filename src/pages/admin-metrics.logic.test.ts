@@ -52,6 +52,20 @@ describe('distribution tabs and points', () => {
     ]);
   });
 
+  test('merges categories that map to the same label', () => {
+    const labelOf = (category: string) =>
+      category === 'ID' ? '印度尼西亚' : category;
+    expect(
+      buildDistributionPoints(
+        [{ date: '2026-09-11', values: { ID: 3, 印度尼西亚: 1, 广东: 4 } }],
+        labelOf,
+      ),
+    ).toEqual([
+      { time: '2026-09-11', category: '印度尼西亚', value: 50, count: 4 },
+      { time: '2026-09-11', category: '广东', value: 50, count: 4 },
+    ]);
+  });
+
   test('ranks legend categories by real volume instead of equal-weight daily share', () => {
     const points = buildDistributionPoints([
       { date: '2026-08-10', values: { x: 1 } },

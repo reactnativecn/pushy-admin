@@ -10,7 +10,7 @@ import {
   Typography,
 } from 'antd';
 import type { Dayjs } from 'dayjs';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { AsyncLine } from '@/components/lazy-chart';
@@ -26,6 +26,7 @@ import {
   buildTotalSeries,
 } from '@/utils/metrics';
 import { metricsKeys } from '@/utils/query-keys';
+import { formatRegion } from '@/utils/region';
 import { useThemeMode } from '@/utils/theme-mode';
 import {
   buildChartPoints,
@@ -47,6 +48,7 @@ import {
   parseMode,
   TOTAL_SERIES_LABEL,
 } from './admin-metrics.logic';
+import { UNKNOWN_REGION } from './realtime-metrics-geo.logic';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -55,14 +57,19 @@ const DISTRIBUTION_DAYS = 30;
 const DistributionPanel = ({
   rows,
   loading,
+  labelOf,
 }: {
   rows: DailyDistributionRow[] | undefined;
   loading: boolean;
+  labelOf?: (category: string) => string;
 }) => {
   const { t } = useTranslation();
   const { isDark } = useThemeMode();
   const legendValuesRef = useRef<string[]>([]);
-  const points = useMemo(() => buildDistributionPoints(rows), [rows]);
+  const points = useMemo(
+    () => buildDistributionPoints(rows, labelOf),
+    [rows, labelOf],
+  );
   const sortedCategories = useMemo(
     () => getDistributionCategoryOrder(points),
     [points],
@@ -105,9 +112,17 @@ const DistributionPanel = ({
 };
 
 export const Component = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isDark } = useThemeMode();
   const [searchParams, setSearchParams] = useSearchParams();
+  const language = i18n.resolvedLanguage ?? i18n.language;
+  const regionLabel = useCallback(
+    (region: string) =>
+      region === UNKNOWN_REGION
+        ? t('realtime_metrics.geo_unknown')
+        : formatRegion(region, language),
+    [t, language],
+  );
   const legendValuesRef = useRef<string[]>([]);
   const defaultRangeRef = useRef<[Dayjs, Dayjs] | null>(null);
   defaultRangeRef.current ??= createDefaultDateRange();
@@ -342,6 +357,7 @@ export const Component = () => {
                 <DistributionPanel
                   rows={customerRegionRows}
                   loading={customerRegions.isLoading}
+                  labelOf={regionLabel}
                 />
               ),
             },
@@ -352,6 +368,7 @@ export const Component = () => {
                 <DistributionPanel
                   rows={writeRegions.data?.data}
                   loading={writeRegions.isLoading}
+                  labelOf={regionLabel}
                 />
               ),
             },

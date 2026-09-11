@@ -119,6 +119,9 @@ export const buildChartPoints = (metrics?: MetricsResponse) => {
 // 在百分比图中失去实际量级。
 export const buildDistributionPoints = (
   rows?: DailyDistributionRow[],
+  // 类别键到展示名；同一天里映射到同名的键合并成一个点（地区图用它把
+  // 国家代码和老数据的中文国名并成一行）。
+  labelOf: (category: string) => string = (category) => category,
 ): DistributionPoint[] => {
   if (!rows) return [];
   const points: DistributionPoint[] = [];
@@ -128,10 +131,16 @@ export const buildDistributionPoints = (
     );
     const total = entries.reduce((sum, [, count]) => sum + count, 0);
     if (total <= 0) continue;
+    const counts = new Map<string, number>();
     for (const [rawCategory, count] of entries) {
+      const trimmed = rawCategory.trim();
+      const category = (trimmed && labelOf(trimmed)) || 'unknown';
+      counts.set(category, (counts.get(category) ?? 0) + count);
+    }
+    for (const [category, count] of counts) {
       points.push({
         time: row.date,
-        category: rawCategory.trim() || 'unknown',
+        category,
         value: (count / total) * 100,
         count,
       });

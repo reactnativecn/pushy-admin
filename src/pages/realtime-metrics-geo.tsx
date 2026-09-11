@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { metricsKeys } from '@/utils/query-keys';
+import { formatRegion } from '@/utils/region';
 import {
   GEO_FETCH_DAYS,
   GEO_WINDOWS,
@@ -28,7 +29,8 @@ export const RealtimeGeoPanel = ({
   appKey: string | undefined;
   isAdmin: boolean;
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage ?? i18n.language;
   const [geoWindow, setGeoWindow] = useState<GeoWindow>('today');
 
   const { data, isLoading } = useQuery({
@@ -40,8 +42,11 @@ export const RealtimeGeoPanel = ({
   });
 
   const summary = useMemo(
-    () => summarizeGeo(data?.days, geoWindow),
-    [data, geoWindow],
+    () =>
+      summarizeGeo(data?.days, geoWindow, undefined, (region) =>
+        formatRegion(region, language),
+      ),
+    [data, geoWindow, language],
   );
   const topMax = summary.top[0]?.count ?? 0;
   const regionLabel = (region: string) =>
