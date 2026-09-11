@@ -1,3 +1,4 @@
+import type { AppGeoResponse } from '@/pages/realtime-metrics-geo.logic';
 import type {
   AccountMember,
   ApiToken,
@@ -462,6 +463,12 @@ export const api = {
     }>(
       'get',
       `/metrics/app?appKey=${encodeURIComponent(params.appKey)}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}`,
+    ),
+  // 完成的查询热更请求按地区的每日分布(北京时间自然日,今日实时累计)
+  getAppGeo: (params: { appKey: string; days: number }) =>
+    request<AppGeoResponse>(
+      'get',
+      `/metrics/app/geo?appKey=${encodeURIComponent(params.appKey)}&days=${params.days}`,
     ),
   // 客户端热更生命周期事件(版本健康度),dict 项形如 `${type}${版本名}`
   getAppEventsMetrics: (params: {

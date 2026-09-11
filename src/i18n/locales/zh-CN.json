@@ -438,7 +438,19 @@
     "no_data": "暂无数据",
     "tooltip_count": "{{count}} 次",
     "tooltip_count_percent": "{{count}} 次（{{percent}}%）",
-    "current_dimension_label": "当前维度：{{dimension}}"
+    "current_dimension_label": "当前维度：{{dimension}}",
+    "geo_title": "地区分布",
+    "geo_today": "今日",
+    "geo_7d": "近 7 天",
+    "geo_30d": "近 30 天",
+    "geo_total": "查询热更次数",
+    "geo_region_count": "地区数",
+    "geo_unknown": "未知",
+    "geo_unknown_share": "未知占比 {{percent}}%",
+    "geo_other": "其他 {{count}} 个地区",
+    "geo_no_data": "暂无地区数据",
+    "geo_hint": "按完成的查询热更请求统计，按北京时间自然日累计；「今日」为实时数据（约 1 秒延迟），最多保留 {{days}} 天。中国大陆到省级，其他地区到国家级。",
+    "geo_resolver_missing": "当前服务节点未加载 IP 地区库，它处理的请求都会记为「未知」。"
   },
   "admin_metrics": {
     "mode_requests": "请求数",

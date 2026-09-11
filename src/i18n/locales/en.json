@@ -438,7 +438,19 @@
     "no_data": "No data available",
     "tooltip_count": "{{count}} checks",
     "tooltip_count_percent": "{{count}} checks ({{percent}}%)",
-    "current_dimension_label": "Current dimension: {{dimension}}"
+    "current_dimension_label": "Current dimension: {{dimension}}",
+    "geo_title": "Regions",
+    "geo_today": "Today",
+    "geo_7d": "Last 7 days",
+    "geo_30d": "Last 30 days",
+    "geo_total": "Update Checks",
+    "geo_region_count": "Regions",
+    "geo_unknown": "Unknown",
+    "geo_unknown_share": "Unknown {{percent}}%",
+    "geo_other": "{{count}} other regions",
+    "geo_no_data": "No region data yet",
+    "geo_hint": "Completed update checks, accumulated per calendar day in UTC+8; \"Today\" is live (about 1 s behind), kept for up to {{days}} days. Mainland China resolves to province, elsewhere to country.",
+    "geo_resolver_missing": "This API node has no IP region database loaded; every request it serves is counted as Unknown."
   },
   "admin_metrics": {
     "mode_requests": "Requests",
