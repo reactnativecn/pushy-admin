@@ -636,7 +636,7 @@
     "version_deleted": "已删除的版本",
     "version_deleted_hint": "该热更版本已被删除，仅保留 hash",
     "copy_hash": "复制完整 hash",
-    "page_footnote": "三种视图共用上方的天数；「今日」为北京时间今日实时累计。版本漏斗按 UTC 日、其余按北京时间自然日。",
+    "page_footnote": "所有视图共用上方的天数；「今日」为北京时间今日实时累计。版本漏斗按 UTC 日、其余按北京时间自然日。",
     "col_carrier": "运营商"
   },
   "admin_metrics": {

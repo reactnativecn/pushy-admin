@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "PUBLIC_API=https://update.reactnative.cn/api rsbuild dev",
+    "dev:analytics": "bun scripts/analytics-demo.mjs",
     "dev:local": "PUBLIC_API=http://localhost:9000 rsbuild dev",
     "build": "NODE_ENV=production rsbuild build",
     "preview": "rsbuild preview",
