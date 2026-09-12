@@ -26,16 +26,15 @@ const SERVER: { main: [string, ...string[]] } = {
   main:
     process.env.NODE_ENV === 'production'
       ? [
+          "https://1.rnupdate.online/api",
+          "https://2.rnupdate.online/api",
+          "https://3.rnupdate.online/api",
+          "https://4.rnupdate.online/api",
           'https://update.react-native.cn/api',
           'https://update.reactnative.cn/api',
-          // "https://5.rnupdate.online/api",
         ]
       : [process.env.PUBLIC_API ?? 'http://localhost:9000'],
 };
-
-// const baseUrl = `http://localhost:9000`;
-// let baseUrl = SERVER.main[0];
-// const baseUrl = `https://p.reactnative.cn/api`;
 
 const getBaseUrl = FEATURES.versionHealthMock
   ? Promise.resolve(SERVER.main[0])
