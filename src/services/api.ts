@@ -1,3 +1,8 @@
+import type {
+  AppEventBreakdownResponse,
+  AppTrafficResponse,
+  VersionFunnelResponse,
+} from '@/pages/app-insights/types';
 import type { AppGeoResponse } from '@/pages/realtime-metrics-geo.logic';
 import type {
   AccountMember,
@@ -469,6 +474,29 @@ export const api = {
     request<AppGeoResponse>(
       'get',
       `/metrics/app/geo?appKey=${encodeURIComponent(params.appKey)}&days=${params.days}`,
+    ),
+  // 以下三个按应用的洞察接口与 geo 同一授权边界；分析存储不可用时服务端
+  // 返回 503 + analyticsUnavailableMessage，由页面就地展示而不是全局弹 toast。
+  getAppTraffic: (params: { appKey: string; days: number }) =>
+    request<AppTrafficResponse>(
+      'get',
+      `/metrics/app/traffic?appKey=${encodeURIComponent(params.appKey)}&days=${params.days}`,
+      undefined,
+      { suppressErrorToast: true },
+    ),
+  getAppEventBreakdown: (params: { appKey: string; days: number }) =>
+    request<AppEventBreakdownResponse>(
+      'get',
+      `/metrics/app/events/breakdown?appKey=${encodeURIComponent(params.appKey)}&days=${params.days}`,
+      undefined,
+      { suppressErrorToast: true },
+    ),
+  getAppVersionFunnel: (params: { appKey: string; days: number }) =>
+    request<VersionFunnelResponse>(
+      'get',
+      `/metrics/app/versions?appKey=${encodeURIComponent(params.appKey)}&days=${params.days}`,
+      undefined,
+      { suppressErrorToast: true },
     ),
   // 客户端热更生命周期事件(版本健康度),dict 项形如 `${type}${版本名}`
   getAppEventsMetrics: (params: {

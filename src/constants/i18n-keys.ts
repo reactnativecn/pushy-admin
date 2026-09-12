@@ -1,4 +1,5 @@
 import type { ApiTokenScope, McpScope } from '@/constants/token-scopes';
+import type { FunnelHealth } from '@/pages/app-insights/logic';
 import type { MemberRole, SystemDeployStatus } from '@/types';
 import type { RangePresetKey } from '@/utils/charts';
 import type { getFatalDepsViolation } from '@/utils/helper';
@@ -89,4 +90,14 @@ export const DEPS_VIOLATION_MESSAGE_KEY: Record<
 > = {
   rn_mismatch: 'bind_package.deps_rn_mismatch',
   rnu_downgrade: 'bind_package.deps_rnu_downgrade',
+};
+
+/** 版本漏斗的健康标签（回滚率阈值判定，null 表示样本不足不判定）。 */
+export const FUNNEL_HEALTH_LABEL_KEY: Record<
+  NonNullable<FunnelHealth>,
+  string
+> = {
+  healthy: 'app_insights.health_healthy',
+  warning: 'app_insights.health_warning',
+  critical: 'app_insights.health_critical',
 };

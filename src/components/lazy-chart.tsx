@@ -1,4 +1,4 @@
-import type { Area, DualAxes, Line, Pie } from '@ant-design/plots';
+import type { Area, Column, DualAxes, Line, Pie } from '@ant-design/plots';
 import {
   type ComponentProps,
   type ComponentType,
@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { SectionErrorBoundary } from './section-error-boundary';
 import { ChartSkeleton } from './skeletons';
 
-type ChartComponentType = 'Area' | 'Line' | 'Pie' | 'DualAxes';
+type ChartComponentType = 'Area' | 'Line' | 'Pie' | 'DualAxes' | 'Column';
 
 // 只从 @ant-design/plots 取用，并且每种图表用静态属性名挑导出：
 // @ant-design/charts 只是 `export * from graphs/plots` 的壳，动态 `module[type]`
@@ -35,6 +35,10 @@ const chartLoaders: Record<
   DualAxes: () =>
     import('@ant-design/plots').then((m) => ({
       default: m.DualAxes as ComponentType<any>,
+    })),
+  Column: () =>
+    import('@ant-design/plots').then((m) => ({
+      default: m.Column as ComponentType<any>,
     })),
 };
 
@@ -131,6 +135,21 @@ export function AsyncDualAxes({
     <AsyncChartWrapper
       chartType="DualAxes"
       errorTitle={t('error_boundary.dual_axes_chart_error')}
+      height={height}
+      chartProps={{ ...props, height }}
+    />
+  );
+}
+
+export function AsyncColumn({
+  height,
+  ...props
+}: ComponentProps<typeof Column> & { height?: number }) {
+  const { t } = useTranslation();
+  return (
+    <AsyncChartWrapper
+      chartType="Column"
+      errorTitle={t('error_boundary.chart_error')}
       height={height}
       chartProps={{ ...props, height }}
     />
