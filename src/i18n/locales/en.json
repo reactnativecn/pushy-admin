@@ -572,7 +572,7 @@
     "current_version": "Current version",
     "current_tag": "current",
     "select_version": "Select target version",
-    "update_hint": "The node installs the selected version once, then all local processes (server/worker) gracefully restart in turn (pm2 brings them back up). Selecting an older version rolls back.",
+    "update_hint": "The node installs the selected version once, then all local processes (server/worker) gracefully restart in turn. Selecting an older version rolls back.",
     "command_queued": "Command queued; the instance applies it on its next heartbeat"
   },
   "admin_users": {
