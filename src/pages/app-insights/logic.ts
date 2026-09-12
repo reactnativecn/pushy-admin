@@ -264,8 +264,6 @@ const MIN_SAMPLES = 10;
 export interface FunnelRates {
   /** 下载成功 / (下载成功 + 下载失败) */
   downloadSuccessRate: number | null;
-  /** 激活 / 下载成功（可 >1：下载在窗口外、激活在窗口内） */
-  activationRate: number | null;
   /** 回滚 / (激活 + 回滚) */
   rollbackRate: number | null;
   failures: number;
@@ -288,10 +286,6 @@ export const computeFunnelRates = (events: FunnelEventCounts): FunnelRates => {
   return {
     downloadSuccessRate:
       downloadSamples > 0 ? events.downloadSuccess / downloadSamples : null,
-    activationRate:
-      events.downloadSuccess > 0
-        ? events.markSuccess / events.downloadSuccess
-        : null,
     rollbackRate,
     failures: events.downloadFail + events.patchFail,
     health,
@@ -300,6 +294,12 @@ export const computeFunnelRates = (events: FunnelEventCounts): FunnelRates => {
 
 export interface FunnelRow extends VersionFunnel, FunnelRates {
   servedTotal: number;
+  /**
+   * adopted.mark / adopted.download：下载过该版本的设备里有多少真的激活了。
+   * 两个数都是累计去重（HLL），处在同一时间基准上，所以不像"窗口内激活数 ÷
+   * 窗口内下载数"那样会因为下载在窗口之前、激活在窗口之内而超过 100%。
+   */
+  adoptionRate: number | null;
   /** adopted.mark / dauToday；dauToday 为 0 时为 null */
   coverage: number | null;
   /** 名字为空表示版本已删除 */
@@ -313,6 +313,10 @@ export const buildFunnelRows = (
     ...version,
     ...computeFunnelRates(version.events),
     servedTotal: servedTotal(version.served),
+    adoptionRate:
+      version.adopted.download > 0
+        ? version.adopted.mark / version.adopted.download
+        : null,
     coverage:
       response && response.dauToday > 0
         ? version.adopted.mark / response.dauToday

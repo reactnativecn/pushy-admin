@@ -173,7 +173,6 @@ describe('funnel', () => {
       rollback: 10,
     });
     near(rates.downloadSuccessRate, 100 / 105);
-    near(rates.activationRate, 0.9);
     near(rates.rollbackRate, 0.1);
     expect(rates.failures).toBe(8);
     expect(rates.health).toBe('critical');
@@ -188,7 +187,6 @@ describe('funnel', () => {
       }),
     ).toMatchObject({
       downloadSuccessRate: null,
-      activationRate: null,
       // 样本不足不判定
       health: null,
     });
@@ -249,7 +247,13 @@ describe('funnel', () => {
       coverage: 0.25,
       deleted: false,
     });
-    expect(rows[1]).toMatchObject({ servedTotal: 0, deleted: true });
+    // 累计激活率用两个累计设备数，与窗口无关，也不会结构性地超过 100%
+    near(rows[0]?.adoptionRate, 50 / 60);
+    expect(rows[1]).toMatchObject({
+      servedTotal: 0,
+      deleted: true,
+      adoptionRate: null,
+    });
     expect(
       buildFunnelRows({ ...response, dauToday: 0 })[0]?.coverage,
     ).toBeNull();

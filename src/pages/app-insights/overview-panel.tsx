@@ -339,7 +339,7 @@ export const OverviewPanel = ({
                         {t('app_insights.glance_line', {
                           served: formatInteger(row.servedTotal),
                           activated: formatInteger(row.events.markSuccess),
-                          activation: formatPercent(row.activationRate),
+                          activation: formatPercent(row.adoptionRate),
                         })}
                       </div>
                     </div>

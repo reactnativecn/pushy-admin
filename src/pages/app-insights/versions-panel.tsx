@@ -164,7 +164,7 @@ const VersionDetail = ({ row }: { row: FunnelRow }) => {
           <div className="mt-1 text-xs text-gray-500">
             {t('app_insights.funnel_line', {
               downloadSuccess: formatPercent(row.downloadSuccessRate),
-              activation: formatPercent(row.activationRate),
+              activation: formatPercent(row.adoptionRate),
               rollback: formatPercent(row.rollbackRate),
             })}
           </div>
@@ -440,8 +440,8 @@ export const VersionsPanel = ({
       title: t('app_insights.col_activation_rate'),
       key: 'activationRate',
       align: 'right',
-      width: 80,
-      render: (_, row) => formatPercent(row.activationRate),
+      width: 100,
+      render: (_, row) => formatPercent(row.adoptionRate),
     },
     {
       title: t('app_insights.col_rollback_rate'),
