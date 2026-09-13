@@ -26,10 +26,10 @@ const SERVER: { main: [string, ...string[]] } = {
   main:
     process.env.NODE_ENV === 'production'
       ? [
-          "https://1.rnupdate.online/api",
-          "https://2.rnupdate.online/api",
-          "https://3.rnupdate.online/api",
-          "https://4.rnupdate.online/api",
+          'https://1.rnupdate.online/api',
+          'https://2.rnupdate.online/api',
+          'https://3.rnupdate.online/api',
+          'https://4.rnupdate.online/api',
           'https://update.react-native.cn/api',
           'https://update.reactnative.cn/api',
         ]
