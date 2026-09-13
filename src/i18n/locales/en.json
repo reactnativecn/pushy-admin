@@ -307,6 +307,7 @@
     "scopes_hint": "The two defaults cover release topology and update diagnosis",
     "scope_pushy_apps_read": "List authorized apps",
     "scope_pushy_diagnose": "Release topology, update decisions and artifact states",
+    "scope_pushy_health_read": "Version health, JS errors and stacks (messages and stacks may carry business context)",
     "apps_hint": "Empty = every app of the account; granting only the apps you debug is strongly recommended",
     "all_apps": "All apps",
     "n_apps": "{{count}} app(s)",

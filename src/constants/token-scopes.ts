@@ -11,5 +11,9 @@ export type ApiTokenScope = (typeof API_TOKEN_SCOPES)[number];
 
 // 只列出当前真有工具支撑的 scope;服务端 ALL_MCP_SCOPES 比这里宽,
 // 新工具上线时再把对应项加进来。
-export const MCP_SCOPES = ['pushy:apps:read', 'pushy:diagnose'] as const;
+export const MCP_SCOPES = [
+  'pushy:apps:read',
+  'pushy:diagnose',
+  'pushy:health:read',
+] as const;
 export type McpScope = (typeof MCP_SCOPES)[number];

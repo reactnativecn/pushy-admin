@@ -81,6 +81,7 @@ export const API_TOKEN_SCOPE_DESC_KEY: Record<ApiTokenScope, string> = {
 export const MCP_SCOPE_DESC_KEY: Record<McpScope, string> = {
   'pushy:apps:read': 'mcp.scope_pushy_apps_read',
   'pushy:diagnose': 'mcp.scope_pushy_diagnose',
+  'pushy:health:read': 'mcp.scope_pushy_health_read',
 };
 
 /** 发布预检的硬规则违规原因（getFatalDepsViolation 的非空返回值）。 */
