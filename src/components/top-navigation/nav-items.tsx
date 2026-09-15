@@ -237,6 +237,9 @@ export function getSelectedKeys(pathname: string) {
   if (pathname === rootRouterPath.adminApps) {
     return ['admin-apps'];
   }
+  if (pathname === rootRouterPath.adminCustomOrders) {
+    return ['admin-custom-orders'];
+  }
   if (pathname === rootRouterPath.adminMetrics) {
     return ['admin-metrics'];
   }

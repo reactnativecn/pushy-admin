@@ -30,6 +30,7 @@ export const rootRouterPath = {
   adminApps: '/admin-apps',
   adminMetrics: '/admin-metrics',
   adminServiceStatus: '/admin-service-status',
+  adminCustomOrders: '/admin-custom-orders',
   apiTokens: '/api-tokens',
   mcpConnections: '/mcp-connections',
   members: '/members',
@@ -178,6 +179,14 @@ export const router = createHashRouter([
         element: <AdminRoute />,
         children: [
           { index: true, lazy: () => import('./pages/admin-service-status') },
+        ],
+      },
+      {
+        path: 'admin-custom-orders',
+        loader: needAuthLoader,
+        element: <AdminRoute />,
+        children: [
+          { index: true, lazy: () => import('./pages/admin-custom-orders') },
         ],
       },
       {

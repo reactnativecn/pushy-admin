@@ -35,7 +35,39 @@ export type NodeTelemetryBatch = {
   generatedAt: string;
 };
 
+export type CustomOrderStatus = 'pending' | 'done' | 'cancelled';
+
+export type CustomOrder = {
+  orderNo: string;
+  subject: string;
+  amount: string;
+  note: string;
+  status: CustomOrderStatus;
+  payUrl: string;
+  createdBy: number | null;
+  thirdOrderNo: string;
+  payTime: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export const adminApi = {
+  // 自定义收款链接：任意金额/商品说明的支付宝订单
+  listCustomOrders: (params: { limit: number; offset: number }) =>
+    request<{ data: CustomOrder[]; count: number }>(
+      'get',
+      `/admin/custom-orders?limit=${params.limit}&offset=${params.offset}`,
+    ),
+  createCustomOrder: (input: {
+    amount: string;
+    subject: string;
+    note?: string;
+  }) => request<CustomOrder>('post', '/admin/custom-orders', input),
+  cancelCustomOrder: (orderNo: string) =>
+    request<CustomOrder>(
+      'post',
+      `/admin/custom-orders/${encodeURIComponent(orderNo)}/cancel`,
+    ),
   getWorkerTaskStats: (days = 7) =>
     request<{ data: WorkerTaskDaySummary[] }>(
       'get',

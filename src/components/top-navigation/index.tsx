@@ -179,6 +179,14 @@ export default function TopNavigation({
                       ),
                     },
                     {
+                      key: 'admin-custom-orders',
+                      label: (
+                        <Link to={rootRouterPath.adminCustomOrders}>
+                          {t('nav.custom_orders')}
+                        </Link>
+                      ),
+                    },
+                    {
                       key: 'admin-metrics',
                       label: (
                         <Link to={rootRouterPath.adminMetrics}>

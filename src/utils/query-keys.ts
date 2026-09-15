@@ -136,6 +136,10 @@ export const adminKeys = {
       ? (['adminApps'] as const)
       : (['adminApps', searchQuery, page, pageSize] as const),
   config: () => ['adminConfig'] as const,
+  customOrders: (page?: number, pageSize?: number) =>
+    page === undefined
+      ? (['adminCustomOrders'] as const)
+      : (['adminCustomOrders', page, pageSize] as const),
 };
 
 export const memberKeys = {
