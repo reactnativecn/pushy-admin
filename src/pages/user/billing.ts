@@ -112,6 +112,18 @@ export function formatWan(value: number, t: (key: string) => string) {
   return `${value / 10_000}${t('user.wan_unit')}`;
 }
 
+// 年付赠送的 Token（美元）。只有整单年付送，月付、升级补差价、加购、定制版和大客户不送；
+// 数字要和 pushy-go internal/order/ai_bonus.go 保持一致。
+const ANNUAL_TOKEN_BONUS: Partial<Record<string, number>> = {
+  standard: 30,
+  premium: 100,
+  pro: 360,
+};
+
+export function getAnnualTokenBonus(tier?: string) {
+  return (tier && ANNUAL_TOKEN_BONUS[tier]) || 0;
+}
+
 export function isPurchasableTier(tier?: string): tier is PurchasableTier {
   return !!tier && PURCHASABLE_TIER_KEYS.includes(tier as PurchasableTier);
 }

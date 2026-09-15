@@ -12,6 +12,7 @@ import {
   formatMoney,
   formatRenewedExpireDate,
   formatWan,
+  getAnnualTokenBonus,
   getDefaultCheckUpdateAddonEligibilityHint,
   getPurchasableTierLabel,
   getQuotaDetailItems,
@@ -27,6 +28,7 @@ const purchaseButtonClassName = 'w-full justify-center sm:w-[160px]';
 
 export type PurchaseMenuOption = {
   amountText: string;
+  bonusTag?: string;
   description?: string;
   details?: Array<{
     label: string;
@@ -126,7 +128,7 @@ function PurchaseActionPopover({
                   {option.amountText}
                 </span>
               </div>
-              {(option.description || option.tag) && (
+              {(option.description || option.tag || option.bonusTag) && (
                 <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
                   {option.description && (
                     <span className="text-slate-500">{option.description}</span>
@@ -134,6 +136,11 @@ function PurchaseActionPopover({
                   {option.tag && (
                     <Tag color="gold" className="m-0">
                       {option.tag}
+                    </Tag>
+                  )}
+                  {option.bonusTag && (
+                    <Tag color="magenta" className="m-0 font-semibold">
+                      🎁 {option.bonusTag}
                     </Tag>
                   )}
                 </div>
@@ -231,9 +238,13 @@ export const RenewalPurchaseButton = ({
           billing && isAnnual
             ? billing.monthlyPrice * billing.billingMonths
             : 0;
+        const tokenBonus = isAnnual ? getAnnualTokenBonus(tier) : 0;
 
         return {
           amountText: formatMoney(option.quote.amount),
+          bonusTag: tokenBonus
+            ? t('user.annual_token_bonus', { amount: tokenBonus })
+            : undefined,
           description: `${t('user.renew_after_expire')} ${formatRenewedExpireDate(
             {
               expiresAt: tierExpiresAt,
@@ -278,9 +289,12 @@ export const RenewalPurchaseButton = ({
         },
       ];
 
+  const renewalHasTokenBonus = renewalOptions.some((option) => option.bonusTag);
+
   return (
     <PurchaseActionPopover
       buttonLabel={loadingPlan ? t('user.jumping') : t('user.renew')}
+      hint={renewalHasTokenBonus ? t('user.token_bonus_hint') : undefined}
       loading={loadingPlan !== null}
       title={t('user.renew')}
       titleNote={
@@ -327,7 +341,9 @@ export const UpgradePurchaseControls = ({
         });
   const hint =
     currentTier === 'free'
-      ? t('user.upgrade_hint_free')
+      ? billingCycle === 'year'
+        ? `${t('user.upgrade_hint_free')}${t('user.token_bonus_hint')}`
+        : t('user.upgrade_hint_free')
       : t('user.upgrade_hint_paid');
 
   const headerContent =
@@ -367,9 +383,13 @@ export const UpgradePurchaseControls = ({
         ? t('user.per_year_unit')
         : t('user.per_month_unit');
       const optionKey = `${option.key}-${billingCycle}`;
+      const tokenBonus = isAnnual ? getAnnualTokenBonus(tier) : 0;
 
       return {
         amountText: `${formatMoney(displayAmount)} ${unitText}`,
+        bonusTag: tokenBonus
+          ? t('user.annual_token_bonus', { amount: tokenBonus })
+          : undefined,
         description: isAnnual
           ? t('user.purchase_annual_desc')
           : t('user.purchase_monthly_desc'),
