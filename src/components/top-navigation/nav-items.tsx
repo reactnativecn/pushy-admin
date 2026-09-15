@@ -4,7 +4,6 @@ import {
   GlobalOutlined,
   InfoCircleOutlined,
   MoonOutlined,
-  OpenAIOutlined,
   ReadOutlined,
   SunOutlined,
 } from '@ant-design/icons';
@@ -62,20 +61,6 @@ export function getExternalItems(
       key: 'about',
       icon: <InfoCircleOutlined />,
       label: <ExtLink href={aboutUrl}>{t('nav.about_us')}</ExtLink>,
-    },
-    {
-      key: 'ai-cresc',
-      icon: <OpenAIOutlined />,
-      label: (
-        <ExtLink href="https://ai.cresc.dev/model-plaza">
-          <span className="inline-flex flex-col justify-center align-middle text-left leading-tight py-1 gap-1">
-            <span style={{ fontWeight: 'bold' }}>{t('nav.ai_promo')}</span>
-            <span className="text-xs font-normal opacity-80">
-              {t('nav.ai_promo_coupon')}
-            </span>
-          </span>
-        </ExtLink>
-      ),
     },
   ];
 }
