@@ -19,6 +19,7 @@ import {
 } from './app-insights/logic';
 import { OverviewPanel } from './app-insights/overview-panel';
 import { hasRealtimeSeriesEntryParams } from './app-insights/realtime-series-panel';
+import { ReleaseInsightsPanel } from './app-insights/release-insights-panel';
 import { TrafficPanel } from './app-insights/traffic-panel';
 import { VersionsPanel } from './app-insights/versions-panel';
 
@@ -149,7 +150,10 @@ export const Component = () => {
             onNavigate={setView}
           />
         ) : view === 'versions' ? (
-          <VersionsPanel appKey={selectedAppKey} days={days} />
+          <>
+            <ReleaseInsightsPanel appKey={selectedAppKey} days={days} />
+            <VersionsPanel appKey={selectedAppKey} days={days} />
+          </>
         ) : view === 'traffic' ? (
           <TrafficPanel appKey={selectedAppKey} days={days} isAdmin={isAdmin} />
         ) : (
