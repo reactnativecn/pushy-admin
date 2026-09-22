@@ -248,31 +248,29 @@ const removeVersion = (
 
 /**
  * Outcome of the CLI's Hermes base equivalence check for this version.
- * Nothing is shown for versions without a report (older CLIs, plain JS) or
- * built without a base: the tag exists to make a rejected or unverifiable
- * base visible, which the chain fields alone cannot tell apart from "no base".
+ * Only a base that was used is shown: it explains why this version's patches
+ * are smaller. `rejected` / `dump-failed` mean the CLI fell back to a plain
+ * compile, which is the correct, fully working result and needs nothing from
+ * the developer -- and a rejection is more often a gap in our own
+ * disassembly normalization than a real bytecode difference. It stays in
+ * `versions.hermesBaseOutcome` / `hermesBaseDetail` for us to query; a red
+ * tag on a healthy release only worries people.
  */
 const HermesBaseTag = ({ record }: { record: Version }) => {
   const { t } = useTranslation();
-  const outcome = record.hermesBaseOutcome;
-  if (!outcome || outcome === 'none') return null;
-  const color =
-    outcome === 'used' ? 'green' : outcome === 'rejected' ? 'red' : 'orange';
-  const label = t(`version_table.hermes_base_${outcome.replace('-', '_')}`);
-  const tip =
-    outcome === 'used'
-      ? t('version_table.hermes_base_used_tip', {
-          id: record.baseVersionId ?? '?',
-        })
-      : `${t(`version_table.hermes_base_${outcome.replace('-', '_')}_tip`)}${
-          record.hermesBaseDetail ? `\n${record.hermesBaseDetail}` : ''
-        }`;
+  if (record.hermesBaseOutcome !== 'used') return null;
   return (
     <Tooltip
-      title={<span className="whitespace-pre-wrap break-all">{tip}</span>}
+      title={
+        <span className="whitespace-pre-wrap break-all">
+          {t('version_table.hermes_base_used_tip', {
+            id: record.baseVersionId ?? '?',
+          })}
+        </span>
+      }
     >
-      <Tag color={color} className="mt-0.5 text-[11px] leading-4 px-1 mr-0">
-        {label}
+      <Tag color="green" className="mt-0.5 text-[11px] leading-4 px-1 mr-0">
+        {t('version_table.hermes_base_used')}
       </Tag>
     </Tooltip>
   );
