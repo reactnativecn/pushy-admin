@@ -17,7 +17,7 @@ beforeEach(async () => {
   await i18n.changeLanguage('en');
 });
 afterEach(cleanup);
-function show(releaseInsights?: ReleaseInsights) {
+function show(releaseInsights?: ReleaseInsights, isAdmin = false) {
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
@@ -28,7 +28,7 @@ function show(releaseInsights?: ReleaseInsights) {
   });
   render(
     <QueryClientProvider client={client}>
-      <ReleaseInsightsPanel appKey="app" days={3} />
+      <ReleaseInsightsPanel appKey="app" days={3} isAdmin={isAdmin} />
     </QueryClientProvider>,
   );
   return client;
@@ -94,5 +94,42 @@ test('partial day and Hermes metadata render in Chinese with accessible day sele
   expect(
     screen.getByRole('combobox', { name: '观测日期（UTC）' }),
   ).not.toBeNull();
+  client.clear();
+});
+
+const rejectedVersion = (): ReleaseInsights => ({
+  status: 'available',
+  timezone: 'UTC',
+  retentionDays: 14,
+  artifactRetentionDays: 35,
+  days: [],
+  versions: [
+    {
+      hash: 'target',
+      name: 'Build',
+      bytecodeVersion: 98,
+      baseVersionId: null,
+      hermesBaseOutcome: 'rejected',
+      hermesBaseDetail: 'Function<h> +72: DefineOwnById r3 vs r3',
+      artifactStatus: 'unavailable',
+      artifactsLimited: false,
+      artifacts: [],
+    },
+  ],
+});
+test('a dropped Hermes base reads as not used to customers, without the detail', () => {
+  const client = show(rejectedVersion());
+  expect(screen.getByText('Not used')).not.toBeNull();
+  expect(screen.queryByText('Rejected by equivalence check')).toBeNull();
+  expect(screen.queryByText('Diagnostic detail')).toBeNull();
+  expect(screen.queryByText(/DefineOwnById/)).toBeNull();
+  client.clear();
+});
+test('administrators still see why the base was dropped', () => {
+  const client = show(rejectedVersion(), true);
+  expect(screen.getByText('Rejected by equivalence check')).not.toBeNull();
+  // antd can render a header cell twice (measure row); presence is the point
+  expect(screen.getAllByText('Diagnostic detail').length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/DefineOwnById/).length).toBeGreaterThan(0);
   client.clear();
 });

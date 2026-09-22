@@ -151,7 +151,11 @@ export const Component = () => {
           />
         ) : view === 'versions' ? (
           <>
-            <ReleaseInsightsPanel appKey={selectedAppKey} days={days} />
+            <ReleaseInsightsPanel
+              appKey={selectedAppKey}
+              days={days}
+              isAdmin={isAdmin}
+            />
             <VersionsPanel appKey={selectedAppKey} days={days} />
           </>
         ) : view === 'traffic' ? (

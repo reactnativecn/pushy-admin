@@ -139,9 +139,17 @@ const zh: typeof en = {
 export const ReleaseInsightsPanel = ({
   appKey,
   days,
+  isAdmin = false,
 }: {
   appKey: string;
   days: number;
+  /**
+   * Administrators see why a Hermes base was dropped. Everyone else sees it
+   * as "not used": the CLI fell back to a plain compile, the release is fine,
+   * and a rejection so far has always been a gap in our own check -- not
+   * something to put in front of a customer.
+   */
+  isAdmin?: boolean;
 }) => {
   const { i18n } = useTranslation();
   const text = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
@@ -243,8 +251,8 @@ export const ReleaseInsightsPanel = ({
   ];
   const outcomes: Record<string, string> = {
     used: text.used,
-    rejected: text.rejected,
-    'dump-failed': text.dumpFailed,
+    rejected: isAdmin ? text.rejected : text.none,
+    'dump-failed': isAdmin ? text.dumpFailed : text.none,
     none: text.none,
     unreported: text.unreported,
   };
@@ -272,7 +280,15 @@ export const ReleaseInsightsPanel = ({
       render: (_, row) =>
         `${row.baseVersionId ?? '—'} / ${row.bytecodeVersion ?? '—'}`,
     },
-    { title: text.detail, dataIndex: 'hermesBaseDetail', ellipsis: true },
+    ...(isAdmin
+      ? [
+          {
+            title: text.detail,
+            dataIndex: 'hermesBaseDetail',
+            ellipsis: true,
+          },
+        ]
+      : []),
     { title: text.artifacts, dataIndex: 'artifactStatus', render: status },
   ];
   const reasons: Record<string, string> = {
