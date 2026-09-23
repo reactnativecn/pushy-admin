@@ -96,6 +96,13 @@ export interface PackageTrafficSummary {
   percent: number;
 }
 
+export type RefusalOutcome = 'blocked' | 'unknown_package';
+
+export interface RefusedPackageSummary {
+  packageVersion: string;
+  requests: number;
+}
+
 export interface TrafficSummary {
   requests: number;
   today: DailyTrafficPoint | null;
@@ -114,6 +121,8 @@ export interface TrafficSummary {
   hosts: RankedItem[];
   carriers: RankedItem[];
   packages: PackageTrafficSummary[];
+  /** 被拒绝请求按原生包版本拆分，请求数降序；旧日桶没有拆分，合计可能小于 hit */
+  refused: Record<RefusalOutcome, RefusedPackageSummary[]>;
   /** 按日期升序，供图表使用 */
   daily: DailyTrafficPoint[];
 }
@@ -132,6 +141,16 @@ const emptyHit = (): Record<HitOutcome, number> => ({
 const percentOf = (part: number, total: number) =>
   total > 0 ? (part / total) * 100 : 0;
 
+const rankRefused = (counts: Map<string, number>): RefusedPackageSummary[] =>
+  Array.from(counts, ([packageVersion, requests]) => ({
+    packageVersion,
+    requests,
+  })).sort((left, right) =>
+    right.requests === left.requests
+      ? left.packageVersion.localeCompare(right.packageVersion)
+      : right.requests - left.requests,
+  );
+
 /**
  * 服务端按最新在前返回；这里把窗口内各天折叠成一份汇总。
  * DAU 是 HLL 去重，跨日不能相加，只给峰值和日均；原生包设备数同理取单日峰值。
@@ -146,6 +165,10 @@ export const summarizeTraffic = (
   const hosts: Record<string, number> = {};
   const carriers: Record<string, number> = {};
   const packages = new Map<string, { requests: number; peakDevices: number }>();
+  const refused: Record<RefusalOutcome, Map<string, number>> = {
+    blocked: new Map(),
+    unknown_package: new Map(),
+  };
   const daily: DailyTrafficPoint[] = [];
   let requests = 0;
   let dauSum = 0;
@@ -192,6 +215,16 @@ export const summarizeTraffic = (
       entry.peakDevices = Math.max(entry.peakDevices, item.devices ?? 0);
       packages.set(item.packageVersion, entry);
     }
+    for (const item of day.refused ?? []) {
+      const target = refused[item.outcome];
+      if (!target || !Number.isFinite(item.requests) || item.requests <= 0) {
+        continue;
+      }
+      target.set(
+        item.packageVersion,
+        (target.get(item.packageVersion) ?? 0) + item.requests,
+      );
+    }
     daily.push({
       date: day.date,
       requests: dayRequests,
@@ -231,6 +264,10 @@ export const summarizeTraffic = (
     hosts: rankCounts(hosts),
     carriers: rankCounts(carriers),
     packages: packageRows,
+    refused: {
+      blocked: rankRefused(refused.blocked),
+      unknown_package: rankRefused(refused.unknown_package),
+    },
     daily,
   };
 };

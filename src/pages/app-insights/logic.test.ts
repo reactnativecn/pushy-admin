@@ -75,6 +75,7 @@ describe('summarizeTraffic', () => {
       hosts: { 'a.example': 100 },
       carriers: { 电信: 60, unknown: 40 },
       packages: [{ packageVersion: '1.0', requests: 100, devices: 30 }],
+      refused: [{ outcome: 'blocked', packageVersion: '1.0', requests: 10 }],
     }),
     trafficDay({
       date: '2026-09-11',
@@ -88,6 +89,10 @@ describe('summarizeTraffic', () => {
       packages: [
         { packageVersion: '1.0', requests: 150, devices: 50 },
         { packageVersion: '0.9', requests: 50, devices: 0 },
+      ],
+      refused: [
+        { outcome: 'unknown_package', packageVersion: '0.8', requests: 4 },
+        { outcome: 'unknown_package', packageVersion: '0.7', requests: 6 },
       ],
     }),
     trafficDay({ date: '2026-09-10', requests: 0, dau: 0 }),
@@ -136,6 +141,13 @@ describe('summarizeTraffic', () => {
         percent: (50 / 300) * 100,
       },
     ]);
+    expect(summary.refused).toEqual({
+      blocked: [{ packageVersion: '1.0', requests: 10 }],
+      unknown_package: [
+        { packageVersion: '0.7', requests: 6 },
+        { packageVersion: '0.8', requests: 4 },
+      ],
+    });
     expect(summary.daily.map((day) => day.date)).toEqual([
       '2026-09-10',
       '2026-09-11',
@@ -151,6 +163,7 @@ describe('summarizeTraffic', () => {
     expect(summary.averageDailyRequests).toBe(0);
     expect(summary.hourly).toHaveLength(24);
     expect(summary.packages).toEqual([]);
+    expect(summary.refused).toEqual({ blocked: [], unknown_package: [] });
   });
 
   it('flags the refusals that explain missing updates', () => {

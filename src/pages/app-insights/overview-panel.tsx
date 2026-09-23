@@ -9,6 +9,7 @@ import {
   buildFunnelRows,
   type FunnelRow,
   type InsightView,
+  type RefusedPackageSummary,
   summarizeTraffic,
   trafficWarnings,
 } from './logic';
@@ -33,6 +34,50 @@ import { HIT_OUTCOMES, type HitOutcome } from './types';
 type DailyMetric = 'requests' | 'dau';
 
 const OVERVIEW_VERSION_LIMIT = 5;
+const REFUSED_PACKAGE_LIMIT = 10;
+
+/** 被拒绝的原生包版本及各自请求数；旧日桶没有按版本拆分，差额单独说明。 */
+const RefusedPackages = ({
+  items,
+  total,
+}: {
+  items: readonly RefusedPackageSummary[];
+  total: number;
+}) => {
+  const { t } = useTranslation();
+  if (items.length === 0) return null;
+  const shown = items.slice(0, REFUSED_PACKAGE_LIMIT);
+  const hidden = items.length - shown.length;
+  const unattributed =
+    total - items.reduce((sum, item) => sum + item.requests, 0);
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1">
+      <span className="text-xs text-gray-500">
+        {t('app_insights.refused_packages')}
+      </span>
+      {shown.map((item) => (
+        <Tag key={item.packageVersion} className="m-0 font-mono">
+          {item.packageVersion}
+          <span className="ml-1 text-gray-500">
+            {formatInteger(item.requests)}
+          </span>
+        </Tag>
+      ))}
+      {hidden > 0 && (
+        <span className="text-xs text-gray-500">
+          {t('app_insights.refused_packages_more', { count: hidden })}
+        </span>
+      )}
+      {unattributed > 0 && (
+        <span className="text-xs text-gray-500">
+          {t('app_insights.refused_packages_unattributed', {
+            count: formatInteger(unattributed),
+          })}
+        </span>
+      )}
+    </div>
+  );
+};
 
 const HEALTH_TAG_COLOR = {
   healthy: 'green',
@@ -221,6 +266,10 @@ export const OverviewPanel = ({
                     values={{ count: formatInteger(summary.hit.blocked) }}
                     components={{ strong: <strong /> }}
                   />
+                  <RefusedPackages
+                    items={summary.refused.blocked}
+                    total={summary.hit.blocked}
+                  />
                 </li>
               )}
               {warnings.includes('unknown_package') && (
@@ -231,6 +280,10 @@ export const OverviewPanel = ({
                       count: formatInteger(summary.hit.unknown_package),
                     }}
                     components={{ strong: <strong /> }}
+                  />
+                  <RefusedPackages
+                    items={summary.refused.unknown_package}
+                    total={summary.hit.unknown_package}
                   />
                 </li>
               )}

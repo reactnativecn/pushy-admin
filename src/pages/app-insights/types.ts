@@ -21,6 +21,13 @@ export interface PackageTraffic {
   devices: number;
 }
 
+/** 被拒绝的请求按客户端上报的原生包版本拆分（hit:blocked / hit:unknown_package）。 */
+export interface RefusedPackage {
+  outcome: 'blocked' | 'unknown_package';
+  packageVersion: string;
+  requests: number;
+}
+
 /** 一个北京时间自然日的流量；今天为实时累计。 */
 export interface AppTrafficDay {
   date: string;
@@ -33,6 +40,8 @@ export interface AppTrafficDay {
   hosts: Record<string, number>;
   carriers: Record<string, number>;
   packages: PackageTraffic[];
+  /** 拆分上线前的日子为空数组；旧服务端不返回该字段。 */
+  refused?: RefusedPackage[];
 }
 
 export interface AppTrafficResponse {
