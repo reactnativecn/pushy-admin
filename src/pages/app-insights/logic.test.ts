@@ -173,12 +173,14 @@ describe('complete-day means and missing observations', () => {
     expect(result.today).toBeNull();
     expect(result.hourly).toHaveLength(24);
   });
-  it('keeps legacy positive observations and valid numeric zero days usable', () => {
+  it('keeps legacy positive device observations but does not invent observed zeroes', () => {
     const result = summarizeTraffic(
       [day('2026-09-25', { dau: 10 }), day('2026-09-26')],
       '2026-09-27',
     );
-    expect(result.averageDau).toBe(5);
+    expect(result.averageDau).toBe(10);
+    expect(result.dauSampleDays).toBe(1);
+    expect(result.daily[1]?.dau).toBeNull();
   });
 });
 
@@ -428,7 +430,6 @@ describe('diagnostic report shares, not attempt failure rates', () => {
     expect(summarizeBreakdown(days, 'v1').carriers).toEqual([]);
     expect(parseFailureReason('other:private')).toEqual({
       kind: 'other',
-      detail: '',
     });
     expect(parseFailureReason('timeout')).toEqual({
       kind: 'known',

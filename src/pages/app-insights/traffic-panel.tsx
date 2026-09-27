@@ -117,7 +117,7 @@ export const TrafficPanel = ({
       <Card size="small" title={t('app_insights.hourly_title')}>
         <Question>{t('app_insights.hourly_question', { days })}</Question>
         <Spin spinning={traffic.isLoading}>
-          {summary.requests > 0 ? (
+          {summary.hourly.some((count) => count > 0) ? (
             <AsyncColumn
               theme={isDark ? 'classicDark' : 'classic'}
               data={hourlyData}

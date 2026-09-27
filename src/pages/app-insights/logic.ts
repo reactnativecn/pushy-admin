@@ -1,6 +1,11 @@
 // Events, offered targets and retained devices have different populations.
 // Do not synthesize conversion rates from independent observation counters.
 import {
+  CRITICAL_ROLLBACK,
+  MIN_EVENT_SAMPLES,
+  WARNING_ROLLBACK,
+} from '../../constants/metric-thresholds';
+import {
   type AppEventBreakdownDay,
   type AppTrafficDay,
   type ClientEventType,
@@ -57,6 +62,14 @@ export const observationCount = (
 ): number | null =>
   status === 'unavailable' || !validCount(value) ? null : value;
 
+/** A legacy zero UUID count may mean missing/expired collection, not zero
+ * devices. An explicit observed zero is valid and participates in the mean. */
+export const deviceObservationCount = (
+  value: number | null | undefined,
+  status?: ObservationStatus,
+): number | null =>
+  status === undefined && value === 0 ? null : observationCount(value, status);
+
 export interface RankedItem {
   key: string;
   count: number;
@@ -100,9 +113,9 @@ export interface DailyTrafficPoint {
 
 export interface PackageTrafficSummary {
   packageVersion: string;
-  requests: number;
+  requests: number | null;
   peakDevices: number | null;
-  percent: number;
+  percent: number | null;
   observedDays: number;
   availableStart: string | null;
   availableEnd: string | null;
@@ -186,13 +199,17 @@ export const summarizeTraffic = (
   let peakDau: number | null = null;
 
   for (const day of days ?? []) {
-    const dayHit = emptyHit();
-    for (const outcome of HIT_OUTCOMES) {
-      dayHit[outcome] = countOf(day.hit?.[outcome]);
-      hit[outcome] += dayHit[outcome];
-    }
     const dayRequests = observationCount(day.requests, day.requestsStatus);
-    const dau = observationCount(day.dau, day.dauStatus);
+    const dayHit = emptyHit();
+    // Ratios must share the same available request-day population. Hourly,
+    // host and UUID observations remain separate, self-denominated series.
+    if (dayRequests !== null) {
+      for (const outcome of HIT_OUTCOMES) {
+        dayHit[outcome] = countOf(day.hit?.[outcome]);
+        hit[outcome] += dayHit[outcome];
+      }
+    }
+    const dau = deviceObservationCount(day.dau, day.dauStatus);
     requests += dayRequests ?? 0;
     if (dau !== null) peakDau = Math.max(peakDau ?? 0, dau);
     if (day.date < today) {
@@ -213,9 +230,11 @@ export const summarizeTraffic = (
     addCounts(hosts, day.hosts);
     addCounts(carriers, day.carriers);
     for (const item of day.packages ?? []) {
-      const entry = packages.get(item.packageVersion) ?? {
+      const entry: PackageTrafficSummary = packages.get(
+        item.packageVersion,
+      ) ?? {
         packageVersion: item.packageVersion,
-        requests: 0,
+        requests: null,
         peakDevices: null,
         percent: 0,
         observedDays: 0,
@@ -225,7 +244,9 @@ export const summarizeTraffic = (
         expiredDays: 0,
         unavailableDays: 0,
       };
-      entry.requests += countOf(item.requests);
+      if (dayRequests !== null && validCount(item.requests)) {
+        entry.requests = (entry.requests ?? 0) + item.requests;
+      }
       const status: DeviceStatus =
         item.devicesStatus ??
         (validCount(item.devices) && item.devices > 0
@@ -254,7 +275,7 @@ export const summarizeTraffic = (
         status === 'partial' || day.packageDevicesLimited === true;
       packages.set(item.packageVersion, entry);
     }
-    for (const item of day.refused ?? []) {
+    for (const item of dayRequests === null ? [] : (day.refused ?? [])) {
       const target = refused[item.outcome];
       if (target && validCount(item.requests) && item.requests > 0) {
         target.set(
@@ -292,11 +313,14 @@ export const summarizeTraffic = (
     packages: Array.from(packages.values())
       .map((entry) => ({
         ...entry,
-        percent: percentOf(entry.requests, requests),
+        percent:
+          entry.requests !== null && requests > 0
+            ? percentOf(entry.requests, requests)
+            : null,
       }))
       .sort(
         (left, right) =>
-          right.requests - left.requests ||
+          (right.requests ?? 0) - (left.requests ?? 0) ||
           left.packageVersion.localeCompare(right.packageVersion),
       ),
     refused: {
@@ -327,7 +351,7 @@ export const servedTotal = (served: ServedCounts | undefined) =>
 
 // Legacy enum identifiers for shared key mappings; rollback reports ONLY.
 export type FunnelHealth = 'healthy' | 'warning' | 'critical' | null;
-export const MIN_EVENT_SAMPLES = 10;
+export { MIN_EVENT_SAMPLES };
 
 export interface FunnelRates {
   downloadSuccessRate: number | null;
@@ -348,9 +372,9 @@ export const computeFunnelRates = (events: FunnelEventCounts): FunnelRates => {
   const health: FunnelHealth =
     rollbackSamples < MIN_EVENT_SAMPLES || rollbackRate === null
       ? null
-      : rollbackRate >= 0.05
+      : rollbackRate >= CRITICAL_ROLLBACK
         ? 'critical'
-        : rollbackRate >= 0.01
+        : rollbackRate >= WARNING_ROLLBACK
           ? 'warning'
           : 'healthy';
   return {
@@ -402,6 +426,18 @@ export const buildFunnelRows = (
       deleted: version.name === null,
     };
   });
+
+/** Order only the returned candidates, without mutating cached API data. */
+export const rankFunnelRows = (rows: readonly FunnelRow[]): FunnelRow[] => {
+  const volume = (row: FunnelRow) =>
+    row.servedTotal +
+    Object.values(row.events).reduce((sum, value) => sum + countOf(value), 0);
+  return [...rows].sort(
+    (left, right) =>
+      volume(right) - volume(left) ||
+      (left.hash < right.hash ? -1 : left.hash > right.hash ? 1 : 0),
+  );
+};
 
 export const filterFunnelRows = (
   rows: readonly FunnelRow[],
@@ -555,6 +591,10 @@ export interface ReasonRow {
   versions: ReasonVersion[];
 }
 export interface BreakdownSummary {
+  totalDays: number;
+  availableDays: number;
+  unavailableDays: number;
+  legacyDays: number;
   failures: number;
   reasons: ReasonRow[];
   os: DimensionRow[];
@@ -578,7 +618,26 @@ export const summarizeBreakdown = (
   const carriers = new Map<string, EventTypeCounts>();
   const versionNames = new Map<string, string | null>();
   let failures = 0;
+  let availableDays = 0;
+  let unavailableDays = 0;
+  let legacyDays = 0;
   for (const day of days ?? []) {
+    if (day.status === undefined) legacyDays += 1;
+    const legacyHasReports = [
+      ...(day.byReason ?? []),
+      ...(day.byOS ?? []),
+      ...(day.byCarrier ?? []),
+    ].some((item) => validCount(item.count) && item.count > 0);
+    // Availability belongs to the unfiltered bucket, not to the selected
+    // version. Explicit unavailable always wins over leftover numeric fields.
+    if (
+      day.status === 'unavailable' ||
+      (day.status !== 'observed' && !legacyHasReports)
+    ) {
+      unavailableDays += 1;
+      continue;
+    }
+    availableDays += 1;
     for (const item of day.byReason ?? []) {
       if (hashFilter && item.hash !== hashFilter) continue;
       if (
@@ -592,7 +651,8 @@ export const summarizeBreakdown = (
       if (!versionNames.has(item.hash) || item.name !== null) {
         versionNames.set(item.hash, item.name);
       }
-      const reason = item.reason.startsWith('other:') ? 'other' : item.reason;
+      const parsed = parseFailureReason(item.reason);
+      const reason = parsed.kind === 'known' ? parsed.reason : 'other';
       const entry = reasons.get(reason) ?? {
         count: 0,
         byType: {} as Partial<Record<ClientEventType, number>>,
@@ -631,6 +691,10 @@ export const summarizeBreakdown = (
   const byCount = (a: DimensionRow, b: DimensionRow) =>
     b.total - a.total || a.key.localeCompare(b.key);
   return {
+    totalDays: days?.length ?? 0,
+    availableDays,
+    unavailableDays,
+    legacyDays,
     failures,
     reasons: Array.from(reasons, ([reason, entry]) => ({
       reason,
@@ -668,12 +732,10 @@ export type KnownFailureReason = (typeof KNOWN_FAILURE_REASONS)[number];
 
 export const parseFailureReason = (
   reason: string,
-):
-  | { kind: 'known'; reason: KnownFailureReason }
-  | { kind: 'other'; detail: string } =>
+): { kind: 'known'; reason: KnownFailureReason } | { kind: 'other' } =>
   KNOWN_FAILURE_REASONS.includes(reason as KnownFailureReason)
     ? { kind: 'known', reason: reason as KnownFailureReason }
-    : { kind: 'other', detail: '' };
+    : { kind: 'other' };
 
 export const KNOWN_CARRIERS = [
   '电信',

@@ -3,7 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import i18n from 'i18next';
 import '@/i18n';
-import { insightsEn, insightsZh } from '@/i18n/insights-metrics';
+import en from '@/i18n/locales/en.json';
+import zhCN from '@/i18n/locales/zh-CN.json';
 import { metricsKeys } from '@/utils/query-keys';
 import { buildFunnelRows, filterFunnelRows } from './logic';
 import { ObservationNotice, RollbackObservation } from './observation-ui';
@@ -11,6 +12,8 @@ import { PackageObservation } from './traffic-panel';
 import type { VersionFunnelResponse } from './types';
 import { VersionDetail, VersionsPanel } from './versions-panel';
 
+const insightsEn = en.app_insights;
+const insightsZh = zhCN.app_insights;
 const clients: QueryClient[] = [];
 beforeEach(async () => {
   global.ResizeObserver = class {
@@ -62,7 +65,7 @@ const fixture = (): VersionFunnelResponse => ({
   ],
 });
 
-test('metric language overrides have identical keys', () => {
+test('canonical metric language catalogs have identical keys', () => {
   expect(Object.keys(insightsEn).sort()).toEqual(
     Object.keys(insightsZh).sort(),
   );
@@ -72,21 +75,18 @@ test('metric language overrides have identical keys', () => {
 
 test('low rollback does not claim overall health and tiny samples are explicit', () => {
   const response = fixture();
-  render(<RollbackObservation events={response.versions[0]!.events} />);
+  const row = buildFunnelRows(response)[0]!;
+  render(
+    <RollbackObservation
+      health={row.health}
+      samples={row.rollbackSamples}
+      count={row.events.rollback}
+    />,
+  );
   expect(screen.getByText('Low rollback report share')).not.toBeNull();
   expect(screen.queryByText('Healthy')).toBeNull();
   cleanup();
-  render(
-    <RollbackObservation
-      events={{
-        downloadSuccess: 0,
-        downloadFail: 0,
-        patchFail: 0,
-        markSuccess: 3,
-        rollback: 1,
-      }}
-    />,
-  );
+  render(<RollbackObservation health={null} samples={4} count={1} />);
   expect(
     screen.getByText('Insufficient rollback observations (4 / 10)'),
   ).not.toBeNull();

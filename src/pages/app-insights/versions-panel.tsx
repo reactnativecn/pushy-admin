@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   buildFunnelRows,
+  computeFunnelRates,
+  type FunnelRates,
   type FunnelRow,
   filterFunnelRows,
   lagShares,
@@ -43,7 +45,10 @@ const LAG_LABEL_KEY: Record<LagBucket, string> = {
   gt7d: 'app_insights.lag_gt7d',
 };
 
-type EventRow = { served: ServedCounts; events: FunnelEventCounts };
+type EventRow = { served: ServedCounts; events: FunnelEventCounts } & Pick<
+  FunnelRates,
+  'health' | 'rollbackSamples'
+>;
 
 const ServedBreakdown = ({ served }: { served: ServedCounts }) => {
   const { t } = useTranslation();
@@ -96,7 +101,13 @@ const useEventColumns = <T extends EventRow>(): ColumnsType<T> => {
     {
       title: t('app_insights.col_health'),
       key: 'rollbackObservation',
-      render: (_, row) => <RollbackObservation events={row.events} />,
+      render: (_, row) => (
+        <RollbackObservation
+          health={row.health}
+          samples={row.rollbackSamples}
+          count={row.events.rollback}
+        />
+      ),
     },
   ];
 };
@@ -150,7 +161,15 @@ const LagTable = ({
 
 export const VersionDetail = ({ row }: { row: FunnelRow }) => {
   const { t } = useTranslation();
-  const packageColumns = useEventColumns<FunnelRow['byPackage'][number]>();
+  const packageRows = useMemo(
+    () =>
+      row.byPackage.map((item) => ({
+        ...item,
+        ...computeFunnelRates(item.events),
+      })),
+    [row.byPackage],
+  );
+  const packageColumns = useEventColumns<(typeof packageRows)[number]>();
   return (
     <div className="space-y-4">
       <Question>{t('app_insights.by_package_title')}</Question>
@@ -159,7 +178,7 @@ export const VersionDetail = ({ row }: { row: FunnelRow }) => {
         rowKey="packageVersion"
         pagination={false}
         scroll={{ x: 'max-content' }}
-        dataSource={row.byPackage}
+        dataSource={packageRows}
         columns={[
           { title: t('app_insights.col_package'), dataIndex: 'packageVersion' },
           ...packageColumns,

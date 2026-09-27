@@ -7,6 +7,7 @@ import {
   buildFunnelRows,
   type InsightView,
   type RefusedPackageSummary,
+  rankFunnelRows,
   summarizeTraffic,
   trafficWarnings,
 } from './logic';
@@ -87,7 +88,7 @@ export const OverviewPanel = ({
     [traffic.data],
   );
   const rows = useMemo(
-    () => buildFunnelRows(funnel.data).slice(0, 5),
+    () => rankFunnelRows(buildFunnelRows(funnel.data)).slice(0, 5),
     [funnel.data],
   );
   const warnings = trafficWarnings(summary.hit);
@@ -263,7 +264,11 @@ export const OverviewPanel = ({
                       })}
                     </div>
                     <div className="mt-2">
-                      <RollbackObservation events={row.events} />
+                      <RollbackObservation
+                        health={row.health}
+                        samples={row.rollbackSamples}
+                        count={row.events.rollback}
+                      />
                     </div>
                   </div>
                   <div className="text-right">

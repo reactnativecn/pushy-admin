@@ -4,19 +4,19 @@ import { Card, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import {
+  CRITICAL_ROLLBACK,
+  MIN_EVENT_SAMPLES,
+  WARNING_ROLLBACK,
+} from '@/constants/metric-thresholds';
 import { adminApi } from '@/services/admin-api';
 import { serviceStatusKeys } from '@/utils/query-keys';
 import { formatCount, formatPercent } from './metrics';
 
 const { Text } = Typography;
 
-// 阈值:回滚率 >5% 异常、>1% 关注;样本太少(<10)不判定
-const CRITICAL_ROLLBACK = 0.05;
-const WARNING_ROLLBACK = 0.01;
-const MIN_SAMPLES = 10;
-
 function healthTag(row: VersionHealthOverviewRow, t: (key: string) => string) {
-  if (row.startSamples < MIN_SAMPLES || row.rollbackRate === null) {
+  if (row.startSamples < MIN_EVENT_SAMPLES || row.rollbackRate === null) {
     return null;
   }
   if (row.rollbackRate >= CRITICAL_ROLLBACK) {

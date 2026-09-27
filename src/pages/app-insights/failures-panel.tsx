@@ -9,7 +9,11 @@ import {
   type ReasonRow,
   summarizeBreakdown,
 } from './logic';
-import { ObservationNotice, ReportShare } from './observation-ui';
+import {
+  BreakdownAvailability,
+  ObservationNotice,
+  ReportShare,
+} from './observation-ui';
 import {
   EmptyState,
   Footnote,
@@ -31,10 +35,12 @@ const DimensionTable = ({
   rows,
   labelOf,
   keyTitle,
+  emptyText,
 }: {
   rows: DimensionRow[];
   labelOf: (key: string) => string;
   keyTitle: string;
+  emptyText: string;
 }) => {
   const { t } = useTranslation();
   const eventLabel = useEventTypeLabel();
@@ -82,7 +88,7 @@ const DimensionTable = ({
       columns={columns}
       pagination={false}
       scroll={{ x: 'max-content' }}
-      locale={{ emptyText: t('app_insights.no_observations') }}
+      locale={{ emptyText }}
     />
   );
 };
@@ -111,10 +117,12 @@ export const FailuresPanel = ({
         : summarizeBreakdown(breakdown.data?.days, versionFilter),
     [all, breakdown.data, versionFilter],
   );
-  const hasObservations =
-    summary.os.length > 0 ||
-    summary.reasons.length > 0 ||
-    summary.carriers.length > 0;
+  const hasAvailableDays = summary.availableDays > 0;
+  const emptyText = t(
+    hasAvailableDays
+      ? 'app_insights.no_reports_in_scope'
+      : 'app_insights.breakdown_unavailable',
+  );
   const highest = highestFailureDimension(summary.os);
   const topReason = summary.reasons[0];
   const reasonColumns: ColumnsType<ReasonRow> = [
@@ -179,6 +187,7 @@ export const FailuresPanel = ({
         updatedAt={breakdown.dataUpdatedAt}
         stale={!!breakdown.error && !!breakdown.data}
       />
+      <BreakdownAvailability summary={summary} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Question>{t('app_insights.failures_intro')}</Question>
         <Select
@@ -200,7 +209,7 @@ export const FailuresPanel = ({
         <div className="grid gap-2 md:grid-cols-3">
           <StatTile
             label={t('app_insights.failure_events', { days })}
-            value={formatInteger(hasObservations ? summary.failures : null)}
+            value={formatInteger(hasAvailableDays ? summary.failures : null)}
             hint={t('app_insights.failure_events_hint')}
           />
           <StatTile
@@ -211,7 +220,7 @@ export const FailuresPanel = ({
                 ? t('app_insights.top_reason_hint', {
                     percent: formatShare(topReason.percent),
                   })
-                : t('app_insights.no_observations')
+                : emptyText
             }
           />
           <StatTile
@@ -225,8 +234,10 @@ export const FailuresPanel = ({
                   }
                   total={highest.failureSamples}
                 />
-              ) : (
+              ) : hasAvailableDays ? (
                 t('app_insights.no_ranked_os')
+              ) : (
+                emptyText
               )
             }
           />
@@ -246,9 +257,7 @@ export const FailuresPanel = ({
               scroll={{ x: 'max-content' }}
             />
           ) : (
-            <EmptyState>
-              {breakdown.isLoading ? '' : t('app_insights.no_observations')}
-            </EmptyState>
+            <EmptyState>{breakdown.isLoading ? '' : emptyText}</EmptyState>
           )}
         </Spin>
         <Footnote>{t('app_insights.reasons_footnote')}</Footnote>
@@ -256,6 +265,7 @@ export const FailuresPanel = ({
       <Card size="small" title={t('app_insights.os_title')}>
         <DimensionTable
           rows={summary.os}
+          emptyText={emptyText}
           keyTitle={t('app_insights.col_os')}
           labelOf={(key) => key}
         />
@@ -265,6 +275,7 @@ export const FailuresPanel = ({
         {versionFilter === ALL ? (
           <DimensionTable
             rows={summary.carriers}
+            emptyText={emptyText}
             keyTitle={t('app_insights.carriers_title')}
             labelOf={carrierLabel}
           />
