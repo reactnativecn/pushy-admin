@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'bun:test';
-
-const near = (value: number | null | undefined, expected: number) =>
-  expect(Math.abs((value ?? Number.NaN) - expected) < 1e-9).toBe(true);
-
 import {
   beijingToday,
   buildFunnelRows,
   computeFunnelRates,
+  filterFunnelRows,
+  highestFailureDimension,
+  isKnownCarrier,
   lagShares,
+  observationCount,
   parseFailureReason,
   parseInsightDays,
   parseInsightView,
@@ -15,403 +15,225 @@ import {
   summarizeBreakdown,
   summarizeTraffic,
   trafficWarnings,
+  versionTotals,
 } from './logic';
 import type {
   AppEventBreakdownDay,
   AppTrafficDay,
+  FunnelEventCounts,
+  VersionFunnel,
   VersionFunnelResponse,
 } from './types';
 
-const trafficDay = (
-  overrides: Partial<AppTrafficDay> & { date: string },
-): AppTrafficDay => ({
-  requests: 0,
-  dau: 0,
-  hourly: [],
-  hit: {},
-  ipVersion: {},
-  hosts: {},
-  carriers: {},
-  packages: [],
-  ...overrides,
+const events = (overrides: Partial<FunnelEventCounts> = {}): FunnelEventCounts => ({
+  downloadSuccess: 0, downloadFail: 0, patchFail: 0, markSuccess: 0, rollback: 0, ...overrides,
+});
+const offered = { hdiff: 0, pdiff: 0, full: 6, fullPending: 0, exp: 0 };
+const version = (): VersionFunnel => ({
+  hash: 'v1', name: 'Version 1', served: offered,
+  events: events({ markSuccess: 5 }), adopted: { mark: 5, download: 5 },
+  lag: { downloadSuccess: { lt1h: 5 }, markSuccess: { lt1h: 5 } },
+  byPackage: [{ packageVersion: '1.0', served: { ...offered, full: 2 }, events: events({ markSuccess: 2 }) }],
+});
+const response = (overrides: Partial<VersionFunnelResponse> = {}): VersionFunnelResponse => ({
+  days: 7, start: '2026-09-21', end: '2026-09-27', hourlyFrom: '2026-09-25',
+  dauToday: 2, versions: [version()], ...overrides,
+});
+const day = (date: string, overrides: Partial<AppTrafficDay> = {}): AppTrafficDay => ({
+  date, requests: 0, dau: 0, hourly: [], hit: {}, ipVersion: {}, hosts: {}, carriers: {}, packages: [], ...overrides,
+});
+const breakdown = (overrides: Partial<AppEventBreakdownDay> = {}): AppEventBreakdownDay => ({
+  date: '2026-09-26', byOS: [], byReason: [], byCarrier: [], ...overrides,
 });
 
-describe('URL params', () => {
-  it('falls back to defaults for unknown values', () => {
+describe('parameters and basic aggregation', () => {
+  it('keeps URL compatibility and defaults', () => {
     expect(parseInsightDays('14')).toBe(14);
     expect(parseInsightDays('9')).toBe(7);
-    expect(parseInsightDays(null)).toBe(7);
-    expect(parseInsightView('failures')).toBe('failures');
-    expect(parseInsightView('nope')).toBe('overview');
+    expect(parseInsightView('versions')).toBe('versions');
+    expect(parseInsightView(null)).toBe('overview');
+    expect(beijingToday(Date.UTC(2026, 8, 26, 20))).toBe('2026-09-27');
   });
-
-  it('derives today in Beijing time', () => {
-    // 2026-09-11T20:00Z 已经是北京时间 12 日
-    expect(beijingToday(Date.UTC(2026, 8, 11, 20))).toBe('2026-09-12');
-    expect(beijingToday(Date.UTC(2026, 8, 11, 15))).toBe('2026-09-11');
-  });
-});
-
-describe('rankCounts', () => {
-  it('sorts by count desc, then by name, dropping empty entries', () => {
-    expect(rankCounts({ b: 2, a: 2, c: 5, d: 0, e: Number.NaN })).toEqual([
-      { key: 'c', count: 5, percent: (5 / 9) * 100 },
-      { key: 'a', count: 2, percent: (2 / 9) * 100 },
-      { key: 'b', count: 2, percent: (2 / 9) * 100 },
+  it('ranks positive counts deterministically and drops invalid values', () => {
+    expect(rankCounts({ b: 2, a: 2, c: -1, d: Number.NaN })).toEqual([
+      { key: 'a', count: 2, percent: 50 }, { key: 'b', count: 2, percent: 50 },
     ]);
     expect(rankCounts(undefined)).toEqual([]);
   });
 });
 
-describe('summarizeTraffic', () => {
-  const days: AppTrafficDay[] = [
-    trafficDay({
-      date: '2026-09-12',
-      requests: 100,
-      dau: 40,
-      hourly: [5, 95],
-      hit: { uptodate: 80, hdiff: 10, blocked: 10 },
-      ipVersion: { v4: 90, v6: 10 },
-      hosts: { 'a.example': 100 },
-      carriers: { 电信: 60, unknown: 40 },
-      packages: [{ packageVersion: '1.0', requests: 100, devices: 30 }],
-      refused: [{ outcome: 'blocked', packageVersion: '1.0', requests: 10 }],
-    }),
-    trafficDay({
-      date: '2026-09-11',
-      requests: 200,
-      dau: 60,
-      hourly: [10],
-      hit: { uptodate: 150, pdiff: 40, unknown_package: 10 },
-      ipVersion: { v4: 200 },
-      hosts: { 'a.example': 150, 'b.example': 50 },
-      carriers: { 电信: 200 },
-      packages: [
-        { packageVersion: '1.0', requests: 150, devices: 50 },
-        { packageVersion: '0.9', requests: 50, devices: 0 },
-      ],
-      refused: [
-        { outcome: 'unknown_package', packageVersion: '0.8', requests: 4 },
-        { outcome: 'unknown_package', packageVersion: '0.7', requests: 6 },
-      ],
-    }),
-    trafficDay({ date: '2026-09-10', requests: 0, dau: 0 }),
-  ];
-
-  it('folds the window into totals, shares and rankings', () => {
-    const summary = summarizeTraffic(days, '2026-09-12');
-    expect(summary.requests).toBe(300);
-    expect(summary.today?.date).toBe('2026-09-12');
-    expect(summary.today?.requests).toBe(100);
-    // 日均只算已完成的日子（含请求为 0 的那天）
-    expect(summary.completedDays).toBe(2);
-    expect(summary.averageDailyRequests).toBe(100);
-    expect(summary.peakDau).toBe(60);
-    expect(summary.averageDau).toBe(50);
-    expect(summary.hit.uptodate).toBe(230);
-    expect(summary.hit.blocked).toBe(10);
-    expect(summary.hit.unknown_package).toBe(10);
-    near(summary.refusedPercent, (20 / 300) * 100);
-    near(summary.updatePercent, (50 / 300) * 100);
-    expect(summary.hourly[0]).toBe(15);
-    expect(summary.hourly[1]).toBe(95);
-    expect(summary.hourly[23]).toBe(0);
-    expect(summary.ipVersion[0]).toEqual({
-      key: 'v4',
-      count: 290,
-      percent: (290 / 300) * 100,
-    });
-    expect(summary.hosts.map((item) => item.key)).toEqual([
-      'a.example',
-      'b.example',
-    ]);
-    expect(summary.carriers[0]).toMatchObject({ key: '电信', count: 260 });
-    // 设备数不能跨日相加，取单日峰值
-    expect(summary.packages).toEqual([
-      {
-        packageVersion: '1.0',
-        requests: 250,
-        peakDevices: 50,
-        percent: (250 / 300) * 100,
-      },
-      {
-        packageVersion: '0.9',
-        requests: 50,
-        peakDevices: 0,
-        percent: (50 / 300) * 100,
-      },
-    ]);
-    expect(summary.refused).toEqual({
-      blocked: [{ packageVersion: '1.0', requests: 10 }],
-      unknown_package: [
-        { packageVersion: '0.7', requests: 6 },
-        { packageVersion: '0.8', requests: 4 },
-      ],
-    });
-    expect(summary.daily.map((day) => day.date)).toEqual([
-      '2026-09-10',
-      '2026-09-11',
-      '2026-09-12',
-    ]);
-    expect(summary.daily[2]?.isToday).toBe(true);
+describe('complete-day means and missing observations', () => {
+  it('includes valid zero days in both means, excludes today and future days', () => {
+    const days = Array.from({ length: 7 }, (_, i) => day(`2026-09-${20 + i}`, {
+      requests: i === 0 ? 100 : 0, dau: i === 0 ? 100 : 0,
+      requestsStatus: 'observed', dauStatus: 'observed',
+    }));
+    const result = summarizeTraffic([...days, day('2026-09-27', { requests: 999, dau: 999 }), day('2026-09-28', { requests: 999, dau: 999 })], '2026-09-27');
+    expect(result.averageDau).toBeCloseTo(100 / 7);
+    expect(result.averageDailyRequests).toBeCloseTo(100 / 7);
+    expect(result.dauSampleDays).toBe(7);
+    expect(result.requestSampleDays).toBe(7);
+    expect(result.completedDays).toBe(7);
   });
-
-  it('is empty-safe', () => {
-    const summary = summarizeTraffic(undefined);
-    expect(summary.requests).toBe(0);
-    expect(summary.today).toBeNull();
-    expect(summary.averageDailyRequests).toBe(0);
-    expect(summary.hourly).toHaveLength(24);
-    expect(summary.packages).toEqual([]);
-    expect(summary.refused).toEqual({ blocked: [], unknown_package: [] });
+  it('does not turn unavailable days into observed zeroes', () => {
+    const result = summarizeTraffic([
+      day('2026-09-24', { requests: 10, dau: 5, requestsStatus: 'observed', dauStatus: 'observed' }),
+      day('2026-09-25', { requestsStatus: 'unavailable', dauStatus: 'unavailable' }),
+      day('2026-09-26', { requestsStatus: 'observed', dauStatus: 'observed' }),
+    ], '2026-09-27');
+    expect(result.averageDailyRequests).toBe(5);
+    expect(result.averageDau).toBe(2.5);
+    expect(result.dauSampleDays).toBe(2);
+    expect(result.completedDays).toBe(3);
+    expect(result.daily[1]?.dau).toBeNull();
+    expect(observationCount(9, 'unavailable')).toBeNull();
+    expect(observationCount(0, 'observed')).toBe(0);
+    expect(observationCount(Number.NaN)).toBeNull();
   });
-
-  it('flags the refusals that explain missing updates', () => {
-    const summary = summarizeTraffic(days, '2026-09-12');
-    expect(trafficWarnings(summary.hit)).toEqual([
-      'blocked',
-      'unknown_package',
-    ]);
-    expect(trafficWarnings(summarizeTraffic([]).hit)).toEqual([]);
+  it('respects a supplied business today instead of browser or Beijing date', () => {
+    const result = summarizeTraffic([day('2026-09-26', { dau: 9 })], '2026-09-26');
+    expect(result.today?.dau).toBe(9);
+    expect(result.averageDau).toBeNull();
+  });
+  it('is empty safe without fabricating means or device peaks', () => {
+    const result = summarizeTraffic(undefined);
+    expect(result.averageDau).toBeNull();
+    expect(result.averageDailyRequests).toBeNull();
+    expect(result.peakDau).toBeNull();
+    expect(result.today).toBeNull();
+    expect(result.hourly).toHaveLength(24);
+  });
+  it('keeps legacy positive observations and valid numeric zero days usable', () => {
+    const result = summarizeTraffic([day('2026-09-25', { dau: 10 }), day('2026-09-26')], '2026-09-27');
+    expect(result.averageDau).toBe(5);
   });
 });
 
-describe('funnel', () => {
-  it('computes rates and health from event counts', () => {
-    const rates = computeFunnelRates({
-      downloadSuccess: 100,
-      downloadFail: 5,
-      patchFail: 3,
-      markSuccess: 90,
-      rollback: 10,
+describe('package observations and refusals', () => {
+  it('reports partial and expired data rather than a whole-window device count', () => {
+    const result = summarizeTraffic([
+      day('2026-09-01', { requests: 100, packages: [{ packageVersion: '1', requests: 100, devices: null, devicesStatus: 'expired' }] }),
+      day('2026-09-26', { requests: 20, packageDevicesLimited: true, packages: [{ packageVersion: '1', requests: 20, devices: 3, devicesStatus: 'partial' }] }),
+      day('2026-09-27', { requests: 10, packages: [{ packageVersion: '1', requests: 10, devices: 2, devicesStatus: 'observed' }] }),
+    ], '2026-09-27');
+    expect(result.packages[0]).toMatchObject({
+      requests: 130, peakDevices: 3, percent: 100, observedDays: 2,
+      availableStart: '2026-09-26', availableEnd: '2026-09-27', partial: true, expiredDays: 1,
     });
-    near(rates.downloadSuccessRate, 100 / 105);
-    near(rates.rollbackRate, 0.1);
-    expect(rates.failures).toBe(8);
-    expect(rates.health).toBe('critical');
-
-    expect(
-      computeFunnelRates({
-        downloadSuccess: 0,
-        downloadFail: 0,
-        patchFail: 0,
-        markSuccess: 3,
-        rollback: 1,
-      }),
-    ).toMatchObject({
-      downloadSuccessRate: null,
-      // 样本不足不判定
-      health: null,
-    });
-    expect(
-      computeFunnelRates({
-        downloadSuccess: 50,
-        downloadFail: 0,
-        patchFail: 0,
-        markSuccess: 50,
-        rollback: 0,
-      }).health,
-    ).toBe('healthy');
   });
-
-  it('adds served totals, coverage and the deleted flag per version', () => {
-    const response: VersionFunnelResponse = {
-      days: 7,
-      start: '2026-09-05',
-      end: '2026-09-11',
-      hourlyFrom: '2026-09-10',
-      dauToday: 200,
-      versions: [
-        {
-          hash: 'abc',
-          name: '1.2.3',
-          served: { hdiff: 10, pdiff: 5, full: 1, fullPending: 2, exp: 0 },
-          events: {
-            downloadSuccess: 15,
-            downloadFail: 0,
-            patchFail: 0,
-            markSuccess: 12,
-            rollback: 0,
-          },
-          adopted: { mark: 50, download: 60 },
-          lag: { downloadSuccess: { lt1h: 10 }, markSuccess: null },
-          byPackage: [],
-        },
-        {
-          hash: 'def',
-          name: null,
-          served: { hdiff: 0, pdiff: 0, full: 0, fullPending: 0, exp: 0 },
-          events: {
-            downloadSuccess: 0,
-            downloadFail: 0,
-            patchFail: 0,
-            markSuccess: 0,
-            rollback: 0,
-          },
-          adopted: { mark: 0, download: 0 },
-          lag: { downloadSuccess: null, markSuccess: null },
-          byPackage: [],
-        },
-      ],
-    };
-    const rows = buildFunnelRows(response);
-    expect(rows[0]).toMatchObject({
-      servedTotal: 18,
-      coverage: 0.25,
-      deleted: false,
-    });
-    // 累计激活率用两个累计设备数，与窗口无关，也不会结构性地超过 100%
-    near(rows[0]?.adoptionRate, 50 / 60);
-    expect(rows[1]).toMatchObject({
-      servedTotal: 0,
-      deleted: true,
-      adoptionRate: null,
-    });
-    expect(
-      buildFunnelRows({ ...response, dauToday: 0 })[0]?.coverage,
-    ).toBeNull();
-    expect(buildFunnelRows(undefined)).toEqual([]);
+  it('does not interpret missing or legacy zero device estimates as no users', () => {
+    const result = summarizeTraffic([day('2026-09-26', { packages: [{ packageVersion: 'old', requests: 3, devices: 0 }] })]);
+    expect(result.packages[0]?.peakDevices).toBeNull();
+    expect(result.packages[0]?.unavailableDays).toBe(1);
   });
+  it('retains refusal detail and request-based shares', () => {
+    const result = summarizeTraffic([day('2026-09-26', {
+      requests: 10, hit: { blocked: 2, unknown_package: 1, full: 7 },
+      refused: [{ outcome: 'blocked', packageVersion: '1.0', requests: 2 }],
+      hourly: [3, 7], carriers: { 电信: 10 },
+    })]);
+    expect(trafficWarnings(result.hit)).toEqual(['blocked', 'unknown_package']);
+    expect(result.updatePercent).toBe(70);
+    expect(result.refusedPercent).toBe(30);
+    expect(result.refused.blocked).toEqual([{ packageVersion: '1.0', requests: 2 }]);
+    expect(result.carriers[0]?.percent).toBe(100);
+  });
+});
 
-  it('expands lag buckets in fixed order with shares', () => {
-    const { total, shares } = lagShares({ lt1h: 30, '6h-24h': 10 });
-    expect(total).toBe(40);
-    expect(shares.map((share) => share.bucket)).toEqual([
-      'lt1h',
-      '1h-6h',
-      '6h-24h',
-      '1d-3d',
-      '3d-7d',
-      'gt7d',
-    ]);
-    expect(shares[0]?.percent).toBe(75);
-    expect(shares[1]?.count).toBe(0);
+describe('independent version observations', () => {
+  it('never derives coverage or adoption conversion from 5 retained UUIDs and 2 DAU', () => {
+    const row = buildFunnelRows(response())[0]!;
+    expect(row.retained?.mark).toBe(5);
+    expect(row.servedTotal).toBe(6);
+    expect('coverage' in row).toBe(false);
+    expect('adoptionRate' in row).toBe(false);
+  });
+  it('honors explicit null observations rather than falling back to adopted', () => {
+    const row = buildFunnelRows(response({ versions: [{ ...version(), observed: { mark: null, download: null } }] }))[0]!;
+    expect(row.retained?.mark).toBeNull();
+    expect(row.retained?.download).toBeNull();
+  });
+  it('hides whole-version observations under native-package filters without mutation', () => {
+    const original = buildFunnelRows(response());
+    const filtered = filterFunnelRows(original, 'v1', '1.0')[0]!;
+    expect(filtered.retained).toBeNull();
+    expect(filtered.events.markSuccess).toBe(2);
+    expect(filtered.servedTotal).toBe(2);
+    expect(original[0]?.retained?.mark).toBe(5);
+    expect(filterFunnelRows(original, undefined, 'missing')).toEqual([]);
+    expect(filterFunnelRows(original, 'missing')).toEqual([]);
+  });
+  it('uses uncapped app summaries including unattributed events', () => {
+    const result = versionTotals(response({
+      truncated: true,
+      summary: { versionCount: 51, offeredTargets: 52, events: events({ rollback: 7 }), unattributed: events({ rollback: 7 }), unattributedOffers: 0 },
+    }));
+    expect(result?.versionCount).toBe(51);
+    expect(result?.events.rollback).toBe(7);
+    expect(result?.scope).toBe('all_observed');
+  });
+  it('labels legacy sums as returned-version subtotals', () => {
+    const result = versionTotals(response({ truncated: true }));
+    expect(result?.scope).toBe('returned_versions');
+    expect(result?.offeredTargets).toBe(6);
+    expect(result?.unattributed).toBeNull();
+    expect(versionTotals(undefined)).toBeNull();
+  });
+  it('classifies only rollback reports and exposes sample counts separately', () => {
+    const result = computeFunnelRates(events({ downloadFail: 90, markSuccess: 10 }));
+    expect(result.rollbackSamples).toBe(10);
+    expect(result.failures).toBe(90);
+    expect(result.rollbackRate).toBe(0);
+    expect(computeFunnelRates(events({ markSuccess: 3, rollback: 1 })).health).toBeNull();
+    expect(computeFunnelRates(events({ markSuccess: 90, rollback: 10 })).health).toBe('critical');
+  });
+  it('keeps lag reports distinct and discards invalid values', () => {
+    const result = lagShares({ lt1h: 30, '6h-24h': 10, gt7d: Number.NaN });
+    expect(result.total).toBe(40);
+    expect(result.shares[0]?.percent).toBe(75);
+    expect(result.shares).toHaveLength(6);
     expect(lagShares(null).total).toBe(0);
   });
 });
 
-describe('summarizeBreakdown', () => {
-  const days: AppEventBreakdownDay[] = [
-    {
-      date: '2026-09-12',
-      byOS: [
-        {
-          type: 'download_success',
-          hash: 'v1',
-          name: '1.0',
-          os: 'android',
-          count: 90,
-        },
-        {
-          type: 'download_fail',
-          hash: 'v1',
-          name: '1.0',
-          os: 'android',
-          count: 10,
-        },
-        { type: 'mark_success', hash: 'v1', name: '1.0', os: 'ios', count: 40 },
-        { type: 'rollback', hash: 'v2', name: null, os: 'ios', count: 2 },
-      ],
+describe('diagnostic report shares, not attempt failure rates', () => {
+  it('keeps a patch failure followed by success as two reports', () => {
+    const result = summarizeBreakdown([breakdown({ byOS: [
+      { type: 'patch_fail', hash: 'v1', name: 'V1', os: 'ios', count: 1 },
+      { type: 'download_success', hash: 'v1', name: 'V1', os: 'ios', count: 1 },
+    ] })]);
+    expect(result.os[0]?.failureSamples).toBe(2);
+    expect(result.os[0]?.failureRate).toBe(0.5);
+    expect(highestFailureDimension(result.os)).toBeNull();
+  });
+  it('does not rank one failure or a zero-failure platform above sufficient evidence', () => {
+    const result = summarizeBreakdown([breakdown({ byOS: [
+      { type: 'download_fail', hash: 'v1', name: 'V1', os: 'tiny', count: 1 },
+      { type: 'download_fail', hash: 'v1', name: 'V1', os: 'ios', count: 10 },
+      { type: 'download_success', hash: 'v1', name: 'V1', os: 'ios', count: 90 },
+      { type: 'download_success', hash: 'v1', name: 'V1', os: 'android', count: 100 },
+    ] })]);
+    expect(highestFailureDimension(result.os)?.key).toBe('ios');
+    expect(highestFailureDimension(result.os.filter((row) => row.key === 'android'))).toBeNull();
+  });
+  it('normalizes legacy free-text reasons and keeps version and carrier scopes separate', () => {
+    const days = [breakdown({
       byReason: [
-        {
-          type: 'download_fail',
-          hash: 'v1',
-          name: '1.0',
-          reason: 'network',
-          count: 8,
-        },
-        {
-          type: 'download_fail',
-          hash: 'v2',
-          name: null,
-          reason: 'network',
-          count: 1,
-        },
-        {
-          type: 'patch_fail',
-          hash: 'v1',
-          name: '1.0',
-          reason: 'other:ENOENT',
-          count: 3,
-        },
+        { type: 'download_fail', hash: 'v1', name: 'V1', reason: 'other:private-a', count: 2 },
+        { type: 'patch_fail', hash: 'v2', name: null, reason: 'other:private-b', count: 3 },
       ],
-      byCarrier: [
-        { type: 'download_success', carrier: '电信', count: 50 },
-        { type: 'download_fail', carrier: '电信', count: 5 },
-      ],
-    },
-    {
-      date: '2026-09-11',
-      byOS: [],
-      byReason: [
-        {
-          type: 'download_fail',
-          hash: 'v1',
-          name: '1.0',
-          reason: 'timeout',
-          count: 4,
-        },
-      ],
-      byCarrier: [],
-    },
-  ];
-
-  it('ranks reasons with per-version detail and rates per dimension', () => {
-    const summary = summarizeBreakdown(days);
-    expect(summary.failures).toBe(16);
-    expect(summary.reasons.map((row) => [row.reason, row.count])).toEqual([
-      ['network', 9],
-      ['timeout', 4],
-      ['other:ENOENT', 3],
-    ]);
-    near(summary.reasons[0]?.percent, (9 / 16) * 100);
-    expect(summary.reasons[0]?.byType).toEqual({ download_fail: 9 });
-    expect(summary.reasons[0]?.versions).toEqual([
-      { hash: 'v1', name: '1.0', count: 8 },
-      { hash: 'v2', name: null, count: 1 },
-    ]);
-    expect(summary.os[0]).toMatchObject({
-      key: 'android',
-      total: 100,
-      failureRate: 0.1,
-      rollbackRate: null,
-    });
-    expect(summary.os[1]).toMatchObject({
-      key: 'ios',
-      rollbackRate: 2 / 42,
-    });
-    expect(summary.carriers[0]).toMatchObject({
-      key: '电信',
-      failureRate: 5 / 55,
-    });
-    expect(summary.versionNames.get('v2')).toBeNull();
-    expect(summary.versionNames.get('v1')).toBe('1.0');
-  });
-
-  it('filters by version hash and drops the carrier dimension when filtering', () => {
-    const summary = summarizeBreakdown(days, 'v2');
-    expect(summary.failures).toBe(1);
-    expect(summary.reasons).toHaveLength(1);
-    expect(summary.os.map((row) => row.key)).toEqual(['ios']);
-    expect(summary.carriers).toEqual([]);
-  });
-
-  it('is empty-safe', () => {
-    expect(summarizeBreakdown(undefined).failures).toBe(0);
-  });
-
-  it('separates known reasons from the other:<prefix> bucket', () => {
-    expect(parseFailureReason('crc_mismatch')).toEqual({
-      kind: 'known',
-      reason: 'crc_mismatch',
-    });
-    expect(parseFailureReason('other:ENOENT')).toEqual({
-      kind: 'other',
-      detail: 'ENOENT',
-    });
-    expect(parseFailureReason('weird')).toEqual({
-      kind: 'other',
-      detail: 'weird',
-    });
+      byCarrier: [{ type: 'download_fail', carrier: '电信', count: 5 }],
+    })];
+    const result = summarizeBreakdown(days);
+    expect(result.failures).toBe(5);
+    expect(result.reasons).toHaveLength(1);
+    expect(result.reasons[0]?.reason).toBe('other');
+    expect(result.reasons[0]?.percent).toBe(100);
+    expect(summarizeBreakdown(days, 'v1').failures).toBe(2);
+    expect(summarizeBreakdown(days, 'v1').carriers).toEqual([]);
+    expect(parseFailureReason('other:private')).toEqual({ kind: 'other', detail: '' });
+    expect(parseFailureReason('timeout')).toEqual({ kind: 'known', reason: 'timeout' });
+    expect(isKnownCarrier('移动')).toBe(true);
+    expect(summarizeBreakdown(undefined).reasons).toEqual([]);
   });
 });

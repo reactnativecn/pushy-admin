@@ -18,6 +18,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Install
+        id: install
         run: bun install --frozen-lockfile
 
       - name: Typecheck
@@ -33,3 +34,24 @@ jobs:
         run: bun run build:check
         env:
           CI: "true"
+
+      # Diagnostic only: the failed check remains failed. No suggested edits
+      # are committed, pushed or used to turn a failed gate into a passing one.
+      - name: Export insights formatting suggestions
+        if: failure() && steps.install.outcome == 'success'
+        run: |
+          bunx --no-install biome check --write src/pages/app-insights src/i18n/insights-metrics.ts src/i18n/index.ts > biome-suggestions.log 2>&1 || true
+          git diff -- src/pages/app-insights src/i18n > biome-suggestions.patch
+
+      - name: Upload diagnostic copies
+        if: failure() && steps.install.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: insights-format-suggestions
+          retention-days: 3
+          path: |
+            biome-suggestions.patch
+            biome-suggestions.log
+            src/pages/app-insights
+            src/i18n/insights-metrics.ts
+            src/i18n/index.ts

@@ -1,15 +1,17 @@
-// 数据分析页的纯逻辑：把三个接口按日返回的数据折叠成窗口内的汇总、
-// 排名与比率。这里不碰 React，也不做文案，方便单测。
-
+// Events, offered targets and retained devices have different populations.
+// Do not synthesize conversion rates from independent observation counters.
 import {
   type AppEventBreakdownDay,
   type AppTrafficDay,
   type ClientEventType,
+  type DeviceStatus,
   type FunnelEventCounts,
   HIT_OUTCOMES,
   type HitOutcome,
   LAG_BUCKETS,
   type LagBucket,
+  type LagBuckets,
+  type ObservationStatus,
   type ServedCounts,
   type VersionFunnel,
   type VersionFunnelResponse,
@@ -18,7 +20,6 @@ import {
 export const INSIGHT_DAY_OPTIONS = [7, 14, 35] as const;
 export type InsightDays = (typeof INSIGHT_DAY_OPTIONS)[number];
 export const DEFAULT_INSIGHT_DAYS: InsightDays = 7;
-
 export const INSIGHT_VIEWS = [
   'overview',
   'versions',
@@ -39,9 +40,22 @@ export const parseInsightView = (value: string | null): InsightView =>
     ? (value as InsightView)
     : 'overview';
 
-/** 服务端按北京时间自然日累加；今天那一条是实时累计。 */
+/** Legacy fallback only; prefer window.today in the writer's timezone. */
 export const beijingToday = (now: number = Date.now()): string =>
   new Date(now + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+export const validCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+const countOf = (value: unknown): number => (validCount(value) ? value : 0);
+const percentOf = (part: number, total: number) =>
+  total > 0 ? (part / total) * 100 : 0;
+
+export const observationCount = (
+  value: number | null | undefined,
+  status?: ObservationStatus,
+): number | null =>
+  status === 'unavailable' || !validCount(value) ? null : value;
 
 export interface RankedItem {
   key: string;
@@ -49,12 +63,11 @@ export interface RankedItem {
   percent: number;
 }
 
-/** 把 {名称→次数} 按次数降序排名并算占比；次数相同按名称稳定排序。 */
 export const rankCounts = (
   counts: Readonly<Record<string, number>> | undefined,
 ): RankedItem[] => {
   const entries = Object.entries(counts ?? {}).filter(
-    ([, count]) => Number.isFinite(count) && count > 0,
+    ([, count]) => validCount(count) && count > 0,
   );
   const total = entries.reduce((sum, [, count]) => sum + count, 0);
   return entries
@@ -63,11 +76,7 @@ export const rankCounts = (
         ? leftKey.localeCompare(rightKey)
         : rightCount - leftCount,
     )
-    .map(([key, count]) => ({
-      key,
-      count,
-      percent: total > 0 ? (count / total) * 100 : 0,
-    }));
+    .map(([key, count]) => ({ key, count, percent: percentOf(count, total) }));
 };
 
 const addCounts = (
@@ -75,15 +84,16 @@ const addCounts = (
   source: Readonly<Record<string, number>> | undefined,
 ) => {
   for (const [key, count] of Object.entries(source ?? {})) {
-    if (!Number.isFinite(count) || count <= 0) continue;
-    target[key] = (target[key] ?? 0) + count;
+    if (validCount(count) && count > 0) {
+      target[key] = (target[key] ?? 0) + count;
+    }
   }
 };
 
 export interface DailyTrafficPoint {
   date: string;
-  requests: number;
-  dau: number;
+  requests: number | null;
+  dau: number | null;
   hit: Record<HitOutcome, number>;
   isToday: boolean;
 }
@@ -91,13 +101,17 @@ export interface DailyTrafficPoint {
 export interface PackageTrafficSummary {
   packageVersion: string;
   requests: number;
-  /** 窗口内单日最高的去重设备数（HLL 不能跨日合并）。 */
-  peakDevices: number;
+  peakDevices: number | null;
   percent: number;
+  observedDays: number;
+  availableStart: string | null;
+  availableEnd: string | null;
+  partial: boolean;
+  expiredDays: number;
+  unavailableDays: number;
 }
 
 export type RefusalOutcome = 'blocked' | 'unknown_package';
-
 export interface RefusedPackageSummary {
   packageVersion: string;
   requests: number;
@@ -106,24 +120,21 @@ export interface RefusedPackageSummary {
 export interface TrafficSummary {
   requests: number;
   today: DailyTrafficPoint | null;
-  /** 不含今天的完整日数据，用于"日均" */
   completedDays: number;
-  averageDailyRequests: number;
-  peakDau: number;
-  averageDau: number;
+  requestSampleDays: number;
+  dauSampleDays: number;
+  averageDailyRequests: number | null;
+  peakDau: number | null;
+  averageDau: number | null;
   hit: Record<HitOutcome, number>;
-  /** 拒绝类（blocked + unknown_package）在总请求里的占比 */
   refusedPercent: number;
-  /** 命中更新（hdiff + pdiff + full）在总请求里的占比 */
   updatePercent: number;
   hourly: number[];
   ipVersion: RankedItem[];
   hosts: RankedItem[];
   carriers: RankedItem[];
   packages: PackageTrafficSummary[];
-  /** 被拒绝请求按原生包版本拆分，请求数降序；旧日桶没有拆分，合计可能小于 hit */
   refused: Record<RefusalOutcome, RefusedPackageSummary[]>;
-  /** 按日期升序，供图表使用 */
   daily: DailyTrafficPoint[];
 }
 
@@ -138,9 +149,6 @@ const emptyHit = (): Record<HitOutcome, number> => ({
   unknown_package: 0,
 });
 
-const percentOf = (part: number, total: number) =>
-  total > 0 ? (part / total) * 100 : 0;
-
 const rankRefused = (counts: Map<string, number>): RefusedPackageSummary[] =>
   Array.from(counts, ([packageVersion, requests]) => ({
     packageVersion,
@@ -151,10 +159,9 @@ const rankRefused = (counts: Map<string, number>): RefusedPackageSummary[] =>
       : right.requests - left.requests,
   );
 
-/**
- * 服务端按最新在前返回；这里把窗口内各天折叠成一份汇总。
- * DAU 是 HLL 去重，跨日不能相加，只给峰值和日均；原生包设备数同理取单日峰值。
- */
+/** Both means exclude today, include valid zeroes, and disclose sample days.
+ * Unavailable values are not zero. Daily device estimates cannot be added;
+ * merging retained original HLLs would require a different server API. */
 export const summarizeTraffic = (
   days: readonly AppTrafficDay[] | undefined,
   today: string = beijingToday(),
@@ -164,98 +171,117 @@ export const summarizeTraffic = (
   const ipVersion: Record<string, number> = {};
   const hosts: Record<string, number> = {};
   const carriers: Record<string, number> = {};
-  const packages = new Map<string, { requests: number; peakDevices: number }>();
+  const packages = new Map<string, PackageTrafficSummary>();
   const refused: Record<RefusalOutcome, Map<string, number>> = {
     blocked: new Map(),
     unknown_package: new Map(),
   };
   const daily: DailyTrafficPoint[] = [];
   let requests = 0;
-  let dauSum = 0;
-  let dauDays = 0;
-  let peakDau = 0;
-  let completedRequests = 0;
   let completedDays = 0;
+  let requestSampleDays = 0;
+  let dauSampleDays = 0;
+  let completedRequests = 0;
+  let completedDau = 0;
+  let peakDau: number | null = null;
 
   for (const day of days ?? []) {
     const dayHit = emptyHit();
-    for (const [outcome, count] of Object.entries(day.hit ?? {})) {
-      if (!Number.isFinite(count) || count <= 0) continue;
-      if (HIT_OUTCOMES.includes(outcome as HitOutcome)) {
-        dayHit[outcome as HitOutcome] += count;
-        hit[outcome as HitOutcome] += count;
-      }
+    for (const outcome of HIT_OUTCOMES) {
+      dayHit[outcome] = countOf(day.hit?.[outcome]);
+      hit[outcome] += dayHit[outcome];
     }
-    const dayRequests = Number.isFinite(day.requests) ? day.requests : 0;
-    const isToday = day.date === today;
-    requests += dayRequests;
-    if (!isToday) {
-      completedRequests += dayRequests;
+    const dayRequests = observationCount(day.requests, day.requestsStatus);
+    const dau = observationCount(day.dau, day.dauStatus);
+    requests += dayRequests ?? 0;
+    if (dau !== null) peakDau = Math.max(peakDau ?? 0, dau);
+    if (day.date < today) {
       completedDays += 1;
-    }
-    if (Number.isFinite(day.dau) && day.dau > 0) {
-      dauSum += day.dau;
-      dauDays += 1;
-      peakDau = Math.max(peakDau, day.dau);
+      if (dayRequests !== null) {
+        completedRequests += dayRequests;
+        requestSampleDays += 1;
+      }
+      if (dau !== null) {
+        completedDau += dau;
+        dauSampleDays += 1;
+      }
     }
     (day.hourly ?? []).forEach((count, hour) => {
-      if (hour < 24 && Number.isFinite(count)) {
-        hourly[hour] = (hourly[hour] ?? 0) + count;
-      }
+      if (hour < 24) hourly[hour] = (hourly[hour] ?? 0) + countOf(count);
     });
     addCounts(ipVersion, day.ipVersion);
     addCounts(hosts, day.hosts);
     addCounts(carriers, day.carriers);
     for (const item of day.packages ?? []) {
       const entry = packages.get(item.packageVersion) ?? {
+        packageVersion: item.packageVersion,
         requests: 0,
-        peakDevices: 0,
+        peakDevices: null,
+        percent: 0,
+        observedDays: 0,
+        availableStart: null,
+        availableEnd: null,
+        partial: false,
+        expiredDays: 0,
+        unavailableDays: 0,
       };
-      entry.requests += item.requests;
-      entry.peakDevices = Math.max(entry.peakDevices, item.devices ?? 0);
+      entry.requests += countOf(item.requests);
+      const status: DeviceStatus =
+        item.devicesStatus ??
+        (validCount(item.devices) && item.devices > 0
+          ? 'observed'
+          : 'unavailable');
+      if (
+        (status === 'observed' || status === 'partial') &&
+        validCount(item.devices)
+      ) {
+        entry.peakDevices = Math.max(entry.peakDevices ?? 0, item.devices);
+        entry.observedDays += 1;
+        entry.availableStart =
+          entry.availableStart === null || day.date < entry.availableStart
+            ? day.date
+            : entry.availableStart;
+        entry.availableEnd =
+          entry.availableEnd === null || day.date > entry.availableEnd
+            ? day.date
+            : entry.availableEnd;
+      } else if (status === 'expired') {
+        entry.expiredDays += 1;
+      } else {
+        entry.unavailableDays += 1;
+      }
+      entry.partial ||=
+        status === 'partial' || day.packageDevicesLimited === true;
       packages.set(item.packageVersion, entry);
     }
     for (const item of day.refused ?? []) {
       const target = refused[item.outcome];
-      if (!target || !Number.isFinite(item.requests) || item.requests <= 0) {
-        continue;
+      if (target && validCount(item.requests) && item.requests > 0) {
+        target.set(
+          item.packageVersion,
+          (target.get(item.packageVersion) ?? 0) + item.requests,
+        );
       }
-      target.set(
-        item.packageVersion,
-        (target.get(item.packageVersion) ?? 0) + item.requests,
-      );
     }
     daily.push({
       date: day.date,
       requests: dayRequests,
-      dau: day.dau ?? 0,
+      dau,
       hit: dayHit,
-      isToday,
+      isToday: day.date === today,
     });
   }
   daily.sort((left, right) => left.date.localeCompare(right.date));
-
-  const packageRows = Array.from(packages.entries())
-    .map(([packageVersion, entry]) => ({
-      packageVersion,
-      requests: entry.requests,
-      peakDevices: entry.peakDevices,
-      percent: percentOf(entry.requests, requests),
-    }))
-    .sort((left, right) =>
-      right.requests === left.requests
-        ? left.packageVersion.localeCompare(right.packageVersion)
-        : right.requests - left.requests,
-    );
-
   return {
     requests,
     today: daily.find((day) => day.isToday) ?? null,
     completedDays,
+    requestSampleDays,
+    dauSampleDays,
     averageDailyRequests:
-      completedDays > 0 ? completedRequests / completedDays : 0,
+      requestSampleDays > 0 ? completedRequests / requestSampleDays : null,
+    averageDau: dauSampleDays > 0 ? completedDau / dauSampleDays : null,
     peakDau,
-    averageDau: dauDays > 0 ? dauSum / dauDays : 0,
     hit,
     refusedPercent: percentOf(hit.blocked + hit.unknown_package, requests),
     updatePercent: percentOf(hit.hdiff + hit.pdiff + hit.full, requests),
@@ -263,7 +289,16 @@ export const summarizeTraffic = (
     ipVersion: rankCounts(ipVersion),
     hosts: rankCounts(hosts),
     carriers: rankCounts(carriers),
-    packages: packageRows,
+    packages: Array.from(packages.values())
+      .map((entry) => ({
+        ...entry,
+        percent: percentOf(entry.requests, requests),
+      }))
+      .sort(
+        (left, right) =>
+          right.requests - left.requests ||
+          left.packageVersion.localeCompare(right.packageVersion),
+      ),
     refused: {
       blocked: rankRefused(refused.blocked),
       unknown_package: rankRefused(refused.unknown_package),
@@ -272,7 +307,6 @@ export const summarizeTraffic = (
   };
 };
 
-/** hit 里值得提醒的项：这两类是"为什么收不到更新"的直接证据。 */
 export const trafficWarnings = (
   hit: Readonly<Record<HitOutcome, number>>,
 ): Array<'blocked' | 'unknown_package'> => {
@@ -284,82 +318,147 @@ export const trafficWarnings = (
 
 export const servedTotal = (served: ServedCounts | undefined) =>
   served
-    ? served.hdiff +
-      served.pdiff +
-      served.full +
-      served.fullPending +
-      served.exp
+    ? countOf(served.hdiff) +
+      countOf(served.pdiff) +
+      countOf(served.full) +
+      countOf(served.fullPending) +
+      countOf(served.exp)
     : 0;
 
+// Legacy enum identifiers for shared key mappings; rollback reports ONLY.
 export type FunnelHealth = 'healthy' | 'warning' | 'critical' | null;
-
-// 与服务状态页的版本健康总览一致：回滚率 ≥5% 异常、≥1% 关注；样本 <10 不判定
-const CRITICAL_ROLLBACK = 0.05;
-const WARNING_ROLLBACK = 0.01;
-const MIN_SAMPLES = 10;
+export const MIN_EVENT_SAMPLES = 10;
 
 export interface FunnelRates {
-  /** 下载成功 / (下载成功 + 下载失败) */
   downloadSuccessRate: number | null;
-  /** 回滚 / (激活 + 回滚) */
   rollbackRate: number | null;
+  downloadSamples: number;
+  rollbackSamples: number;
   failures: number;
   health: FunnelHealth;
 }
 
 export const computeFunnelRates = (events: FunnelEventCounts): FunnelRates => {
-  const downloadSamples = events.downloadSuccess + events.downloadFail;
-  const startSamples = events.markSuccess + events.rollback;
-  const rollbackRate = startSamples > 0 ? events.rollback / startSamples : null;
-  let health: FunnelHealth = null;
-  if (rollbackRate !== null && startSamples >= MIN_SAMPLES) {
-    health =
-      rollbackRate >= CRITICAL_ROLLBACK
+  const downloadSamples =
+    countOf(events.downloadSuccess) + countOf(events.downloadFail);
+  const rollbackSamples =
+    countOf(events.markSuccess) + countOf(events.rollback);
+  const rollbackRate =
+    rollbackSamples > 0 ? countOf(events.rollback) / rollbackSamples : null;
+  const health: FunnelHealth =
+    rollbackSamples < MIN_EVENT_SAMPLES || rollbackRate === null
+      ? null
+      : rollbackRate >= 0.05
         ? 'critical'
-        : rollbackRate >= WARNING_ROLLBACK
+        : rollbackRate >= 0.01
           ? 'warning'
           : 'healthy';
-  }
   return {
     downloadSuccessRate:
-      downloadSamples > 0 ? events.downloadSuccess / downloadSamples : null,
+      downloadSamples > 0
+        ? countOf(events.downloadSuccess) / downloadSamples
+        : null,
     rollbackRate,
-    failures: events.downloadFail + events.patchFail,
+    downloadSamples,
+    rollbackSamples,
+    failures: countOf(events.downloadFail) + countOf(events.patchFail),
     health,
   };
 };
 
+export interface RetainedObservations {
+  mark: number | null;
+  download: number | null;
+  lag: LagBuckets;
+}
+
 export interface FunnelRow extends VersionFunnel, FunnelRates {
   servedTotal: number;
-  /**
-   * adopted.mark / adopted.download：下载过该版本的设备里有多少真的激活了。
-   * 两个数都是累计去重（HLL），处在同一时间基准上，所以不像"窗口内激活数 ÷
-   * 窗口内下载数"那样会因为下载在窗口之前、激活在窗口之内而超过 100%。
-   */
-  adoptionRate: number | null;
-  /** adopted.mark / dauToday；dauToday 为 0 时为 null */
-  coverage: number | null;
-  /** 名字为空表示版本已删除 */
+  retained: RetainedObservations | null;
   deleted: boolean;
 }
 
 export const buildFunnelRows = (
   response: VersionFunnelResponse | undefined,
 ): FunnelRow[] =>
-  (response?.versions ?? []).map((version) => ({
-    ...version,
-    ...computeFunnelRates(version.events),
-    servedTotal: servedTotal(version.served),
-    adoptionRate:
-      version.adopted.download > 0
-        ? version.adopted.mark / version.adopted.download
-        : null,
-    coverage:
-      response && response.dauToday > 0
-        ? version.adopted.mark / response.dauToday
-        : null,
-    deleted: version.name === null,
-  }));
+  (response?.versions ?? []).map((version) => {
+    const retainedCount = (kind: 'mark' | 'download') => {
+      // Explicit null is authoritative; never fall through to legacy data.
+      const value =
+        version.observed === undefined
+          ? version.adopted[kind]
+          : version.observed[kind];
+      return validCount(value) && value > 0 ? value : null;
+    };
+    return {
+      ...version,
+      ...computeFunnelRates(version.events),
+      servedTotal: servedTotal(version.served),
+      retained: {
+        mark: retainedCount('mark'),
+        download: retainedCount('download'),
+        lag: version.lag,
+      },
+      deleted: version.name === null,
+    };
+  });
+
+export const filterFunnelRows = (
+  rows: readonly FunnelRow[],
+  hash?: string,
+  packageVersion?: string,
+): FunnelRow[] =>
+  rows.flatMap((row) => {
+    if (hash && row.hash !== hash) return [];
+    if (!packageVersion) return [row];
+    const item = row.byPackage.find(
+      (entry) => entry.packageVersion === packageVersion,
+    );
+    return item
+      ? [
+          {
+            ...row,
+            ...computeFunnelRates(item.events),
+            served: item.served,
+            events: item.events,
+            servedTotal: servedTotal(item.served),
+            retained: null,
+            byPackage: [item],
+          },
+        ]
+      : [];
+  });
+
+export const versionTotals = (
+  response: VersionFunnelResponse | undefined,
+) => {
+  if (!response) return null;
+  if (response.summary) {
+    return { ...response.summary, scope: 'all_observed' as const };
+  }
+  const events: FunnelEventCounts = {
+    downloadSuccess: 0,
+    downloadFail: 0,
+    patchFail: 0,
+    markSuccess: 0,
+    rollback: 0,
+  };
+  let offeredTargets = 0;
+  for (const row of response.versions) {
+    offeredTargets += servedTotal(row.served);
+    for (const key of Object.keys(events) as (keyof FunnelEventCounts)[]) {
+      events[key] += countOf(row.events[key]);
+    }
+  }
+  return {
+    versionCount: response.versions.length,
+    offeredTargets,
+    events,
+    unattributed: null,
+    unattributedOffers: null,
+    scope: 'returned_versions' as const,
+  };
+};
 
 export interface LagShare {
   bucket: LagBucket;
@@ -367,24 +466,22 @@ export interface LagShare {
   percent: number;
 }
 
-/** 发布后多久收到事件：按固定桶顺序展开，缺失桶补 0。 */
 export const lagShares = (
   buckets: Partial<Record<LagBucket, number>> | null | undefined,
 ): { total: number; shares: LagShare[] } => {
   const total = LAG_BUCKETS.reduce(
-    (sum, bucket) => sum + (buckets?.[bucket] ?? 0),
+    (sum, bucket) => sum + countOf(buckets?.[bucket]),
     0,
   );
   return {
     total,
     shares: LAG_BUCKETS.map((bucket) => {
-      const count = buckets?.[bucket] ?? 0;
+      const count = countOf(buckets?.[bucket]);
       return { bucket, count, percent: percentOf(count, total) };
     }),
   };
 };
 
-/** 找到 hash 对应的版本名；用来在漏斗表之外（例如失败诊断）显示。 */
 export const shortHash = (hash: string) =>
   hash.length > 12 ? `${hash.slice(0, 12)}…` : hash;
 
@@ -393,9 +490,7 @@ export const FAILURE_EVENT_TYPES: ReadonlySet<ClientEventType> = new Set([
   'patch_fail',
   'rollback',
 ]);
-
 export type EventTypeCounts = Record<ClientEventType, number>;
-
 const emptyEventCounts = (): EventTypeCounts => ({
   download_success: 0,
   download_fail: 0,
@@ -408,34 +503,53 @@ export interface DimensionRow {
   key: string;
   counts: EventTypeCounts;
   total: number;
-  /** (下载失败 + Patch 失败) / (下载成功 + 下载失败 + Patch 失败) */
   failureRate: number | null;
-  /** 回滚 / (启动成功 + 回滚) */
   rollbackRate: number | null;
+  failureSamples: number;
+  rollbackSamples: number;
 }
 
-const finishDimensionRow = (key: string, counts: EventTypeCounts) => {
-  const downloadSamples =
+const finishDimensionRow = (
+  key: string,
+  counts: EventTypeCounts,
+): DimensionRow => {
+  const failureSamples =
     counts.download_success + counts.download_fail + counts.patch_fail;
-  const startSamples = counts.mark_success + counts.rollback;
+  const rollbackSamples = counts.mark_success + counts.rollback;
   return {
     key,
     counts,
     total: Object.values(counts).reduce((sum, count) => sum + count, 0),
     failureRate:
-      downloadSamples > 0
-        ? (counts.download_fail + counts.patch_fail) / downloadSamples
+      failureSamples > 0
+        ? (counts.download_fail + counts.patch_fail) / failureSamples
         : null,
-    rollbackRate: startSamples > 0 ? counts.rollback / startSamples : null,
+    rollbackRate:
+      rollbackSamples > 0 ? counts.rollback / rollbackSamples : null,
+    failureSamples,
+    rollbackSamples,
   };
 };
+
+export const highestFailureDimension = (rows: readonly DimensionRow[]) =>
+  [...rows]
+    .filter(
+      (row) =>
+        row.failureSamples >= MIN_EVENT_SAMPLES &&
+        (row.failureRate ?? 0) > 0,
+    )
+    .sort(
+      (left, right) =>
+        (right.failureRate ?? 0) - (left.failureRate ?? 0) ||
+        right.failureSamples - left.failureSamples ||
+        left.key.localeCompare(right.key),
+    )[0] ?? null;
 
 export interface ReasonVersion {
   hash: string;
   name: string | null;
   count: number;
 }
-
 export interface ReasonRow {
   reason: string;
   count: number;
@@ -443,21 +557,14 @@ export interface ReasonRow {
   byType: Partial<Record<ClientEventType, number>>;
   versions: ReasonVersion[];
 }
-
 export interface BreakdownSummary {
-  /** 失败事件总数（byReason 之和） */
   failures: number;
   reasons: ReasonRow[];
   os: DimensionRow[];
   carriers: DimensionRow[];
-  /** 出现在失败原因里的版本：hash → name（null 表示已删除） */
   versionNames: Map<string, string | null>;
 }
 
-/**
- * 三组明细各自求和。byReason 只含失败事件，所以 reasons 的分母就是失败总数；
- * byOS / byCarrier 含成功事件，能算出每个平台/运营商的失败率。
- */
 export const summarizeBreakdown = (
   days: readonly AppEventBreakdownDay[] | undefined,
   hashFilter?: string,
@@ -474,16 +581,22 @@ export const summarizeBreakdown = (
   const carriers = new Map<string, EventTypeCounts>();
   const versionNames = new Map<string, string | null>();
   let failures = 0;
-
   for (const day of days ?? []) {
     for (const item of day.byReason ?? []) {
       if (hashFilter && item.hash !== hashFilter) continue;
-      if (!Number.isFinite(item.count) || item.count <= 0) continue;
+      if (
+        !validCount(item.count) ||
+        item.count <= 0 ||
+        !FAILURE_EVENT_TYPES.has(item.type)
+      ) {
+        continue;
+      }
       failures += item.count;
       if (!versionNames.has(item.hash) || item.name !== null) {
         versionNames.set(item.hash, item.name);
       }
-      const entry = reasons.get(item.reason) ?? {
+      const reason = item.reason.startsWith('other:') ? 'other' : item.reason;
+      const entry = reasons.get(reason) ?? {
         count: 0,
         byType: {} as Partial<Record<ClientEventType, number>>,
         versions: new Map<string, ReasonVersion>(),
@@ -498,64 +611,49 @@ export const summarizeBreakdown = (
       version.count += item.count;
       if (item.name !== null) version.name = item.name;
       entry.versions.set(item.hash, version);
-      reasons.set(item.reason, entry);
+      reasons.set(reason, entry);
     }
     for (const item of day.byOS ?? []) {
       if (hashFilter && item.hash !== hashFilter) continue;
-      if (!Number.isFinite(item.count) || item.count <= 0) continue;
+      if (!validCount(item.count) || item.count <= 0) continue;
       if (!versionNames.has(item.hash) || item.name !== null) {
         versionNames.set(item.hash, item.name);
       }
       const counts = os.get(item.os) ?? emptyEventCounts();
-      if (item.type in counts) counts[item.type] += item.count;
+      if (Object.hasOwn(counts, item.type)) counts[item.type] += item.count;
       os.set(item.os, counts);
     }
-    // 运营商维度没有 hash，版本筛选时跳过它
     if (hashFilter) continue;
     for (const item of day.byCarrier ?? []) {
-      if (!Number.isFinite(item.count) || item.count <= 0) continue;
+      if (!validCount(item.count) || item.count <= 0) continue;
       const counts = carriers.get(item.carrier) ?? emptyEventCounts();
-      if (item.type in counts) counts[item.type] += item.count;
+      if (Object.hasOwn(counts, item.type)) counts[item.type] += item.count;
       carriers.set(item.carrier, counts);
     }
   }
-
-  const byCountDesc = <T extends { total: number; key: string }>(
-    left: T,
-    right: T,
-  ) =>
-    right.total === left.total
-      ? left.key.localeCompare(right.key)
-      : right.total - left.total;
-
+  const byCount = (a: DimensionRow, b: DimensionRow) =>
+    b.total - a.total || a.key.localeCompare(b.key);
   return {
     failures,
-    reasons: Array.from(reasons.entries())
-      .map(([reason, entry]) => ({
-        reason,
-        count: entry.count,
-        percent: percentOf(entry.count, failures),
-        byType: entry.byType,
-        versions: Array.from(entry.versions.values()).sort(
-          (left, right) => right.count - left.count,
-        ),
-      }))
-      .sort((left, right) =>
-        right.count === left.count
-          ? left.reason.localeCompare(right.reason)
-          : right.count - left.count,
+    reasons: Array.from(reasons, ([reason, entry]) => ({
+      reason,
+      count: entry.count,
+      percent: percentOf(entry.count, failures),
+      byType: entry.byType,
+      versions: Array.from(entry.versions.values()).sort(
+        (a, b) => b.count - a.count || a.hash.localeCompare(b.hash),
       ),
-    os: Array.from(os.entries())
-      .map(([key, counts]) => finishDimensionRow(key, counts))
-      .sort(byCountDesc),
-    carriers: Array.from(carriers.entries())
-      .map(([key, counts]) => finishDimensionRow(key, counts))
-      .sort(byCountDesc),
+    })).sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason)),
+    os: Array.from(os, ([key, counts]) =>
+      finishDimensionRow(key, counts),
+    ).sort(byCount),
+    carriers: Array.from(carriers, ([key, counts]) =>
+      finishDimensionRow(key, counts),
+    ).sort(byCount),
     versionNames,
   };
 };
 
-/** 失败原因的有限类别；`other:<前缀>` 之外的值都在这里。 */
 export const KNOWN_FAILURE_REASONS = [
   'empty',
   'crc_mismatch',
@@ -578,12 +676,8 @@ export const parseFailureReason = (
   | { kind: 'other'; detail: string } =>
   KNOWN_FAILURE_REASONS.includes(reason as KnownFailureReason)
     ? { kind: 'known', reason: reason as KnownFailureReason }
-    : {
-        kind: 'other',
-        detail: reason.startsWith('other:') ? reason.slice(6) : reason,
-      };
+    : { kind: 'other', detail: '' };
 
-/** 服务端写入的运营商标签是中文字面量；界面上按语言翻译，未知标签原样显示。 */
 export const KNOWN_CARRIERS = [
   '电信',
   '联通',
@@ -596,6 +690,5 @@ export const KNOWN_CARRIERS = [
   'unknown',
 ] as const;
 export type KnownCarrier = (typeof KNOWN_CARRIERS)[number];
-
 export const isKnownCarrier = (carrier: string): carrier is KnownCarrier =>
   KNOWN_CARRIERS.includes(carrier as KnownCarrier);
