@@ -5,14 +5,19 @@ import { useTranslation } from 'react-i18next';
 import {
   type DimensionRow,
   FAILURE_EVENT_TYPES,
+  highestFailureDimension,
   type ReasonRow,
   summarizeBreakdown,
 } from './logic';
 import {
+  BreakdownAvailability,
+  ObservationNotice,
+  ReportShare,
+} from './observation-ui';
+import {
   EmptyState,
   Footnote,
   formatInteger,
-  formatPercent,
   formatShare,
   InsightsError,
   Question,
@@ -23,62 +28,67 @@ import {
   useFailureReasonLabel,
   VersionLabel,
 } from './shared';
-import { CLIENT_EVENT_TYPES } from './types';
+import { CLIENT_EVENT_TYPES, type ClientEventType } from './types';
 
 const ALL = '__all__';
-const REASON_VERSION_LIMIT = 3;
-
 const DimensionTable = ({
   rows,
   labelOf,
   keyTitle,
+  emptyText,
 }: {
   rows: DimensionRow[];
   labelOf: (key: string) => string;
   keyTitle: string;
+  emptyText: string;
 }) => {
   const { t } = useTranslation();
   const eventLabel = useEventTypeLabel();
   const columns: ColumnsType<DimensionRow> = [
-    {
-      title: keyTitle,
-      key: 'key',
-      render: (_, row) => labelOf(row.key),
-    },
+    { title: keyTitle, key: 'key', render: (_, row) => labelOf(row.key) },
     ...CLIENT_EVENT_TYPES.map((type) => ({
       title: eventLabel(type),
       key: type,
       align: 'right' as const,
-      render: (_: unknown, row: DimensionRow) =>
-        row.counts[type] > 0 && FAILURE_EVENT_TYPES.has(type) ? (
-          <span className="text-red-500">
-            {formatInteger(row.counts[type])}
-          </span>
-        ) : (
-          formatInteger(row.counts[type])
-        ),
+      render: (_: unknown, row: DimensionRow) => (
+        <span
+          className={
+            FAILURE_EVENT_TYPES.has(type) && row.counts[type] > 0
+              ? 'text-red-500'
+              : undefined
+          }
+        >
+          {formatInteger(row.counts[type])}
+        </span>
+      ),
     })),
     {
       title: t('app_insights.col_failure_rate'),
-      key: 'failureRate',
-      align: 'right',
-      render: (_, row) => formatPercent(row.failureRate),
+      key: 'failureShare',
+      render: (_, row) => (
+        <ReportShare
+          part={row.counts.download_fail + row.counts.patch_fail}
+          total={row.failureSamples}
+        />
+      ),
     },
     {
       title: t('app_insights.col_rollback_rate'),
-      key: 'rollbackRate',
-      align: 'right',
-      render: (_, row) => formatPercent(row.rollbackRate),
+      key: 'rollbackShare',
+      render: (_, row) => (
+        <ReportShare part={row.counts.rollback} total={row.rollbackSamples} />
+      ),
     },
   ];
   return (
     <Table
       size="small"
       rowKey="key"
-      columns={columns}
       dataSource={rows}
+      columns={columns}
       pagination={false}
       scroll={{ x: 'max-content' }}
+      locale={{ emptyText }}
     />
   );
 };
@@ -95,8 +105,7 @@ export const FailuresPanel = ({
   const carrierLabel = useCarrierLabel();
   const eventLabel = useEventTypeLabel();
   const breakdown = useAppEventBreakdown(appKey, days);
-  const [versionFilter, setVersionFilter] = useState<string>(ALL);
-
+  const [versionFilter, setVersionFilter] = useState(ALL);
   const all = useMemo(
     () => summarizeBreakdown(breakdown.data?.days),
     [breakdown.data],
@@ -108,54 +117,31 @@ export const FailuresPanel = ({
         : summarizeBreakdown(breakdown.data?.days, versionFilter),
     [all, breakdown.data, versionFilter],
   );
-
-  const versionOptions = useMemo(
-    () => [
-      { value: ALL, label: t('app_insights.filter_all_versions') },
-      ...Array.from(all.versionNames.entries()).map(([hash, name]) => ({
-        value: hash,
-        label: name
-          ? `${name} (${hash.slice(0, 8)})`
-          : `${t('app_insights.version_deleted')} (${hash.slice(0, 8)})`,
-      })),
-    ],
-    [all.versionNames, t],
+  const hasAvailableDays = summary.availableDays > 0;
+  const emptyText = t(
+    hasAvailableDays
+      ? 'app_insights.no_reports_in_scope'
+      : 'app_insights.breakdown_unavailable',
   );
-
+  const highest = highestFailureDimension(summary.os);
+  const topReason = summary.reasons[0];
   const reasonColumns: ColumnsType<ReasonRow> = [
     {
       title: t('app_insights.col_reason'),
       key: 'reason',
-      render: (_, row) => (
-        <span title={row.reason}>{reasonLabel(row.reason)}</span>
-      ),
+      render: (_, row) => reasonLabel(row.reason),
     },
     {
       title: t('app_insights.col_count'),
-      key: 'count',
+      dataIndex: 'count',
       align: 'right',
-      width: 100,
-      render: (_, row) => (
-        <span className="tabular-nums">{formatInteger(row.count)}</span>
-      ),
+      render: formatInteger,
     },
     {
       title: t('app_insights.col_share'),
-      key: 'share',
-      width: 180,
-      render: (_, row) => (
-        <div className="flex items-center gap-2">
-          <span className="h-2 flex-1 overflow-hidden rounded bg-gray-100">
-            <span
-              className="block h-full rounded bg-red-500"
-              style={{ width: `${Math.max(row.percent, 1)}%` }}
-            />
-          </span>
-          <span className="w-12 text-right text-xs tabular-nums text-gray-500">
-            {formatShare(row.percent)}
-          </span>
-        </div>
-      ),
+      dataIndex: 'percent',
+      align: 'right',
+      render: formatShare,
     },
     {
       title: t('app_insights.col_event_type'),
@@ -163,9 +149,8 @@ export const FailuresPanel = ({
       render: (_, row) => (
         <span className="flex flex-wrap gap-1">
           {Object.entries(row.byType).map(([type, count]) => (
-            <Tag key={type} className="m-0">
-              {eventLabel(type as keyof typeof row.byType)}{' '}
-              {formatInteger(count)}
+            <Tag key={type}>
+              {eventLabel(type as ClientEventType)} {formatInteger(count)}
             </Tag>
           ))}
         </span>
@@ -175,161 +160,135 @@ export const FailuresPanel = ({
       title: t('app_insights.col_versions'),
       key: 'versions',
       render: (_, row) => (
-        <span className="flex flex-col gap-0.5">
-          {row.versions.slice(0, REASON_VERSION_LIMIT).map((version) => (
-            <span
-              key={version.hash}
-              className="flex items-center gap-2 text-xs"
-            >
-              <VersionLabel hash={version.hash} name={version.name} compact />
-              <span className="tabular-nums text-gray-500">
-                {formatInteger(version.count)}
-              </span>
-            </span>
+        <div className="space-y-1">
+          {row.versions.slice(0, 3).map((version) => (
+            <div key={version.hash}>
+              <VersionLabel hash={version.hash} name={version.name} compact />{' '}
+              {formatInteger(version.count)}
+            </div>
           ))}
-          {row.versions.length > REASON_VERSION_LIMIT && (
-            <span className="text-xs text-gray-400">
+          {row.versions.length > 3 && (
+            <span>
               {t('app_insights.more_versions', {
-                count: row.versions.length - REASON_VERSION_LIMIT,
+                count: row.versions.length - 3,
               })}
             </span>
           )}
-        </span>
+        </div>
       ),
     },
   ];
-
-  const topReason = summary.reasons[0];
-  const worstOs = [...summary.os]
-    .filter((row) => row.failureRate !== null)
-    .sort(
-      (left, right) => (right.failureRate ?? 0) - (left.failureRate ?? 0),
-    )[0];
-
   return (
-    <div className="flex flex-col gap-4">
-      {breakdown.error ? <InsightsError error={breakdown.error} /> : null}
+    <div className="space-y-4">
+      {!!breakdown.error && <InsightsError error={breakdown.error} />}
+      <ObservationNotice
+        window={breakdown.data?.window}
+        source="business"
+        updatedAt={breakdown.dataUpdatedAt}
+        stale={!!breakdown.error && !!breakdown.data}
+      />
+      <BreakdownAvailability summary={summary} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Question>{t('app_insights.failures_intro')}</Question>
         <Select
-          size="small"
           showSearch
           optionFilterProp="label"
           value={versionFilter}
-          options={versionOptions}
           onChange={setVersionFilter}
-          className="w-56"
+          className="w-64"
+          options={[
+            { value: ALL, label: t('app_insights.filter_all_versions') },
+            ...Array.from(all.versionNames, ([hash, name]) => ({
+              value: hash,
+              label: `${name ?? t('app_insights.version_deleted')} (${hash.slice(0, 8)})`,
+            })),
+          ]}
         />
       </div>
       <Spin spinning={breakdown.isLoading}>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-3">
           <StatTile
             label={t('app_insights.failure_events', { days })}
-            value={formatInteger(summary.failures)}
+            value={formatInteger(hasAvailableDays ? summary.failures : null)}
             hint={t('app_insights.failure_events_hint')}
-            tone={summary.failures > 0 ? 'warning' : undefined}
           />
           <StatTile
             label={t('app_insights.top_reason')}
-            value={
-              topReason ? (
-                <span className="text-base">
-                  {reasonLabel(topReason.reason)}
-                </span>
-              ) : (
-                '-'
-              )
-            }
+            value={topReason ? reasonLabel(topReason.reason) : '-'}
             hint={
               topReason
                 ? t('app_insights.top_reason_hint', {
                     percent: formatShare(topReason.percent),
                   })
-                : t('app_insights.no_failures')
+                : emptyText
             }
           />
           <StatTile
             label={t('app_insights.worst_os')}
-            value={
-              worstOs ? <span className="text-base">{worstOs.key}</span> : '-'
-            }
+            value={highest?.key ?? '-'}
             hint={
-              worstOs
-                ? t('app_insights.worst_os_hint', {
-                    percent: formatPercent(worstOs.failureRate),
-                  })
-                : t('app_insights.no_os_rows')
+              highest ? (
+                <ReportShare
+                  part={
+                    highest.counts.download_fail + highest.counts.patch_fail
+                  }
+                  total={highest.failureSamples}
+                />
+              ) : hasAvailableDays ? (
+                t('app_insights.no_ranked_os')
+              ) : (
+                emptyText
+              )
             }
           />
         </div>
       </Spin>
-
       <Card size="small" title={t('app_insights.reasons_title')}>
-        <Question>{t('app_insights.reasons_question')}</Question>
         <Spin spinning={breakdown.isLoading}>
-          {summary.reasons.length === 0 ? (
-            <EmptyState>
-              {breakdown.isLoading ? '' : t('app_insights.no_failures')}
-            </EmptyState>
-          ) : (
+          {summary.reasons.length > 0 ? (
             <Table
               size="small"
               rowKey="reason"
-              columns={reasonColumns}
               dataSource={summary.reasons}
+              columns={reasonColumns}
               pagination={
                 summary.reasons.length > 10 ? { pageSize: 10 } : false
               }
               scroll={{ x: 'max-content' }}
             />
+          ) : (
+            <EmptyState>{breakdown.isLoading ? '' : emptyText}</EmptyState>
           )}
         </Spin>
         <Footnote>{t('app_insights.reasons_footnote')}</Footnote>
       </Card>
-
       <Card size="small" title={t('app_insights.os_title')}>
-        <Question>{t('app_insights.os_question')}</Question>
-        <Spin spinning={breakdown.isLoading}>
-          {summary.os.length === 0 ? (
-            <EmptyState>
-              {breakdown.isLoading ? '' : t('app_insights.no_events')}
-            </EmptyState>
-          ) : (
-            <DimensionTable
-              rows={summary.os}
-              labelOf={(os) => os}
-              keyTitle={t('app_insights.col_os')}
-            />
-          )}
-        </Spin>
+        <DimensionTable
+          rows={summary.os}
+          emptyText={emptyText}
+          keyTitle={t('app_insights.col_os')}
+          labelOf={(key) => key}
+        />
         <Footnote>{t('app_insights.rates_footnote')}</Footnote>
       </Card>
-
       <Card size="small" title={t('app_insights.carrier_events_title')}>
-        <Question>{t('app_insights.carrier_events_question')}</Question>
-        {versionFilter !== ALL ? (
-          <EmptyState>{t('app_insights.carrier_no_version_filter')}</EmptyState>
+        {versionFilter === ALL ? (
+          <DimensionTable
+            rows={summary.carriers}
+            emptyText={emptyText}
+            keyTitle={t('app_insights.carriers_title')}
+            labelOf={carrierLabel}
+          />
         ) : (
-          <Spin spinning={breakdown.isLoading}>
-            {summary.carriers.length === 0 ? (
-              <EmptyState>
-                {breakdown.isLoading ? '' : t('app_insights.no_events')}
-              </EmptyState>
-            ) : (
-              <DimensionTable
-                rows={summary.carriers}
-                labelOf={carrierLabel}
-                keyTitle={t('app_insights.col_carrier')}
-              />
-            )}
-          </Spin>
+          <EmptyState>{t('app_insights.carrier_no_version_filter')}</EmptyState>
         )}
-        <Footnote>
-          {t('app_insights.breakdown_footnote', {
-            retention: breakdown.data?.retentionDays ?? 35,
-          })}
-        </Footnote>
+        <Footnote>{t('app_insights.rates_footnote')}</Footnote>
       </Card>
+      <Footnote>
+        {t('app_insights.breakdown_footnote', {
+          retention: breakdown.data?.retentionDays ?? 35,
+        })}
+      </Footnote>
     </div>
   );
 };

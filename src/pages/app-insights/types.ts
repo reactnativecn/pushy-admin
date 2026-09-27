@@ -1,7 +1,22 @@
-// pushy-go 三个按应用的洞察接口的响应形状（docs/client-telemetry.md「读取入口」）。
-// 三个接口共用 /metrics/app/geo 的授权边界与 days 参数（默认 7，上限 35）。
+// Additive v2 observation contract; optional fields support rolling deploys.
+export interface ObservationWindow {
+  timezone: string;
+  startDate: string;
+  endDate: string;
+  startInclusive: string;
+  endExclusive: string;
+  today: string;
+  generatedAt: string;
+  partialDay: boolean;
+}
 
-/** checkUpdate 请求的最终结果分类（服务端 classifyResult）。 */
+export type ObservationStatus = 'observed' | 'unavailable';
+export type DeviceStatus = ObservationStatus | 'partial' | 'expired';
+export interface ObservationContract {
+  version: number;
+  collection: string;
+}
+
 export const HIT_OUTCOMES = [
   'uptodate',
   'hdiff',
@@ -17,36 +32,38 @@ export type HitOutcome = (typeof HIT_OUTCOMES)[number];
 export interface PackageTraffic {
   packageVersion: string;
   requests: number;
-  /** 来自 HLL，可能为 0（没有 uuid 或超出跟踪上限）。 */
-  devices: number;
+  devices: number | null;
+  devicesStatus?: DeviceStatus;
 }
 
-/** 被拒绝的请求按客户端上报的原生包版本拆分（hit:blocked / hit:unknown_package）。 */
 export interface RefusedPackage {
   outcome: 'blocked' | 'unknown_package';
   packageVersion: string;
   requests: number;
 }
 
-/** 一个北京时间自然日的流量；今天为实时累计。 */
 export interface AppTrafficDay {
   date: string;
-  /** hit:* 之和，即含拒绝在内的全部完成请求。 */
   requests: number;
   dau: number;
+  requestsStatus?: ObservationStatus;
+  dauStatus?: ObservationStatus;
   hourly: number[];
   hit: Partial<Record<HitOutcome, number>> & Record<string, number>;
   ipVersion: Record<string, number>;
   hosts: Record<string, number>;
   carriers: Record<string, number>;
   packages: PackageTraffic[];
-  /** 拆分上线前的日子为空数组；旧服务端不返回该字段。 */
   refused?: RefusedPackage[];
+  packageDevicesLimited?: boolean;
 }
 
 export interface AppTrafficResponse {
   days: AppTrafficDay[];
   retentionDays: number;
+  packageDevicesRetentionDays?: number;
+  window?: ObservationWindow | null;
+  contract?: ObservationContract;
 }
 
 export const CLIENT_EVENT_TYPES = [
@@ -61,7 +78,6 @@ export type ClientEventType = (typeof CLIENT_EVENT_TYPES)[number];
 export interface EventOSCount {
   type: ClientEventType;
   hash: string;
-  /** null 表示版本已删除。 */
   name: string | null;
   os: string;
   count: number;
@@ -83,6 +99,7 @@ export interface EventCarrierCount {
 
 export interface AppEventBreakdownDay {
   date: string;
+  status?: ObservationStatus;
   byOS: EventOSCount[];
   byReason: EventReasonCount[];
   byCarrier: EventCarrierCount[];
@@ -91,17 +108,20 @@ export interface AppEventBreakdownDay {
 export interface AppEventBreakdownResponse {
   days: AppEventBreakdownDay[];
   retentionDays: number;
+  window?: ObservationWindow | null;
+  contract?: ObservationContract;
 }
 
+// Offered targets/options, not unique requests or file downloads.
 export interface ServedCounts {
   hdiff: number;
   pdiff: number;
   full: number;
-  /** 增量还没生成、退化成整包下发的次数。 */
   fullPending: number;
   exp: number;
 }
 
+// Unlinked client reports, not mutually exclusive update attempts.
 export interface FunnelEventCounts {
   downloadSuccess: number;
   downloadFail: number;
@@ -136,10 +156,18 @@ export interface VersionFunnel {
   name: string | null;
   served: ServedCounts;
   events: FunnelEventCounts;
-  /** 累计激活 / 下载过该版本的设备数（HLL，不分日）。 */
   adopted: { mark: number; download: number };
+  observed?: { mark: number | null; download: number | null };
   lag: LagBuckets;
   byPackage: PackageFunnel[];
+}
+
+export interface VersionEventSummary {
+  versionCount: number;
+  offeredTargets: number;
+  events: FunnelEventCounts;
+  unattributed: FunnelEventCounts;
+  unattributedOffers: number;
 }
 
 export interface VersionFunnelResponse {
@@ -147,9 +175,22 @@ export interface VersionFunnelResponse {
   days: number;
   start: string;
   end: string;
-  /** 从这一 UTC 日起读实时小时桶。 */
   hourlyFrom: string;
   dauToday: number;
   truncated?: boolean;
   versions: VersionFunnel[];
+  window?: ObservationWindow | null;
+  dauWindow?: ObservationWindow | null;
+  summary?: VersionEventSummary;
+  contract?: ObservationContract & {
+    servedUnit: string;
+    eventUnit: string;
+    deviceUnit: string;
+    adoptionScope: string;
+    adoptionInactivityDays: number;
+    lagOrigin: string;
+    lagUnit: string;
+    lagInactivityDays: number;
+    versionOrder: string;
+  };
 }

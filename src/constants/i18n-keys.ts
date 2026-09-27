@@ -93,12 +93,12 @@ export const DEPS_VIOLATION_MESSAGE_KEY: Record<
   rnu_downgrade: 'bind_package.deps_rnu_downgrade',
 };
 
-/** 版本漏斗的健康标签（回滚率阈值判定，null 表示样本不足不判定）。 */
+/** 回滚报告占比标签（null 表示样本不足，不代表整体健康）。 */
 export const FUNNEL_HEALTH_LABEL_KEY: Record<
   NonNullable<FunnelHealth>,
   string
 > = {
-  healthy: 'app_insights.health_healthy',
-  warning: 'app_insights.health_warning',
-  critical: 'app_insights.health_critical',
+  healthy: 'app_insights.rollback_low',
+  warning: 'app_insights.rollback_warning',
+  critical: 'app_insights.rollback_high',
 };

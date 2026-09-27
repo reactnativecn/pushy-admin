@@ -75,7 +75,10 @@ export const formatPercent = (ratio: number | null | undefined, digits = 1) =>
     ? `${((ratio as number) * 100).toFixed(digits)}%`
     : '-';
 
-export const formatShare = (percent: number) => `${percent.toFixed(1)}%`;
+export const formatShare = (percent: number | null | undefined) =>
+  typeof percent === 'number' && Number.isFinite(percent)
+    ? `${percent.toFixed(1)}%`
+    : '-';
 
 /** 单个指标块：标题 → 大数字 → 一句补充说明。 */
 export const StatTile = ({
@@ -309,9 +312,7 @@ export const useFailureReasonLabel = () => {
   return (reason: string) => {
     const parsed = parseFailureReason(reason);
     if (parsed.kind === 'other') {
-      return parsed.detail
-        ? t('app_insights.reason_other_detail', { detail: parsed.detail })
-        : t('app_insights.reason_other');
+      return t('app_insights.reason_other');
     }
     const key = {
       empty: 'app_insights.reason_empty',
