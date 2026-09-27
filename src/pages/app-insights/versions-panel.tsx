@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   buildFunnelRows,
-  filterFunnelRows,
   type FunnelRow,
+  filterFunnelRows,
   lagShares,
   servedTotal,
   versionTotals,
@@ -26,7 +26,12 @@ import {
   useAppVersionFunnel,
   VersionLabel,
 } from './shared';
-import type { FunnelEventCounts, LagBucket, LagBuckets, ServedCounts } from './types';
+import type {
+  FunnelEventCounts,
+  LagBucket,
+  LagBuckets,
+  ServedCounts,
+} from './types';
 
 const ALL = '__all__';
 const LAG_LABEL_KEY: Record<LagBucket, string> = {
@@ -49,7 +54,15 @@ const ServedBreakdown = ({ served }: { served: ServedCounts }) => {
     [t('app_insights.served_full_pending'), served.fullPending],
     [t('app_insights.served_exp'), served.exp],
   ];
-  return <div>{parts.map(([label, count]) => <div key={label}>{label}: {formatInteger(count)}</div>)}</div>;
+  return (
+    <div>
+      {parts.map(([label, count]) => (
+        <div key={label}>
+          {label}: {formatInteger(count)}
+        </div>
+      ))}
+    </div>
+  );
 };
 
 const useEventColumns = <T extends EventRow>(): ColumnsType<T> => {
@@ -68,7 +81,9 @@ const useEventColumns = <T extends EventRow>(): ColumnsType<T> => {
       align: 'right',
       render: (_, row) => (
         <Tooltip title={<ServedBreakdown served={row.served} />}>
-          <span className="tabular-nums underline decoration-dotted">{formatInteger(servedTotal(row.served))}</span>
+          <span className="tabular-nums underline decoration-dotted">
+            {formatInteger(servedTotal(row.served))}
+          </span>
         </Tooltip>
       ),
     },
@@ -86,12 +101,20 @@ const useEventColumns = <T extends EventRow>(): ColumnsType<T> => {
   ];
 };
 
-const LagTable = ({ title, buckets }: { title: string; buckets: LagBuckets['downloadSuccess'] }) => {
+const LagTable = ({
+  title,
+  buckets,
+}: {
+  title: string;
+  buckets: LagBuckets['downloadSuccess'];
+}) => {
   const { t } = useTranslation();
   const { total, shares } = lagShares(buckets);
   return (
     <div>
-      <h4>{title} {t('app_insights.lag_total', { count: formatInteger(total) })}</h4>
+      <h4>
+        {title} {t('app_insights.lag_total', { count: formatInteger(total) })}
+      </h4>
       {total > 0 ? (
         <Table
           size="small"
@@ -99,12 +122,28 @@ const LagTable = ({ title, buckets }: { title: string; buckets: LagBuckets['down
           pagination={false}
           dataSource={shares}
           columns={[
-            { title, key: 'bucket', render: (_, row) => t(LAG_LABEL_KEY[row.bucket]) },
-            { title: t('app_insights.col_count'), dataIndex: 'count', align: 'right', render: formatInteger },
-            { title: t('app_insights.col_share'), dataIndex: 'percent', align: 'right', render: formatShare },
+            {
+              title,
+              key: 'bucket',
+              render: (_, row) => t(LAG_LABEL_KEY[row.bucket]),
+            },
+            {
+              title: t('app_insights.col_count'),
+              dataIndex: 'count',
+              align: 'right',
+              render: formatInteger,
+            },
+            {
+              title: t('app_insights.col_share'),
+              dataIndex: 'percent',
+              align: 'right',
+              render: formatShare,
+            },
           ]}
         />
-      ) : <EmptyState>{t('app_insights.no_observations')}</EmptyState>}
+      ) : (
+        <EmptyState>{t('app_insights.no_observations')}</EmptyState>
+      )}
     </div>
   );
 };
@@ -121,65 +160,139 @@ export const VersionDetail = ({ row }: { row: FunnelRow }) => {
         pagination={false}
         scroll={{ x: 'max-content' }}
         dataSource={row.byPackage}
-        columns={[{ title: t('app_insights.col_package'), dataIndex: 'packageVersion' }, ...packageColumns]}
+        columns={[
+          { title: t('app_insights.col_package'), dataIndex: 'packageVersion' },
+          ...packageColumns,
+        ]}
       />
       {row.retained ? (
         <Card size="small" title={t('app_insights.retained_title')}>
           <Question>{t('app_insights.retained_scope')}</Question>
           <div className="grid gap-2 md:grid-cols-2">
-            <StatTile label={t('app_insights.adopted_mark')} value={observedInteger(row.retained.mark)} />
-            <StatTile label={t('app_insights.adopted_download')} value={observedInteger(row.retained.download)} />
+            <StatTile
+              label={t('app_insights.adopted_mark')}
+              value={observedInteger(row.retained.mark)}
+            />
+            <StatTile
+              label={t('app_insights.adopted_download')}
+              value={observedInteger(row.retained.download)}
+            />
           </div>
           <Footnote>{t('app_insights.retained_hint')}</Footnote>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <LagTable title={t('app_insights.lag_download')} buckets={row.retained.lag.downloadSuccess} />
-            <LagTable title={t('app_insights.lag_mark')} buckets={row.retained.lag.markSuccess} />
+            <LagTable
+              title={t('app_insights.lag_download')}
+              buckets={row.retained.lag.downloadSuccess}
+            />
+            <LagTable
+              title={t('app_insights.lag_mark')}
+              buckets={row.retained.lag.markSuccess}
+            />
           </div>
           <Footnote>{t('app_insights.lag_footnote')}</Footnote>
         </Card>
       ) : (
-        <Alert type="info" message={t('app_insights.retained_unavailable_package')} />
+        <Alert
+          type="info"
+          message={t('app_insights.retained_unavailable_package')}
+        />
       )}
     </div>
   );
 };
 
-export const VersionsPanel = ({ appKey, days }: { appKey: string | undefined; days: number }) => {
+export const VersionsPanel = ({
+  appKey,
+  days,
+}: {
+  appKey: string | undefined;
+  days: number;
+}) => {
   const { t } = useTranslation();
   const funnel = useAppVersionFunnel(appKey, days);
   const [versionFilter, setVersionFilter] = useState(ALL);
   const [packageFilter, setPackageFilter] = useState(ALL);
   const allRows = useMemo(() => buildFunnelRows(funnel.data), [funnel.data]);
   const rows = useMemo(
-    () => filterFunnelRows(allRows, versionFilter === ALL ? undefined : versionFilter, packageFilter === ALL ? undefined : packageFilter),
+    () =>
+      filterFunnelRows(
+        allRows,
+        versionFilter === ALL ? undefined : versionFilter,
+        packageFilter === ALL ? undefined : packageFilter,
+      ),
     [allRows, versionFilter, packageFilter],
   );
   const totals = versionTotals(funnel.data);
   const eventColumns = useEventColumns<FunnelRow>();
-  const packages = Array.from(new Set(allRows.flatMap((row) => row.byPackage.map((item) => item.packageVersion)))).sort();
+  const packages = Array.from(
+    new Set(
+      allRows.flatMap((row) =>
+        row.byPackage.map((item) => item.packageVersion),
+      ),
+    ),
+  ).sort();
   const columns: ColumnsType<FunnelRow> = [
-    { title: t('app_insights.col_version'), key: 'version', fixed: 'left', width: 220, render: (_, row) => <VersionLabel hash={row.hash} name={row.name} /> },
+    {
+      title: t('app_insights.col_version'),
+      key: 'version',
+      fixed: 'left',
+      width: 220,
+      render: (_, row) => <VersionLabel hash={row.hash} name={row.name} />,
+    },
     ...eventColumns,
   ];
   return (
     <div className="space-y-4">
-      {funnel.error && <InsightsError error={funnel.error} />}
-      <ObservationNotice window={funnel.data?.window} source="utc" updatedAt={funnel.dataUpdatedAt} stale={!!funnel.error && !!funnel.data} />
-      <Question>{t(totals?.scope === 'all_observed' ? 'app_insights.totals_all' : 'app_insights.totals_returned')}</Question>
+      {!!funnel.error && <InsightsError error={funnel.error} />}
+      <ObservationNotice
+        window={funnel.data?.window}
+        source="utc"
+        updatedAt={funnel.dataUpdatedAt}
+        stale={!!funnel.error && !!funnel.data}
+      />
+      <Question>
+        {t(
+          totals?.scope === 'all_observed'
+            ? 'app_insights.totals_all'
+            : 'app_insights.totals_returned',
+        )}
+      </Question>
       <Spin spinning={funnel.isLoading}>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-          <StatTile label={t('app_insights.versions_in_window')} value={formatInteger(totals?.versionCount)} />
-          <StatTile label={t('app_insights.window_served')} value={formatInteger(totals?.offeredTargets)} />
-          <StatTile label={t('app_insights.window_rollbacks')} value={formatInteger(totals?.events.rollback)} />
+          <StatTile
+            label={t('app_insights.versions_in_window')}
+            value={formatInteger(totals?.versionCount)}
+          />
+          <StatTile
+            label={t('app_insights.window_served')}
+            value={formatInteger(totals?.offeredTargets)}
+          />
+          <StatTile
+            label={t('app_insights.window_rollbacks')}
+            value={formatInteger(totals?.events.rollback)}
+          />
         </div>
       </Spin>
       {totals?.unattributed && (
-        <Footnote>{t('app_insights.totals_unattributed', {
-          offers: formatInteger(totals.unattributedOffers),
-          reports: formatInteger(Object.values(totals.unattributed).reduce((sum, count) => sum + count, 0)),
-        })}</Footnote>
+        <Footnote>
+          {t('app_insights.totals_unattributed', {
+            offers: formatInteger(totals.unattributedOffers),
+            reports: formatInteger(
+              Object.values(totals.unattributed).reduce(
+                (sum, count) => sum + count,
+                0,
+              ),
+            ),
+          })}
+        </Footnote>
       )}
-      {funnel.data?.truncated && <Alert type="info" showIcon message={t('app_insights.truncated', { count: allRows.length })} />}
+      {funnel.data?.truncated && (
+        <Alert
+          type="info"
+          showIcon
+          message={t('app_insights.truncated', { count: allRows.length })}
+        />
+      )}
       <Card size="small" title={t('app_insights.funnel_table_title')}>
         <div className="mb-3 flex flex-wrap gap-2">
           <Select
@@ -188,7 +301,13 @@ export const VersionsPanel = ({ appKey, days }: { appKey: string | undefined; da
             showSearch
             optionFilterProp="label"
             className="w-64"
-            options={[{ value: ALL, label: t('app_insights.filter_all_versions') }, ...allRows.map((row) => ({ value: row.hash, label: `${row.name ?? t('app_insights.version_deleted')} (${row.hash.slice(0, 8)})` }))]}
+            options={[
+              { value: ALL, label: t('app_insights.filter_all_versions') },
+              ...allRows.map((row) => ({
+                value: row.hash,
+                label: `${row.name ?? t('app_insights.version_deleted')} (${row.hash.slice(0, 8)})`,
+              })),
+            ]}
           />
           <Select
             value={packageFilter}
@@ -196,7 +315,10 @@ export const VersionsPanel = ({ appKey, days }: { appKey: string | undefined; da
             showSearch
             optionFilterProp="label"
             className="w-48"
-            options={[{ value: ALL, label: t('app_insights.filter_all_packages') }, ...packages.map((value) => ({ value, label: value }))]}
+            options={[
+              { value: ALL, label: t('app_insights.filter_all_packages') },
+              ...packages.map((value) => ({ value, label: value })),
+            ]}
           />
         </div>
         <Question>{t('app_insights.events_not_funnel')}</Question>
@@ -210,9 +332,21 @@ export const VersionsPanel = ({ appKey, days }: { appKey: string | undefined; da
               columns={columns}
               pagination={rows.length > 20 ? { pageSize: 20 } : false}
               scroll={{ x: 'max-content' }}
-              expandable={{ expandedRowRender: (row) => <VersionDetail row={row} /> }}
+              expandable={{
+                expandedRowRender: (row) => <VersionDetail row={row} />,
+              }}
             />
-          ) : <EmptyState>{funnel.isLoading ? '' : t(allRows.length ? 'app_insights.no_versions_match' : 'app_insights.no_observations')}</EmptyState>}
+          ) : (
+            <EmptyState>
+              {funnel.isLoading
+                ? ''
+                : t(
+                    allRows.length
+                      ? 'app_insights.no_versions_match'
+                      : 'app_insights.no_observations',
+                  )}
+            </EmptyState>
+          )}
         </Spin>
         <Footnote>{t('app_insights.rollback_only')}</Footnote>
       </Card>

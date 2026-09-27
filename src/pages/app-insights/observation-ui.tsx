@@ -18,9 +18,7 @@ export const ObservationNotice = ({
   const { t } = useTranslation();
   return (
     <div className="space-y-1 text-xs text-gray-500" data-testid="metric-scope">
-      {stale && (
-        <Alert type="warning" message={t('app_insights.stale_data')} />
-      )}
+      {stale && <Alert type="warning" message={t('app_insights.stale_data')} />}
       <div>
         {window
           ? t('app_insights.window_exact', {

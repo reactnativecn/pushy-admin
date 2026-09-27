@@ -429,9 +429,7 @@ export const filterFunnelRows = (
       : [];
   });
 
-export const versionTotals = (
-  response: VersionFunnelResponse | undefined,
-) => {
+export const versionTotals = (response: VersionFunnelResponse | undefined) => {
   if (!response) return null;
   if (response.summary) {
     return { ...response.summary, scope: 'all_observed' as const };
@@ -535,8 +533,7 @@ export const highestFailureDimension = (rows: readonly DimensionRow[]) =>
   [...rows]
     .filter(
       (row) =>
-        row.failureSamples >= MIN_EVENT_SAMPLES &&
-        (row.failureRate ?? 0) > 0,
+        row.failureSamples >= MIN_EVENT_SAMPLES && (row.failureRate ?? 0) > 0,
     )
     .sort(
       (left, right) =>
@@ -644,9 +641,9 @@ export const summarizeBreakdown = (
         (a, b) => b.count - a.count || a.hash.localeCompare(b.hash),
       ),
     })).sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason)),
-    os: Array.from(os, ([key, counts]) =>
-      finishDimensionRow(key, counts),
-    ).sort(byCount),
+    os: Array.from(os, ([key, counts]) => finishDimensionRow(key, counts)).sort(
+      byCount,
+    ),
     carriers: Array.from(carriers, ([key, counts]) =>
       finishDimensionRow(key, counts),
     ).sort(byCount),
