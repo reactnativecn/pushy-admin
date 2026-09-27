@@ -387,7 +387,7 @@ export const buildFunnelRows = (
       const value =
         version.observed === undefined
           ? version.adopted[kind]
-          : version.observed[kind];
+          : version.observed?.[kind];
       return validCount(value) && value > 0 ? value : null;
     };
     return {
