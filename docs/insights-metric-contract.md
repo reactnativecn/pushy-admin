@@ -22,13 +22,13 @@ No-update includes already-current and no bound version. Paused/restricted can b
 
 Deploy pushy-go #17 first, then this console. All server fields are additive; the console continues to operate with old payloads and labels their limitations. No billing, rollout decisions, auto-pause rules, client protocol, retention TTL, production data or schema is mutated. Existing realtime series, release insights and region sections retain their independent time controls.
 
-Metric-contract translations are grouped in `src/i18n/insights-metrics.ts` and registered over the legacy resource at initialization. Both languages have identical keys, checked in tests.
+Metric-contract translations are grouped in `src/i18n/insights-metrics.ts`. Runtime registration and locale validation import the same side-effect-free `src/i18n/resources.ts` catalog. Tests retain base JSON key parity, validate effective bilingual key parity and all static source references, and reject plain-text rendering of tagged translations in either language.
 
 ## Verification
 
 Unit regressions cover zero days, unavailable values, partial today, supplied business date, independently retained UUID sets, package filters, old/new payloads, top-N summaries, unlinked patch recovery, sample thresholds and old failure labels. Render tests cover rollback-only wording, hidden out-of-scope retained metrics, the former 250% scenario, legacy totals, stale windows and package observation states.
 
-CI still checks types, lint, tests and bundle size. On failure, a short-lived diagnostic artifact exports Biome suggestions and formatted copies; it never commits edits or makes a failed validation pass.
+The existing CI gates remain unchanged: typecheck, lint, tests, production build and bundle-size limits. Temporary formatting diagnostics used during development have been removed from the final workflow diff.
 
 ## Not fabricated by this correction
 

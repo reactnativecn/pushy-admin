@@ -2,13 +2,10 @@ import { describe, expect, it } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resources } from './resources';
 
-// 两类 i18n 事故 CI 都看不见,因为 t() 的返回值类型上就是 string:
-//   1. 只给一个语言包加了 key —— 另一个语言回退成英文/中文原文;
-//   2. 两个语言包都没加 —— 界面直接显示 'nav.automation' 这样的原始 key;
-//   3. 文案里带 <strong> 之类的标签,却用 t() 渲染 —— 标签被原样显示。
-// 下面三个测试分别挡住它们。
-
+// Validate both the base JSON catalogs and the effective runtime resources.
+// Runtime overlays must not bypass key parity, missing-key or markup checks.
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const LOCALES_DIR = join(HERE, 'locales');
 const SRC_DIR = join(HERE, '..');
@@ -42,8 +39,7 @@ function sourceFiles(dir: string): string[] {
 
 /**
  * 静态可解析的 key:t('a.b') 与 <Trans i18nKey="a.b">。
- * t(`a.b_${x}`) 这类模板字面量无法静态判定,由 locale 平价测试兜底
- * ——只要两个语言包的键集一致,动态族就不会只在一边存在。
+ * t(`a.b_${x}`) 这类模板字面量无法静态判定,由 locale 平价测试兜底。
  */
 function staticKeysIn(source: string): string[] {
   const keys: string[] = [];
@@ -72,54 +68,52 @@ function valueAt(locale: Json, path: string): string | undefined {
   return typeof found === 'string' ? found : undefined;
 }
 
-const en = loadLocale('en.json');
-const zh = loadLocale('zh-CN.json');
+const en = resources.en.translation;
+const zh = resources['zh-CN'].translation;
 
 describe('i18n locales', () => {
-  it('en 与 zh-CN 的键集完全一致', () => {
+  it('base JSON catalogs keep identical key sets', () => {
+    expect(leafKeys(loadLocale('en.json')).sort()).toEqual(
+      leafKeys(loadLocale('zh-CN.json')).sort(),
+    );
+  });
+
+  it('en 与 zh-CN 的运行时键集完全一致', () => {
     const enKeys = new Set(leafKeys(en));
     const zhKeys = new Set(leafKeys(zh));
-
     const missingInZh = [...enKeys].filter((key) => !zhKeys.has(key)).sort();
     const missingInEn = [...zhKeys].filter((key) => !enKeys.has(key)).sort();
-
     expect({ missingInZh, missingInEn }).toEqual({
       missingInZh: [],
       missingInEn: [],
     });
   });
 
-  it('源码里静态引用的 key 在两个语言包里都存在', () => {
+  it('源码里静态引用的 key 在两个运行时语言包里都存在', () => {
     const enKeys = new Set(leafKeys(en));
     const zhKeys = new Set(leafKeys(zh));
-
     const referenced = new Set(
       sourceFiles(SRC_DIR).flatMap((file) =>
         staticKeysIn(readFileSync(file, 'utf-8')),
       ),
     );
-
-    // 只校验看起来像 i18n key 的引用(带点号的命名空间路径),
-    // 避免把恰好叫 t() 的其他调用误判成翻译。
     const namespaced = [...referenced].filter((key) => key.includes('.'));
     const missing = namespaced
       .filter((key) => !enKeys.has(key) || !zhKeys.has(key))
       .sort();
-
     expect(missing).toEqual([]);
   });
 
   it('带标签的文案不能走 t(),必须用 <Trans> 渲染', () => {
-    // t() 返回的是字符串,React 会把 '<strong>原生代码</strong>' 原样显示出来。
-    // 这类文案只能交给 <Trans components={{ strong: <strong /> }} />。
-    const markup = leafKeys(en).filter((key) =>
-      /<[a-z][a-z0-9]*>/i.test(valueAt(en, key) ?? ''),
+    const markup = [en, zh].flatMap((locale) =>
+      leafKeys(locale).filter((key) =>
+        /<[a-z][a-z0-9]*>/i.test(valueAt(locale, key) ?? ''),
+      ),
     );
-
     const sources = sourceFiles(SRC_DIR).map((file) =>
       readFileSync(file, 'utf-8'),
     );
-    const renderedAsPlainText = markup
+    const renderedAsPlainText = [...new Set(markup)]
       .filter((key) =>
         sources.some(
           (source) =>
@@ -127,7 +121,6 @@ describe('i18n locales', () => {
         ),
       )
       .sort();
-
     expect(renderedAsPlainText).toEqual([]);
   });
 });
