@@ -524,6 +524,12 @@ export const FAILURE_EVENT_TYPES: ReadonlySet<ClientEventType> = new Set([
   'patch_fail',
   'rollback',
 ]);
+// Rollbacks are reported without an error detail, so only download and
+// patch failures carry a classified reason.
+const REASON_EVENT_TYPES: ReadonlySet<ClientEventType> = new Set([
+  'download_fail',
+  'patch_fail',
+]);
 export type EventTypeCounts = Record<ClientEventType, number>;
 const emptyEventCounts = (): EventTypeCounts => ({
   download_success: 0,
@@ -643,7 +649,7 @@ export const summarizeBreakdown = (
       if (
         !validCount(item.count) ||
         item.count <= 0 ||
-        !FAILURE_EVENT_TYPES.has(item.type)
+        !REASON_EVENT_TYPES.has(item.type)
       ) {
         continue;
       }

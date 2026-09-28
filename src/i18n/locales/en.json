@@ -596,7 +596,7 @@
     "ip_footnote": "Determined from the client IP.",
     "failures_intro": "Why do downloads, patches and activations fail, and which versions, platforms and networks are affected?",
     "failure_events": "Classified failure reports in {{days}} calendar buckets",
-    "failure_events_hint": "Reason aggregates: download failures, Patch failures and rollbacks, not failed devices.",
+    "failure_events_hint": "Reason aggregates: download and Patch failures. Rollbacks carry no reason; see the rollback report share by platform. Not failed devices.",
     "top_reason": "Top reason",
     "top_reason_hint": "{{percent}} of failure events",
     "no_failures": "No failure events in this range",

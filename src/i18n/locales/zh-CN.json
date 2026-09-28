@@ -596,7 +596,7 @@
     "ip_footnote": "按客户端 IP 判断。",
     "failures_intro": "下载、Patch 与回滚事件为什么会失败，集中在哪些版本、平台和网络？",
     "failure_events": "近 {{days}} 日桶已分类失败事件",
-    "failure_events_hint": "来自原因分类聚合：下载失败、Patch 失败和回滚；不是失败设备数。",
+    "failure_events_hint": "来自原因分类聚合：下载失败和 Patch 失败；回滚不带原因，看「按平台」里的回滚报告占比。不是失败设备数。",
     "top_reason": "最主要原因",
     "top_reason_hint": "占失败事件 {{percent}}",
     "no_failures": "该时间范围内没有失败事件",
