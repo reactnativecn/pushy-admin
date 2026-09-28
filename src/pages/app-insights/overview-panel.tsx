@@ -1,10 +1,12 @@
-import { Alert, Card, Radio, Spin, Tag } from 'antd';
-import { useMemo, useState } from 'react';
+import { Alert, Card, Radio, Spin, Table, Tag, Tooltip } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncColumn } from '@/components/lazy-chart';
 import { useThemeMode } from '@/utils/theme-mode';
 import {
   buildFunnelRows,
+  type FunnelRow,
   type InsightView,
   type RefusedPackageSummary,
   rankFunnelRows,
@@ -14,7 +16,7 @@ import {
 import {
   ObservationNotice,
   observedInteger,
-  RollbackObservation,
+  RollbackShare,
 } from './observation-ui';
 import {
   BarList,
@@ -66,6 +68,87 @@ const RefusedPackages = ({
   );
 };
 
+/** 0 次与有值区分开：0 用浅灰，扫一眼就能看到哪一列真的有事件。 */
+const Count = ({ value }: { value: number }) => (
+  <span className={value === 0 ? 'text-gray-300 tabular-nums' : 'tabular-nums'}>
+    {formatInteger(value)}
+  </span>
+);
+
+const HeaderHint = ({ label, hint }: { label: string; hint: ReactNode }) => (
+  <Tooltip title={hint}>
+    <span className="cursor-help underline decoration-dotted underline-offset-4">
+      {label}
+    </span>
+  </Tooltip>
+);
+
+const useGlanceColumns = (): ColumnsType<FunnelRow> => {
+  const { t } = useTranslation();
+  return [
+    {
+      title: t('app_insights.col_version'),
+      key: 'version',
+      render: (_, row) => <VersionLabel hash={row.hash} name={row.name} />,
+    },
+    {
+      title: t('app_insights.col_served'),
+      key: 'served',
+      align: 'right',
+      render: (_, row) => <Count value={row.servedTotal} />,
+    },
+    {
+      title: t('app_insights.col_activated'),
+      key: 'activated',
+      align: 'right',
+      render: (_, row) => <Count value={row.events.markSuccess} />,
+    },
+    {
+      title: t('app_insights.glance_col_failed'),
+      key: 'failed',
+      align: 'right',
+      render: (_, row) => <Count value={row.failures} />,
+    },
+    {
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_rollback_rate')}
+          hint={t('app_insights.rollback_only')}
+        />
+      ),
+      key: 'rollback',
+      align: 'right',
+      render: (_, row) => (
+        <RollbackShare
+          health={row.health}
+          samples={row.rollbackSamples}
+          count={row.events.rollback}
+        />
+      ),
+    },
+    {
+      title: (
+        <HeaderHint
+          label={t('app_insights.glance_col_devices')}
+          hint={
+            <>
+              <div>{t('app_insights.observed_glance')}</div>
+              <div>{t('app_insights.retained_hint')}</div>
+            </>
+          }
+        />
+      ),
+      key: 'devices',
+      align: 'right',
+      render: (_, row) => (
+        <span className="font-semibold tabular-nums">
+          {observedInteger(row.retained?.mark)}
+        </span>
+      ),
+    },
+  ];
+};
+
 export const OverviewPanel = ({
   appKey,
   days,
@@ -78,6 +161,7 @@ export const OverviewPanel = ({
   const { t } = useTranslation();
   const { isDark } = useThemeMode();
   const hitLabel = useHitOutcomeLabel();
+  const glanceColumns = useGlanceColumns();
   const [dailyMetric, setDailyMetric] = useState<'requests' | 'dau'>(
     'requests',
   );
@@ -244,52 +328,26 @@ export const OverviewPanel = ({
           source="utc"
           updatedAt={funnel.dataUpdatedAt}
           stale={!!funnel.error && !!funnel.data}
+          compact
         />
         <Spin spinning={funnel.isLoading}>
           {rows.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {rows.map((row) => (
-                <div
-                  key={row.hash}
-                  className="grid gap-3 py-3 md:grid-cols-[minmax(0,1fr)_auto]"
-                >
-                  <div className="min-w-0">
-                    <VersionLabel hash={row.hash} name={row.name} />
-                    <div className="mt-1 text-xs text-gray-500">
-                      {t('app_insights.glance_line', {
-                        served: formatInteger(row.servedTotal),
-                        activated: formatInteger(row.events.markSuccess),
-                        failed: formatInteger(row.failures),
-                        rollback: formatInteger(row.events.rollback),
-                      })}
-                    </div>
-                    <div className="mt-2">
-                      <RollbackObservation
-                        health={row.health}
-                        samples={row.rollbackSamples}
-                        count={row.events.rollback}
-                      />
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold tabular-nums">
-                      {observedInteger(row.retained?.mark)}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {t('app_insights.observed_glance')}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table
+              size="small"
+              rowKey="hash"
+              columns={glanceColumns}
+              dataSource={rows}
+              pagination={false}
+              scroll={{ x: 'max-content' }}
+            />
           ) : (
             <EmptyState>
               {funnel.isLoading ? '' : t('app_insights.no_observations')}
             </EmptyState>
           )}
         </Spin>
-        <Footnote>{t('app_insights.events_not_funnel')}</Footnote>
         <Footnote>
+          {t('app_insights.events_not_funnel')}{' '}
           {t('app_insights.retained_scope')} {t('app_insights.retained_hint')}
         </Footnote>
       </Card>

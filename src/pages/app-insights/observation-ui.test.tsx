@@ -7,7 +7,11 @@ import en from '@/i18n/locales/en.json';
 import zhCN from '@/i18n/locales/zh-CN.json';
 import { metricsKeys } from '@/utils/query-keys';
 import { buildFunnelRows, filterFunnelRows } from './logic';
-import { ObservationNotice, RollbackObservation } from './observation-ui';
+import {
+  ObservationNotice,
+  RollbackObservation,
+  RollbackShare,
+} from './observation-ui';
 import { PackageObservation } from './traffic-panel';
 import type { VersionFunnelResponse } from './types';
 import { VersionDetail, VersionsPanel } from './versions-panel';
@@ -90,6 +94,17 @@ test('low rollback does not claim overall health and tiny samples are explicit',
   expect(
     screen.getByText('Insufficient rollback observations (4 / 10)'),
   ).not.toBeNull();
+});
+
+test('compact rollback share shows the ratio and flags thin samples', () => {
+  render(<RollbackShare health="warning" samples={200} count={3} />);
+  expect(screen.getByText('1.5%')).not.toBeNull();
+  expect(screen.getByText('3/200')).not.toBeNull();
+  expect(screen.queryByText(insightsEn.samples_short)).toBeNull();
+  cleanup();
+  render(<RollbackShare health={null} samples={2} count={1} />);
+  expect(screen.getByText('50.0%')).not.toBeNull();
+  expect(screen.getByText(insightsEn.samples_short)).not.toBeNull();
 });
 
 test('package-filtered details hide whole-version cumulative metrics', () => {
