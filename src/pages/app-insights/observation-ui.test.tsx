@@ -145,7 +145,6 @@ test('legacy table labels returned-version totals and keeps download failures vi
 test('window and stale state disclose actual UTC boundaries and refresh freshness', () => {
   render(
     <ObservationNotice
-      source="utc"
       updatedAt={1}
       stale
       window={{

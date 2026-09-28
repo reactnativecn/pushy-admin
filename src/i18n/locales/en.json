@@ -643,12 +643,9 @@
     "col_carrier": "Carrier",
     "means_note": "Both means exclude today. Valid zeroes count; unavailable values do not. Available days do not imply complete collection.",
     "window_exact": "{{timezone}}: {{start}} to {{end}} (start inclusive, end exclusive)",
-    "window_utc_legacy": "Legacy API: version events use UTC calendar days; exact window metadata is unavailable.",
-    "window_business_legacy": "Legacy API lacks business timezone and availability metadata. Today falls back to UTC+8; ambiguous zero-device counts are excluded, not treated as observed zeroes.",
     "last_refreshed": "Last successful read: {{time}}; refreshes every minute",
     "not_loaded": "No successful read yet",
     "stale_data": "Refresh failed; showing the last successful read",
-    "best_effort": "Best-effort observations may be duplicated or missing. No data does not establish zero devices or no failures.",
     "no_observations": "No available observations; this does not establish zero or healthy",
     "observed_glance": "Retained cumulative activation UUID estimate",
     "col_download_fail": "Download-failure reports",
@@ -675,7 +672,6 @@
     "no_ranked_os": "No platform has both enough samples and a positive failure share",
     "breakdown_unavailable": "Failure report data is unavailable; absence cannot establish zero failures.",
     "breakdown_availability": "Available observation days: {{available}} / {{total}}; unavailable: {{unavailable}}. Unavailable days are excluded, not filled with zero.",
-    "breakdown_legacy_days": "{{days}} legacy days lack availability metadata; only positive reported observations are usable.",
     "no_reports_in_scope": "No reports observed in this filter; this is not an overall health conclusion."
   },
   "admin_metrics": {

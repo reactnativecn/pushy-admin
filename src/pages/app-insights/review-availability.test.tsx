@@ -150,9 +150,6 @@ test('Chinese availability distinguishes legacy missing buckets from an empty fi
     ),
   ).not.toBeNull();
   expect(
-    screen.getByText(i18n.t('app_insights.breakdown_legacy_days', { days: 2 })),
-  ).not.toBeNull();
-  expect(
     screen.queryByText(i18n.t('app_insights.breakdown_unavailable')),
   ).toBeNull();
 });

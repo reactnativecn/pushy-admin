@@ -9,26 +9,25 @@ import type { ObservationWindow } from './types';
 
 export const ObservationNotice = ({
   window,
-  source,
   updatedAt,
   stale = false,
   compact = false,
 }: {
   window?: ObservationWindow | null;
-  source: 'utc' | 'business';
   updatedAt: number;
   stale?: boolean;
-  /** 卡片内用：窗口与刷新时间并成一行，尽力采集说明收进提示。 */
+  /** 卡片内用：窗口与刷新时间并成一行。 */
   compact?: boolean;
 }) => {
   const { t } = useTranslation();
+  // 旧接口不带窗口元数据时不显示窗口行，只留刷新时间。
   const windowText = window
     ? t('app_insights.window_exact', {
         timezone: window.timezone,
         start: window.startInclusive,
         end: window.endExclusive,
       })
-    : t(`app_insights.window_${source}_legacy`);
+    : null;
   const refreshedText =
     updatedAt > 0
       ? t('app_insights.last_refreshed', {
@@ -45,20 +44,16 @@ export const ObservationNotice = ({
             message={t('app_insights.stale_data')}
           />
         )}
-        <Tooltip title={t('app_insights.best_effort')}>
-          <span className="cursor-help">
-            {windowText} · {refreshedText}
-          </span>
-        </Tooltip>
+        {windowText && `${windowText} · `}
+        {refreshedText}
       </div>
     );
   }
   return (
     <div className="space-y-1 text-xs text-gray-500" data-testid="metric-scope">
       {stale && <Alert type="warning" message={t('app_insights.stale_data')} />}
-      <div>{windowText}</div>
+      {windowText && <div>{windowText}</div>}
       <div>{refreshedText}</div>
-      <div>{t('app_insights.best_effort')}</div>
     </div>
   );
 };
@@ -184,7 +179,7 @@ export const BreakdownAvailability = ({
 }: {
   summary: Pick<
     BreakdownSummary,
-    'totalDays' | 'availableDays' | 'unavailableDays' | 'legacyDays'
+    'totalDays' | 'availableDays' | 'unavailableDays'
   >;
 }) => {
   const { t } = useTranslation();
@@ -201,13 +196,6 @@ export const BreakdownAvailability = ({
           unavailable: summary.unavailableDays,
         })}
       </div>
-      {summary.legacyDays > 0 && (
-        <div>
-          {t('app_insights.breakdown_legacy_days', {
-            days: summary.legacyDays,
-          })}
-        </div>
-      )}
     </div>
   );
 };

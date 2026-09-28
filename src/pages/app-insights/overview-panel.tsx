@@ -201,7 +201,6 @@ export const OverviewPanel = ({
       {!!traffic.error && <InsightsError error={traffic.error} />}
       <ObservationNotice
         window={traffic.data?.window}
-        source="business"
         updatedAt={traffic.dataUpdatedAt}
         stale={!!traffic.error && !!traffic.data}
       />
@@ -323,7 +322,6 @@ export const OverviewPanel = ({
         {!!funnel.error && <InsightsError error={funnel.error} />}
         <ObservationNotice
           window={funnel.data?.window}
-          source="utc"
           updatedAt={funnel.dataUpdatedAt}
           stale={!!funnel.error && !!funnel.data}
           compact

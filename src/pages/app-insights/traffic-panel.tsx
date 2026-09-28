@@ -110,7 +110,6 @@ export const TrafficPanel = ({
       {!!traffic.error && <InsightsError error={traffic.error} />}
       <ObservationNotice
         window={traffic.data?.window}
-        source="business"
         updatedAt={traffic.dataUpdatedAt}
         stale={!!traffic.error && !!traffic.data}
       />

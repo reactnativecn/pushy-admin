@@ -183,7 +183,6 @@ export const FailuresPanel = ({
       {!!breakdown.error && <InsightsError error={breakdown.error} />}
       <ObservationNotice
         window={breakdown.data?.window}
-        source="business"
         updatedAt={breakdown.dataUpdatedAt}
         stale={!!breakdown.error && !!breakdown.data}
       />

@@ -271,7 +271,6 @@ export const VersionsPanel = ({
       {!!funnel.error && <InsightsError error={funnel.error} />}
       <ObservationNotice
         window={funnel.data?.window}
-        source="utc"
         updatedAt={funnel.dataUpdatedAt}
         stale={!!funnel.error && !!funnel.data}
       />
