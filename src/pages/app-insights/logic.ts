@@ -22,7 +22,7 @@ import {
   type VersionFunnelResponse,
 } from './types';
 
-export const INSIGHT_DAY_OPTIONS = [7, 14, 35] as const;
+export const INSIGHT_DAY_OPTIONS = [7, 14, 30] as const;
 export type InsightDays = (typeof INSIGHT_DAY_OPTIONS)[number];
 export const DEFAULT_INSIGHT_DAYS: InsightDays = 7;
 export const INSIGHT_VIEWS = [
@@ -35,6 +35,8 @@ export type InsightView = (typeof INSIGHT_VIEWS)[number];
 
 export const parseInsightDays = (value: string | null): InsightDays => {
   const parsed = Number(value);
+  // 旧链接里的 days=35 落到现在的最大档。
+  if (parsed === 35) return 30;
   return INSIGHT_DAY_OPTIONS.includes(parsed as InsightDays)
     ? (parsed as InsightDays)
     : DEFAULT_INSIGHT_DAYS;

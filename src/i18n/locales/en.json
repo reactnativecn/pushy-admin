@@ -595,7 +595,7 @@
     "col_failure_rate": "Download failure rate",
     "carrier_events_title": "By carrier",
     "carrier_no_version_filter": "Carrier data isn't split by version. Select “All versions”.",
-    "breakdown_footnote": "Only SDK versions that send reports are included; kept for up to {{retention}} days.",
+    "breakdown_footnote": "Only SDK versions that send reports are included.",
     "version_deleted": "Unnamed or deleted",
     "version_deleted_hint": "No version name available",
     "copy_hash": "Copy full hash",

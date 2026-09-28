@@ -292,11 +292,7 @@ export const FailuresPanel = ({
           <EmptyState>{t('app_insights.carrier_no_version_filter')}</EmptyState>
         )}
       </Card>
-      <Footnote>
-        {t('app_insights.breakdown_footnote', {
-          retention: breakdown.data?.retentionDays ?? 35,
-        })}
-      </Footnote>
+      <Footnote>{t('app_insights.breakdown_footnote')}</Footnote>
     </div>
   );
 };

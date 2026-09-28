@@ -91,6 +91,7 @@ describe('parameters and basic aggregation', () => {
   it('keeps URL compatibility and defaults', () => {
     expect(parseInsightDays('14')).toBe(14);
     expect(parseInsightDays('9')).toBe(7);
+    expect(parseInsightDays('35')).toBe(30);
     expect(parseInsightView('versions')).toBe('versions');
     expect(parseInsightView(null)).toBe('overview');
     expect(beijingToday(Date.UTC(2026, 8, 26, 20))).toBe('2026-09-27');

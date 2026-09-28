@@ -595,7 +595,7 @@
     "col_failure_rate": "下载失败率",
     "carrier_events_title": "按运营商",
     "carrier_no_version_filter": "运营商数据不区分版本，请选择「全部版本」。",
-    "breakdown_footnote": "只包含支持上报的 SDK 版本，最多保留 {{retention}} 天。",
+    "breakdown_footnote": "只包含支持上报的 SDK 版本。",
     "version_deleted": "未命名或已删除",
     "version_deleted_hint": "没有获取到版本名称",
     "copy_hash": "复制完整 hash",
