@@ -22,6 +22,7 @@ import {
   Footnote,
   formatInteger,
   formatShare,
+  HeaderHint,
   InsightsError,
   Question,
   StatTile,
@@ -81,7 +82,12 @@ const useEventColumns = <T extends EventRow>(): ColumnsType<T> => {
   ];
   return [
     {
-      title: t('app_insights.col_served'),
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_served')}
+          hint={t('app_insights.served_hint')}
+        />
+      ),
       key: 'offered',
       align: 'right',
       render: (_, row) => (
@@ -285,6 +291,7 @@ export const VersionsPanel = ({
           <StatTile
             label={t('app_insights.window_served')}
             value={formatInteger(totals?.offeredTargets)}
+            hint={t('app_insights.window_served_hint')}
           />
           <StatTile
             label={t('app_insights.window_rollbacks')}

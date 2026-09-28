@@ -125,6 +125,21 @@ export const StatTile = ({
   );
 };
 
+/** 表头名 + 虚线下划线，悬停看口径说明。 */
+export const HeaderHint = ({
+  label,
+  hint,
+}: {
+  label: ReactNode;
+  hint: ReactNode;
+}) => (
+  <Tooltip title={hint}>
+    <span className="cursor-help underline decoration-dotted underline-offset-4">
+      {label}
+    </span>
+  </Tooltip>
+);
+
 /** 图表卡片下方的一句"它回答什么问题"，与口径脚注分开。 */
 export const Question = ({ children }: { children: ReactNode }) => (
   <div className="mb-3 text-sm text-gray-500">{children}</div>

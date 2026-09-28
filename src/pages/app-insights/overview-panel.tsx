@@ -1,6 +1,6 @@
-import { Alert, Card, Radio, Spin, Table, Tag, Tooltip } from 'antd';
+import { Alert, Card, Radio, Spin, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncColumn } from '@/components/lazy-chart';
 import { useThemeMode } from '@/utils/theme-mode';
@@ -23,6 +23,7 @@ import {
   EmptyState,
   Footnote,
   formatInteger,
+  HeaderHint,
   InsightsError,
   Question,
   StatTile,
@@ -75,14 +76,6 @@ const Count = ({ value }: { value: number }) => (
   </span>
 );
 
-const HeaderHint = ({ label, hint }: { label: string; hint: ReactNode }) => (
-  <Tooltip title={hint}>
-    <span className="cursor-help underline decoration-dotted underline-offset-4">
-      {label}
-    </span>
-  </Tooltip>
-);
-
 const useGlanceColumns = (): ColumnsType<FunnelRow> => {
   const { t } = useTranslation();
   return [
@@ -92,7 +85,12 @@ const useGlanceColumns = (): ColumnsType<FunnelRow> => {
       render: (_, row) => <VersionLabel hash={row.hash} name={row.name} />,
     },
     {
-      title: t('app_insights.col_served'),
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_served')}
+          hint={t('app_insights.served_hint')}
+        />
+      ),
       key: 'served',
       align: 'right',
       render: (_, row) => <Count value={row.servedTotal} />,
