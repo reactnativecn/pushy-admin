@@ -9,7 +9,6 @@ import {
 } from './release-insights-format';
 import type {
   ArtifactInsight,
-  ReleaseDelivery,
   ReleaseVersionInsight,
   RolloutInsight,
 } from './release-insights-types';
@@ -55,13 +54,6 @@ const en = {
   observedAt: 'Time (UTC)',
   distinction:
     '“Used” means the CLI used the HermesBase compile. The size saving compares the patch with the full bundle, not HermesBase alone.',
-  offers: 'How updates are delivered',
-  offersNote:
-    "One update check can return a patch, a full bundle and a gray version at once; counts overlap and don't mean the client downloaded anything.",
-  target: 'Target',
-  kind: 'Format',
-  reason: 'Note',
-  count: 'Count',
   requests: 'Requests',
   used: 'Used',
   rejected: 'Failed equivalence check',
@@ -71,11 +63,6 @@ const en = {
   observed: 'OK',
   limited: 'Incomplete',
   unknownStatus: 'No data',
-  current: 'Main',
-  experimental: 'Gray release',
-  pending: 'Patch not ready yet',
-  mismatch: 'Base package mismatch',
-  noPatch: 'No patch',
 };
 const zh: typeof en = {
   title: '发布效果',
@@ -112,13 +99,6 @@ const zh: typeof en = {
   observedAt: '时间（UTC）',
   distinction:
     '「已采用」表示 CLI 使用了 HermesBase 的编译结果。体积对比的是补丁与整包，不单指 HermesBase 带来的缩减。',
-  offers: '更新包下发方式',
-  offersNote:
-    '一次检查更新可能同时返回增量、整包和灰度版本，次数有重叠，也不代表客户端已下载。',
-  target: '目标',
-  kind: '格式',
-  reason: '说明',
-  count: '次数',
   requests: '请求数',
   used: '已采用',
   rejected: '等价性校验未通过',
@@ -128,14 +108,9 @@ const zh: typeof en = {
   observed: '正常',
   limited: '数据不完整',
   unknownStatus: '暂无数据',
-  current: '主版本',
-  experimental: '灰度版本',
-  pending: '增量尚未生成',
-  mismatch: '基包不匹配',
-  noPatch: '无增量',
 };
 
-export type ReleaseSection = 'rollout' | 'deliveries' | 'hermes';
+export type ReleaseSection = 'rollout' | 'hermes';
 
 export const ReleaseInsightsPanel = ({
   appKey,
@@ -291,27 +266,6 @@ export const ReleaseInsightsPanel = ({
     },
     { title: text.artifacts, dataIndex: 'artifactStatus', render: status },
   ];
-  const reasons: Record<string, string> = {
-    response_artifacts_pending: text.pending,
-    bundle_mismatch_observed: text.mismatch,
-    no_patch_offered: text.noPatch,
-  };
-  const deliveryColumns: ColumnsType<ReleaseDelivery> = [
-    { title: text.version, dataIndex: 'hash', render: name },
-    {
-      title: text.target,
-      dataIndex: 'target',
-      render: (value: string) =>
-        value === 'exp' ? text.experimental : text.current,
-    },
-    { title: text.kind, dataIndex: 'kind' },
-    {
-      title: text.reason,
-      dataIndex: 'reason',
-      render: (value: string) => reasons[value] ?? value,
-    },
-    { title: text.count, dataIndex: 'count', render: number },
-  ];
   const unavailableMessage = (
     <Alert
       showIcon
@@ -386,25 +340,6 @@ export const ReleaseInsightsPanel = ({
               />
             )}
             <p className="m-0 text-xs text-gray-400">{text.inference}</p>
-          </div>
-        </Card>
-      )}
-      {show('deliveries') && (
-        <Card size="small" title={text.offers} extra={dateSelect('deliveries')}>
-          <div className="flex flex-col gap-3">
-            <p className="m-0 text-sm text-gray-500">{text.offersNote}</p>
-            {dayNotice}
-            {dayReadable && (
-              <Table
-                rowKey="id"
-                dataSource={day?.deliveries ?? []}
-                columns={deliveryColumns}
-                size="small"
-                scroll={{ x: 800 }}
-                pagination={{ pageSize: 10 }}
-                locale={{ emptyText: text.missing }}
-              />
-            )}
           </div>
         </Card>
       )}

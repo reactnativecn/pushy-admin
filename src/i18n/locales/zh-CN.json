@@ -453,6 +453,10 @@
     "geo_resolver_missing": "当前服务节点未加载 IP 地区库，它处理的请求都会记为「未知」。"
   },
   "app_insights": {
+    "delivery_title": "下发方式",
+    "full_reasons": "最近 {{days}} 天的整包原因：",
+    "full_reason_mismatch": "基包不匹配 {{count}} 次",
+    "full_reason_no_patch": "未提供增量 {{count}} 次",
     "perspective_active": "从{{name}}视角来统计",
     "by_version": "热更版本",
     "by_package": "原生包",

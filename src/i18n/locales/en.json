@@ -453,6 +453,10 @@
     "geo_resolver_missing": "This API node has no IP region database loaded; every request it serves is counted as Unknown."
   },
   "app_insights": {
+    "delivery_title": "How it was delivered",
+    "full_reasons": "Full-bundle reasons, last {{days}} days: ",
+    "full_reason_mismatch": "base package mismatch {{count}}",
+    "full_reason_no_patch": "no patch offered {{count}}",
     "perspective_active": "{{name}} view",
     "by_version": "Hot update",
     "by_package": "Native package",
