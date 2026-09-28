@@ -130,7 +130,7 @@ const useGlanceColumns = (): ColumnsType<FunnelRow> => {
           label={t('app_insights.glance_col_devices')}
           hint={
             <>
-              <div>{t('app_insights.observed_glance')}</div>
+              <div>{t('app_insights.retained_scope')}</div>
               <div>{t('app_insights.retained_hint')}</div>
             </>
           }
@@ -237,7 +237,6 @@ export const OverviewPanel = ({
           />
         </div>
       </Spin>
-      <Footnote>{t('app_insights.means_note')}</Footnote>
       {warnings.map((outcome) => (
         <Alert
           key={outcome}
@@ -342,10 +341,7 @@ export const OverviewPanel = ({
             </EmptyState>
           )}
         </Spin>
-        <Footnote>
-          {t('app_insights.events_not_funnel')}{' '}
-          {t('app_insights.retained_scope')} {t('app_insights.retained_hint')}
-        </Footnote>
+        <Footnote>{t('app_insights.events_not_funnel')}</Footnote>
       </Card>
     </div>
   );

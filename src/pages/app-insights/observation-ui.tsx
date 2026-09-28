@@ -1,4 +1,4 @@
-import { Alert, Tag, Tooltip } from 'antd';
+import { Alert, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { FUNNEL_HEALTH_LABEL_KEY } from '@/constants/i18n-keys';
 import { MIN_EVENT_SAMPLES } from '@/constants/metric-thresholds';
@@ -24,8 +24,8 @@ export const ObservationNotice = ({
   const windowText = window
     ? t('app_insights.window_exact', {
         timezone: window.timezone,
-        start: window.startInclusive,
-        end: window.endExclusive,
+        start: window.startDate,
+        end: window.endDate,
       })
     : null;
   const refreshedText =
@@ -77,44 +77,6 @@ export const ReportShare = ({
     </span>
   </span>
 );
-
-export const RollbackObservation = ({
-  health,
-  samples,
-  count,
-}: {
-  health: FunnelHealth;
-  samples: number;
-  count: number;
-}) => {
-  const { t } = useTranslation();
-  const label =
-    health === null
-      ? t('app_insights.insufficient_samples', {
-          count: samples,
-          minimum: MIN_EVENT_SAMPLES,
-        })
-      : t(FUNNEL_HEALTH_LABEL_KEY[health]);
-  return (
-    <Tooltip title={t('app_insights.rollback_only')}>
-      <span className="inline-flex flex-col items-start gap-1">
-        <Tag
-          color={
-            health === 'critical'
-              ? 'red'
-              : health === 'warning'
-                ? 'orange'
-                : undefined
-          }
-          className="m-0"
-        >
-          {label}
-        </Tag>
-        <ReportShare part={count} total={samples} />
-      </span>
-    </Tooltip>
-  );
-};
 
 const HEALTH_DOT: Record<NonNullable<FunnelHealth>, string> = {
   healthy: 'bg-green-500',
@@ -184,18 +146,19 @@ export const BreakdownAvailability = ({
 }) => {
   const { t } = useTranslation();
   if (summary.totalDays === 0) return null;
+  if (summary.availableDays > 0 && summary.unavailableDays === 0) return null;
   return (
     <div className="space-y-1 text-xs text-gray-500" role="status">
       {summary.availableDays === 0 && (
         <Alert type="warning" title={t('app_insights.breakdown_unavailable')} />
       )}
-      <div>
-        {t('app_insights.breakdown_availability', {
-          available: summary.availableDays,
-          total: summary.totalDays,
-          unavailable: summary.unavailableDays,
-        })}
-      </div>
+      {summary.availableDays > 0 && (
+        <div>
+          {t('app_insights.breakdown_availability', {
+            unavailable: summary.unavailableDays,
+          })}
+        </div>
+      )}
     </div>
   );
 };

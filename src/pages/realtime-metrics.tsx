@@ -163,9 +163,6 @@ export const Component = () => {
         ) : (
           <FailuresPanel appKey={selectedAppKey} days={days} />
         )}
-        <div className="mt-4 text-xs text-gray-400">
-          {t('app_insights.page_footnote')}
-        </div>
       </Card>
     </AppDrawerLayout>
   );

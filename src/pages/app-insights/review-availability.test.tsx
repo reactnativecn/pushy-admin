@@ -73,15 +73,6 @@ test('an entirely unavailable failure window renders unavailable, not zero or he
   ).toBe(true);
   expect(failureTileValue()).toBe('-');
   expect(screen.queryByText('500')).toBeNull();
-  expect(
-    screen.getByText(
-      i18n.t('app_insights.breakdown_availability', {
-        available: 0,
-        total: 1,
-        unavailable: 1,
-      }),
-    ),
-  ).not.toBeNull();
 });
 test('explicit observed empty days render zero with available-day context', () => {
   show([day({ status: 'observed' })]);

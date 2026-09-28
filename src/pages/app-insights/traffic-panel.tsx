@@ -37,11 +37,10 @@ export const PackageObservation = ({ row }: { row: PackageTrafficSummary }) => {
       {row.partial && (
         <Tag color="orange">{t('app_insights.package_partial')}</Tag>
       )}
-      {(row.expiredDays > 0 || row.unavailableDays > 0) && (
-        <div>
+      {row.observedDays > 0 && row.expiredDays + row.unavailableDays > 0 && (
+        <div className="text-gray-400">
           {t('app_insights.package_missing_days', {
-            expired: row.expiredDays,
-            missing: row.unavailableDays,
+            count: row.expiredDays + row.unavailableDays,
           })}
         </div>
       )}
@@ -85,14 +84,12 @@ export const TrafficPanel = ({
       key: 'hosts',
       title: t('app_insights.hosts_title'),
       question: t('app_insights.hosts_question'),
-      footnote: t('app_insights.hosts_footnote'),
       items: summary.hosts.map((row) => ({ ...row, label: row.key })),
     },
     {
       key: 'ip',
       title: t('app_insights.ip_title'),
       question: t('app_insights.ip_question'),
-      footnote: t('app_insights.ip_footnote'),
       items: summary.ipVersion.map((row) => ({
         ...row,
         label:
@@ -131,7 +128,6 @@ export const TrafficPanel = ({
             </EmptyState>
           )}
         </Spin>
-        <Footnote>{t('app_insights.hourly_footnote')}</Footnote>
       </Card>
       <Card size="small" title={t('app_insights.packages_title')}>
         <Question>{t('app_insights.packages_question')}</Question>
@@ -194,9 +190,9 @@ export const TrafficPanel = ({
                 </EmptyState>
               )}
             </Spin>
-            <Footnote>
-              {distribution.footnote} {t('app_insights.request_share')}
-            </Footnote>
+            {distribution.footnote && (
+              <Footnote>{distribution.footnote}</Footnote>
+            )}
           </Card>
         ))}
       </div>

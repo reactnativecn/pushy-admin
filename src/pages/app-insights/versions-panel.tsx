@@ -15,7 +15,7 @@ import {
 import {
   ObservationNotice,
   observedInteger,
-  RollbackObservation,
+  RollbackShare,
 } from './observation-ui';
 import {
   EmptyState,
@@ -105,10 +105,16 @@ const useEventColumns = <T extends EventRow>(): ColumnsType<T> => {
       render: (_: unknown, row: T) => formatInteger(row.events[key]),
     })),
     {
-      title: t('app_insights.col_health'),
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_health')}
+          hint={t('app_insights.rollback_only')}
+        />
+      ),
       key: 'rollbackObservation',
+      align: 'right',
       render: (_, row) => (
-        <RollbackObservation
+        <RollbackShare
           health={row.health}
           samples={row.rollbackSamples}
           count={row.events.rollback}
@@ -347,7 +353,6 @@ export const VersionsPanel = ({
           />
         </div>
         <Question>{t('app_insights.events_not_funnel')}</Question>
-        <Footnote>{t('app_insights.filtered_note')}</Footnote>
         <Spin spinning={funnel.isLoading}>
           {rows.length > 0 ? (
             <Table
@@ -373,7 +378,6 @@ export const VersionsPanel = ({
             </EmptyState>
           )}
         </Spin>
-        <Footnote>{t('app_insights.rollback_only')}</Footnote>
       </Card>
     </div>
   );

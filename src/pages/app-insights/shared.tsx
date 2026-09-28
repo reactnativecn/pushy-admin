@@ -349,11 +349,11 @@ export const useFailureReasonLabel = () => {
 export const useEventTypeLabel = () => {
   const { t } = useTranslation();
   const labels = {
-    download_success: t('version_health.download_success'),
-    download_fail: t('version_health.download_fail'),
-    patch_fail: t('version_health.patch_fail'),
-    rollback: t('version_health.rollback'),
-    mark_success: t('version_health.mark_success'),
+    download_success: t('app_insights.col_downloaded'),
+    download_fail: t('app_insights.col_download_fail'),
+    patch_fail: t('app_insights.col_patch_fail'),
+    rollback: t('app_insights.col_rollback'),
+    mark_success: t('app_insights.col_activated'),
   } as const;
   return (type: keyof typeof labels) => labels[type];
 };

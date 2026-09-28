@@ -7,11 +7,7 @@ import en from '@/i18n/locales/en.json';
 import zhCN from '@/i18n/locales/zh-CN.json';
 import { metricsKeys } from '@/utils/query-keys';
 import { buildFunnelRows, filterFunnelRows } from './logic';
-import {
-  ObservationNotice,
-  RollbackObservation,
-  RollbackShare,
-} from './observation-ui';
+import { ObservationNotice, RollbackShare } from './observation-ui';
 import { PackageObservation } from './traffic-panel';
 import type { VersionFunnelResponse } from './types';
 import { VersionDetail, VersionsPanel } from './versions-panel';
@@ -73,27 +69,8 @@ test('canonical metric language catalogs have identical keys', () => {
   expect(Object.keys(insightsEn).sort()).toEqual(
     Object.keys(insightsZh).sort(),
   );
-  expect(i18n.t('app_insights.hit_uptodate')).toBe('No update offered');
-  expect(i18n.t('app_insights.view_versions')).toBe('Version events');
-});
-
-test('low rollback does not claim overall health and tiny samples are explicit', () => {
-  const response = fixture();
-  const row = buildFunnelRows(response)[0]!;
-  render(
-    <RollbackObservation
-      health={row.health}
-      samples={row.rollbackSamples}
-      count={row.events.rollback}
-    />,
-  );
-  expect(screen.getByText('Low rollback report share')).not.toBeNull();
-  expect(screen.queryByText('Healthy')).toBeNull();
-  cleanup();
-  render(<RollbackObservation health={null} samples={4} count={1} />);
-  expect(
-    screen.getByText('Insufficient rollback observations (4 / 10)'),
-  ).not.toBeNull();
+  expect(i18n.t('app_insights.hit_uptodate')).toBe('No update');
+  expect(i18n.t('app_insights.view_versions')).toBe('Versions');
 });
 
 test('compact rollback share shows the ratio and flags thin samples', () => {
@@ -159,9 +136,9 @@ test('window and stale state disclose actual UTC boundaries and refresh freshnes
       }}
     />,
   );
-  expect(screen.getByText(/2026-09-21T00:00:00Z/)).not.toBeNull();
+  expect(screen.getByText(/2026-09-21 – 2026-09-27 \(UTC\)/)).not.toBeNull();
   expect(screen.getByText(insightsEn.stale_data)).not.toBeNull();
-  expect(screen.getByText(/refreshes every minute/)).not.toBeNull();
+  expect(screen.getByText(/Updated /)).not.toBeNull();
 });
 
 test('package observations surface short retention and collection limits', () => {
@@ -181,8 +158,6 @@ test('package observations surface short retention and collection limits', () =>
       }}
     />,
   );
-  expect(
-    screen.getByText('20 expired days; 1 unavailable days'),
-  ).not.toBeNull();
+  expect(screen.getByText('21 days missing')).not.toBeNull();
   expect(screen.getByText(insightsEn.package_partial)).not.toBeNull();
 });

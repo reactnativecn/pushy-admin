@@ -19,6 +19,7 @@ import {
   Footnote,
   formatInteger,
   formatShare,
+  HeaderHint,
   InsightsError,
   Question,
   StatTile,
@@ -63,7 +64,12 @@ const DimensionTable = ({
       ),
     })),
     {
-      title: t('app_insights.col_failure_rate'),
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_failure_rate')}
+          hint={t('app_insights.failure_rate_hint')}
+        />
+      ),
       key: 'failureShare',
       render: (_, row) => (
         <ReportShare
@@ -73,7 +79,12 @@ const DimensionTable = ({
       ),
     },
     {
-      title: t('app_insights.col_rollback_rate'),
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_rollback_rate')}
+          hint={t('app_insights.rollback_only')}
+        />
+      ),
       key: 'rollbackShare',
       render: (_, row) => (
         <ReportShare part={row.counts.rollback} total={row.rollbackSamples} />
@@ -268,7 +279,6 @@ export const FailuresPanel = ({
           keyTitle={t('app_insights.col_os')}
           labelOf={(key) => key}
         />
-        <Footnote>{t('app_insights.rates_footnote')}</Footnote>
       </Card>
       <Card size="small" title={t('app_insights.carrier_events_title')}>
         {versionFilter === ALL ? (
@@ -281,7 +291,6 @@ export const FailuresPanel = ({
         ) : (
           <EmptyState>{t('app_insights.carrier_no_version_filter')}</EmptyState>
         )}
-        <Footnote>{t('app_insights.rates_footnote')}</Footnote>
       </Card>
       <Footnote>
         {t('app_insights.breakdown_footnote', {

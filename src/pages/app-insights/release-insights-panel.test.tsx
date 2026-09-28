@@ -36,7 +36,7 @@ function show(releaseInsights?: ReleaseInsights, isAdmin = false) {
 test('older backend renders an upgrade message', () => {
   const client = show();
   expect(
-    screen.getByText('This backend has not enabled release insights yet.'),
+    screen.getByText('The server has not enabled this feature yet.'),
   ).not.toBeNull();
   client.clear();
 });
@@ -51,7 +51,7 @@ test('optional API failure renders without throwing', () => {
   });
   expect(
     screen.getByText(
-      'Release insights are unavailable. Existing version statistics remain below.',
+      'Release data is unavailable right now. Version data below is not affected.',
     ),
   ).not.toBeNull();
   client.clear();
@@ -88,12 +88,8 @@ test('partial day and Hermes metadata render in Chinese with accessible day sele
     ],
   });
   expect(screen.getByText('已采用')).not.toBeNull();
-  expect(
-    screen.getByText('当日曾触及采集上限或部分观测不完整，数量可能偏低。'),
-  ).not.toBeNull();
-  expect(
-    screen.getByRole('combobox', { name: '观测日期（UTC）' }),
-  ).not.toBeNull();
+  expect(screen.getByText('当天数据不完整，数量可能偏低。')).not.toBeNull();
+  expect(screen.getByRole('combobox', { name: '日期（UTC）' })).not.toBeNull();
   client.clear();
 });
 
@@ -120,16 +116,16 @@ const rejectedVersion = (): ReleaseInsights => ({
 test('a dropped Hermes base reads as not used to customers, without the detail', () => {
   const client = show(rejectedVersion());
   expect(screen.getByText('Not used')).not.toBeNull();
-  expect(screen.queryByText('Rejected by equivalence check')).toBeNull();
-  expect(screen.queryByText('Diagnostic detail')).toBeNull();
+  expect(screen.queryByText('Failed equivalence check')).toBeNull();
+  expect(screen.queryByText('Details')).toBeNull();
   expect(screen.queryByText(/DefineOwnById/)).toBeNull();
   client.clear();
 });
 test('administrators still see why the base was dropped', () => {
   const client = show(rejectedVersion(), true);
-  expect(screen.getByText('Rejected by equivalence check')).not.toBeNull();
+  expect(screen.getByText('Failed equivalence check')).not.toBeNull();
   // antd can render a header cell twice (measure row); presence is the point
-  expect(screen.getAllByText('Diagnostic detail').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('Details').length).toBeGreaterThan(0);
   expect(screen.getAllByText(/DefineOwnById/).length).toBeGreaterThan(0);
   client.clear();
 });
