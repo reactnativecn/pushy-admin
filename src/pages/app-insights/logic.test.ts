@@ -171,7 +171,7 @@ describe('complete-day means and missing observations', () => {
     expect(result.averageDailyRequests).toBeNull();
     expect(result.peakDau).toBeNull();
     expect(result.today).toBeNull();
-    expect(result.hourly).toHaveLength(24);
+    expect(result.hourlyDays).toEqual([]);
   });
   it('keeps legacy positive device observations but does not invent observed zeroes', () => {
     const result = summarizeTraffic(

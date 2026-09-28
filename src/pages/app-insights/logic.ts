@@ -142,7 +142,8 @@ export interface TrafficSummary {
   hit: Record<HitOutcome, number>;
   refusedPercent: number;
   updatePercent: number;
-  hourly: number[];
+  /** 最近 7 天各自的 24 小时分布，按日期升序；不跨天相加。 */
+  hourlyDays: HourlyDay[];
   ipVersion: RankedItem[];
   hosts: RankedItem[];
   carriers: RankedItem[];
@@ -172,6 +173,13 @@ const rankRefused = (counts: Map<string, number>): RefusedPackageSummary[] =>
       : right.requests - left.requests,
   );
 
+export const HOURLY_DAYS = 7;
+
+export interface HourlyDay {
+  date: string;
+  hourly: number[];
+}
+
 /** Both means exclude today, include valid zeroes, and disclose sample days.
  * Unavailable values are not zero. Daily device estimates cannot be added;
  * merging retained original HLLs would require a different server API. */
@@ -180,7 +188,7 @@ export const summarizeTraffic = (
   today: string = beijingToday(),
 ): TrafficSummary => {
   const hit = emptyHit();
-  const hourly = new Array<number>(24).fill(0);
+  const hourlyDays: HourlyDay[] = [];
   const ipVersion: Record<string, number> = {};
   const hosts: Record<string, number> = {};
   const carriers: Record<string, number> = {};
@@ -223,9 +231,11 @@ export const summarizeTraffic = (
         dauSampleDays += 1;
       }
     }
+    const hourly = new Array<number>(24).fill(0);
     (day.hourly ?? []).forEach((count, hour) => {
-      if (hour < 24) hourly[hour] = (hourly[hour] ?? 0) + countOf(count);
+      if (hour < 24) hourly[hour] = countOf(count);
     });
+    hourlyDays.push({ date: day.date, hourly });
     addCounts(ipVersion, day.ipVersion);
     addCounts(hosts, day.hosts);
     addCounts(carriers, day.carriers);
@@ -306,7 +316,9 @@ export const summarizeTraffic = (
     hit,
     refusedPercent: percentOf(hit.blocked + hit.unknown_package, requests),
     updatePercent: percentOf(hit.hdiff + hit.pdiff + hit.full, requests),
-    hourly,
+    hourlyDays: hourlyDays
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-HOURLY_DAYS),
     ipVersion: rankCounts(ipVersion),
     hosts: rankCounts(hosts),
     carriers: rankCounts(carriers),

@@ -122,7 +122,7 @@ describe('review: request ratios use matching observation days', () => {
     ]);
     expect(result.daily[0]?.hit.blocked).toBe(0);
     expect(result.daily[0]?.requests).toBeNull();
-    expect(result.hourly[0]).toBe(30);
+    expect(result.hourlyDays.map((item) => item.hourly[0])).toEqual([20, 10]);
     expect(result.hosts[0]?.count).toBe(20);
     expect(input).toEqual(before);
   });

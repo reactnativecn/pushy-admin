@@ -1,10 +1,14 @@
-import { Card, Spin, Table, Tag } from 'antd';
-import { useMemo } from 'react';
+import { Card, Radio, Spin, Table, Tag } from 'antd';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncColumn } from '@/components/lazy-chart';
 import { useThemeMode } from '@/utils/theme-mode';
 import { RealtimeGeoPanel } from '../realtime-metrics-geo';
-import { type PackageTrafficSummary, summarizeTraffic } from './logic';
+import {
+  beijingToday,
+  type PackageTrafficSummary,
+  summarizeTraffic,
+} from './logic';
 import { ObservationNotice, observedInteger } from './observation-ui';
 import { RealtimeSeriesPanel } from './realtime-series-panel';
 import {
@@ -65,10 +69,15 @@ export const TrafficPanel = ({
     () => summarizeTraffic(traffic.data?.days, traffic.data?.window?.today),
     [traffic.data],
   );
-  const hourlyData = summary.hourly.map((value, hour) => ({
+  const [hourlyDate, setHourlyDate] = useState<string | null>(null);
+  const hourlyDay =
+    summary.hourlyDays.find((item) => item.date === hourlyDate) ??
+    summary.hourlyDays.at(-1);
+  const hourlyData = (hourlyDay?.hourly ?? []).map((value, hour) => ({
     hour: `${String(hour).padStart(2, '0')}:00`,
     value,
   }));
+  const today = traffic.data?.window?.today ?? beijingToday();
   const distributions = [
     {
       key: 'carriers',
@@ -109,10 +118,30 @@ export const TrafficPanel = ({
         updatedAt={traffic.dataUpdatedAt}
         stale={!!traffic.error && !!traffic.data}
       />
-      <Card size="small" title={t('app_insights.hourly_title')}>
-        <Question>{t('app_insights.hourly_question', { days })}</Question>
+      <Card
+        size="small"
+        title={t('app_insights.hourly_title')}
+        extra={
+          summary.hourlyDays.length > 1 && (
+            <Radio.Group
+              size="small"
+              value={hourlyDay?.date}
+              onChange={(event) => setHourlyDate(event.target.value)}
+            >
+              {summary.hourlyDays.map((item) => (
+                <Radio.Button key={item.date} value={item.date}>
+                  {item.date === today
+                    ? t('app_insights.today')
+                    : item.date.slice(5)}
+                </Radio.Button>
+              ))}
+            </Radio.Group>
+          )
+        }
+      >
+        <Question>{t('app_insights.hourly_question')}</Question>
         <Spin spinning={traffic.isLoading}>
-          {summary.hourly.some((count) => count > 0) ? (
+          {hourlyData.some((point) => point.value > 0) ? (
             <AsyncColumn
               theme={isDark ? 'classicDark' : 'classic'}
               data={hourlyData}
