@@ -218,7 +218,7 @@ const HARMONY_API_VERSION: Record<number, string> = {
 
 /**
  * 把 SDK 上报的 os 标签归到便于阅读的系统版本：Android API level → 版本号，
- * 鸿蒙 API level → 商业版本号，iOS / tvOS 只保留主版本（17.5.1 → 17），其余原样。
+ * 鸿蒙 API level → 商业版本号，iOS / tvOS 保留到 minor（17.5.1 → 17.5，18 → 18.0），其余原样。
  */
 export const normalizeOSVersion = (label: string): string => {
   const [platform = '', version = ''] = label.split(' ');
@@ -232,7 +232,8 @@ export const normalizeOSVersion = (label: string): string => {
     return mapped ? `harmony ${mapped}` : `harmony API ${version}`;
   }
   if (platform === 'ios' || platform === 'tvos') {
-    return `${platform} ${version.split('.')[0]}`;
+    const [major, minor = '0'] = version.split('.');
+    return `${platform} ${major}.${minor}`;
   }
   return label;
 };
