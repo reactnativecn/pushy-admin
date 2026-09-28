@@ -280,6 +280,8 @@ export const VersionLabel = ({
         copyable={{
           text: hash,
           tooltips: [t('app_insights.copy_hash'), false],
+          // 表格整行可点击展开，复制时不要连带展开
+          onCopy: (event) => event?.stopPropagation(),
         }}
       >
         {shortHash(hash)}

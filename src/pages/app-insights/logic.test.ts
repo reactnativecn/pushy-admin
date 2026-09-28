@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import {
   beijingToday,
   buildFunnelRows,
+  buildPackageRows,
   computeFunnelRates,
   highestFailureDimension,
   isKnownCarrier,
@@ -317,6 +318,65 @@ describe('independent version observations', () => {
     )[0]!;
     expect(row.retained?.mark).toBeNull();
     expect(row.retained?.download).toBeNull();
+  });
+  it('pivots versions into native package rows with traffic context', () => {
+    const second = {
+      ...version(),
+      hash: 'v2',
+      name: 'Version 2',
+      byPackage: [
+        {
+          packageVersion: '1.0',
+          served: { ...offered, hdiff: 3 },
+          events: events({ markSuccess: 4, rollback: 1 }),
+        },
+        {
+          packageVersion: '2.0',
+          served: offered,
+          events: events({ markSuccess: 1 }),
+        },
+      ],
+    };
+    const rows = buildPackageRows(
+      buildFunnelRows(response({ versions: [version(), second] })),
+      [
+        {
+          packageVersion: '2.0',
+          requests: 50,
+          percent: 50,
+          peakDevices: 9,
+          observedDays: 1,
+          availableStart: null,
+          availableEnd: null,
+          partial: false,
+          expiredDays: 0,
+          unavailableDays: 0,
+        },
+        {
+          packageVersion: '3.0',
+          requests: 10,
+          percent: 10,
+          peakDevices: null,
+          observedDays: 0,
+          availableStart: null,
+          availableEnd: null,
+          partial: false,
+          expiredDays: 0,
+          unavailableDays: 0,
+        },
+      ],
+    );
+    expect(rows.map((row) => row.packageVersion)).toEqual([
+      '2.0',
+      '3.0',
+      '1.0',
+    ]);
+    const one = rows.find((row) => row.packageVersion === '1.0')!;
+    expect(one.events.markSuccess).toBe(6);
+    expect(one.events.rollback).toBe(1);
+    expect(one.requests).toBeNull();
+    expect(one.versions.map((item) => item.hash)).toEqual(['v2', 'v1']);
+    expect(rows[1]?.versions).toEqual([]);
   });
   it('uses uncapped app summaries including unattributed events', () => {
     const result = versionTotals(

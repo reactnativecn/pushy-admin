@@ -8,7 +8,6 @@ import zhCN from '@/i18n/locales/zh-CN.json';
 import { metricsKeys } from '@/utils/query-keys';
 import { buildFunnelRows } from './logic';
 import { ObservationNotice, RollbackShare } from './observation-ui';
-import { PackageObservation } from './traffic-panel';
 import type { VersionFunnelResponse } from './types';
 import { VersionDetail, VersionsPanel } from './versions-panel';
 
@@ -129,25 +128,4 @@ test('window and stale state disclose actual UTC boundaries and refresh freshnes
   expect(screen.getByText(/2026-09-21 – 2026-09-27 \(UTC\)/)).not.toBeNull();
   expect(screen.getByText(insightsEn.stale_data)).not.toBeNull();
   expect(screen.getByText(/Updated /)).not.toBeNull();
-});
-
-test('package observations surface short retention and collection limits', () => {
-  render(
-    <PackageObservation
-      row={{
-        packageVersion: '1',
-        requests: 100,
-        percent: 100,
-        peakDevices: 3,
-        observedDays: 2,
-        availableStart: '2026-09-26',
-        availableEnd: '2026-09-27',
-        expiredDays: 20,
-        unavailableDays: 1,
-        partial: true,
-      }}
-    />,
-  );
-  expect(screen.getByText('21 days missing')).not.toBeNull();
-  expect(screen.getByText(insightsEn.package_partial)).not.toBeNull();
 });

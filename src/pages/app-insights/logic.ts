@@ -534,6 +534,117 @@ export const rankFunnelRows = (rows: readonly FunnelRow[]): FunnelRow[] => {
   );
 };
 
+/** 原生包视角下，某个原生包里各热更版本的事件。 */
+export interface PackageVersionRow extends FunnelRates {
+  hash: string;
+  name: string | null | undefined;
+  served: ServedCounts;
+  events: FunnelEventCounts;
+  servedTotal: number;
+}
+
+/** 原生包视角的一行：请求与设备来自流量，事件由各热更版本按原生包拆分汇总。 */
+export interface PackageRow extends FunnelRates {
+  packageVersion: string;
+  requests: number | null;
+  percent: number | null;
+  peakDevices: number | null;
+  served: ServedCounts;
+  events: FunnelEventCounts;
+  servedTotal: number;
+  versions: PackageVersionRow[];
+}
+
+const SERVED_KEYS = ['hdiff', 'pdiff', 'full', 'fullPending', 'exp'] as const;
+const EVENT_KEYS = [
+  'downloadSuccess',
+  'downloadFail',
+  'patchFail',
+  'markSuccess',
+  'rollback',
+] as const;
+
+export const buildPackageRows = (
+  versions: readonly FunnelRow[],
+  traffic: readonly PackageTrafficSummary[],
+): PackageRow[] => {
+  const rows = new Map<string, PackageRow>();
+  const rowOf = (packageVersion: string): PackageRow => {
+    let row = rows.get(packageVersion);
+    if (!row) {
+      row = {
+        packageVersion,
+        requests: null,
+        percent: null,
+        peakDevices: null,
+        served: { hdiff: 0, pdiff: 0, full: 0, fullPending: 0, exp: 0 },
+        events: {
+          downloadSuccess: 0,
+          downloadFail: 0,
+          patchFail: 0,
+          markSuccess: 0,
+          rollback: 0,
+        },
+        servedTotal: 0,
+        versions: [],
+        ...computeFunnelRates({
+          downloadSuccess: 0,
+          downloadFail: 0,
+          patchFail: 0,
+          markSuccess: 0,
+          rollback: 0,
+        }),
+      };
+      rows.set(packageVersion, row);
+    }
+    return row;
+  };
+  for (const item of traffic) {
+    Object.assign(rowOf(item.packageVersion), {
+      requests: item.requests,
+      percent: item.percent,
+      peakDevices: item.peakDevices,
+    });
+  }
+  for (const version of versions) {
+    for (const item of version.byPackage) {
+      const row = rowOf(item.packageVersion);
+      for (const key of SERVED_KEYS) {
+        row.served[key] += countOf(item.served[key]);
+      }
+      for (const key of EVENT_KEYS) {
+        row.events[key] += countOf(item.events[key]);
+      }
+      row.versions.push({
+        hash: version.hash,
+        name: version.name,
+        served: item.served,
+        events: item.events,
+        servedTotal: servedTotal(item.served),
+        ...computeFunnelRates(item.events),
+      });
+    }
+  }
+  return Array.from(rows.values())
+    .map((row) => ({
+      ...row,
+      ...computeFunnelRates(row.events),
+      servedTotal: servedTotal(row.served),
+      versions: row.versions.sort(
+        (a, b) =>
+          b.servedTotal +
+          b.events.markSuccess -
+          (a.servedTotal + a.events.markSuccess),
+      ),
+    }))
+    .sort(
+      (a, b) =>
+        (b.requests ?? 0) - (a.requests ?? 0) ||
+        b.servedTotal - a.servedTotal ||
+        a.packageVersion.localeCompare(b.packageVersion),
+    );
+};
+
 export const versionTotals = (response: VersionFunnelResponse | undefined) => {
   if (!response) return null;
   if (response.summary) {

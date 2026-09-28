@@ -1,14 +1,17 @@
-import { Alert, Card, Spin, Table, Tooltip } from 'antd';
+import { Alert, Card, Segmented, Spin, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   buildFunnelRows,
+  buildPackageRows,
   computeFunnelRates,
   type FunnelRates,
   type FunnelRow,
   lagShares,
+  type PackageRow,
   servedTotal,
+  summarizeTraffic,
   versionTotals,
 } from './logic';
 import {
@@ -26,10 +29,10 @@ import {
   InsightsError,
   Question,
   StatTile,
+  useAppTraffic,
   useAppVersionFunnel,
   VersionLabel,
 } from './shared';
-import { PackagesCard } from './traffic-panel';
 import type {
   FunnelEventCounts,
   LagBucket,
@@ -183,6 +186,31 @@ const LagTable = ({
   );
 };
 
+/** 原生包视角展开：这个原生包里各热更版本的事件。 */
+const PackageDetail = ({ row }: { row: PackageRow }) => {
+  const { t } = useTranslation();
+  const eventColumns = useEventColumns<PackageRow['versions'][number]>();
+  return (
+    <Table
+      size="small"
+      rowKey="hash"
+      pagination={false}
+      scroll={{ x: 'max-content' }}
+      dataSource={row.versions}
+      columns={[
+        {
+          title: t('app_insights.col_version'),
+          key: 'version',
+          render: (_, item) => (
+            <VersionLabel hash={item.hash} name={item.name} compact />
+          ),
+        },
+        ...eventColumns,
+      ]}
+    />
+  );
+};
+
 export const VersionDetail = ({ row }: { row: FunnelRow }) => {
   const { t } = useTranslation();
   const packageRows = useMemo(
@@ -255,6 +283,54 @@ export const VersionsPanel = ({
   const { t } = useTranslation();
   const funnel = useAppVersionFunnel(appKey, days);
   const rows = useMemo(() => buildFunnelRows(funnel.data), [funnel.data]);
+  const traffic = useAppTraffic(appKey, days);
+  const [perspective, setPerspective] = useState<'version' | 'package'>(
+    'version',
+  );
+  const packageRows = useMemo(
+    () =>
+      buildPackageRows(
+        rows,
+        summarizeTraffic(traffic.data?.days, traffic.data?.window?.today)
+          .packages,
+      ),
+    [rows, traffic.data],
+  );
+  const packageEventColumns = useEventColumns<PackageRow>();
+  const packageColumns: ColumnsType<PackageRow> = [
+    {
+      title: t('app_insights.col_package'),
+      dataIndex: 'packageVersion',
+      fixed: 'left',
+    },
+    {
+      title: t('app_insights.requests'),
+      key: 'requests',
+      align: 'right',
+      render: (_, row) => (
+        <span className="tabular-nums">
+          {formatInteger(row.requests)}
+          {row.percent !== null && (
+            <span className="ml-1 text-xs text-gray-400">
+              {formatShare(row.percent)}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_peak_devices')}
+          hint={t('app_insights.peak_devices_hint')}
+        />
+      ),
+      dataIndex: 'peakDevices',
+      align: 'right',
+      render: observedInteger,
+    },
+    ...packageEventColumns,
+  ];
   const totals = versionTotals(funnel.data);
   const eventColumns = useEventColumns<FunnelRow>();
   const columns: ColumnsType<FunnelRow> = [
@@ -276,11 +352,7 @@ export const VersionsPanel = ({
         stale={!!funnel.error && !!funnel.data}
       />
       <Spin spinning={funnel.isLoading}>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-          <StatTile
-            label={t('app_insights.versions_in_window')}
-            value={formatInteger(totals?.versionCount)}
-          />
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <StatTile
             label={t('app_insights.window_served')}
             value={formatInteger(totals?.offeredTargets)}
@@ -312,17 +384,49 @@ export const VersionsPanel = ({
           message={t('app_insights.truncated', { count: rows.length })}
         />
       )}
-      <Card size="small" title={t('app_insights.funnel_table_title')}>
-        <Spin spinning={funnel.isLoading}>
-          {rows.length > 0 ? (
+      <Card
+        size="small"
+        title={t('app_insights.funnel_table_title')}
+        extra={
+          <Segmented
+            size="small"
+            value={perspective}
+            onChange={(value) => setPerspective(value as 'version' | 'package')}
+            options={[
+              { value: 'version', label: t('app_insights.by_version') },
+              { value: 'package', label: t('app_insights.by_package') },
+            ]}
+          />
+        }
+      >
+        <Spin spinning={funnel.isLoading || traffic.isLoading}>
+          {perspective === 'package' ? (
+            <Table
+              size="small"
+              rowKey="packageVersion"
+              rowClassName="cursor-pointer"
+              dataSource={packageRows}
+              columns={packageColumns}
+              pagination={packageRows.length > 20 ? { pageSize: 20 } : false}
+              scroll={{ x: 'max-content' }}
+              locale={{ emptyText: t('app_insights.no_observations') }}
+              expandable={{
+                expandRowByClick: true,
+                rowExpandable: (row) => row.versions.length > 0,
+                expandedRowRender: (row) => <PackageDetail row={row} />,
+              }}
+            />
+          ) : rows.length > 0 ? (
             <Table
               size="small"
               rowKey="hash"
+              rowClassName="cursor-pointer"
               dataSource={rows}
               columns={columns}
               pagination={rows.length > 20 ? { pageSize: 20 } : false}
               scroll={{ x: 'max-content' }}
               expandable={{
+                expandRowByClick: true,
                 expandedRowRender: (row) => <VersionDetail row={row} />,
               }}
             />
@@ -350,7 +454,6 @@ export const VersionsPanel = ({
           />
         </>
       )}
-      <PackagesCard appKey={appKey} days={days} />
       {appKey && (
         <ReleaseInsightsPanel
           appKey={appKey}
