@@ -176,6 +176,7 @@ describe('complete-day means and missing observations', () => {
     expect(normalizeOSVersion('tvos 18.0')).toBe('tvos 18.0');
     expect(normalizeOSVersion('harmony 12')).toBe('harmony 5.0.0');
     expect(normalizeOSVersion('harmony 20')).toBe('harmony 6.0.0');
+    expect(normalizeOSVersion('harmony 24')).toBe('harmony 6.1.1');
     expect(normalizeOSVersion('harmony 99')).toBe('harmony API 99');
     expect(normalizeOSVersion('unknown')).toBe('unknown');
   });
