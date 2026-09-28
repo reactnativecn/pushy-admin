@@ -6,7 +6,7 @@ import '@/i18n';
 import en from '@/i18n/locales/en.json';
 import zhCN from '@/i18n/locales/zh-CN.json';
 import { metricsKeys } from '@/utils/query-keys';
-import { buildFunnelRows, filterFunnelRows } from './logic';
+import { buildFunnelRows } from './logic';
 import { ObservationNotice, RollbackShare } from './observation-ui';
 import { PackageObservation } from './traffic-panel';
 import type { VersionFunnelResponse } from './types';
@@ -82,15 +82,6 @@ test('compact rollback share shows the ratio and flags thin samples', () => {
   render(<RollbackShare health={null} samples={2} count={1} />);
   expect(screen.getByText('50.0%')).not.toBeNull();
   expect(screen.getByText(insightsEn.samples_short)).not.toBeNull();
-});
-
-test('package-filtered details hide whole-version cumulative metrics', () => {
-  const row = filterFunnelRows(buildFunnelRows(fixture()), 'v1', '1.0')[0]!;
-  render(<VersionDetail row={row} />);
-  expect(
-    screen.getByText(insightsEn.retained_unavailable_package),
-  ).not.toBeNull();
-  expect(screen.queryByText(insightsEn.retained_title)).toBeNull();
 });
 
 test('retained counts are rendered without a coverage or adoption percentage', () => {

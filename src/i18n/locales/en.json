@@ -453,7 +453,6 @@
     "geo_resolver_missing": "This API node has no IP region database loaded; every request it serves is counted as Unknown."
   },
   "app_insights": {
-    "versions_table_question": "Deliveries, downloads, activations and rollbacks per version; expand a row for the native package split and all-time devices.",
     "more_os_versions": "{{count}} other versions",
     "platform_detail": "By version",
     "platform_overall": "Overall",
@@ -516,8 +515,6 @@
     "truncated": "Too many versions; showing the {{count}} most active.",
     "funnel_table_title": "By version",
     "filter_all_versions": "All versions",
-    "filter_all_packages": "All native packages",
-    "no_versions_match": "No version matches the filters",
     "col_version": "Bundle",
     "col_health": "Rollback rate",
     "col_served": "Deliveries",
@@ -612,7 +609,6 @@
     "events_not_funnel": "Each column is counted separately; this is not a step-by-step funnel.",
     "retained_title": "All-time devices and arrival time",
     "retained_scope": "Counted since the version was uploaded; not affected by the day range.",
-    "retained_unavailable_package": "All-time devices and arrival time are hidden when filtering by native package.",
     "retained_hint": "Device counts are deduplicated estimates.",
     "rollback_low": "Low rollback rate",
     "rollback_warning": "Elevated rollback rate",

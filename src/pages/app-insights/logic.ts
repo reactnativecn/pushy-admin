@@ -534,32 +534,6 @@ export const rankFunnelRows = (rows: readonly FunnelRow[]): FunnelRow[] => {
   );
 };
 
-export const filterFunnelRows = (
-  rows: readonly FunnelRow[],
-  hash?: string,
-  packageVersion?: string,
-): FunnelRow[] =>
-  rows.flatMap((row) => {
-    if (hash && row.hash !== hash) return [];
-    if (!packageVersion) return [row];
-    const item = row.byPackage.find(
-      (entry) => entry.packageVersion === packageVersion,
-    );
-    return item
-      ? [
-          {
-            ...row,
-            ...computeFunnelRates(item.events),
-            served: item.served,
-            events: item.events,
-            servedTotal: servedTotal(item.served),
-            retained: null,
-            byPackage: [item],
-          },
-        ]
-      : [];
-  });
-
 export const versionTotals = (response: VersionFunnelResponse | undefined) => {
   if (!response) return null;
   if (response.summary) {

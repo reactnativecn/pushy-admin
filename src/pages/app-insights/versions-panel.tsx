@@ -1,13 +1,12 @@
-import { Alert, Card, Select, Spin, Table, Tooltip } from 'antd';
+import { Alert, Card, Spin, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   buildFunnelRows,
   computeFunnelRates,
   type FunnelRates,
   type FunnelRow,
-  filterFunnelRows,
   lagShares,
   servedTotal,
   versionTotals,
@@ -38,7 +37,6 @@ import type {
   ServedCounts,
 } from './types';
 
-const ALL = '__all__';
 const LAG_LABEL_KEY: Record<LagBucket, string> = {
   lt1h: 'app_insights.lag_lt1h',
   '1h-6h': 'app_insights.lag_1h_6h',
@@ -210,7 +208,7 @@ export const VersionDetail = ({ row }: { row: FunnelRow }) => {
           ...packageColumns,
         ]}
       />
-      {row.retained ? (
+      {row.retained && (
         <Card size="small" title={t('app_insights.retained_title')}>
           <Question>{t('app_insights.retained_scope')}</Question>
           <div className="grid gap-2 md:grid-cols-2">
@@ -236,11 +234,6 @@ export const VersionDetail = ({ row }: { row: FunnelRow }) => {
           </div>
           <Footnote>{t('app_insights.lag_footnote')}</Footnote>
         </Card>
-      ) : (
-        <Alert
-          type="info"
-          message={t('app_insights.retained_unavailable_package')}
-        />
       )}
     </div>
   );
@@ -261,27 +254,9 @@ export const VersionsPanel = ({
 }) => {
   const { t } = useTranslation();
   const funnel = useAppVersionFunnel(appKey, days);
-  const [versionFilter, setVersionFilter] = useState(ALL);
-  const [packageFilter, setPackageFilter] = useState(ALL);
-  const allRows = useMemo(() => buildFunnelRows(funnel.data), [funnel.data]);
-  const rows = useMemo(
-    () =>
-      filterFunnelRows(
-        allRows,
-        versionFilter === ALL ? undefined : versionFilter,
-        packageFilter === ALL ? undefined : packageFilter,
-      ),
-    [allRows, versionFilter, packageFilter],
-  );
+  const rows = useMemo(() => buildFunnelRows(funnel.data), [funnel.data]);
   const totals = versionTotals(funnel.data);
   const eventColumns = useEventColumns<FunnelRow>();
-  const packages = Array.from(
-    new Set(
-      allRows.flatMap((row) =>
-        row.byPackage.map((item) => item.packageVersion),
-      ),
-    ),
-  ).sort();
   const columns: ColumnsType<FunnelRow> = [
     {
       title: t('app_insights.col_version'),
@@ -334,38 +309,10 @@ export const VersionsPanel = ({
         <Alert
           type="info"
           showIcon
-          message={t('app_insights.truncated', { count: allRows.length })}
+          message={t('app_insights.truncated', { count: rows.length })}
         />
       )}
       <Card size="small" title={t('app_insights.funnel_table_title')}>
-        <div className="mb-3 flex flex-wrap gap-2">
-          <Select
-            value={versionFilter}
-            onChange={setVersionFilter}
-            showSearch
-            optionFilterProp="label"
-            className="w-64"
-            options={[
-              { value: ALL, label: t('app_insights.filter_all_versions') },
-              ...allRows.map((row) => ({
-                value: row.hash,
-                label: `${row.name ?? t('app_insights.version_deleted')} (${row.hash.slice(0, 8)})`,
-              })),
-            ]}
-          />
-          <Select
-            value={packageFilter}
-            onChange={setPackageFilter}
-            showSearch
-            optionFilterProp="label"
-            className="w-48"
-            options={[
-              { value: ALL, label: t('app_insights.filter_all_packages') },
-              ...packages.map((value) => ({ value, label: value })),
-            ]}
-          />
-        </div>
-        <Question>{t('app_insights.versions_table_question')}</Question>
         <Spin spinning={funnel.isLoading}>
           {rows.length > 0 ? (
             <Table
@@ -381,13 +328,7 @@ export const VersionsPanel = ({
             />
           ) : (
             <EmptyState>
-              {funnel.isLoading
-                ? ''
-                : t(
-                    allRows.length
-                      ? 'app_insights.no_versions_match'
-                      : 'app_insights.no_observations',
-                  )}
+              {funnel.isLoading ? '' : t('app_insights.no_observations')}
             </EmptyState>
           )}
         </Spin>

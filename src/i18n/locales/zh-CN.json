@@ -453,7 +453,6 @@
     "geo_resolver_missing": "当前服务节点未加载 IP 地区库，它处理的请求都会记为「未知」。"
   },
   "app_insights": {
-    "versions_table_question": "每个热更版本的下发、下载、激活和回滚；点开一行查看按原生包拆分和累计设备。",
     "more_os_versions": "其他 {{count}} 个版本",
     "platform_detail": "细分",
     "platform_overall": "整体",
@@ -516,8 +515,6 @@
     "truncated": "版本较多，只显示最活跃的前 {{count}} 个。",
     "funnel_table_title": "各版本数据",
     "filter_all_versions": "全部版本",
-    "filter_all_packages": "全部原生包",
-    "no_versions_match": "没有匹配筛选条件的版本",
     "col_version": "热更版本",
     "col_health": "回滚率",
     "col_served": "下发次数",
@@ -612,7 +609,6 @@
     "events_not_funnel": "各列分别计数，不是逐级转化。",
     "retained_title": "累计设备与到达时间",
     "retained_scope": "从版本上传起累计，不受天数筛选影响。",
-    "retained_unavailable_package": "按原生包筛选时不显示累计设备和到达时间。",
     "retained_hint": "设备数为去重估算值。",
     "rollback_low": "回滚率低",
     "rollback_warning": "回滚率偏高",

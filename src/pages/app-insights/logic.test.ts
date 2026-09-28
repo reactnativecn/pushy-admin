@@ -3,7 +3,6 @@ import {
   beijingToday,
   buildFunnelRows,
   computeFunnelRates,
-  filterFunnelRows,
   highestFailureDimension,
   isKnownCarrier,
   lagShares,
@@ -318,16 +317,6 @@ describe('independent version observations', () => {
     )[0]!;
     expect(row.retained?.mark).toBeNull();
     expect(row.retained?.download).toBeNull();
-  });
-  it('hides whole-version observations under native-package filters without mutation', () => {
-    const original = buildFunnelRows(response());
-    const filtered = filterFunnelRows(original, 'v1', '1.0')[0]!;
-    expect(filtered.retained).toBeNull();
-    expect(filtered.events.markSuccess).toBe(2);
-    expect(filtered.servedTotal).toBe(2);
-    expect(original[0]?.retained?.mark).toBe(5);
-    expect(filterFunnelRows(original, undefined, 'missing')).toEqual([]);
-    expect(filterFunnelRows(original, 'missing')).toEqual([]);
   });
   it('uses uncapped app summaries including unattributed events', () => {
     const result = versionTotals(
