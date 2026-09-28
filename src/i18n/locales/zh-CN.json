@@ -619,8 +619,6 @@
     "rollback_high": "回滚率过高",
     "insufficient_samples": "样本不足（{{count}} / {{minimum}}）",
     "rollback_only": "回滚率 = 回滚 ÷ (激活 + 回滚)。上报满 10 次后，≥1% 提示偏高，≥5% 提示过高。",
-    "totals_all": "整个应用的汇总，不受下方筛选影响。",
-    "totals_returned": "只汇总下方列出的版本。",
     "totals_unattributed": "含无法对应到版本的数据：下发 {{offers}} 次，上报 {{reports}} 次。",
     "request_share": "请求占比",
     "col_availability": "设备数据",

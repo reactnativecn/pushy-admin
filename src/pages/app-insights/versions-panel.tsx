@@ -300,13 +300,6 @@ export const VersionsPanel = ({
         updatedAt={funnel.dataUpdatedAt}
         stale={!!funnel.error && !!funnel.data}
       />
-      <Question>
-        {t(
-          totals?.scope === 'all_observed'
-            ? 'app_insights.totals_all'
-            : 'app_insights.totals_returned',
-        )}
-      </Question>
       <Spin spinning={funnel.isLoading}>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <StatTile

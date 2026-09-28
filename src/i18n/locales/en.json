@@ -619,8 +619,6 @@
     "rollback_high": "High rollback rate",
     "insufficient_samples": "Too few samples ({{count}} / {{minimum}})",
     "rollback_only": "Rollback rate = rollbacks ÷ (activations + rollbacks). After 10 reports, ≥1% is flagged elevated and ≥5% high.",
-    "totals_all": "Totals for the whole app; not affected by the filters below.",
-    "totals_returned": "Totals for the versions listed below only.",
     "totals_unattributed": "Includes data not tied to a version: {{offers}} deliveries, {{reports}} reports.",
     "request_share": "Request share",
     "col_availability": "Device data",
