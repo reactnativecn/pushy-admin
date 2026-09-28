@@ -1,4 +1,4 @@
-import { Alert, Card, Segmented, Spin, Table, Tooltip } from 'antd';
+import { Alert, Card, Radio, Spin, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -299,10 +299,12 @@ export const VersionsPanel = ({
   const packageEventColumns = useEventColumns<PackageRow>();
   // 视角切换放在第一列表头，切换后表格的行随之变成热更版本或原生包。
   const perspectiveToggle = (
-    <Segmented
+    <Radio.Group
       size="small"
+      optionType="button"
+      buttonStyle="solid"
       value={perspective}
-      onChange={(value) => setPerspective(value as 'version' | 'package')}
+      onChange={(event) => setPerspective(event.target.value)}
       options={[
         { value: 'version', label: t('app_insights.by_version') },
         { value: 'package', label: t('app_insights.by_package') },
