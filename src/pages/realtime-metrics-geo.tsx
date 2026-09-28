@@ -54,7 +54,14 @@ export const RealtimeGeoPanel = ({
 
   return (
     <Card
-      title={t('realtime_metrics.geo_title')}
+      title={
+        <span className="flex flex-wrap items-baseline gap-x-2">
+          {t('realtime_metrics.geo_title')}
+          <span className="text-xs font-normal text-gray-500">
+            {t('realtime_metrics.geo_hint')}
+          </span>
+        </span>
+      }
       size="small"
       style={{ marginBottom: 16 }}
       extra={
@@ -183,9 +190,6 @@ export const RealtimeGeoPanel = ({
                 {isLoading ? '' : t('realtime_metrics.geo_no_data')}
               </div>
             )}
-          </div>
-          <div className="mt-3 text-xs text-gray-500">
-            {t('realtime_metrics.geo_hint')}
           </div>
         </Spin>
       )}
