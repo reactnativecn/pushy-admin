@@ -297,11 +297,24 @@ export const VersionsPanel = ({
     [rows, traffic.data],
   );
   const packageEventColumns = useEventColumns<PackageRow>();
+  // 视角切换放在第一列表头，切换后表格的行随之变成热更版本或原生包。
+  const perspectiveToggle = (
+    <Segmented
+      size="small"
+      value={perspective}
+      onChange={(value) => setPerspective(value as 'version' | 'package')}
+      options={[
+        { value: 'version', label: t('app_insights.by_version') },
+        { value: 'package', label: t('app_insights.by_package') },
+      ]}
+    />
+  );
   const packageColumns: ColumnsType<PackageRow> = [
     {
-      title: t('app_insights.col_package'),
+      title: perspectiveToggle,
       dataIndex: 'packageVersion',
       fixed: 'left',
+      width: 220,
     },
     {
       title: t('app_insights.requests'),
@@ -335,7 +348,7 @@ export const VersionsPanel = ({
   const eventColumns = useEventColumns<FunnelRow>();
   const columns: ColumnsType<FunnelRow> = [
     {
-      title: t('app_insights.col_version'),
+      title: perspectiveToggle,
       key: 'version',
       fixed: 'left',
       width: 220,
@@ -384,21 +397,7 @@ export const VersionsPanel = ({
           message={t('app_insights.truncated', { count: rows.length })}
         />
       )}
-      <Card
-        size="small"
-        title={t('app_insights.funnel_table_title')}
-        extra={
-          <Segmented
-            size="small"
-            value={perspective}
-            onChange={(value) => setPerspective(value as 'version' | 'package')}
-            options={[
-              { value: 'version', label: t('app_insights.by_version') },
-              { value: 'package', label: t('app_insights.by_package') },
-            ]}
-          />
-        }
-      >
+      <Card size="small" title={t('app_insights.funnel_table_title')}>
         <Spin spinning={funnel.isLoading || traffic.isLoading}>
           {perspective === 'package' ? (
             <Table
@@ -416,7 +415,7 @@ export const VersionsPanel = ({
                 expandedRowRender: (row) => <PackageDetail row={row} />,
               }}
             />
-          ) : rows.length > 0 ? (
+          ) : (
             <Table
               size="small"
               rowKey="hash"
@@ -425,15 +424,12 @@ export const VersionsPanel = ({
               columns={columns}
               pagination={rows.length > 20 ? { pageSize: 20 } : false}
               scroll={{ x: 'max-content' }}
+              locale={{ emptyText: t('app_insights.no_observations') }}
               expandable={{
                 expandRowByClick: true,
                 expandedRowRender: (row) => <VersionDetail row={row} />,
               }}
             />
-          ) : (
-            <EmptyState>
-              {funnel.isLoading ? '' : t('app_insights.no_observations')}
-            </EmptyState>
           )}
         </Spin>
         <Footnote>{t('app_insights.events_not_funnel')}</Footnote>
