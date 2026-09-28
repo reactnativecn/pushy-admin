@@ -551,7 +551,6 @@
     "packages_footnote": "设备数只保留最近 {{devices}} 天。",
     "carriers_title": "运营商",
     "carriers_question": "按客户端 IP 判断的运营商分布。",
-    "carriers_footnote": "中国大陆以外统一记为「其他地区」。",
     "carrier_telecom": "电信",
     "carrier_unicom": "联通",
     "carrier_mobile": "移动",

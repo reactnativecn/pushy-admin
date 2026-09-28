@@ -74,7 +74,6 @@ export const TrafficPanel = ({
       key: 'carriers',
       title: t('app_insights.carriers_title'),
       question: t('app_insights.carriers_question'),
-      footnote: t('app_insights.carriers_footnote'),
       items: summary.carriers.map((row) => ({
         ...row,
         label: carrierLabel(row.key),
@@ -190,9 +189,6 @@ export const TrafficPanel = ({
                 </EmptyState>
               )}
             </Spin>
-            {distribution.footnote && (
-              <Footnote>{distribution.footnote}</Footnote>
-            )}
           </Card>
         ))}
       </div>

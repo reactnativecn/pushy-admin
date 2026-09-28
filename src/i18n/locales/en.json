@@ -551,7 +551,6 @@
     "packages_footnote": "Device counts are kept for {{devices}} days.",
     "carriers_title": "Carriers",
     "carriers_question": "Carriers, based on client IP.",
-    "carriers_footnote": "Outside mainland China everything is grouped as “Other regions”.",
     "carrier_telecom": "China Telecom",
     "carrier_unicom": "China Unicom",
     "carrier_mobile": "China Mobile",
