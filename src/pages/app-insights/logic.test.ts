@@ -173,7 +173,9 @@ describe('complete-day means and missing observations', () => {
     expect(normalizeOSVersion('android 99')).toBe('android API 99');
     expect(normalizeOSVersion('ios 17.5.1')).toBe('ios 17');
     expect(normalizeOSVersion('tvos 18.0')).toBe('tvos 18');
-    expect(normalizeOSVersion('harmony 12')).toBe('harmony API 12');
+    expect(normalizeOSVersion('harmony 12')).toBe('harmony 5.0.0');
+    expect(normalizeOSVersion('harmony 20')).toBe('harmony 6.0.0');
+    expect(normalizeOSVersion('harmony 99')).toBe('harmony API 99');
     expect(normalizeOSVersion('unknown')).toBe('unknown');
   });
   it('groups OS labels into platforms and ranks OS versions', () => {

@@ -202,9 +202,23 @@ const ANDROID_API_VERSION: Record<number, string> = {
   36: '16',
 };
 
+// 鸿蒙同样上报 API level；对照华为版本说明（HarmonyOS 5.0.0 起）。
+const HARMONY_API_VERSION: Record<number, string> = {
+  12: '5.0.0',
+  13: '5.0.1',
+  14: '5.0.2',
+  15: '5.0.3',
+  16: '5.0.4',
+  17: '5.0.5',
+  18: '5.1.0',
+  19: '5.1.1',
+  20: '6.0.0',
+  21: '6.0.1',
+};
+
 /**
  * 把 SDK 上报的 os 标签归到便于阅读的系统版本：Android API level → 版本号，
- * 鸿蒙整数标成 API level，iOS / tvOS 只保留主版本（17.5.1 → 17），其余原样。
+ * 鸿蒙 API level → 商业版本号，iOS / tvOS 只保留主版本（17.5.1 → 17），其余原样。
  */
 export const normalizeOSVersion = (label: string): string => {
   const [platform = '', version = ''] = label.split(' ');
@@ -213,9 +227,9 @@ export const normalizeOSVersion = (label: string): string => {
     const mapped = ANDROID_API_VERSION[Number(version)];
     return mapped ? `android ${mapped}` : `android API ${version}`;
   }
-  // 鸿蒙上报的整数同样是 API level，没有可靠的版本号对照，明确标成 API。
   if (platform === 'harmony' && /^\d+$/.test(version)) {
-    return `harmony API ${version}`;
+    const mapped = HARMONY_API_VERSION[Number(version)];
+    return mapped ? `harmony ${mapped}` : `harmony API ${version}`;
   }
   if (platform === 'ios' || platform === 'tvos') {
     return `${platform} ${version.split('.')[0]}`;
