@@ -31,7 +31,8 @@ const en = {
   expired: 'Data for this day has expired.',
   noGray: 'No gray rollout data yet.',
   day: 'Date (UTC)',
-  rule: 'Native package / rule',
+  rule: 'Native package → gray version',
+  rolloutShare: 'Rollout',
   exposed: 'Devices reached',
   hit: 'Hit',
   miss: 'Missed',
@@ -76,7 +77,8 @@ const zh: typeof en = {
   expired: '该日期的数据已过期。',
   noGray: '暂无灰度数据。',
   day: '日期（UTC）',
-  rule: '原生包 / 规则',
+  rule: '原生包 → 灰度版本',
+  rolloutShare: '灰度',
   exposed: '触达设备',
   hit: '命中',
   miss: '未命中',
@@ -158,17 +160,16 @@ export const ReleaseInsightsPanel = ({
     {
       title: text.rule,
       key: 'rule',
-      width: 270,
       render: (_, row) => (
         <div>
           <div>
-            {row.packageVersion} · {name(row.targetHash)}
+            {row.packageVersion} → {name(row.targetHash)}
           </div>
-          <div className="text-xs text-gray-500">
-            {row.rollout == null ? text.missing : `${row.rollout}%`} ·{' '}
-            {row.algorithm}
-          </div>
-          <code className="text-xs">{row.id.slice(0, 12)}</code>
+          {row.rollout != null && (
+            <div className="text-xs text-gray-500">
+              {text.rolloutShare} {row.rollout}%
+            </div>
+          )}
         </div>
       ),
     },
