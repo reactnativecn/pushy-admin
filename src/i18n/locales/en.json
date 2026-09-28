@@ -452,7 +452,7 @@
     "geo_unknown_share": "Unknown {{percent}}%",
     "geo_other": "{{count}} other regions",
     "geo_no_data": "No region data yet",
-    "geo_hint": "By calendar day in UTC+8; \"Today\" is live. Kept for up to {{days}} days. Mainland China by province, elsewhere by country.",
+    "geo_hint": "By calendar day in UTC+8; \"Today\" is live.",
     "geo_resolver_missing": "This API node has no IP region database loaded; every request it serves is counted as Unknown."
   },
   "app_insights": {

@@ -452,7 +452,7 @@
     "geo_unknown_share": "未知占比 {{percent}}%",
     "geo_other": "其他 {{count}} 个地区",
     "geo_no_data": "暂无地区数据",
-    "geo_hint": "按北京时间自然日统计，「今日」为实时数据，最多保留 {{days}} 天。中国大陆精确到省，其他地区精确到国家。",
+    "geo_hint": "按北京时间自然日统计，「今日」为实时数据。",
     "geo_resolver_missing": "当前服务节点未加载 IP 地区库，它处理的请求都会记为「未知」。"
   },
   "app_insights": {

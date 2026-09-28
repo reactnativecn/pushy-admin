@@ -185,9 +185,7 @@ export const RealtimeGeoPanel = ({
             )}
           </div>
           <div className="mt-3 text-xs text-gray-500">
-            {t('realtime_metrics.geo_hint', {
-              days: data?.retentionDays ?? GEO_FETCH_DAYS,
-            })}
+            {t('realtime_metrics.geo_hint')}
           </div>
         </Spin>
       )}
