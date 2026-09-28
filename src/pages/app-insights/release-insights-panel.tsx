@@ -32,14 +32,13 @@ const en = {
   noGray: 'No gray rollout data yet.',
   day: 'Date (UTC)',
   rule: 'Native package → gray version',
-  rolloutShare: 'Rollout',
   exposed: 'Devices reached',
   hit: 'Hit',
   miss: 'Missed',
   unknown: 'SDK too old',
   unknownHint:
     'These devices run an SDK too old to tell whether they are in the gray release. They still update normally; upgrading the SDK makes them countable.',
-  rate: 'Hit rate',
+  rate: 'Target / actual hit rate',
   status: 'Data status',
   hermes: 'HermesBase compilation and patch size',
   version: 'Version',
@@ -78,14 +77,13 @@ const zh: typeof en = {
   noGray: '暂无灰度数据。',
   day: '日期（UTC）',
   rule: '原生包 → 灰度版本',
-  rolloutShare: '灰度',
   exposed: '触达设备',
   hit: '命中',
   miss: '未命中',
   unknown: 'SDK 版本过低',
   unknownHint:
     '这些设备的 SDK 版本较低，无法统计是否命中灰度；不影响它们正常更新，升级 SDK 后即可统计。',
-  rate: '命中率',
+  rate: '设定 / 实际命中率',
   status: '数据状态',
   hermes: 'HermesBase 编译与补丁大小',
   version: '目标版本',
@@ -165,11 +163,6 @@ export const ReleaseInsightsPanel = ({
           <div>
             {row.packageVersion} → {name(row.targetHash)}
           </div>
-          {row.rollout != null && (
-            <div className="text-xs text-gray-500">
-              {text.rolloutShare} {row.rollout}%
-            </div>
-          )}
         </div>
       ),
     },
@@ -183,8 +176,14 @@ export const ReleaseInsightsPanel = ({
     },
     {
       title: text.rate,
-      dataIndex: 'hitRate',
-      render: (value: number | null) => observationPercent(value, text.missing),
+      key: 'rate',
+      render: (_, row) => (
+        <span className="whitespace-nowrap tabular-nums">
+          {row.rollout == null ? text.missing : `${row.rollout}%`}
+          <span className="mx-1 text-gray-400">/</span>
+          {observationPercent(row.hitRate, text.missing)}
+        </span>
+      ),
     },
     { title: text.status, dataIndex: 'status', render: status },
   ];
