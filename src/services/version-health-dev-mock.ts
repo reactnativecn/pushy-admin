@@ -266,20 +266,6 @@ function buildBreakdownDays(days: number) {
           reason: 'other:ENOENT',
           count: n(5),
         },
-        {
-          type: 'rollback',
-          hash: HASH_A,
-          name: '2.4.1',
-          reason: 'other:JS exception',
-          count: n(9),
-        },
-        {
-          type: 'rollback',
-          hash: HASH_B,
-          name: '2.4.0',
-          reason: 'empty',
-          count: n(3),
-        },
       ],
       byCarrier: [
         { type: 'download_success', carrier: '电信', count: n(1_400) },

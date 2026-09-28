@@ -257,7 +257,7 @@ describe('review: failure availability and canonical reason identity', () => {
         },
         { type: 'patch_fail', hash: 'v2', name: 'V2', reason: 'ssl', count: 3 },
         {
-          type: 'rollback',
+          type: 'patch_fail',
           hash: 'v1',
           name: 'V1',
           reason: 'other:old',
@@ -288,7 +288,7 @@ describe('review: failure availability and canonical reason identity', () => {
     expect(result.reasons[0]).toMatchObject({
       count: 10,
       percent: (10 / 15) * 100,
-      byType: { download_fail: 3, patch_fail: 3, rollback: 4 },
+      byType: { download_fail: 3, patch_fail: 7 },
       versions: [
         { hash: 'v1', name: 'V1', count: 6 },
         { hash: 'v2', name: 'V2', count: 4 },

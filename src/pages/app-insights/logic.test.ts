@@ -439,4 +439,28 @@ describe('diagnostic report shares, not attempt failure rates', () => {
     expect(isKnownCarrier('移动')).toBe(true);
     expect(summarizeBreakdown(undefined).reasons).toEqual([]);
   });
+  it('ignores legacy rollback reason rows', () => {
+    const result = summarizeBreakdown([
+      breakdown({
+        byReason: [
+          {
+            type: 'patch_fail',
+            hash: 'v1',
+            name: 'V1',
+            reason: 'crc_mismatch',
+            count: 4,
+          },
+          {
+            type: 'rollback',
+            hash: 'v1',
+            name: 'V1',
+            reason: 'empty',
+            count: 40,
+          },
+        ],
+      }),
+    ]);
+    expect(result.failures).toBe(4);
+    expect(result.reasons.map((row) => row.reason)).toEqual(['crc_mismatch']);
+  });
 });

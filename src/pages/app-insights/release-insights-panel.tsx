@@ -140,10 +140,10 @@ export const ReleaseInsightsPanel = ({
   appKey: string;
   days: number;
   /**
-   * Administrators see why a Hermes base was dropped. Everyone else sees it
-   * as "not used": the CLI fell back to a plain compile, the release is fine,
-   * and a rejection so far has always been a gap in our own check -- not
-   * something to put in front of a customer.
+   * Only administrators see the HermesBase compilation and artifact size
+   * section. It is a diagnostic view of our own build pipeline: customers
+   * cannot act on it, and a dropped base means the CLI fell back to a plain
+   * compile while the release itself is fine.
    */
   isAdmin?: boolean;
 }) => {
@@ -247,8 +247,8 @@ export const ReleaseInsightsPanel = ({
   ];
   const outcomes: Record<string, string> = {
     used: text.used,
-    rejected: isAdmin ? text.rejected : text.none,
-    'dump-failed': isAdmin ? text.dumpFailed : text.none,
+    rejected: text.rejected,
+    'dump-failed': text.dumpFailed,
     none: text.none,
     unreported: text.unreported,
   };
@@ -276,15 +276,11 @@ export const ReleaseInsightsPanel = ({
       render: (_, row) =>
         `${row.baseVersionId ?? '—'} / ${row.bytecodeVersion ?? '—'}`,
     },
-    ...(isAdmin
-      ? [
-          {
-            title: text.detail,
-            dataIndex: 'hermesBaseDetail',
-            ellipsis: true,
-          },
-        ]
-      : []),
+    {
+      title: text.detail,
+      dataIndex: 'hermesBaseDetail',
+      ellipsis: true,
+    },
     { title: text.artifacts, dataIndex: 'artifactStatus', render: status },
   ];
   const reasons: Record<string, string> = {
@@ -359,29 +355,33 @@ export const ReleaseInsightsPanel = ({
                 locale={{ emptyText: text.noGray }}
               />
             )}
-            <h3 className="font-medium">{text.hermes}</h3>
-            <Alert showIcon type="info" message={text.distinction} />
-            <Table
-              rowKey="hash"
-              dataSource={insights.versions}
-              columns={versionColumns}
-              scroll={{ x: 950 }}
-              size="small"
-              pagination={{ pageSize: 10 }}
-              expandable={{
-                expandedRowRender: (row) => (
-                  <Table
-                    rowKey="key"
-                    dataSource={row.artifacts}
-                    columns={artifactColumns}
-                    size="small"
-                    scroll={{ x: 1000 }}
-                    pagination={{ pageSize: 10 }}
-                    locale={{ emptyText: text.empty }}
-                  />
-                ),
-              }}
-            />
+            {isAdmin && (
+              <>
+                <h3 className="font-medium">{text.hermes}</h3>
+                <Alert showIcon type="info" message={text.distinction} />
+                <Table
+                  rowKey="hash"
+                  dataSource={insights.versions}
+                  columns={versionColumns}
+                  scroll={{ x: 950 }}
+                  size="small"
+                  pagination={{ pageSize: 10 }}
+                  expandable={{
+                    expandedRowRender: (row) => (
+                      <Table
+                        rowKey="key"
+                        dataSource={row.artifacts}
+                        columns={artifactColumns}
+                        size="small"
+                        scroll={{ x: 1000 }}
+                        pagination={{ pageSize: 10 }}
+                        locale={{ emptyText: text.empty }}
+                      />
+                    ),
+                  }}
+                />
+              </>
+            )}
             <h3 className="font-medium">{text.offers}</h3>
             <p className="text-sm text-gray-500">{text.offersNote}</p>
             <Table
