@@ -111,7 +111,7 @@ test('legacy table labels returned-version totals and keeps download failures vi
   });
   render(
     <QueryClientProvider client={client}>
-      <VersionsPanel appKey="metric-test" days={7} />
+      <VersionsPanel appKey="metric-test" days={7} isAdmin={false} />
     </QueryClientProvider>,
   );
   expect(screen.getByText(insightsEn.totals_returned)).not.toBeNull();

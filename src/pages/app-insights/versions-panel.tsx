@@ -17,6 +17,7 @@ import {
   observedInteger,
   RollbackShare,
 } from './observation-ui';
+import { ReleaseInsightsPanel } from './release-insights-panel';
 import {
   EmptyState,
   Footnote,
@@ -245,12 +246,18 @@ export const VersionDetail = ({ row }: { row: FunnelRow }) => {
   );
 };
 
+/**
+ * 版本页从整体到细节：汇总 → 各版本数据 → 灰度发布 → 更新包下发方式 →
+ * 原生包分布 →（管理员）HermesBase 诊断。
+ */
 export const VersionsPanel = ({
   appKey,
   days,
+  isAdmin,
 }: {
   appKey: string | undefined;
   days: number;
+  isAdmin: boolean;
 }) => {
   const { t } = useTranslation();
   const funnel = useAppVersionFunnel(appKey, days);
@@ -365,7 +372,7 @@ export const VersionsPanel = ({
             ]}
           />
         </div>
-        <Question>{t('app_insights.events_not_funnel')}</Question>
+        <Question>{t('app_insights.versions_table_question')}</Question>
         <Spin spinning={funnel.isLoading}>
           {rows.length > 0 ? (
             <Table
@@ -391,8 +398,33 @@ export const VersionsPanel = ({
             </EmptyState>
           )}
         </Spin>
+        <Footnote>{t('app_insights.events_not_funnel')}</Footnote>
       </Card>
+      {appKey && (
+        <>
+          <ReleaseInsightsPanel
+            appKey={appKey}
+            days={days}
+            isAdmin={isAdmin}
+            section="rollout"
+          />
+          <ReleaseInsightsPanel
+            appKey={appKey}
+            days={days}
+            isAdmin={isAdmin}
+            section="deliveries"
+          />
+        </>
+      )}
       <PackagesCard appKey={appKey} days={days} />
+      {appKey && (
+        <ReleaseInsightsPanel
+          appKey={appKey}
+          days={days}
+          isAdmin={isAdmin}
+          section="hermes"
+        />
+      )}
     </div>
   );
 };

@@ -91,8 +91,11 @@ test('partial day and Hermes metadata render in Chinese with accessible day sele
     true,
   );
   expect(screen.getByText('已采用')).not.toBeNull();
-  expect(screen.getByText('当天数据不完整，数量可能偏低。')).not.toBeNull();
-  expect(screen.getByRole('combobox', { name: '日期（UTC）' })).not.toBeNull();
+  // 灰度发布与下发方式两张卡片各有一个日期选择和当日提示
+  expect(screen.getAllByText('当天数据不完整，数量可能偏低。')).toHaveLength(2);
+  expect(screen.getAllByRole('combobox', { name: '日期（UTC）' })).toHaveLength(
+    2,
+  );
   client.clear();
 });
 

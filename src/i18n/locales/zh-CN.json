@@ -453,6 +453,7 @@
     "geo_resolver_missing": "当前服务节点未加载 IP 地区库，它处理的请求都会记为「未知」。"
   },
   "app_insights": {
+    "versions_table_question": "每个热更版本的下发、下载、激活和回滚；点开一行查看按原生包拆分和累计设备。",
     "more_os_versions": "其他 {{count}} 个版本",
     "platform_detail": "细分",
     "platform_overall": "整体",

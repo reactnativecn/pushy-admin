@@ -19,7 +19,9 @@ import { useAppVersionFunnel } from './shared';
 // frontend/backend deployment without changing the existing translation keys.
 const en = {
   title: 'Release effectiveness',
-  gray: 'Gray rollout hits (devices)',
+  gray: 'Gray release',
+  grayQuestion:
+    'Whether each gray-release rule reaches the intended share of devices, by day.',
   missing: 'No data',
   unavailable:
     'Release data is unavailable right now. Version data below is not affected.',
@@ -53,7 +55,7 @@ const en = {
   observedAt: 'Time (UTC)',
   distinction:
     '“Used” means the CLI used the HermesBase compile. The size saving compares the patch with the full bundle, not HermesBase alone.',
-  offers: 'Updates returned by the server',
+  offers: 'How updates are delivered',
   offersNote:
     "One update check can return a patch, a full bundle and a gray version at once; counts overlap and don't mean the client downloaded anything.",
   target: 'Target',
@@ -77,7 +79,8 @@ const en = {
 };
 const zh: typeof en = {
   title: '发布效果',
-  gray: '灰度命中（设备数）',
+  gray: '灰度发布',
+  grayQuestion: '各灰度规则每天实际命中了多少设备，是否接近设定比例。',
   missing: '暂无数据',
   unavailable: '发布效果数据暂时不可用，不影响下方版本数据。',
   upgrade: '服务端尚未启用该功能。',
@@ -109,7 +112,7 @@ const zh: typeof en = {
   observedAt: '时间（UTC）',
   distinction:
     '「已采用」表示 CLI 使用了 HermesBase 的编译结果。体积对比的是补丁与整包，不单指 HermesBase 带来的缩减。',
-  offers: '服务端返回的更新',
+  offers: '更新包下发方式',
   offersNote:
     '一次检查更新可能同时返回增量、整包和灰度版本，次数有重叠，也不代表客户端已下载。',
   target: '目标',
@@ -132,10 +135,13 @@ const zh: typeof en = {
   noPatch: '无增量',
 };
 
+export type ReleaseSection = 'rollout' | 'deliveries' | 'hermes';
+
 export const ReleaseInsightsPanel = ({
   appKey,
   days,
   isAdmin = false,
+  section,
 }: {
   appKey: string;
   days: number;
@@ -146,6 +152,8 @@ export const ReleaseInsightsPanel = ({
    * compile while the release itself is fine.
    */
   isAdmin?: boolean;
+  /** 只渲染其中一张卡片；不传则依次渲染全部。 */
+  section?: ReleaseSection;
 }) => {
   const { i18n } = useTranslation();
   const text = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
@@ -304,47 +312,69 @@ export const ReleaseInsightsPanel = ({
     },
     { title: text.count, dataIndex: 'count', render: number },
   ];
+  const unavailableMessage = (
+    <Alert
+      showIcon
+      type="info"
+      message={
+        query.isLoading
+          ? '…'
+          : query.error || insights?.status === 'unavailable'
+            ? text.unavailable
+            : text.upgrade
+      }
+    />
+  );
+  const available = !!insights && insights.status !== 'unavailable';
+  const dateSelect = (name: ReleaseSection) =>
+    available && (
+      <span className="flex items-center gap-2 text-sm font-normal">
+        <label htmlFor={`${dateSelectID}-${name}`}>{text.day}</label>
+        <Select
+          id={`${dateSelectID}-${name}`}
+          size="small"
+          value={day?.date}
+          onChange={setSelectedDate}
+          options={insights.days.map((item) => ({
+            value: item.date,
+            label: item.date,
+          }))}
+          className="w-36"
+        />
+      </span>
+    );
+  const dayNotice = (
+    <>
+      {day && (day.limited || day.status === 'partial') && (
+        <Alert showIcon type="warning" message={text.partial} />
+      )}
+      {(day?.status === 'expired' || day?.status === 'unavailable') && (
+        <Alert
+          type="info"
+          message={day.status === 'expired' ? text.expired : text.missing}
+        />
+      )}
+    </>
+  );
+  const dayReadable =
+    day?.status !== 'expired' && day?.status !== 'unavailable';
+  const show = (name: ReleaseSection) => !section || section === name;
+  // 旧服务端或数据不可用时只提示一次，放在第一张卡片的位置。
+  if (!available) {
+    return show('rollout') ? (
+      <Card size="small" title={text.title}>
+        <Spin spinning={query.isLoading}>{unavailableMessage}</Spin>
+      </Card>
+    ) : null;
+  }
   return (
-    <Card title={text.title} className="mb-4">
-      <Spin spinning={query.isLoading}>
-        {!insights || insights.status === 'unavailable' ? (
-          <Alert
-            showIcon
-            type="info"
-            message={
-              query.isLoading
-                ? '…'
-                : query.error || insights?.status === 'unavailable'
-                  ? text.unavailable
-                  : text.upgrade
-            }
-          />
-        ) : (
-          <div className="flex flex-col gap-4">
-            <h3 className="font-medium">{text.gray}</h3>
-            <Alert showIcon type="info" message={text.inference} />
-            <div className="flex flex-wrap items-center gap-2">
-              <label htmlFor={dateSelectID}>{text.day}</label>
-              <Select
-                id={dateSelectID}
-                value={day?.date}
-                onChange={setSelectedDate}
-                options={insights.days.map((item) => ({
-                  value: item.date,
-                  label: item.date,
-                }))}
-                className="w-44"
-              />
-            </div>
-            {day && (day.limited || day.status === 'partial') && (
-              <Alert showIcon type="warning" message={text.partial} />
-            )}
-            {day?.status === 'expired' || day?.status === 'unavailable' ? (
-              <Alert
-                type="info"
-                message={day.status === 'expired' ? text.expired : text.missing}
-              />
-            ) : (
+    <>
+      {show('rollout') && (
+        <Card size="small" title={text.gray} extra={dateSelect('rollout')}>
+          <div className="flex flex-col gap-3">
+            <p className="m-0 text-sm text-gray-500">{text.grayQuestion}</p>
+            {dayNotice}
+            {dayReadable && (
               <Table
                 rowKey="id"
                 dataSource={day?.cohorts ?? []}
@@ -355,47 +385,57 @@ export const ReleaseInsightsPanel = ({
                 locale={{ emptyText: text.noGray }}
               />
             )}
-            {isAdmin && (
-              <>
-                <h3 className="font-medium">{text.hermes}</h3>
-                <Alert showIcon type="info" message={text.distinction} />
-                <Table
-                  rowKey="hash"
-                  dataSource={insights.versions}
-                  columns={versionColumns}
-                  scroll={{ x: 950 }}
-                  size="small"
-                  pagination={{ pageSize: 10 }}
-                  expandable={{
-                    expandedRowRender: (row) => (
-                      <Table
-                        rowKey="key"
-                        dataSource={row.artifacts}
-                        columns={artifactColumns}
-                        size="small"
-                        scroll={{ x: 1000 }}
-                        pagination={{ pageSize: 10 }}
-                        locale={{ emptyText: text.empty }}
-                      />
-                    ),
-                  }}
-                />
-              </>
+            <p className="m-0 text-xs text-gray-400">{text.inference}</p>
+          </div>
+        </Card>
+      )}
+      {show('deliveries') && (
+        <Card size="small" title={text.offers} extra={dateSelect('deliveries')}>
+          <div className="flex flex-col gap-3">
+            <p className="m-0 text-sm text-gray-500">{text.offersNote}</p>
+            {dayNotice}
+            {dayReadable && (
+              <Table
+                rowKey="id"
+                dataSource={day?.deliveries ?? []}
+                columns={deliveryColumns}
+                size="small"
+                scroll={{ x: 800 }}
+                pagination={{ pageSize: 10 }}
+                locale={{ emptyText: text.missing }}
+              />
             )}
-            <h3 className="font-medium">{text.offers}</h3>
-            <p className="text-sm text-gray-500">{text.offersNote}</p>
+          </div>
+        </Card>
+      )}
+      {show('hermes') && isAdmin && (
+        <Card size="small" title={text.hermes}>
+          <div className="flex flex-col gap-3">
+            <p className="m-0 text-sm text-gray-500">{text.distinction}</p>
             <Table
-              rowKey="id"
-              dataSource={day?.deliveries ?? []}
-              columns={deliveryColumns}
+              rowKey="hash"
+              dataSource={insights.versions}
+              columns={versionColumns}
+              scroll={{ x: 950 }}
               size="small"
-              scroll={{ x: 800 }}
               pagination={{ pageSize: 10 }}
-              locale={{ emptyText: text.missing }}
+              expandable={{
+                expandedRowRender: (row) => (
+                  <Table
+                    rowKey="key"
+                    dataSource={row.artifacts}
+                    columns={artifactColumns}
+                    size="small"
+                    scroll={{ x: 1000 }}
+                    pagination={{ pageSize: 10 }}
+                    locale={{ emptyText: text.empty }}
+                  />
+                ),
+              }}
             />
           </div>
-        )}
-      </Spin>
-    </Card>
+        </Card>
+      )}
+    </>
   );
 };
