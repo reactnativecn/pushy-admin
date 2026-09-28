@@ -7,6 +7,7 @@ import {
   highestFailureDimension,
   isKnownCarrier,
   lagShares,
+  normalizeOSVersion,
   observationCount,
   parseFailureReason,
   parseInsightDays,
@@ -166,13 +167,22 @@ describe('complete-day means and missing observations', () => {
     expect(result.today?.dau).toBe(9);
     expect(result.averageDau).toBeNull();
   });
+  it('maps Android API levels and folds iOS minor versions', () => {
+    expect(normalizeOSVersion('android 34')).toBe('android 14');
+    expect(normalizeOSVersion('android 32')).toBe('android 12');
+    expect(normalizeOSVersion('android 99')).toBe('android API 99');
+    expect(normalizeOSVersion('ios 17.5.1')).toBe('ios 17');
+    expect(normalizeOSVersion('tvos 18.0')).toBe('tvos 18');
+    expect(normalizeOSVersion('harmony 12')).toBe('harmony API 12');
+    expect(normalizeOSVersion('unknown')).toBe('unknown');
+  });
   it('groups OS labels into platforms and ranks OS versions', () => {
     const result = summarizeTraffic(
       [
         day('2026-09-26', {
-          os: { 'android 14': 30, 'ios 17.5': 10 },
+          os: { 'android 34': 30, 'ios 17.5': 10 },
         }),
-        day('2026-09-27', { os: { 'android 15': 20, 'ios 17.5': 5 } }),
+        day('2026-09-27', { os: { 'android 35': 20, 'ios 17.6.1': 5 } }),
       ],
       '2026-09-27',
     );
@@ -181,10 +191,11 @@ describe('complete-day means and missing observations', () => {
       ['android', 50],
       ['ios', 15],
     ]);
-    expect(result.osVersions[0]).toMatchObject({
-      key: 'android 14',
-      count: 30,
-    });
+    expect(result.osVersions.map((row) => [row.key, row.count])).toEqual([
+      ['android 14', 30],
+      ['android 15', 20],
+      ['ios 17', 15],
+    ]);
     expect(summarizeTraffic([day('2026-09-27')]).hasClientInfo).toBe(false);
   });
   it('is empty safe without fabricating means or device peaks', () => {

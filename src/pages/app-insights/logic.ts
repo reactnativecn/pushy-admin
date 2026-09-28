@@ -181,6 +181,48 @@ const rankRefused = (counts: Map<string, number>): RefusedPackageSummary[] =>
       : right.requests - left.requests,
   );
 
+// Android 客户端上报的是 API level（Platform.Version），换算成系统版本号；
+// 同一系统版本的多个 API level（如 12 / 12L）合并。
+const ANDROID_API_VERSION: Record<number, string> = {
+  21: '5',
+  22: '5.1',
+  23: '6',
+  24: '7',
+  25: '7.1',
+  26: '8',
+  27: '8.1',
+  28: '9',
+  29: '10',
+  30: '11',
+  31: '12',
+  32: '12',
+  33: '13',
+  34: '14',
+  35: '15',
+  36: '16',
+};
+
+/**
+ * 把 SDK 上报的 os 标签归到便于阅读的系统版本：Android API level → 版本号，
+ * 鸿蒙整数标成 API level，iOS / tvOS 只保留主版本（17.5.1 → 17），其余原样。
+ */
+export const normalizeOSVersion = (label: string): string => {
+  const [platform = '', version = ''] = label.split(' ');
+  if (!version) return label;
+  if (platform === 'android' && /^\d+$/.test(version)) {
+    const mapped = ANDROID_API_VERSION[Number(version)];
+    return mapped ? `android ${mapped}` : `android API ${version}`;
+  }
+  // 鸿蒙上报的整数同样是 API level，没有可靠的版本号对照，明确标成 API。
+  if (platform === 'harmony' && /^\d+$/.test(version)) {
+    return `harmony API ${version}`;
+  }
+  if (platform === 'ios' || platform === 'tvos') {
+    return `${platform} ${version.split('.')[0]}`;
+  }
+  return label;
+};
+
 export const HOURLY_DAYS = 7;
 
 export interface HourlyDay {
@@ -251,11 +293,12 @@ export const summarizeTraffic = (
     addCounts(hosts, day.hosts);
     addCounts(carriers, day.carriers);
     if (day.os) hasClientInfo = true;
-    addCounts(osVersions, day.os);
     for (const [label, count] of Object.entries(day.os ?? {})) {
       if (validCount(count) && count > 0) {
         const platform = label.split(' ')[0] || 'unknown';
         platforms[platform] = (platforms[platform] ?? 0) + count;
+        const version = normalizeOSVersion(label);
+        osVersions[version] = (osVersions[version] ?? 0) + count;
       }
     }
     for (const item of day.packages ?? []) {

@@ -216,8 +216,8 @@ const seed = (appIndex = 0) =>
         os: split(
           requests,
           english
-            ? ['ios 18.0', 'ios 17.6', 'android 15', 'android 14', 'ios 16.7']
-            : ['android 15', 'android 14', 'ios 18.0', 'android 13', 'harmony 5.0', 'ios 17.6', 'unknown'],
+            ? ['ios 18.0.1', 'ios 17.6', 'android 35', 'android 34', 'ios 16.7.10']
+            : ['android 35', 'android 34', 'ios 18.0.1', 'android 33', 'harmony 12', 'ios 17.6.1', 'unknown'],
           english ? [34, 22, 20, 16, 8] : [31, 22, 17, 12, 8, 7, 3],
         ),
         hosts: split(

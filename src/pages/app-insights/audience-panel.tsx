@@ -49,6 +49,7 @@ export const AudiencePanel = ({
     items.map((row) => ({
       ...row,
       label: row.key === 'unknown' ? unknown : labelOf(row.key),
+      title: row.key === 'unknown' ? unknown : labelOf(row.key),
       muted: row.key === 'unknown',
     }));
   const [platformDetail, setPlatformDetail] = useState(false);
@@ -59,6 +60,7 @@ export const AudiencePanel = ({
     items: BarListItem[];
     extra?: ReactNode;
     emptyText?: string;
+    restLabel?: (count: number) => ReactNode;
   }> = [
     {
       key: 'platforms',
@@ -79,6 +81,7 @@ export const AudiencePanel = ({
           ]}
         />
       ),
+      restLabel: (count) => t('app_insights.more_os_versions', { count }),
       emptyText:
         traffic.data && !summary.hasClientInfo
           ? t('app_insights.client_info_unavailable')
@@ -122,7 +125,7 @@ export const AudiencePanel = ({
             <Question>{card.question}</Question>
             <Spin spinning={traffic.isLoading}>
               {card.items.length > 0 ? (
-                <BarList items={card.items} />
+                <BarList items={card.items} restLabel={card.restLabel} />
               ) : (
                 <EmptyState>
                   {traffic.isLoading
