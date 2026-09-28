@@ -12,7 +12,7 @@ import type {
   ReleaseVersionInsight,
   RolloutInsight,
 } from './release-insights-types';
-import { useAppVersionFunnel } from './shared';
+import { HeaderHint, useAppVersionFunnel } from './shared';
 
 // Local bilingual strings keep this optional panel usable during a rolling
 // frontend/backend deployment without changing the existing translation keys.
@@ -35,9 +35,10 @@ const en = {
   exposed: 'Devices reached',
   hit: 'Hit',
   miss: 'Missed',
-  unknown: 'Undetermined',
+  unknown: 'SDK too old',
+  unknownHint:
+    'These devices run an SDK too old to tell whether they are in the gray release. They still update normally; upgrading the SDK makes them countable.',
   rate: 'Hit rate',
-  reasons: 'Why undetermined',
   status: 'Data status',
   hermes: 'HermesBase compilation and patch size',
   version: 'Version',
@@ -54,7 +55,6 @@ const en = {
   observedAt: 'Time (UTC)',
   distinction:
     '“Used” means the CLI used the HermesBase compile. The size saving compares the patch with the full bundle, not HermesBase alone.',
-  requests: 'Requests',
   used: 'Used',
   rejected: 'Failed equivalence check',
   dumpFailed: 'Equivalence check failed',
@@ -80,9 +80,10 @@ const zh: typeof en = {
   exposed: '触达设备',
   hit: '命中',
   miss: '未命中',
-  unknown: '无法判定',
+  unknown: 'SDK 版本过低',
+  unknownHint:
+    '这些设备的 SDK 版本较低，无法统计是否命中灰度；不影响它们正常更新，升级 SDK 后即可统计。',
   rate: '命中率',
-  reasons: '无法判定的原因',
   status: '数据状态',
   hermes: 'HermesBase 编译与补丁大小',
   version: '目标版本',
@@ -99,7 +100,6 @@ const zh: typeof en = {
   observedAt: '时间（UTC）',
   distinction:
     '「已采用」表示 CLI 使用了 HermesBase 的编译结果。体积对比的是补丁与整包，不单指 HermesBase 带来的缩减。',
-  requests: '请求数',
   used: '已采用',
   rejected: '等价性校验未通过',
   dumpFailed: '等价性校验失败',
@@ -175,28 +175,15 @@ export const ReleaseInsightsPanel = ({
     { title: text.exposed, dataIndex: 'exposedDevices', render: number },
     { title: text.hit, dataIndex: 'hitDevices', render: number },
     { title: text.miss, dataIndex: 'missDevices', render: number },
-    { title: text.unknown, dataIndex: 'unknownDevices', render: number },
+    {
+      title: <HeaderHint label={text.unknown} hint={text.unknownHint} />,
+      dataIndex: 'unknownDevices',
+      render: number,
+    },
     {
       title: text.rate,
       dataIndex: 'hitRate',
       render: (value: number | null) => observationPercent(value, text.missing),
-    },
-    {
-      title: text.reasons,
-      key: 'reasons',
-      width: 220,
-      render: (_, row) => (
-        <div>
-          <div>
-            {text.requests}: {number(row.requests.unknown)}
-          </div>
-          <div className="text-xs">
-            UUID: {number(row.requests.missingUUID)} · SDK:{' '}
-            {number(row.requests.missingSDK)} · Rule:{' '}
-            {number(row.requests.missingRule)}
-          </div>
-        </div>
-      ),
     },
     { title: text.status, dataIndex: 'status', render: status },
   ];
