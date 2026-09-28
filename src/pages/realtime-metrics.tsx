@@ -94,7 +94,7 @@ export const Component = () => {
         }
         sectionLabel={t('realtime_metrics.title')}
       />
-      <Card>
+      <Card className="insights-page">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
           <Segmented
             value={view}

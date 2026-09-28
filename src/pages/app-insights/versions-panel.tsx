@@ -1,7 +1,8 @@
-import { Alert, Card, Radio, Spin, Table, Tooltip } from 'antd';
+import { Alert, Card, Spin, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/utils/helper';
 import {
   buildFunnelRows,
   buildPackageRows,
@@ -299,17 +300,32 @@ export const VersionsPanel = ({
   const packageEventColumns = useEventColumns<PackageRow>();
   // 视角切换放在第一列表头，切换后表格的行随之变成热更版本或原生包。
   const perspectiveToggle = (
-    <Radio.Group
-      size="small"
-      optionType="button"
-      buttonStyle="solid"
-      value={perspective}
-      onChange={(event) => setPerspective(event.target.value)}
-      options={[
-        { value: 'version', label: t('app_insights.by_version') },
-        { value: 'package', label: t('app_insights.by_package') },
-      ]}
-    />
+    <div className="flex gap-5" role="tablist">
+      {(['version', 'package'] as const).map((value) => {
+        const active = perspective === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => setPerspective(value)}
+            className={cn(
+              '-mb-2 cursor-pointer border-0 border-b-2 border-solid bg-transparent px-0 pb-1.5 text-[15px]',
+              active
+                ? 'border-primary font-semibold text-primary'
+                : 'border-transparent font-normal text-gray-400 hover:text-gray-600',
+            )}
+          >
+            {t(
+              value === 'version'
+                ? 'app_insights.by_version'
+                : 'app_insights.by_package',
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
   const packageColumns: ColumnsType<PackageRow> = [
     {

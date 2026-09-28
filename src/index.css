@@ -171,3 +171,13 @@ a.ant-typography:hover .ant-typography {
     margin: 0;
   }
 }
+
+/* 数据分析页：表头比默认紧凑表格更醒目（字号与高度都加大）。 */
+@layer components {
+  .insights-page .ant-table-thead > tr > th,
+  .insights-page .ant-table-thead > tr > td {
+    font-size: 15px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
