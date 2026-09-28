@@ -545,7 +545,7 @@
     "series_question": "最近几小时的检查更新次数，可按热更版本或原生包拆分。",
     "series_footnote": "每 5 分钟一个点，默认只显示前 10 项。",
     "hourly_title": "小时分布",
-    "hourly_question": "近 {{days}} 天里，一天中哪些时段检查更新最多。",
+    "hourly_question": "近 {{days}} 天（含今天）每个小时的检查更新次数合计，按北京时间，用来看一天中哪些时段最忙。",
     "packages_title": "原生包",
     "packages_question": "各原生包版本的检查更新次数。",
     "packages_footnote": "设备数只保留最近 {{devices}} 天。",

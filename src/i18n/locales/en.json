@@ -545,7 +545,7 @@
     "series_question": "Update checks over the last few hours, split by bundle or native package.",
     "series_footnote": "One point every 5 minutes; top 10 shown by default.",
     "hourly_title": "Hour of day",
-    "hourly_question": "Which hours of the day get the most update checks, last {{days}} days.",
+    "hourly_question": "Update checks per hour of the day, summed over the last {{days}} days (including today), in UTC+8. Shows which hours are busiest.",
     "packages_title": "Native packages",
     "packages_question": "Update checks by native package version.",
     "packages_footnote": "Device counts are kept for {{devices}} days.",
