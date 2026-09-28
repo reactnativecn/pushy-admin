@@ -29,6 +29,7 @@ import {
   useAppVersionFunnel,
   VersionLabel,
 } from './shared';
+import { PackagesCard } from './traffic-panel';
 import type {
   FunnelEventCounts,
   LagBucket,
@@ -391,6 +392,7 @@ export const VersionsPanel = ({
           )}
         </Spin>
       </Card>
+      <PackagesCard appKey={appKey} days={days} />
     </div>
   );
 };

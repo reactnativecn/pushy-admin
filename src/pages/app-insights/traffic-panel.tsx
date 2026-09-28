@@ -52,6 +52,72 @@ export const PackageObservation = ({ row }: { row: PackageTrafficSummary }) => {
   );
 };
 
+/** 各原生包版本的请求量与设备数；放在版本页，和热更版本一起看。 */
+export const PackagesCard = ({
+  appKey,
+  days,
+}: {
+  appKey: string | undefined;
+  days: number;
+}) => {
+  const { t } = useTranslation();
+  const traffic = useAppTraffic(appKey, days);
+  const summary = useMemo(
+    () => summarizeTraffic(traffic.data?.days, traffic.data?.window?.today),
+    [traffic.data],
+  );
+  return (
+    <Card size="small" title={t('app_insights.packages_title')}>
+      <Question>{t('app_insights.packages_question')}</Question>
+      <Spin spinning={traffic.isLoading}>
+        <Table
+          size="small"
+          rowKey="packageVersion"
+          dataSource={summary.packages}
+          pagination={summary.packages.length > 10 ? { pageSize: 10 } : false}
+          scroll={{ x: 'max-content' }}
+          locale={{ emptyText: t('app_insights.no_observations') }}
+          columns={[
+            {
+              title: t('app_insights.col_package'),
+              dataIndex: 'packageVersion',
+            },
+            {
+              title: t('app_insights.requests'),
+              dataIndex: 'requests',
+              align: 'right',
+              render: formatInteger,
+            },
+            {
+              title: t('app_insights.request_share'),
+              dataIndex: 'percent',
+              align: 'right',
+              render: formatShare,
+            },
+            {
+              title: t('app_insights.col_peak_devices'),
+              dataIndex: 'peakDevices',
+              align: 'right',
+              render: observedInteger,
+            },
+            {
+              title: t('app_insights.col_availability'),
+              key: 'availability',
+              render: (_, row) => <PackageObservation row={row} />,
+            },
+          ]}
+        />
+      </Spin>
+      <Footnote>
+        {t('app_insights.packages_footnote', {
+          requests: traffic.data?.retentionDays ?? 35,
+          devices: traffic.data?.packageDevicesRetentionDays ?? 14,
+        })}
+      </Footnote>
+    </Card>
+  );
+};
+
 export const TrafficPanel = ({
   appKey,
   days,
@@ -156,54 +222,6 @@ export const TrafficPanel = ({
             </EmptyState>
           )}
         </Spin>
-      </Card>
-      <Card size="small" title={t('app_insights.packages_title')}>
-        <Question>{t('app_insights.packages_question')}</Question>
-        <Spin spinning={traffic.isLoading}>
-          <Table
-            size="small"
-            rowKey="packageVersion"
-            dataSource={summary.packages}
-            pagination={summary.packages.length > 10 ? { pageSize: 10 } : false}
-            scroll={{ x: 'max-content' }}
-            locale={{ emptyText: t('app_insights.no_observations') }}
-            columns={[
-              {
-                title: t('app_insights.col_package'),
-                dataIndex: 'packageVersion',
-              },
-              {
-                title: t('app_insights.requests'),
-                dataIndex: 'requests',
-                align: 'right',
-                render: formatInteger,
-              },
-              {
-                title: t('app_insights.request_share'),
-                dataIndex: 'percent',
-                align: 'right',
-                render: formatShare,
-              },
-              {
-                title: t('app_insights.col_peak_devices'),
-                dataIndex: 'peakDevices',
-                align: 'right',
-                render: observedInteger,
-              },
-              {
-                title: t('app_insights.col_availability'),
-                key: 'availability',
-                render: (_, row) => <PackageObservation row={row} />,
-              },
-            ]}
-          />
-        </Spin>
-        <Footnote>
-          {t('app_insights.packages_footnote', {
-            requests: traffic.data?.retentionDays ?? 35,
-            devices: traffic.data?.packageDevicesRetentionDays ?? 14,
-          })}
-        </Footnote>
       </Card>
       <div className="grid gap-4 xl:grid-cols-3">
         {distributions.map((distribution) => (

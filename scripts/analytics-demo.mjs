@@ -259,6 +259,130 @@ const seed = (appIndex = 0) =>
     };
   });
 const fixtures = apps.map((_, i) => seed(i));
+const utcDate = (ago) =>
+  new Date(Date.now() - ago * 86400000).toISOString().slice(0, 10);
+const ruleId = (text) =>
+  Array.from(text)
+    .reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)
+    .toString(16)
+    .padStart(8, '0')
+    .repeat(4);
+function releaseInsights(days, appIndex) {
+  const scale = appIndex ? 0.39 : 1;
+  const cohort = (ago, packageVersion, main, target, rollout, devices) => {
+    const wave = 1 + Math.sin(ago * 1.3) * 0.08;
+    const exposed = Math.round(devices * scale * wave * (ago === 0 ? 0.7 : 1));
+    const unknown = Math.round(exposed * 0.012);
+    const hit = Math.round((exposed - unknown) * (rollout / 100) * (1 + Math.sin(ago) * 0.02));
+    const requests = Math.round(exposed * 3.4);
+    return {
+      id: ruleId(packageVersion + target + rollout),
+      packageVersion,
+      mainHash: hashes[main],
+      targetHash: hashes[target],
+      rollout,
+      algorithm: 'uuid-hash-v1',
+      ruleDigest: ruleId(target + packageVersion),
+      requests: {
+        exposed: requests,
+        hit: Math.round(requests * (rollout / 100)),
+        miss: Math.round(requests * (1 - rollout / 100)),
+        unknown: Math.round(requests * 0.012),
+        missingUUID: Math.round(requests * 0.008),
+        missingSDK: Math.round(requests * 0.004),
+        missingRule: 0,
+      },
+      exposedDevices: exposed,
+      hitDevices: hit,
+      missDevices: exposed - unknown - hit,
+      unknownDevices: unknown,
+      hitRate: hit / (exposed - unknown),
+      status: ago === 3 ? 'partial' : 'observed',
+      inferred: true,
+      approximate: true,
+    };
+  };
+  const delivery = (hash, target, kind, reason, count) => ({
+    id: ruleId(hash + target + kind + reason),
+    hash: hashes[hash],
+    target,
+    kind,
+    reason,
+    count: Math.round(count * scale),
+  });
+  return {
+    status: 'available',
+    timezone: 'UTC',
+    retentionDays: 14,
+    artifactRetentionDays: 35,
+    days: Array.from({ length: days }, (_, ago) => {
+      const date = utcDate(ago);
+      if (ago >= 14) {
+        return { date, status: 'expired', requests: null, limited: false, cohorts: [], deliveries: [] };
+      }
+      const f = (ago === 0 ? 0.7 : 1) * (1 + Math.sin(ago * 1.3) * 0.08);
+      return {
+        date,
+        status: ago === 3 ? 'partial' : 'observed',
+        requests: Math.round(160000 * scale * f),
+        limited: ago === 3,
+        cohorts: [
+          cohort(ago, packages[0], 1, 0, 20, 26000),
+          cohort(ago, packages[1], 2, 1, 50, 9200),
+        ],
+        deliveries: [
+          delivery(0, 'exp', 'hdiff', '', 21000 * f),
+          delivery(0, 'exp', 'pdiff', '', 3100 * f),
+          delivery(0, 'exp', 'full', 'response_artifacts_pending', 420 * f),
+          delivery(1, 'current', 'hdiff', '', 15800 * f),
+          delivery(1, 'current', 'pdiff', '', 4200 * f),
+          delivery(1, 'current', 'full', 'bundle_mismatch_observed', 260 * f),
+          delivery(2, 'current', 'full', 'no_patch_offered', 1900 * f),
+        ],
+      };
+    }),
+    versions: [
+      {
+        hash: hashes[0],
+        name: versions[0],
+        bytecodeVersion: 96,
+        baseVersionId: 1182,
+        hermesBaseOutcome: 'used',
+        hermesBaseDetail: '',
+        artifactStatus: 'observed',
+        artifactsLimited: false,
+        artifacts: [
+          { key: 'a', fromHash: hashes[1], toHash: hashes[0], taskType: 'hdiff', state: 'ready', format: 'hdiff', observedAt: `${utcDate(1)} 03:12`, artifactBytes: 184320, fullBytes: 2936012, reduction: 0.937 },
+          { key: 'b', fromHash: 'package:' + packages[0], toHash: hashes[0], taskType: 'pdiff', state: 'ready', format: 'pdiff', observedAt: `${utcDate(1)} 03:14`, artifactBytes: 412672, fullBytes: 2936012, reduction: 0.859 },
+        ],
+      },
+      {
+        hash: hashes[1],
+        name: versions[1],
+        bytecodeVersion: 96,
+        baseVersionId: 1140,
+        hermesBaseOutcome: 'rejected',
+        hermesBaseDetail: 'equivalence check: DefineOwnById operand mismatch at function #214',
+        artifactStatus: 'observed',
+        artifactsLimited: false,
+        artifacts: [
+          { key: 'c', fromHash: hashes[2], toHash: hashes[1], taskType: 'hdiff', state: 'ready', format: 'hdiff', observedAt: `${utcDate(6)} 11:40`, artifactBytes: 667648, fullBytes: 2899148, reduction: 0.77 },
+        ],
+      },
+      {
+        hash: hashes[2],
+        name: versions[2],
+        bytecodeVersion: null,
+        baseVersionId: null,
+        hermesBaseOutcome: 'none',
+        hermesBaseDetail: '',
+        artifactStatus: 'observed',
+        artifactsLimited: false,
+        artifacts: [],
+      },
+    ],
+  };
+}
 function payload(url) {
   const selected = Math.max(
     0,
@@ -306,6 +430,7 @@ function payload(url) {
       return { days: window.map((row) => row.breakdown), retentionDays: 35 };
     case '/metrics/app/versions':
       return {
+        releaseInsights: releaseInsights(days, selected),
         days,
         start: date(days - 1),
         end: date(0),
