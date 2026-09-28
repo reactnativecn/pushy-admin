@@ -456,6 +456,9 @@
     "geo_resolver_missing": "This API node has no IP region database loaded; every request it serves is counted as Unknown."
   },
   "app_insights": {
+    "served_with_hint": "{{label}} ({{hint}})",
+    "pdiff_hint": "patch from the code bundled in the installed app, for a first hot update",
+    "hdiff_hint": "patch from the hot update the client already has",
     "failure_rate_hint": "Download failure rate = (download + patch failures) ÷ download attempts",
     "view_overview": "Overview",
     "view_versions": "Versions",
@@ -484,7 +487,7 @@
     "daily_footnote": "Today is still in progress.",
     "outcome_title": "Check results",
     "outcome_question": "What each update check returned.",
-    "outcome_footnote": "“No update” covers devices already up to date and apps with nothing published. Returning an update doesn't mean it was downloaded.",
+    "outcome_footnote": "hdiff patches from the installed hot update; pdiff patches from the code bundled in the app (first hot update). “No update” covers devices already up to date and apps with nothing published. Returning an update doesn't mean it was downloaded.",
     "hit_uptodate": "No update",
     "hit_hdiff": "hdiff patch returned",
     "hit_pdiff": "pdiff patch returned",

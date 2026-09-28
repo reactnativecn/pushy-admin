@@ -188,7 +188,15 @@ export const OverviewPanel = ({
   const outcomes = activeOutcomes
     .map((key) => ({
       key,
-      label: hitLabel(key),
+      label:
+        key === 'hdiff' || key === 'pdiff' ? (
+          <HeaderHint
+            label={hitLabel(key)}
+            hint={t(`app_insights.${key}_hint`)}
+          />
+        ) : (
+          hitLabel(key)
+        ),
       count: summary.hit[key],
       percent:
         summary.requests > 0 ? (summary.hit[key] / summary.requests) * 100 : 0,

@@ -456,6 +456,9 @@
     "geo_resolver_missing": "当前服务节点未加载 IP 地区库，它处理的请求都会记为「未知」。"
   },
   "app_insights": {
+    "served_with_hint": "{{label}}（{{hint}}）",
+    "pdiff_hint": "基于安装包自带的原始代码做增量，用于首次热更",
+    "hdiff_hint": "基于客户端已装的热更版本做增量",
     "failure_rate_hint": "下载失败率 = (下载失败 + Patch 失败) ÷ 下载次数",
     "view_overview": "概览",
     "view_versions": "版本",
@@ -484,7 +487,7 @@
     "daily_footnote": "今天的数据仍在累计。",
     "outcome_title": "检查结果构成",
     "outcome_question": "每次检查更新分别得到了什么结果。",
-    "outcome_footnote": "「无需更新」包括已是最新版本和没有发布版本。返回了更新不代表客户端已下载。",
+    "outcome_footnote": "hdiff 基于已装的热更版本做增量，pdiff 基于安装包原始代码做增量（首次热更）。「无需更新」包括已是最新版本和没有发布版本。返回了更新不代表客户端已下载。",
     "hit_uptodate": "无需更新",
     "hit_hdiff": "返回 hdiff 增量",
     "hit_pdiff": "返回 pdiff 增量",

@@ -54,8 +54,20 @@ type EventRow = { served: ServedCounts; events: FunnelEventCounts } & Pick<
 const ServedBreakdown = ({ served }: { served: ServedCounts }) => {
   const { t } = useTranslation();
   const parts: Array<[string, number]> = [
-    [t('app_insights.served_hdiff'), served.hdiff],
-    [t('app_insights.served_pdiff'), served.pdiff],
+    [
+      t('app_insights.served_with_hint', {
+        label: t('app_insights.served_hdiff'),
+        hint: t('app_insights.hdiff_hint'),
+      }),
+      served.hdiff,
+    ],
+    [
+      t('app_insights.served_with_hint', {
+        label: t('app_insights.served_pdiff'),
+        hint: t('app_insights.pdiff_hint'),
+      }),
+      served.pdiff,
+    ],
     [t('app_insights.served_full'), served.full],
     [t('app_insights.served_full_pending'), served.fullPending],
     [t('app_insights.served_exp'), served.exp],
