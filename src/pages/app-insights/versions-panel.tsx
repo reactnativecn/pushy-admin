@@ -303,6 +303,11 @@ export const VersionsPanel = ({
     <div className="flex gap-5" role="tablist">
       {(['version', 'package'] as const).map((value) => {
         const active = perspective === value;
+        const label = t(
+          value === 'version'
+            ? 'app_insights.by_version'
+            : 'app_insights.by_package',
+        );
         return (
           <button
             key={value}
@@ -311,17 +316,15 @@ export const VersionsPanel = ({
             aria-selected={active}
             onClick={() => setPerspective(value)}
             className={cn(
-              '-mb-2 cursor-pointer border-0 border-b-2 border-solid bg-transparent px-0 pb-1.5 text-[15px]',
+              '-mb-2 cursor-pointer whitespace-nowrap border-0 border-b-2 border-solid bg-transparent px-0 pb-1.5 text-[15px]',
               active
                 ? 'border-primary font-semibold text-primary'
                 : 'border-transparent font-normal text-gray-400 hover:text-gray-600',
             )}
           >
-            {t(
-              value === 'version'
-                ? 'app_insights.by_version'
-                : 'app_insights.by_package',
-            )}
+            {active
+              ? t('app_insights.perspective_active', { name: label })
+              : label}
           </button>
         );
       })}
@@ -332,7 +335,7 @@ export const VersionsPanel = ({
       title: perspectiveToggle,
       dataIndex: 'packageVersion',
       fixed: 'left',
-      width: 220,
+      width: 300,
     },
     {
       title: t('app_insights.requests'),
@@ -369,7 +372,7 @@ export const VersionsPanel = ({
       title: perspectiveToggle,
       key: 'version',
       fixed: 'left',
-      width: 220,
+      width: 300,
       render: (_, row) => <VersionLabel hash={row.hash} name={row.name} />,
     },
     ...eventColumns,

@@ -453,6 +453,7 @@
     "geo_resolver_missing": "当前服务节点未加载 IP 地区库，它处理的请求都会记为「未知」。"
   },
   "app_insights": {
+    "perspective_active": "从{{name}}视角来统计",
     "by_version": "热更版本",
     "by_package": "原生包",
     "peak_devices_hint": "所选天数内单日最多的设备数；设备数据只保留最近 14 天。",

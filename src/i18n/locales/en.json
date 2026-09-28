@@ -453,6 +453,7 @@
     "geo_resolver_missing": "This API node has no IP region database loaded; every request it serves is counted as Unknown."
   },
   "app_insights": {
+    "perspective_active": "{{name}} view",
     "by_version": "Hot update",
     "by_package": "Native package",
     "peak_devices_hint": "Highest single-day device count in the range; device data is kept for 14 days.",
