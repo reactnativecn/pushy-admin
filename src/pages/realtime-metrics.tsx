@@ -8,6 +8,7 @@ import { appViewPath, rootRouterPath, router } from '@/router';
 import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
 import { useSelectedAppFromUrl } from '@/utils/selected-app';
+import { AudiencePanel } from './app-insights/audience-panel';
 import { FailuresPanel } from './app-insights/failures-panel';
 import {
   DEFAULT_INSIGHT_DAYS,
@@ -30,6 +31,7 @@ const VIEW_LABEL_KEY: Record<InsightView, string> = {
   overview: 'app_insights.view_overview',
   versions: 'app_insights.view_versions',
   traffic: 'app_insights.view_traffic',
+  audience: 'app_insights.view_audience',
   failures: 'app_insights.view_failures',
 };
 
@@ -117,25 +119,28 @@ export const Component = () => {
                 }}
               />
             )}
-            <Radio.Group
-              value={days}
-              onChange={(event) =>
-                patchSearchParams(setSearchParams, {
-                  days:
-                    event.target.value === DEFAULT_INSIGHT_DAYS
-                      ? undefined
-                      : String(event.target.value),
-                })
-              }
-              optionType="button"
-              buttonStyle="solid"
-            >
-              {INSIGHT_DAY_OPTIONS.map((value) => (
-                <Radio.Button key={value} value={value}>
-                  {t('app_insights.days_option', { days: value })}
-                </Radio.Button>
-              ))}
-            </Radio.Group>
+            {/* 流量页的实时曲线与小时分布各有自己的时间范围 */}
+            {view !== 'traffic' && (
+              <Radio.Group
+                value={days}
+                onChange={(event) =>
+                  patchSearchParams(setSearchParams, {
+                    days:
+                      event.target.value === DEFAULT_INSIGHT_DAYS
+                        ? undefined
+                        : String(event.target.value),
+                  })
+                }
+                optionType="button"
+                buttonStyle="solid"
+              >
+                {INSIGHT_DAY_OPTIONS.map((value) => (
+                  <Radio.Button key={value} value={value}>
+                    {t('app_insights.days_option', { days: value })}
+                  </Radio.Button>
+                ))}
+              </Radio.Group>
+            )}
           </div>
         </div>
 
@@ -159,7 +164,13 @@ export const Component = () => {
             <VersionsPanel appKey={selectedAppKey} days={days} />
           </>
         ) : view === 'traffic' ? (
-          <TrafficPanel appKey={selectedAppKey} days={days} isAdmin={isAdmin} />
+          <TrafficPanel appKey={selectedAppKey} isAdmin={isAdmin} />
+        ) : view === 'audience' ? (
+          <AudiencePanel
+            appKey={selectedAppKey}
+            days={days}
+            isAdmin={isAdmin}
+          />
         ) : (
           <FailuresPanel appKey={selectedAppKey} days={days} />
         )}

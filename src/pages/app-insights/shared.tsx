@@ -198,7 +198,7 @@ export const BarList = ({
       {top.map((item, index) => (
         <li
           key={item.key}
-          className="grid grid-cols-[1.5rem_minmax(0,11rem)_minmax(0,1fr)_4.5rem_3.5rem] items-center gap-2 py-1 text-sm"
+          className="grid grid-cols-[1.5rem_minmax(6rem,11rem)_minmax(0,1fr)_4.5rem_3.5rem] items-center gap-2 py-1 text-sm"
         >
           <span className="text-xs text-gray-400 tabular-nums">
             {index + 1}
@@ -230,7 +230,7 @@ export const BarList = ({
         </li>
       ))}
       {rest.length > 0 && (
-        <li className="grid grid-cols-[1.5rem_minmax(0,11rem)_minmax(0,1fr)_4.5rem_3.5rem] items-center gap-2 py-1 text-sm text-gray-500">
+        <li className="grid grid-cols-[1.5rem_minmax(6rem,11rem)_minmax(0,1fr)_4.5rem_3.5rem] items-center gap-2 py-1 text-sm text-gray-500">
           <span />
           <span className="truncate">
             {restLabel ? restLabel(rest.length) : `+${rest.length}`}

@@ -29,6 +29,7 @@ export const INSIGHT_VIEWS = [
   'overview',
   'versions',
   'traffic',
+  'audience',
   'failures',
 ] as const;
 export type InsightView = (typeof INSIGHT_VIEWS)[number];
@@ -149,6 +150,11 @@ export interface TrafficSummary {
   ipVersion: RankedItem[];
   hosts: RankedItem[];
   carriers: RankedItem[];
+  /** 平台（os 标签的第一个词）与系统版本（完整 os 标签）。 */
+  platforms: RankedItem[];
+  osVersions: RankedItem[];
+  /** 服务端是否返回了 os；旧服务端没有这一项。 */
+  hasClientInfo: boolean;
   packages: PackageTrafficSummary[];
   refused: Record<RefusalOutcome, RefusedPackageSummary[]>;
   daily: DailyTrafficPoint[];
@@ -194,6 +200,9 @@ export const summarizeTraffic = (
   const ipVersion: Record<string, number> = {};
   const hosts: Record<string, number> = {};
   const carriers: Record<string, number> = {};
+  const platforms: Record<string, number> = {};
+  const osVersions: Record<string, number> = {};
+  let hasClientInfo = false;
   const packages = new Map<string, PackageTrafficSummary>();
   const refused: Record<RefusalOutcome, Map<string, number>> = {
     blocked: new Map(),
@@ -241,6 +250,14 @@ export const summarizeTraffic = (
     addCounts(ipVersion, day.ipVersion);
     addCounts(hosts, day.hosts);
     addCounts(carriers, day.carriers);
+    if (day.os) hasClientInfo = true;
+    addCounts(osVersions, day.os);
+    for (const [label, count] of Object.entries(day.os ?? {})) {
+      if (validCount(count) && count > 0) {
+        const platform = label.split(' ')[0] || 'unknown';
+        platforms[platform] = (platforms[platform] ?? 0) + count;
+      }
+    }
     for (const item of day.packages ?? []) {
       const entry: PackageTrafficSummary = packages.get(
         item.packageVersion,
@@ -324,6 +341,9 @@ export const summarizeTraffic = (
     ipVersion: rankCounts(ipVersion),
     hosts: rankCounts(hosts),
     carriers: rankCounts(carriers),
+    platforms: rankCounts(platforms),
+    osVersions: rankCounts(osVersions),
+    hasClientInfo,
     packages: Array.from(packages.values())
       .map((entry) => ({
         ...entry,

@@ -166,6 +166,27 @@ describe('complete-day means and missing observations', () => {
     expect(result.today?.dau).toBe(9);
     expect(result.averageDau).toBeNull();
   });
+  it('groups OS labels into platforms and ranks OS versions', () => {
+    const result = summarizeTraffic(
+      [
+        day('2026-09-26', {
+          os: { 'android 14': 30, 'ios 17.5': 10 },
+        }),
+        day('2026-09-27', { os: { 'android 15': 20, 'ios 17.5': 5 } }),
+      ],
+      '2026-09-27',
+    );
+    expect(result.hasClientInfo).toBe(true);
+    expect(result.platforms.map((row) => [row.key, row.count])).toEqual([
+      ['android', 50],
+      ['ios', 15],
+    ]);
+    expect(result.osVersions[0]).toMatchObject({
+      key: 'android 14',
+      count: 30,
+    });
+    expect(summarizeTraffic([day('2026-09-27')]).hasClientInfo).toBe(false);
+  });
   it('is empty safe without fabricating means or device peaks', () => {
     const result = summarizeTraffic(undefined);
     expect(result.averageDau).toBeNull();

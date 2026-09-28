@@ -53,6 +53,8 @@ export interface AppTrafficDay {
   ipVersion: Record<string, number>;
   hosts: Record<string, number>;
   carriers: Record<string, number>;
+  /** 平台与系统版本，如 "android 14"；旧服务端不返回。 */
+  os?: Record<string, number>;
   packages: PackageTraffic[];
   refused?: RefusedPackage[];
   packageDevicesLimited?: boolean;

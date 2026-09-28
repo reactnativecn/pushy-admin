@@ -3,16 +3,15 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncColumn } from '@/components/lazy-chart';
 import { useThemeMode } from '@/utils/theme-mode';
-import { RealtimeGeoPanel } from '../realtime-metrics-geo';
 import {
   beijingToday,
+  HOURLY_DAYS,
   type PackageTrafficSummary,
   summarizeTraffic,
 } from './logic';
 import { ObservationNotice, observedInteger } from './observation-ui';
 import { RealtimeSeriesPanel } from './realtime-series-panel';
 import {
-  BarList,
   EmptyState,
   Footnote,
   formatInteger,
@@ -20,7 +19,6 @@ import {
   InsightsError,
   Question,
   useAppTraffic,
-  useCarrierLabel,
 } from './shared';
 
 export const PackageObservation = ({ row }: { row: PackageTrafficSummary }) => {
@@ -118,19 +116,17 @@ export const PackagesCard = ({
   );
 };
 
+/** 实时请求与小时分布；两者都有自己的时间范围，不跟随页面顶部的天数。 */
 export const TrafficPanel = ({
   appKey,
-  days,
   isAdmin,
 }: {
   appKey: string | undefined;
-  days: number;
   isAdmin: boolean;
 }) => {
   const { t } = useTranslation();
   const { isDark } = useThemeMode();
-  const carrierLabel = useCarrierLabel();
-  const traffic = useAppTraffic(appKey, days);
+  const traffic = useAppTraffic(appKey, HOURLY_DAYS);
   const summary = useMemo(
     () => summarizeTraffic(traffic.data?.days, traffic.data?.window?.today),
     [traffic.data],
@@ -144,37 +140,6 @@ export const TrafficPanel = ({
     value,
   }));
   const today = traffic.data?.window?.today ?? beijingToday();
-  const distributions = [
-    {
-      key: 'carriers',
-      title: t('app_insights.carriers_title'),
-      question: t('app_insights.carriers_question'),
-      items: summary.carriers.map((row) => ({
-        ...row,
-        label: carrierLabel(row.key),
-      })),
-    },
-    {
-      key: 'hosts',
-      title: t('app_insights.hosts_title'),
-      question: t('app_insights.hosts_question'),
-      items: summary.hosts.map((row) => ({ ...row, label: row.key })),
-    },
-    {
-      key: 'ip',
-      title: t('app_insights.ip_title'),
-      question: t('app_insights.ip_question'),
-      items: summary.ipVersion.map((row) => ({
-        ...row,
-        label:
-          row.key === 'v4'
-            ? 'IPv4'
-            : row.key === 'v6'
-              ? 'IPv6'
-              : t('app_insights.ip_unknown'),
-      })),
-    },
-  ];
   return (
     <div className="space-y-4">
       <RealtimeSeriesPanel appKey={appKey} isAdmin={isAdmin} />
@@ -223,23 +188,6 @@ export const TrafficPanel = ({
           )}
         </Spin>
       </Card>
-      <div className="grid gap-4 xl:grid-cols-3">
-        {distributions.map((distribution) => (
-          <Card size="small" title={distribution.title} key={distribution.key}>
-            <Question>{distribution.question}</Question>
-            <Spin spinning={traffic.isLoading}>
-              {distribution.items.length > 0 ? (
-                <BarList items={distribution.items} />
-              ) : (
-                <EmptyState>
-                  {traffic.isLoading ? '' : t('app_insights.no_observations')}
-                </EmptyState>
-              )}
-            </Spin>
-          </Card>
-        ))}
-      </div>
-      <RealtimeGeoPanel appKey={appKey} isAdmin={isAdmin} />
     </div>
   );
 };

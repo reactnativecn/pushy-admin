@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import {
-  type AppGeoDay,
-  parseGeoWindow,
-  summarizeGeo,
-} from './realtime-metrics-geo.logic';
+import { type AppGeoDay, summarizeGeo } from './realtime-metrics-geo.logic';
 
 const days: AppGeoDay[] = [
   {
@@ -17,7 +13,7 @@ const days: AppGeoDay[] = [
 
 describe('summarizeGeo', () => {
   it('sums only the days inside the window, newest first', () => {
-    const today = summarizeGeo(days, 'today');
+    const today = summarizeGeo(days, 1);
     expect(today.total).toBe(20);
     expect(today.top.map((item) => item.region)).toEqual([
       '广东',
@@ -28,7 +24,7 @@ describe('summarizeGeo', () => {
     expect(today.unknown).toBe(4);
     expect(today.top[0]?.percent).toBe(50);
 
-    const week = summarizeGeo(days, '7d');
+    const week = summarizeGeo(days, 7);
     expect(week.total).toBe(25);
     expect(week.top[0]).toEqual({ region: '广东', count: 12, percent: 48 });
     expect(week.regionCount).toBe(4);
@@ -43,7 +39,7 @@ describe('summarizeGeo', () => {
           regions: { c: 1, a: 2, b: 2, d: 1 },
         },
       ],
-      'today',
+      1,
       2,
     );
     expect(summary.top.map((item) => item.region)).toEqual(['a', 'b']);
@@ -63,7 +59,7 @@ describe('summarizeGeo', () => {
           regions: { ID: 4, 印度尼西亚: 3, 广东: 2, 未知: 1 },
         },
       ],
-      'today',
+      1,
       undefined,
       (region) => (region === 'ID' ? '印度尼西亚' : region),
     );
@@ -76,7 +72,7 @@ describe('summarizeGeo', () => {
   });
 
   it('is empty-safe', () => {
-    expect(summarizeGeo(undefined, '30d')).toEqual({
+    expect(summarizeGeo(undefined, 30)).toEqual({
       total: 0,
       unknown: 0,
       regionCount: 0,
@@ -86,16 +82,8 @@ describe('summarizeGeo', () => {
     expect(
       summarizeGeo(
         [{ date: '2026-09-11', requests: 0, regions: { x: 0, y: -1 } }],
-        'today',
+        1,
       ).total,
     ).toBe(0);
-  });
-});
-
-describe('parseGeoWindow', () => {
-  it('falls back to today', () => {
-    expect(parseGeoWindow('7d')).toBe('7d');
-    expect(parseGeoWindow('bogus')).toBe('today');
-    expect(parseGeoWindow(null)).toBe('today');
   });
 });

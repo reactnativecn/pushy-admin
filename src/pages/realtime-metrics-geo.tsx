@@ -1,37 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Card, Radio, Spin } from 'antd';
-import { useMemo, useState } from 'react';
+import { Alert, Card, Spin } from 'antd';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { metricsKeys } from '@/utils/query-keys';
 import { formatRegion } from '@/utils/region';
 import {
   GEO_FETCH_DAYS,
-  GEO_WINDOWS,
-  type GeoWindow,
   summarizeGeo,
   UNKNOWN_REGION,
 } from './realtime-metrics-geo.logic';
 
-// 地区分布只有天粒度（服务端按北京时间自然日累加），和上面的 5 分钟曲线
-// 不共用时间范围：今日那一条是实时累计，其余按天回看。
-
-const WINDOW_LABEL_KEY: Record<GeoWindow, string> = {
-  today: 'realtime_metrics.geo_today',
-  '7d': 'realtime_metrics.geo_7d',
-  '30d': 'realtime_metrics.geo_30d',
-};
+// 地区分布只有天粒度（服务端按北京时间自然日累加），天数跟随页面顶部的选择。
 
 export const RealtimeGeoPanel = ({
   appKey,
+  days,
   isAdmin,
 }: {
   appKey: string | undefined;
+  days: number;
   isAdmin: boolean;
 }) => {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage ?? i18n.language;
-  const [geoWindow, setGeoWindow] = useState<GeoWindow>('today');
 
   const { data, isLoading } = useQuery({
     queryKey: metricsKeys.appGeo(appKey, GEO_FETCH_DAYS),
@@ -43,10 +35,10 @@ export const RealtimeGeoPanel = ({
 
   const summary = useMemo(
     () =>
-      summarizeGeo(data?.days, geoWindow, undefined, (region) =>
+      summarizeGeo(data?.days, days, undefined, (region) =>
         formatRegion(region, language),
       ),
-    [data, geoWindow, language],
+    [data, days, language],
   );
   const topMax = summary.top[0]?.count ?? 0;
   const regionLabel = (region: string) =>
@@ -64,21 +56,6 @@ export const RealtimeGeoPanel = ({
       }
       size="small"
       style={{ marginBottom: 16 }}
-      extra={
-        <Radio.Group
-          size="small"
-          value={geoWindow}
-          onChange={(e) => setGeoWindow(e.target.value as GeoWindow)}
-          optionType="button"
-          buttonStyle="solid"
-        >
-          {GEO_WINDOWS.map((value) => (
-            <Radio.Button key={value} value={value}>
-              {t(WINDOW_LABEL_KEY[value])}
-            </Radio.Button>
-          ))}
-        </Radio.Group>
-      }
     >
       {!appKey ? (
         <div className="h-20 flex items-center justify-center text-gray-400">
@@ -104,7 +81,7 @@ export const RealtimeGeoPanel = ({
                   {isLoading ? '-' : summary.total.toLocaleString()}
                 </div>
                 <div className="mt-1 text-[11px] text-gray-500">
-                  {t(WINDOW_LABEL_KEY[geoWindow])}
+                  {t('app_insights.days_option', { days })}
                 </div>
               </div>
               <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">

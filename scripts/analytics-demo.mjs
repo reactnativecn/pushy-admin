@@ -213,6 +213,13 @@ const seed = (appIndex = 0) =>
         ),
         hit,
         ipVersion: split(requests, ['v4', 'v6'], english ? [64, 36] : [39, 61]),
+        os: split(
+          requests,
+          english
+            ? ['ios 18.0', 'ios 17.6', 'android 15', 'android 14', 'ios 16.7']
+            : ['android 15', 'android 14', 'ios 18.0', 'android 13', 'harmony 5.0', 'ios 17.6', 'unknown'],
+          english ? [34, 22, 20, 16, 8] : [31, 22, 17, 12, 8, 7, 3],
+        ),
         hosts: split(
           requests,
           english
