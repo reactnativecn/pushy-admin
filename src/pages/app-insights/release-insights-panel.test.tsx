@@ -58,35 +58,38 @@ test('optional API failure renders without throwing', () => {
 });
 test('partial day and Hermes metadata render in Chinese with accessible day selector', async () => {
   await i18n.changeLanguage('zh-CN');
-  const client = show({
-    status: 'available',
-    timezone: 'UTC',
-    retentionDays: 14,
-    artifactRetentionDays: 35,
-    days: [
-      {
-        date: '2026-09-19',
-        status: 'partial',
-        limited: true,
-        requests: 2,
-        cohorts: [],
-        deliveries: [],
-      },
-    ],
-    versions: [
-      {
-        hash: 'target',
-        name: 'Build',
-        bytecodeVersion: 96,
-        baseVersionId: 3,
-        hermesBaseOutcome: 'used',
-        hermesBaseDetail: 'verified',
-        artifactStatus: 'unavailable',
-        artifactsLimited: false,
-        artifacts: [],
-      },
-    ],
-  });
+  const client = show(
+    {
+      status: 'available',
+      timezone: 'UTC',
+      retentionDays: 14,
+      artifactRetentionDays: 35,
+      days: [
+        {
+          date: '2026-09-19',
+          status: 'partial',
+          limited: true,
+          requests: 2,
+          cohorts: [],
+          deliveries: [],
+        },
+      ],
+      versions: [
+        {
+          hash: 'target',
+          name: 'Build',
+          bytecodeVersion: 96,
+          baseVersionId: 3,
+          hermesBaseOutcome: 'used',
+          hermesBaseDetail: 'verified',
+          artifactStatus: 'unavailable',
+          artifactsLimited: false,
+          artifacts: [],
+        },
+      ],
+    },
+    true,
+  );
   expect(screen.getByText('已采用')).not.toBeNull();
   expect(
     screen.getByText('当日曾触及采集上限或部分观测不完整，数量可能偏低。'),
@@ -117,11 +120,13 @@ const rejectedVersion = (): ReleaseInsights => ({
     },
   ],
 });
-test('a dropped Hermes base reads as not used to customers, without the detail', () => {
+test('customers do not see the HermesBase section at all', () => {
   const client = show(rejectedVersion());
-  expect(screen.getByText('Not used')).not.toBeNull();
+  expect(
+    screen.queryByText('HermesBase compilation and artifact sizes'),
+  ).toBeNull();
+  expect(screen.queryByText('Not used')).toBeNull();
   expect(screen.queryByText('Rejected by equivalence check')).toBeNull();
-  expect(screen.queryByText('Diagnostic detail')).toBeNull();
   expect(screen.queryByText(/DefineOwnById/)).toBeNull();
   client.clear();
 });
