@@ -134,3 +134,13 @@ test('administrators still see why the base was dropped', () => {
   expect(screen.getAllByText(/DefineOwnById/).length).toBeGreaterThan(0);
   client.clear();
 });
+test('a plain JS bundle shows as JS rather than an HBC number', () => {
+  const insights = rejectedVersion();
+  insights.versions = insights.versions?.map((v) => ({
+    ...v,
+    bytecodeVersion: 0,
+  }));
+  const client = show(insights, true);
+  expect(screen.getAllByText('— / JS').length).toBeGreaterThan(0);
+  client.clear();
+});

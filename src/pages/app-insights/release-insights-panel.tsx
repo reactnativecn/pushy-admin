@@ -244,7 +244,8 @@ export const ReleaseInsightsPanel = ({
       title: text.base,
       key: 'base',
       render: (_, row) =>
-        `${row.baseVersionId ?? '—'} / ${row.bytecodeVersion ?? '—'}`,
+        // bytecodeVersion 0: the bundle is plain JS, not Hermes bytecode
+        `${row.baseVersionId ?? '—'} / ${row.bytecodeVersion === 0 ? 'JS' : (row.bytecodeVersion ?? '—')}`,
     },
     {
       title: text.detail,
