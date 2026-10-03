@@ -98,7 +98,7 @@ export const StatTile = ({
   return (
     <div
       className={cn(
-        'rounded border px-3 py-2',
+        'min-w-0 rounded border px-3 py-2',
         tone === 'error'
           ? 'border-red-200 bg-red-50'
           : tone === 'warning'

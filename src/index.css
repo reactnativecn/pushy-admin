@@ -180,4 +180,23 @@ a.ant-typography:hover .ant-typography {
     padding-top: 12px;
     padding-bottom: 12px;
   }
+
+  .insights-view-switch {
+    scrollbar-width: none;
+  }
+
+  @media (max-width: 767px) {
+    .insights-page > .ant-card-body {
+      padding: 16px;
+    }
+
+    .insights-view-switch .ant-segmented-item-label {
+      padding-inline: 8px;
+    }
+
+    .insights-page .ant-radio-button-wrapper {
+      padding-inline: 4px;
+      white-space: nowrap;
+    }
+  }
 }
