@@ -12,6 +12,7 @@ import {
 } from './metrics';
 import { QuotaAlertsPanel } from './quota-alerts-panel';
 import { ServiceStatusPanel } from './status-panel';
+import { StorageUsagePanel } from './storage-usage-panel';
 import { ServiceTargetCards } from './target-cards';
 import { UserAnalyticsPanel } from './user-analytics-panel';
 import { VersionHealthOverviewPanel } from './version-health-overview-panel';
@@ -71,6 +72,7 @@ export const Component = () => {
       <VersionHealthOverviewPanel />
       <QuotaAlertsPanel />
       <WorkerStatsPanel />
+      <StorageUsagePanel />
 
       <Modal
         destroyOnHidden

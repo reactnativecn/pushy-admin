@@ -109,6 +109,7 @@ export const serviceStatusKeys = {
   quotaAlerts: () => ['serviceStatus', 'global', 'quotaAlerts'] as const,
   workerTaskStats: (days: number) =>
     ['serviceStatus', 'global', 'workerTaskStats', days] as const,
+  storageUsage: () => ['serviceStatus', 'global', 'storageUsage'] as const,
   target: (target: string) => ['serviceStatus', target] as const,
   metrics: (target: string) => ['serviceStatus', target, 'metrics'] as const,
   api5xxEvents: (target: string, offset: number) =>

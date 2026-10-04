@@ -35,6 +35,59 @@ export type NodeTelemetryBatch = {
   generatedAt: string;
 };
 
+// GET /admin/system/storage：information_schema 估算与 OSS GetBucketStat 汇总，
+// 两个分区各自可用，单边失败不影响另一边。
+export type StorageUsageError =
+  | 'not_configured'
+  | 'access_denied'
+  | 'unavailable';
+
+export type StorageUsageTable = {
+  name: string;
+  rowsEstimate: number;
+  dataBytes: number;
+  indexBytes: number;
+  freeBytes: number;
+  totalBytes: number;
+};
+
+export type StorageUsageClass = {
+  class:
+    | 'standard'
+    | 'infrequentAccess'
+    | 'archive'
+    | 'coldArchive'
+    | 'deepColdArchive';
+  bytes: number;
+  realBytes: number;
+  objectCount: number;
+};
+
+export type StorageUsageSnapshot = {
+  generatedAt: string;
+  database: {
+    available: boolean;
+    error?: StorageUsageError;
+    schema?: string;
+    rowsEstimate: number;
+    dataBytes: number;
+    indexBytes: number;
+    freeBytes: number;
+    totalBytes: number;
+    tables: StorageUsageTable[];
+  };
+  oss: {
+    available: boolean;
+    error?: StorageUsageError;
+    bucket?: string;
+    storageBytes: number;
+    objectCount: number;
+    multipartUploadCount: number;
+    statUpdatedAt: string | null;
+    classes: StorageUsageClass[];
+  };
+};
+
 export type CustomOrderStatus = 'pending' | 'done' | 'cancelled';
 
 export type CustomOrder = {
@@ -75,6 +128,10 @@ export const adminApi = {
       undefined,
       { suppressErrorToast: true },
     ),
+  getStorageUsage: () =>
+    request<StorageUsageSnapshot>('get', '/admin/system/storage', undefined, {
+      suppressErrorToast: true,
+    }),
   getAnalyticsOverview: (days = 7) =>
     request<{ data: GlobalAnalyticsDay[] }>(
       'get',
