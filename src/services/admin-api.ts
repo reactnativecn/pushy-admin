@@ -1,3 +1,4 @@
+import type { ConfigSchemaResult } from '@/pages/admin-config.logic';
 import type {
   AdminApp,
   AdminUser,
@@ -8,7 +9,7 @@ import type {
   SystemNpmInfo,
 } from '@/types';
 import type { InternalMetricsResponse } from './api';
-import request from './request';
+import request, { type RequestOptions } from './request';
 
 export type WriteOperationDimension = 'path' | 'region' | 'client';
 
@@ -169,10 +170,17 @@ export const adminApi = {
   // admin config
   getConfig: () =>
     request<{ data?: Record<string, string> }>('get', `/admin/config`),
-  setConfig: (key: string, value: string) =>
-    request<{ key: string; value: string }>('post', '/admin/config', {
-      key,
-      value,
+  setConfig: (key: string, value: string, options?: RequestOptions) =>
+    request<{ key: string; value: string }>(
+      'post',
+      '/admin/config',
+      { key, value },
+      options,
+    ),
+  // 早于 schema 接口的服务端会返回 404，页面据此回退到原始编辑页
+  getConfigSchema: () =>
+    request<ConfigSchemaResult>('get', '/admin/config/schema', undefined, {
+      suppressErrorToast: true,
     }),
   deleteConfig: (key: string) => request('delete', `/admin/config/${key}`),
   // admin user management

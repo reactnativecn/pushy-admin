@@ -1,114 +1,148 @@
-import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Alert,
   Button,
   Card,
-  Form,
-  Input,
-  Modal,
+  Empty,
   message,
   Popconfirm,
-  Space,
   Spin,
   Table,
+  Tag,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import JsonEditor from '@/pages/manage/components/json-editor';
 import { adminApi } from '@/services/admin-api';
+import { RequestError } from '@/services/request';
 import { adminKeys } from '@/utils/query-keys';
-import { useIsMobile, useModalWidth } from '@/utils/responsive';
+import { useIsMobile } from '@/utils/responsive';
+import { ConfigEditor } from './admin-config/config-editor';
+import { IssueList } from './admin-config/issue-list';
+import { LegacyConfigPage } from './admin-config/legacy-config';
+import {
+  type ConfigSchemaItem,
+  type ConfigState,
+  groupItems,
+  localize,
+  pickLocale,
+  previewValue,
+} from './admin-config.logic';
 
-const { Title } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
-interface ConfigItem {
-  key: string;
-  value: string;
+const STATE_COLOR: Record<ConfigState, string | undefined> = {
+  unset: undefined,
+  set: 'success',
+  invalid: 'error',
+};
+
+function StateTag({ state }: { state: ConfigState }) {
+  const { t } = useTranslation();
+  const labels: Record<ConfigState, string> = {
+    unset: t('admin_config.state_unset'),
+    set: t('admin_config.state_set'),
+    invalid: t('admin_config.state_invalid'),
+  };
+  return <Tag color={STATE_COLOR[state]}>{labels[state]}</Tag>;
 }
 
-export const Component = () => {
+function useDeleteConfig() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
-  const modalWidth = useModalWidth(700);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ConfigItem | null>(null);
-  const [form] = Form.useForm();
-  const [jsonValue, setJsonValue] = useState('');
-
-  const { data, isLoading } = useQuery({
-    queryKey: adminKeys.config(),
-    queryFn: () => adminApi.getConfig(),
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: ({ key, value }: { key: string; value: string }) =>
-      adminApi.setConfig(key, value),
-    onSuccess: () => {
-      message.success(t('admin_config.saved'));
-      setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: adminKeys.config() });
-    },
-  });
-
-  const deleteMutation = useMutation({
+  return useMutation({
     mutationFn: (key: string) => adminApi.deleteConfig(key),
     onSuccess: () => {
       message.success(t('admin_config.deleted'));
+      queryClient.invalidateQueries({ queryKey: adminKeys.configSchema() });
       queryClient.invalidateQueries({ queryKey: adminKeys.config() });
     },
   });
+}
 
-  const configList: ConfigItem[] = data?.data
-    ? Object.entries(data.data).map(([key, value]) => ({ key, value }))
-    : [];
+function ConfigEntry({
+  item,
+  locale,
+  onEdit,
+}: {
+  item: ConfigSchemaItem;
+  locale: 'zh' | 'en';
+  onEdit: (item: ConfigSchemaItem) => void;
+}) {
+  const { t } = useTranslation();
+  const deleteMutation = useDeleteConfig();
+  const description = localize(item.description, locale);
+  const preview = previewValue(item);
 
-  const handleAdd = () => {
-    setEditingItem(null);
-    form.resetFields();
-    setJsonValue('');
-    setIsModalOpen(true);
-  };
+  return (
+    <div className="flex flex-col gap-2 border-0 border-b border-solid border-gray-100 py-4 last:border-b-0 md:flex-row md:items-start md:justify-between md:gap-6">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Text strong>{localize(item.title, locale) || item.key}</Text>
+          <Text code className="text-xs">
+            {item.key}
+          </Text>
+          <StateTag state={item.state} />
+        </div>
+        {description && (
+          <Paragraph type="secondary" className="mt-1! mb-0! text-sm">
+            {description}
+          </Paragraph>
+        )}
+        {item.state === 'invalid' && item.issues && item.issues.length > 0 && (
+          <Alert
+            type="error"
+            showIcon
+            className="mt-2"
+            title={t('admin_config.stored_invalid')}
+            description={
+              <IssueList issues={item.issues} item={item} locale={locale} />
+            }
+          />
+        )}
+        {preview && (
+          <pre className="m-0 mt-2 max-h-32 overflow-auto rounded bg-gray-100 p-2 text-xs">
+            {preview}
+          </pre>
+        )}
+      </div>
+      <div className="flex shrink-0 gap-2">
+        <Button icon={<EditOutlined />} onClick={() => onEdit(item)}>
+          {t('admin_config.edit')}
+        </Button>
+        {item.state !== 'unset' && (
+          <Popconfirm
+            title={t('admin_config.delete_title')}
+            onConfirm={() => deleteMutation.mutate(item.key)}
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              loading={deleteMutation.isPending}
+              aria-label={t('admin_config.delete')}
+            />
+          </Popconfirm>
+        )}
+      </div>
+    </div>
+  );
+}
 
-  const handleEdit = (record: ConfigItem) => {
-    setEditingItem(record);
-    form.setFieldsValue({ key: record.key });
-    // Pretty print JSON if possible
-    try {
-      setJsonValue(JSON.stringify(JSON.parse(record.value), null, 2));
-    } catch {
-      setJsonValue(record.value);
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleSave = async () => {
-    let values: Record<string, any>;
-    try {
-      values = await form.validateFields();
-    } catch {
-      // 校验失败时表单已内联提示,不再额外弹 toast
-      return;
-    }
-
-    // 先校验 JSON,再以压缩后的字符串提交
-    let parsedValue: unknown;
-    try {
-      parsedValue = JSON.parse(jsonValue);
-    } catch {
-      message.error(t('admin_config.invalid_json'));
-      return;
-    }
-
-    saveMutation.mutate({
-      key: values.key,
-      value: JSON.stringify(parsedValue),
-    });
-  };
-
-  const columns: ColumnsType<ConfigItem> = [
+function UnregisteredTable({
+  rows,
+}: {
+  rows: Array<{ key: string; value: string }>;
+}) {
+  const { t } = useTranslation();
+  const isMobile = useIsMobile();
+  const deleteMutation = useDeleteConfig();
+  const columns: ColumnsType<{ key: string; value: string }> = [
     {
       title: t('admin_config.col_key'),
       dataIndex: 'key',
@@ -119,130 +153,159 @@ export const Component = () => {
       title: t('admin_config.col_value'),
       dataIndex: 'value',
       key: 'value',
-      responsive: ['sm'],
-      render: (value: string) => {
-        try {
-          const parsed = JSON.parse(value);
-          return (
-            <pre className="m-0 max-h-24 overflow-auto text-xs bg-gray-100 p-2 rounded">
-              {JSON.stringify(parsed, null, 2)}
-            </pre>
-          );
-        } catch {
-          return <span className="text-gray-600">{value}</span>;
-        }
-      },
+      render: (value: string) => (
+        <pre className="m-0 max-h-24 overflow-auto whitespace-pre-wrap break-all text-xs">
+          {value}
+        </pre>
+      ),
     },
     {
       title: t('admin_config.col_action'),
       key: 'action',
-      width: 150,
-      render: (_: unknown, record: ConfigItem) => (
-        <Space>
-          <Button type="link" onClick={() => handleEdit(record)}>
-            {t('admin_config.edit')}
-          </Button>
-          <Popconfirm
-            title={t('admin_config.delete_title')}
-            onConfirm={() => deleteMutation.mutate(record.key)}
-          >
-            <Button
-              type="link"
-              danger
-              icon={<DeleteOutlined />}
-              loading={
-                deleteMutation.isPending &&
-                deleteMutation.variables === record.key
-              }
-            />
-          </Popconfirm>
-        </Space>
+      width: 80,
+      render: (_: unknown, record) => (
+        <Popconfirm
+          title={t('admin_config.delete_title')}
+          onConfirm={() => deleteMutation.mutate(record.key)}
+        >
+          <Button
+            type="link"
+            danger
+            icon={<DeleteOutlined />}
+            aria-label={t('admin_config.delete')}
+            loading={
+              deleteMutation.isPending &&
+              deleteMutation.variables === record.key
+            }
+          />
+        </Popconfirm>
       ),
     },
   ];
+  return (
+    <Table
+      dataSource={rows}
+      columns={columns}
+      rowKey="key"
+      size={isMobile ? 'small' : 'middle'}
+      pagination={false}
+      scroll={{ x: 560 }}
+    />
+  );
+}
+
+function SchemaConfigPage({
+  data,
+}: {
+  data: NonNullable<Awaited<ReturnType<typeof adminApi.getConfigSchema>>>;
+}) {
+  const { t, i18n } = useTranslation();
+  const locale = pickLocale(i18n.resolvedLanguage ?? i18n.language);
+  const [editing, setEditing] = useState<ConfigSchemaItem | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const sections = groupItems(data);
 
   return (
-    <div className="page-section">
-      <Card>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
-          <Title level={4} className="m-0!">
-            {t('admin_config.title')}
-          </Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleAdd}
-            className="w-full md:w-auto"
-          >
-            {t('admin_config.add_config')}
-          </Button>
-        </div>
-
-        <Spin spinning={isLoading}>
-          <Table
-            dataSource={configList}
-            columns={columns}
-            rowKey="key"
-            size={isMobile ? 'small' : 'middle'}
-            pagination={false}
-            scroll={{ x: 720 }}
-          />
-        </Spin>
-      </Card>
-
-      <Modal
-        title={
-          editingItem
-            ? t('admin_config.edit_modal_title')
-            : t('admin_config.add_modal_title')
-        }
-        open={isModalOpen}
-        width={modalWidth}
-        onCancel={() => setIsModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsModalOpen(false)}>
-            {t('admin_config.cancel')}
-          </Button>,
-          <Button
-            key="save"
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={saveMutation.isPending}
-            onClick={handleSave}
-          >
-            {t('admin_config.save')}
-          </Button>,
-        ]}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="key"
-            label={t('admin_config.col_key')}
-            rules={[
-              { required: true, message: t('admin_config.key_required') },
-            ]}
-          >
-            <Input
-              disabled={!!editingItem}
-              placeholder={t('admin_config.key_placeholder')}
-            />
-          </Form.Item>
-          <Form.Item label={t('admin_config.value_label')}>
-            <JsonEditor
-              // 编辑器只会撑满它的直接容器,高度要透传到内层 div
-              className={`${isMobile ? 'h-[220px]' : 'h-[300px]'} [&>div:last-child]:h-full`}
-              content={{ text: jsonValue }}
-              onChange={(content) => {
-                setJsonValue(
-                  'text' in content
-                    ? content.text
-                    : JSON.stringify(content.json, null, 2),
-                );
+    <div className="page-section flex flex-col gap-4">
+      <Title level={4} className="m-0!">
+        {t('admin_config.title')}
+      </Title>
+      {sections.map((section) => (
+        <Card
+          key={section.key || '__other'}
+          title={
+            section.title
+              ? localize(section.title, locale)
+              : t('admin_config.group_other')
+          }
+          size="small"
+        >
+          {section.items.map((item) => (
+            <ConfigEntry
+              key={item.key}
+              item={item}
+              locale={locale}
+              onEdit={(target) => {
+                setEditing(target);
+                setEditorOpen(true);
               }}
             />
-          </Form.Item>
-        </Form>
-      </Modal>
+          ))}
+        </Card>
+      ))}
+      {data.unregistered.length > 0 && (
+        <Card title={t('admin_config.unregistered_title')} size="small">
+          <Paragraph type="secondary" className="text-sm">
+            {t('admin_config.unregistered_hint')}
+          </Paragraph>
+          <UnregisteredTable rows={data.unregistered} />
+        </Card>
+      )}
+      {editing && (
+        <ConfigEditor
+          key={editing.key}
+          item={editing}
+          open={editorOpen}
+          locale={locale}
+          onClose={() => setEditorOpen(false)}
+          afterClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
+}
+
+export const Component = () => {
+  const { t } = useTranslation();
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: adminKeys.configSchema(),
+    queryFn: async () => {
+      try {
+        return await adminApi.getConfigSchema();
+      } catch (err) {
+        // Servers before the schema endpoint: fall back to the raw editor
+        if (err instanceof RequestError && err.status === 404) return null;
+        throw err;
+      }
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="page-section flex justify-center py-16">
+        <Spin />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="page-section">
+        <Alert
+          type="error"
+          showIcon
+          title={t('admin_config.load_failed')}
+          description={error.message}
+          action={
+            <Button
+              size="small"
+              icon={<ReloadOutlined />}
+              loading={isFetching}
+              onClick={() => refetch()}
+            >
+              {t('admin_config.retry')}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+  if (data === null) return <LegacyConfigPage />;
+  if (!data) {
+    return (
+      <div className="page-section">
+        <Empty />
+      </div>
+    );
+  }
+  return <SchemaConfigPage data={data} />;
 };

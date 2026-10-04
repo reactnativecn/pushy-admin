@@ -9,6 +9,8 @@ export class RequestError extends Error {
   status?: number;
   /** 请求层已经弹过提示（或 401 已触发登出），上层不必再报一次。 */
   handled = false;
+  /** 解析后的 JSON 错误体，供需要结构化细节（如校验错误）的调用方使用。 */
+  body?: unknown;
 
   constructor(message: string, status?: number) {
     super(message);
@@ -58,6 +60,7 @@ export async function handleResponse<T extends Record<any, any>>(
     json.message || `Request failed with status ${response.status}`,
     response.status,
   );
+  error.body = json;
   if (!requestOptions.suppressErrorToast && error.message) {
     message.error(error.message);
     error.handled = true;
