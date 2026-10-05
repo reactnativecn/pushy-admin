@@ -553,7 +553,7 @@
     "lag_gt7d": "> 7 d",
     "lag_footnote": "Counts reports, not devices.",
     "series_question": "Update checks over the last few hours, split by bundle or native package.",
-    "series_footnote": "One point every 5 minutes; top 10 shown by default.",
+    "series_footnote": "One point every 5 minutes within the last 72 hours, hourly when the range starts earlier; top 10 shown by default.",
     "hourly_title": "Hour of day",
     "hourly_question": "Update checks in each hour of the selected day (UTC+8).",
     "carriers_title": "Carriers",

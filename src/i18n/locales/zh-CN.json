@@ -553,7 +553,7 @@
     "lag_gt7d": "7 天以上",
     "lag_footnote": "按上报次数统计，不是设备数。",
     "series_question": "最近几小时的检查更新次数，可按热更版本或原生包拆分。",
-    "series_footnote": "每 5 分钟一个点，默认只显示前 10 项。",
+    "series_footnote": "72 小时内每 5 分钟一个点，起点更早时每小时一个点；默认只显示前 10 项。",
     "hourly_title": "小时分布",
     "hourly_question": "所选日期每个小时的检查更新次数（北京时间）。",
     "carriers_title": "运营商",
