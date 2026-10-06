@@ -110,6 +110,7 @@ export const serviceStatusKeys = {
   workerTaskStats: (days: number) =>
     ['serviceStatus', 'global', 'workerTaskStats', days] as const,
   storageUsage: () => ['serviceStatus', 'global', 'storageUsage'] as const,
+  redisStatus: () => ['serviceStatus', 'global', 'redisStatus'] as const,
   target: (target: string) => ['serviceStatus', target] as const,
   metrics: (target: string) => ['serviceStatus', target, 'metrics'] as const,
   api5xxEvents: (target: string, offset: number) =>

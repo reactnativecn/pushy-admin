@@ -89,6 +89,73 @@ export type StorageUsageSnapshot = {
   };
 };
 
+// GET /admin/system/redis：共享 Redis 的一次 INFO（每节点缓存 10 秒）加上
+// 应答节点自己的连接池与熔断器。Redis 不可用时仍返回 200，available=false。
+export type RedisCircuit = {
+  group: 'default' | 'cache-read' | 'state-read' | 'write';
+  open: boolean;
+};
+
+export type RedisStatusSnapshot = {
+  generatedAt: string;
+  available: boolean;
+  error?: 'unavailable';
+  latencyMs: number;
+  server: {
+    version: string;
+    mode: string;
+    role: string;
+    uptimeSeconds: number;
+    replicas: number;
+  };
+  clients: {
+    connected: number;
+    blocked: number;
+    pubsub: number;
+    max: number;
+    rejected: number;
+  };
+  memory: {
+    usedBytes: number;
+    rssBytes: number;
+    peakBytes: number;
+    /** 0 表示未设置 maxmemory。 */
+    maxBytes: number;
+    policy: string;
+    fragmentationRatio: number;
+  };
+  stats: {
+    opsPerSec: number;
+    /** INFO 的 instantaneous_*_kbps，单位实为 KB/s。 */
+    inputKbps: number;
+    outputKbps: number;
+    totalCommands: number;
+    keyspaceHits: number;
+    keyspaceMisses: number;
+    hitRate: number | null;
+    expiredKeys: number;
+    evictedKeys: number;
+    errorReplies: number;
+  };
+  keyspace: { db: string; keys: number; expires: number; avgTtlMs: number }[];
+  errors: { prefix: string; count: number }[];
+  node: {
+    hostname?: string;
+    pool: {
+      poolSize: number;
+      totalConns: number;
+      idleConns: number;
+      pendingRequests: number;
+      hits: number;
+      misses: number;
+      timeouts: number;
+      waitCount: number;
+      staleConns: number;
+    };
+    circuits: RedisCircuit[];
+  };
+};
+
 export type CustomOrderStatus = 'pending' | 'done' | 'cancelled';
 
 export type CustomOrder = {
@@ -131,6 +198,10 @@ export const adminApi = {
     ),
   getStorageUsage: () =>
     request<StorageUsageSnapshot>('get', '/admin/system/storage', undefined, {
+      suppressErrorToast: true,
+    }),
+  getRedisStatus: () =>
+    request<RedisStatusSnapshot>('get', '/admin/system/redis', undefined, {
       suppressErrorToast: true,
     }),
   getAnalyticsOverview: (days = 7) =>

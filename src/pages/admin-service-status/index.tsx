@@ -11,6 +11,7 @@ import {
   type ServiceStatusTargetKey,
 } from './metrics';
 import { QuotaAlertsPanel } from './quota-alerts-panel';
+import { RedisStatusPanel } from './redis-status-panel';
 import { ServiceStatusPanel } from './status-panel';
 import { StorageUsagePanel } from './storage-usage-panel';
 import { ServiceTargetCards } from './target-cards';
@@ -72,6 +73,7 @@ export const Component = () => {
       <VersionHealthOverviewPanel />
       <QuotaAlertsPanel />
       <WorkerStatsPanel />
+      <RedisStatusPanel />
       <StorageUsagePanel />
 
       <Modal
