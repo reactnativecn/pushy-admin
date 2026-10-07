@@ -199,6 +199,12 @@ export interface AuditLog {
     name?: string;
     tokenSuffix: string;
   };
+  /** Workspace the log belongs to */
+  userId?: number | null;
+  /** Who performed it: a member when it differs from userId */
+  actorId?: number | null;
+  /** member: the actor is not the workspace owner (includes their own password / email changes) */
+  actor?: { email: string; name?: string; member?: boolean } | null;
   createdAt: string;
 }
 

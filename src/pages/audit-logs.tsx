@@ -12,6 +12,7 @@ import {
   Drawer,
   Input,
   message,
+  Popover,
   Select,
   Space,
   Table,
@@ -39,12 +40,18 @@ import {
   getActionLabel,
   getActionMap,
   getActionOptions,
+  getActorLabel,
+  getActorOptions,
   getApiTokenLabel,
+  getApiTokenOptions,
   getAuditCsvHeader,
   getDateRangePatch,
   getPreviewData,
   getStatusFilterOptions,
   isAuditDateDisabled,
+  isMemberAction,
+  matchesActor,
+  matchesApiToken,
   matchesDateRange,
   matchesStatusFilter,
   parseDateRange,
@@ -87,6 +94,8 @@ export const AuditLogs = () => {
 
   const query = searchQuery.toLowerCase();
   const selectedAction = searchParams.get('action') ?? undefined;
+  const selectedApiToken = searchParams.get('apiKey') ?? undefined;
+  const selectedActor = searchParams.get('actor') ?? undefined;
   const statusFilter = parseStatusFilter(searchParams.get('status'));
   const dateRange = parseDateRange(searchParams);
   const selectedLogId = searchParams.get('logId');
@@ -101,6 +110,8 @@ export const AuditLogs = () => {
     endDate: dateRange?.[1]?.endOf('day').toISOString(),
   });
   const isCapped = total > auditLogs.length;
+  const apiTokenOptions = getApiTokenOptions(auditLogs, selectedApiToken);
+  const actorOptions = getActorOptions(auditLogs, selectedActor);
 
   const filteredAuditLogs = auditLogs.filter((log) => {
     if (
@@ -111,6 +122,14 @@ export const AuditLogs = () => {
     }
 
     if (!matchesStatusFilter(log.statusCode, statusFilter)) {
+      return false;
+    }
+
+    if (!matchesApiToken(log, selectedApiToken)) {
+      return false;
+    }
+
+    if (!matchesActor(log, selectedActor)) {
       return false;
     }
 
@@ -168,11 +187,32 @@ export const AuditLogs = () => {
       render: (createdAt: string) => {
         const date = dayjs(createdAt);
         return (
-          <div>
+          <div className="whitespace-nowrap">
             <div>{date.format('YYYY-MM-DD HH:mm:ss')}</div>
             <Text type="secondary" className="text-xs">
               {date.fromNow()}
             </Text>
+          </div>
+        );
+      },
+    },
+    {
+      title: t('audit_logs.col_actor'),
+      width: 200,
+      render: (_value, record) => {
+        const actorLabel = getActorLabel(record);
+        if (!actorLabel) {
+          return <Text type="secondary">-</Text>;
+        }
+
+        return (
+          <div className="min-w-0">
+            <div className="truncate" title={record.actor?.email}>
+              {actorLabel}
+            </div>
+            {isMemberAction(record) && (
+              <Tag className="mt-1">{t('audit_logs.actor_member_tag')}</Tag>
+            )}
           </div>
         );
       },
@@ -229,26 +269,28 @@ export const AuditLogs = () => {
     {
       title: t('audit_logs.col_payload'),
       responsive: ['lg'],
-      width: 200,
+      width: 320,
       render: (_value, record) => {
         const previewData = getPreviewData(record.data);
         if (!previewData) {
           return <Text type="secondary">-</Text>;
         }
 
-        const previewText = JSON.stringify(previewData);
+        // Clamp to two wrapped lines; hover shows the full body, and clicking
+        // the row opens the detail drawer with the formatted payload
         return (
-          <Text
-            ellipsis={{
-              tooltip: (
-                <pre className="max-w-[480px] whitespace-pre-wrap break-all">
-                  {JSON.stringify(previewData, null, 2)}
-                </pre>
-              ),
-            }}
+          <Popover
+            placement="topLeft"
+            content={
+              <pre className="m-0 max-h-80 max-w-[480px] overflow-auto whitespace-pre-wrap break-all text-xs">
+                {JSON.stringify(previewData, null, 2)}
+              </pre>
+            }
           >
-            {previewText}
-          </Text>
+            <div className="line-clamp-2 break-all font-mono text-xs">
+              {JSON.stringify(previewData)}
+            </div>
+          </Popover>
         );
       },
     },
@@ -331,6 +373,36 @@ export const AuditLogs = () => {
               onChange={(value) => {
                 patchSearchParams(setSearchParams, {
                   action: value,
+                  page: '1',
+                });
+              }}
+              className="w-full md:w-52"
+            />
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder={t('audit_logs.actor_placeholder')}
+              options={actorOptions}
+              value={selectedActor}
+              onChange={(value) => {
+                patchSearchParams(setSearchParams, {
+                  actor: value,
+                  page: '1',
+                });
+              }}
+              className="w-full md:w-52"
+            />
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder={t('audit_logs.apikey_placeholder')}
+              options={apiTokenOptions}
+              value={selectedApiToken}
+              onChange={(value) => {
+                patchSearchParams(setSearchParams, {
+                  apiKey: value,
                   page: '1',
                 });
               }}
@@ -461,6 +533,13 @@ export const AuditLogs = () => {
                   key: 'status',
                   label: t('audit_logs.detail_status'),
                   children: selectedLog.statusCode,
+                },
+                {
+                  key: 'actor',
+                  label: t('audit_logs.col_actor'),
+                  children: selectedLog.actor
+                    ? `${getActorLabel(selectedLog)}${selectedLog.actor.name ? ` (${selectedLog.actor.email})` : ''}`
+                    : '-',
                 },
                 {
                   key: 'ip',

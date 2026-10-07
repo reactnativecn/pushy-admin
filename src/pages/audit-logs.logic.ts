@@ -63,6 +63,52 @@ export const getApiTokenLabel = (apiTokens?: AuditLog['apiTokens']) => {
     : `****${apiTokens.tokenSuffix}`;
 };
 
+/**
+ * API Key filter options, one per token suffix seen in the loaded logs. A key
+ * picked from the URL that no loaded log uses still gets an option so the
+ * Select shows a label instead of the raw suffix.
+ */
+export const getApiTokenOptions = (logs: AuditLog[], selected?: string) => {
+  const options = new Map<string, string>();
+  for (const log of logs) {
+    const suffix = log.apiTokens?.tokenSuffix;
+    if (suffix && !options.has(suffix)) {
+      options.set(suffix, getApiTokenLabel(log.apiTokens) as string);
+    }
+  }
+  if (selected && !options.has(selected)) {
+    options.set(selected, `****${selected}`);
+  }
+  return [...options].map(([value, label]) => ({ value, label }));
+};
+
+export const getActorLabel = (log: AuditLog) =>
+  log.actor ? log.actor.name || log.actor.email : undefined;
+
+/** The server flags actors who are not the workspace owner */
+export const isMemberAction = (log: AuditLog) => Boolean(log.actor?.member);
+
+/** Actor filter options keyed by actorId, same fallback rule as getApiTokenOptions */
+export const getActorOptions = (logs: AuditLog[], selected?: string) => {
+  const options = new Map<string, string>();
+  for (const log of logs) {
+    const label = getActorLabel(log);
+    if (log.actorId != null && label && !options.has(String(log.actorId))) {
+      options.set(String(log.actorId), label);
+    }
+  }
+  if (selected && !options.has(selected)) {
+    options.set(selected, `#${selected}`);
+  }
+  return [...options].map(([value, label]) => ({ value, label }));
+};
+
+export const matchesActor = (log: AuditLog, selected?: string) =>
+  !selected || String(log.actorId) === selected;
+
+export const matchesApiToken = (log: AuditLog, selected?: string) =>
+  !selected || log.apiTokens?.tokenSuffix === selected;
+
 export const normalizePath = (path: string): string => {
   return path.replace(/\/\d+/g, '/{id}').replace(/\/$/, '');
 };
@@ -183,6 +229,8 @@ export const buildSearchText = (actionMap: ActionMap, log: AuditLog) => {
     log.ip,
     log.userAgent,
     getApiTokenLabel(log.apiTokens),
+    log.actor?.email,
+    log.actor?.name,
     JSON.stringify(getPreviewData(log.data) ?? {}),
   ]
     .filter(Boolean)

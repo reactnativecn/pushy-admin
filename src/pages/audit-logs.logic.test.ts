@@ -9,13 +9,19 @@ import {
   getActionLabel,
   getActionMap,
   getActionOptions,
+  getActorLabel,
+  getActorOptions,
   getApiTokenLabel,
+  getApiTokenOptions,
   getAuditCsvHeader,
   getDateRangePatch,
   getPreviewData,
   getStatusFilterOptions,
   getUserAgentSummary,
   isAuditDateDisabled,
+  isMemberAction,
+  matchesActor,
+  matchesApiToken,
   matchesDateRange,
   matchesStatusFilter,
   normalizePath,
@@ -396,5 +402,51 @@ describe('buildAuditCsvRow / getAuditCsvHeader', () => {
     expect(row[7]).toBe('-');
     expect(row[8]).toBe('1.2.3.4');
     expect(row[9]).toBe('****ab');
+  });
+});
+
+describe('API Key / actor filters', () => {
+  const ownerLog = makeLog({
+    id: 1,
+    userId: 7,
+    actorId: 7,
+    actor: { email: 'owner@example.com' },
+    apiTokens: { name: 'CI', tokenSuffix: 'ab12' },
+  });
+  const memberLog = makeLog({
+    id: 2,
+    userId: 7,
+    actorId: 9,
+    actor: { email: 'dev@example.com', name: 'Dev', member: true },
+  });
+
+  test('lists each API Key and actor once, keeping a URL-only selection', () => {
+    expect(getApiTokenOptions([ownerLog, ownerLog, memberLog])).toEqual([
+      { value: 'ab12', label: 'CI(****ab12)' },
+    ]);
+    expect(getApiTokenOptions([memberLog], 'zz99')).toEqual([
+      { value: 'zz99', label: '****zz99' },
+    ]);
+    expect(getActorOptions([ownerLog, memberLog, memberLog], '3')).toEqual([
+      { value: '7', label: 'owner@example.com' },
+      { value: '9', label: 'Dev' },
+      { value: '3', label: '#3' },
+    ]);
+  });
+
+  test('matches by token suffix and actor id', () => {
+    expect(matchesApiToken(ownerLog, 'ab12')).toBe(true);
+    expect(matchesApiToken(memberLog, 'ab12')).toBe(false);
+    expect(matchesApiToken(memberLog, undefined)).toBe(true);
+    expect(matchesActor(memberLog, '9')).toBe(true);
+    expect(matchesActor(ownerLog, '9')).toBe(false);
+  });
+
+  test('flags only members acting in the owner workspace', () => {
+    expect(isMemberAction(ownerLog)).toBe(false);
+    expect(isMemberAction(memberLog)).toBe(true);
+    expect(isMemberAction(makeLog())).toBe(false);
+    expect(getActorLabel(memberLog)).toBe('Dev');
+    expect(getActorLabel(makeLog())).toBeUndefined();
   });
 });
