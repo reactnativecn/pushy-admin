@@ -258,16 +258,25 @@ const removeVersion = (
  */
 const HermesBaseTag = ({ record }: { record: Version }) => {
   const { t } = useTranslation();
+  const { packages } = useManageContext();
   if (record.hermesBaseOutcome !== 'used') return null;
+  // A version base carries its id; a native-package base only its hash, and a
+  // local base file (--hermesBase <path>) neither.
+  const basePackage =
+    record.baseVersionId == null && record.baseHash
+      ? packages.find((item) => item.hash === record.baseHash)
+      : undefined;
+  const tip =
+    record.baseVersionId != null
+      ? t('version_table.hermes_base_used_tip', { id: record.baseVersionId })
+      : basePackage
+        ? t('version_table.hermes_base_used_tip_package', {
+            name: basePackage.name,
+          })
+        : t('version_table.hermes_base_used_tip_other');
   return (
     <Tooltip
-      title={
-        <span className="whitespace-pre-wrap break-all">
-          {t('version_table.hermes_base_used_tip', {
-            id: record.baseVersionId ?? '?',
-          })}
-        </span>
-      }
+      title={<span className="whitespace-pre-wrap break-all">{tip}</span>}
     >
       <Tag color="green" className="mt-0.5 text-[11px] leading-4 px-1 mr-0">
         {t('version_table.hermes_base_used')}
