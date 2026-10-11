@@ -324,28 +324,22 @@ export const useCarrierLabel = () => {
   };
 };
 
+const failureReasonKey = (reason: string) => {
+  const parsed = parseFailureReason(reason);
+  return parsed.kind === 'other' ? 'other' : parsed.reason;
+};
+
 export const useFailureReasonLabel = () => {
   const { t } = useTranslation();
-  return (reason: string) => {
-    const parsed = parseFailureReason(reason);
-    if (parsed.kind === 'other') {
-      return t('app_insights.reason_other');
-    }
-    const key = {
-      empty: 'app_insights.reason_empty',
-      crc_mismatch: 'app_insights.reason_crc_mismatch',
-      patch_apply: 'app_insights.reason_patch_apply',
-      no_space: 'app_insights.reason_no_space',
-      timeout: 'app_insights.reason_timeout',
-      network: 'app_insights.reason_network',
-      http_4xx: 'app_insights.reason_http_4xx',
-      http_5xx: 'app_insights.reason_http_5xx',
-      file_io: 'app_insights.reason_file_io',
-      zip: 'app_insights.reason_zip',
-      bundle_mismatch: 'app_insights.reason_bundle_mismatch',
-    }[parsed.reason];
-    return t(key);
-  };
+  return (reason: string) =>
+    t(`app_insights.reason_${failureReasonKey(reason)}`);
+};
+
+/** 原因的白话解释与处理建议，悬停在原因上显示。 */
+export const useFailureReasonHint = () => {
+  const { t } = useTranslation();
+  return (reason: string) =>
+    t(`app_insights.reason_${failureReasonKey(reason)}_hint`);
 };
 
 export const useEventTypeLabel = () => {

@@ -26,6 +26,7 @@ import {
   useAppEventBreakdown,
   useCarrierLabel,
   useEventTypeLabel,
+  useFailureReasonHint,
   useFailureReasonLabel,
   VersionLabel,
 } from './shared';
@@ -113,6 +114,7 @@ export const FailuresPanel = ({
 }) => {
   const { t } = useTranslation();
   const reasonLabel = useFailureReasonLabel();
+  const reasonHint = useFailureReasonHint();
   const carrierLabel = useCarrierLabel();
   const eventLabel = useEventTypeLabel();
   const breakdown = useAppEventBreakdown(appKey, days);
@@ -140,7 +142,12 @@ export const FailuresPanel = ({
     {
       title: t('app_insights.col_reason'),
       key: 'reason',
-      render: (_, row) => reasonLabel(row.reason),
+      render: (_, row) => (
+        <HeaderHint
+          label={reasonLabel(row.reason)}
+          hint={reasonHint(row.reason)}
+        />
+      ),
     },
     {
       title: t('app_insights.col_count'),
@@ -155,7 +162,12 @@ export const FailuresPanel = ({
       render: formatShare,
     },
     {
-      title: t('app_insights.col_event_type'),
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_event_type')}
+          hint={t('app_insights.event_type_hint')}
+        />
+      ),
       key: 'types',
       render: (_, row) => (
         <span className="flex flex-wrap gap-1">
