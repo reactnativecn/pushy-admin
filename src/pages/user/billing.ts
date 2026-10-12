@@ -24,28 +24,15 @@ export function resolveMonthlyPrice(annualPrice: number) {
   return Math.round((monthly + Number.EPSILON) * 100) / 100;
 }
 
-const PURCHASABLE_TIER_KEYS: PurchasableTier[] = [
-  'standard',
-  'premium',
-  'pro',
-  'vip1',
-  'vip2',
-  'vip3',
-];
-
-const getPurchasableTiers = (
-  t: (key: string) => string,
-): Array<{
-  label: string;
-  tier: PurchasableTier;
-}> => [
-  { label: t('user.purchasable_tiers.standard'), tier: 'standard' },
-  { label: t('user.purchasable_tiers.premium'), tier: 'premium' },
-  { label: t('user.purchasable_tiers.pro'), tier: 'pro' },
-  { label: t('user.purchasable_tiers.vip1'), tier: 'vip1' },
-  { label: t('user.purchasable_tiers.vip2'), tier: 'vip2' },
-  { label: t('user.purchasable_tiers.vip3'), tier: 'vip3' },
-];
+// 可购买版本的名称文案 key；写成字面量查表，漏翻译能在测试里暴露。
+export const PURCHASABLE_TIER_LABEL_KEY: Record<PurchasableTier, string> = {
+  standard: 'user.purchasable_tiers.standard',
+  premium: 'user.purchasable_tiers.premium',
+  pro: 'user.purchasable_tiers.pro',
+  vip1: 'user.purchasable_tiers.vip1',
+  vip2: 'user.purchasable_tiers.vip2',
+  vip3: 'user.purchasable_tiers.vip3',
+};
 
 const checkUpdateAddonEligibleTiers = new Set<Tier>([
   'premium',
@@ -77,6 +64,25 @@ export function formatMoney(value: number) {
 
 export function formatDiscount(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+/**
+ * 年付相对「按月付满 billingMonths 个月」的折扣（如 "8.3" 折）；
+ * 年付不比按月便宜时返回 undefined，不展示折扣标签。
+ */
+export function getAnnualDiscount({
+  annualPrice,
+  billingMonths = ANNUAL_BILLING_MONTHS,
+  monthlyPrice,
+}: {
+  annualPrice: number;
+  billingMonths?: number;
+  monthlyPrice: number;
+}) {
+  const monthlyTotal = monthlyPrice * billingMonths;
+  return monthlyTotal > annualPrice
+    ? formatDiscount((annualPrice / monthlyTotal) * 10)
+    : undefined;
 }
 
 export function getRemainingBillableDays(expiresAt?: string, now?: string) {
@@ -131,16 +137,14 @@ export function getAnnualTokenBonus(tier?: string) {
 }
 
 export function isPurchasableTier(tier?: string): tier is PurchasableTier {
-  return !!tier && PURCHASABLE_TIER_KEYS.includes(tier as PurchasableTier);
+  return !!tier && Object.hasOwn(PURCHASABLE_TIER_LABEL_KEY, tier);
 }
 
 export function getPurchasableTierLabel(
   tier: PurchasableTier,
   t: (key: string) => string,
 ) {
-  return (
-    getPurchasableTiers(t).find((option) => option.tier === tier)?.label ?? tier
-  );
+  return t(PURCHASABLE_TIER_LABEL_KEY[tier]);
 }
 
 export function getQuotaDetailItems(
@@ -195,22 +199,24 @@ export const getDefaultCheckUpdateAddonEligibilityHint = (
   t: (key: string) => string,
 ) => t('user.addon_eligible_hint');
 
-export async function purchase(tier: ProductTier, months?: number) {
-  const orderResponse = await api.createOrder({ months, tier });
-  if (orderResponse?.payUrl && isValidExternalUrl(orderResponse.payUrl)) {
-    window.location.href = orderResponse.payUrl;
-  } else if (orderResponse?.payUrl) {
-    console.error('Invalid payment URL:', orderResponse.payUrl);
+// 下单成功后跳转到支付页；支付地址不合法时只提示，不跳转。
+function redirectToPay(orderResponse?: { payUrl?: string }) {
+  const payUrl = orderResponse?.payUrl;
+  if (!payUrl) {
+    return;
+  }
+  if (isValidExternalUrl(payUrl)) {
+    window.location.href = payUrl;
+  } else {
+    console.error('Invalid payment URL:', payUrl);
     message.error(i18n.t('user.payment_invalid'));
   }
 }
 
+export async function purchase(tier: ProductTier, months?: number) {
+  redirectToPay(await api.createOrder({ months, tier }));
+}
+
 export async function purchaseCheckUpdateAddon(units: number) {
-  const orderResponse = await api.createOrder({ checkUpdateAddonUnits: units });
-  if (orderResponse?.payUrl && isValidExternalUrl(orderResponse.payUrl)) {
-    window.location.href = orderResponse.payUrl;
-  } else if (orderResponse?.payUrl) {
-    console.error('Invalid payment URL:', orderResponse.payUrl);
-    message.error(i18n.t('user.payment_invalid'));
-  }
+  redirectToPay(await api.createOrder({ checkUpdateAddonUnits: units }));
 }

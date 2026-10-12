@@ -1,17 +1,15 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Popover, Segmented, Tag, Tooltip } from 'antd';
+import { Button, Segmented, Tooltip } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Quota, Tier } from '@/types';
-import { cn } from '@/utils/helper';
 import {
   ANNUAL_BILLING_MONTHS,
   canPurchaseCheckUpdateAddon,
-  formatDiscount,
   formatExpireDate,
   formatMoney,
   formatRenewedExpireDate,
   formatWan,
+  getAnnualDiscount,
   getAnnualTokenBonus,
   getDefaultCheckUpdateAddonEligibilityHint,
   getPurchasableTierLabel,
@@ -24,188 +22,12 @@ import {
   resolveMonthlyPrice,
   type useOrderBillingConfig,
 } from './billing';
-
-const purchaseButtonClassName = 'w-full justify-center sm:w-[160px]';
-
-export type PurchaseMenuOption = {
-  amountText: string;
-  bonusTag?: string;
-  description?: string;
-  details?: Array<{
-    label: string;
-    value: string;
-  }>;
-  disabled?: boolean;
-  formula?: string;
-  key: string;
-  onClick?: () => Promise<void>;
-  tag?: string;
-  title: string;
-};
-
-function PurchaseActionPopover({
-  buttonLabel,
-  emptyText,
-  headerContent,
-  hint,
-  loading,
-  title,
-  titleNote,
-  widthClassName = 'w-[340px]',
-  options,
-}: {
-  buttonLabel: string;
-  emptyText?: string;
-  headerContent?: React.ReactNode;
-  hint?: string;
-  loading: boolean;
-  title?: string;
-  titleNote?: string;
-  widthClassName?: string;
-  options: PurchaseMenuOption[];
-}) {
-  const { t } = useTranslation();
-  const resolvedEmptyText = emptyText ?? t('user.addon_empty');
-
-  const content = (
-    <div
-      className={cn(
-        'max-h-[70vh] max-w-[calc(100vw-32px)] overflow-y-auto pr-1',
-        widthClassName,
-      )}
-    >
-      {title && (
-        <div className="px-2">
-          <div className="font-semibold text-slate-900 text-sm">{title}</div>
-          {titleNote && (
-            <div className="mt-0.5 text-slate-500 text-xs">{titleNote}</div>
-          )}
-        </div>
-      )}
-      {hint && (
-        <div className="px-2 pt-1 pb-2 text-slate-500 text-xs leading-relaxed">
-          {hint}
-        </div>
-      )}
-      {headerContent}
-      <div className="flex flex-col gap-1">
-        {options.length > 0 ? (
-          options.map((option) => (
-            <button
-              className={cn(
-                'w-full rounded border border-transparent px-3 py-2 text-left transition',
-                option.disabled || loading
-                  ? 'cursor-not-allowed text-slate-400'
-                  : 'cursor-pointer hover:border-blue-200 hover:bg-blue-50',
-              )}
-              disabled={option.disabled || loading}
-              key={option.key}
-              onClick={async (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                await option.onClick?.();
-              }}
-              type="button"
-            >
-              <div className="flex min-w-0 items-center justify-between gap-3">
-                <span
-                  className={cn(
-                    'font-medium',
-                    option.disabled || loading
-                      ? 'text-slate-400'
-                      : 'text-slate-900',
-                  )}
-                >
-                  {option.title}
-                </span>
-                <span
-                  className={cn(
-                    'min-w-0 text-right font-semibold',
-                    option.disabled || loading
-                      ? 'text-slate-400'
-                      : 'text-slate-900',
-                  )}
-                >
-                  {option.amountText}
-                </span>
-              </div>
-              {(option.description || option.tag || option.bonusTag) && (
-                <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
-                  {option.description && (
-                    <span className="text-slate-500">{option.description}</span>
-                  )}
-                  {option.tag && (
-                    <Tag color="gold" className="m-0">
-                      {option.tag}
-                    </Tag>
-                  )}
-                  {option.bonusTag && (
-                    <Tag color="magenta" className="m-0 font-semibold">
-                      🎁 {option.bonusTag}
-                    </Tag>
-                  )}
-                </div>
-              )}
-              {option.details && (
-                <div
-                  className={cn(
-                    'mt-2 grid gap-1.5',
-                    option.details.length >= 4 ? 'grid-cols-4' : 'grid-cols-3',
-                  )}
-                >
-                  {option.details.map((detail) => (
-                    <div
-                      className="rounded bg-slate-50 px-2 py-1"
-                      key={detail.label}
-                    >
-                      <div className="text-[10px] text-slate-400">
-                        {detail.label}
-                      </div>
-                      <div
-                        className={cn(
-                          'mt-0.5 truncate font-semibold text-sm tabular-nums',
-                          option.disabled || loading
-                            ? 'text-slate-400'
-                            : 'text-primary',
-                        )}
-                      >
-                        {detail.value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {option.formula && (
-                <div className="mt-2 rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-500 tabular-nums">
-                  {option.formula}
-                </div>
-              )}
-            </button>
-          ))
-        ) : (
-          <div className="px-2 py-3 text-center text-slate-500 text-xs">
-            {resolvedEmptyText}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  return (
-    <Popover
-      content={content}
-      placement="bottomLeft"
-      trigger={['hover', 'click']}
-    >
-      <Button className={purchaseButtonClassName} loading={loading}>
-        <span className="inline-flex items-center gap-2">
-          {buttonLabel}
-          <DownOutlined className="text-[10px]" />
-        </span>
-      </Button>
-    </Popover>
-  );
-}
+import {
+  PurchaseActionPopover,
+  type PurchaseMenuOption,
+  purchaseButtonClassName,
+  useRunningKey,
+} from './purchase-action-popover';
 
 export const RenewalPurchaseButton = ({
   quotes,
@@ -221,7 +43,7 @@ export const RenewalPurchaseButton = ({
   tierExpiresAt?: string;
 }) => {
   const { t } = useTranslation();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const { run, runningKey: loadingPlan } = useRunningKey<string>();
   const addonUnits = quotes?.current.checkUpdateAddonUnits ?? 0;
   const addonMonthlyPrice = quotes?.current.checkUpdateAddonMonthlyPrice ?? 0;
 
@@ -235,10 +57,8 @@ export const RenewalPurchaseButton = ({
         const months =
           option.months ?? billing?.requestedMonths ?? ANNUAL_BILLING_MONTHS;
         const isAnnual = billing?.billingCycle === 'year';
-        const monthlyTotal =
-          billing && isAnnual
-            ? billing.monthlyPrice * billing.billingMonths
-            : 0;
+        const discount =
+          billing && isAnnual ? getAnnualDiscount(billing) : undefined;
         const tokenBonus = isAnnual ? getAnnualTokenBonus(tier) : 0;
 
         return {
@@ -255,22 +75,8 @@ export const RenewalPurchaseButton = ({
             t,
           )}`,
           key: option.key,
-          onClick: async () => {
-            setLoadingPlan(option.key);
-            try {
-              await purchase(tier, months);
-            } finally {
-              setLoadingPlan(null);
-            }
-          },
-          tag:
-            billing && isAnnual && monthlyTotal > billing.annualPrice
-              ? t('user.about_discount', {
-                  discount: formatDiscount(
-                    (billing.annualPrice / monthlyTotal) * 10,
-                  ),
-                })
-              : undefined,
+          onClick: () => run(option.key, () => purchase(tier, months)),
+          tag: discount ? t('user.about_discount', { discount }) : undefined,
           title: isAnnual
             ? `${months} ${t('user.annual_billing')}`
             : `${months} ${t('user.price_month')}`,
@@ -324,7 +130,7 @@ export const UpgradePurchaseControls = ({
   tierExpiresAt?: string;
 }) => {
   const { t } = useTranslation();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const { run, runningKey: loadingPlan } = useRunningKey<string>();
   const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('month');
   const upgradeOptions = quotes?.upgrades ?? [];
 
@@ -374,10 +180,13 @@ export const UpgradePurchaseControls = ({
         billing?.monthlyPrice ?? resolveMonthlyPrice(annualPrice);
       const isAnnual = billingCycle === 'year';
       const months = isAnnual ? ANNUAL_BILLING_MONTHS : 1;
-      const monthlyTotal =
-        billing && isAnnual
-          ? billing.monthlyPrice * billing.billingMonths
-          : monthlyPrice * ANNUAL_BILLING_MONTHS;
+      const discount = isAnnual
+        ? getAnnualDiscount({
+            annualPrice,
+            billingMonths: billing?.billingMonths,
+            monthlyPrice,
+          })
+        : undefined;
       const tierLabel = tier ? getPurchasableTierLabel(tier, t) : option.key;
       const displayAmount = isAnnual ? annualPrice : monthlyPrice;
       const unitText = isAnnual
@@ -399,19 +208,9 @@ export const UpgradePurchaseControls = ({
         key: optionKey,
         onClick: async () => {
           if (!tier) return;
-          setLoadingPlan(optionKey);
-          try {
-            await purchase(tier, months);
-          } finally {
-            setLoadingPlan(null);
-          }
+          await run(optionKey, () => purchase(tier, months));
         },
-        tag:
-          isAnnual && monthlyTotal > annualPrice
-            ? t('user.about_discount', {
-                discount: formatDiscount((annualPrice / monthlyTotal) * 10),
-              })
-            : undefined,
+        tag: discount ? t('user.about_discount', { discount }) : undefined,
         title: tierLabel,
       };
     }
@@ -432,12 +231,7 @@ export const UpgradePurchaseControls = ({
       key: option.key,
       onClick: async () => {
         if (!tier) return;
-        setLoadingPlan(option.key);
-        try {
-          await purchase(tier, option.months);
-        } finally {
-          setLoadingPlan(null);
-        }
+        await run(option.key, () => purchase(tier, option.months));
       },
       title: tier ? getPurchasableTierLabel(tier, t) : option.key,
     };
@@ -476,7 +270,7 @@ export function CheckUpdateAddonPurchase({
   tierExpiresAt?: string;
 }) {
   const { t } = useTranslation();
-  const [loadingUnits, setLoadingUnits] = useState<number | null>(null);
+  const { run, runningKey: loadingUnits } = useRunningKey<number>();
   const monthlyUnitPrice =
     billingConfig.checkUpdateAddon?.monthlyUnitPrice ?? 100;
   const eligibilityHint =
@@ -504,14 +298,7 @@ export function CheckUpdateAddonPurchase({
             : `${formatMoney(quote.amount)} ${t('user.per_year')}`,
           disabled,
           key: option.key,
-          onClick: async () => {
-            setLoadingUnits(units);
-            try {
-              await purchaseCheckUpdateAddon(units);
-            } finally {
-              setLoadingUnits(null);
-            }
-          },
+          onClick: () => run(units, () => purchaseCheckUpdateAddon(units)),
           title: `+${(addonQuota * units).toLocaleString()} ${t('user.per_day')}`,
         };
       })
