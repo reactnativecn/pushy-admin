@@ -1,14 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, DatePicker, Radio, Spin } from 'antd';
 import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { AsyncLine } from '@/components/lazy-chart';
 import { RANGE_PRESET_LABEL_KEY } from '@/constants/i18n-keys';
 import { api } from '@/services/api';
-import { buildTimeSeriesLineConfig, getRangePresets } from '@/utils/charts';
+import {
+  buildTimeSeriesLineConfig,
+  getRangePresets,
+  getRangePresetWindow,
+} from '@/utils/charts';
 import { patchSearchParams } from '@/utils/helper';
 import {
   aggregateSeries,
@@ -44,6 +47,13 @@ interface FormattedCategory {
 const CATEGORY_SEPARATOR = '';
 
 const isTotalPoint = (point: ChartDataPoint) => Boolean(point.isTotal);
+
+/** 原生包图例名：结尾的 64 位 hex 指纹截成前 8 位，便于阅读。 */
+const packageLabel = (value: string, t: (key: string) => string) =>
+  `${t('realtime_metrics.package_prefix')} ${value.replace(
+    /([0-9a-f]{64})$/,
+    (hash) => `${hash.slice(0, 8)}…`,
+  )}`;
 
 const formatCategory = (
   rawCategory: string,
@@ -81,10 +91,7 @@ const formatCategory = (
       // 内容指纹复合键与 buildTime 复合键同属"原生包"面板(新客户端上报
       // 指纹后取代 buildTime);截断 64 位 hex 便于图例阅读
       return {
-        label: `${t('realtime_metrics.package_prefix')} ${value.replace(
-          /([0-9a-f]{64})$/,
-          (h) => `${h.slice(0, 8)}…`,
-        )}`,
+        label: packageLabel(value, t),
         attribute: 'packageVersion_buildTime',
         isTotal: false,
       };
@@ -146,16 +153,11 @@ export const RealtimeSeriesPanel = ({
   });
   // 时间窗可由入口链接指定（如原生包时间戳告警按 7 天窗口计算，
   // 跳转过来必须用同样的窗口才能查到对应数据），默认过去 24 小时
-  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(() => {
-    const rangeHours: Record<string, number> = {
-      '1h': 1,
-      '6h': 6,
-      '24h': 24,
-      '7d': 24 * 7,
-    };
-    const hours = rangeHours[searchParams.get('range') ?? ''] ?? 24;
-    return [dayjs().subtract(hours, 'hour'), dayjs()];
-  });
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(
+    () =>
+      getRangePresetWindow(searchParams.get('range')) ??
+      getRangePresetWindow('24h')!,
+  );
   const legendValuesRef = useRef<string[]>([]);
   const selectedAttribute: MetricAttribute =
     searchParams.get('attribute') === 'packageVersion_buildTime'
@@ -238,19 +240,14 @@ export const RealtimeSeriesPanel = ({
   // 不受 Top 10 截断影响——它们通常量很小,否则点进来什么都看不到
   const focusLabels = useMemo(() => {
     const focusParam = searchParams.get('focus') ?? '';
-    return focusParam
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean)
-      .map(
-        (value) =>
-          // 指纹告警的 focus 值带完整 64 位 hex，
-          // 与图例标签做同样的截断才能匹配上
-          `${t('realtime_metrics.package_prefix')} ${value.replace(
-            /([0-9a-f]{64})$/,
-            (h) => `${h.slice(0, 8)}…`,
-          )}`,
-      );
+    return (
+      focusParam
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+        // 指纹告警的 focus 值带完整 64 位 hex，与图例标签用同一个函数生成才能匹配上
+        .map((value) => packageLabel(value, t))
+    );
   }, [searchParams, t]);
 
   const { defaultLegendValues, colorDomain } = useMemo(

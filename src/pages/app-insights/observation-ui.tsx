@@ -4,7 +4,8 @@ import { FUNNEL_HEALTH_LABEL_KEY } from '@/constants/i18n-keys';
 import { MIN_EVENT_SAMPLES } from '@/constants/metric-thresholds';
 import { formatInteger, formatPercent } from '@/utils/format';
 import { cn } from '@/utils/helper';
-import type { BreakdownSummary, FunnelHealth } from './logic';
+import type { BreakdownSummary } from './breakdown.logic';
+import type { FunnelHealth } from './logic';
 import type { ObservationWindow } from './types';
 
 export const ObservationNotice = ({

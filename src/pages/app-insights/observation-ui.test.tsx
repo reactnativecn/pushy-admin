@@ -6,7 +6,7 @@ import '@/i18n';
 import en from '@/i18n/locales/en.json';
 import zhCN from '@/i18n/locales/zh-CN.json';
 import { metricsKeys } from '@/utils/query-keys';
-import { buildFunnelRows } from './logic';
+import { buildFunnelRows } from './funnel.logic';
 import { ObservationNotice, RollbackShare } from './observation-ui';
 import type { VersionFunnelResponse } from './types';
 import { VersionDetail, VersionsPanel } from './versions-panel';

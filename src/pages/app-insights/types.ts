@@ -1,3 +1,5 @@
+import type { ReleaseInsights } from './release-insights-types';
+
 // Additive v2 observation contract; optional fields support rolling deploys.
 export interface ObservationWindow {
   timezone: string;
@@ -173,7 +175,7 @@ export interface VersionEventSummary {
 }
 
 export interface VersionFunnelResponse {
-  releaseInsights?: import('./release-insights-types').ReleaseInsights;
+  releaseInsights?: ReleaseInsights;
   days: number;
   start: string;
   end: string;

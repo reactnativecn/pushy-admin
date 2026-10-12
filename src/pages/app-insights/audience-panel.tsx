@@ -1,19 +1,20 @@
-import { Card, Segmented, Spin } from 'antd';
+import { Card, Segmented } from 'antd';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PLATFORM_LABELS } from '@/components/platform-icon';
-import { RealtimeGeoPanel } from '../realtime-metrics-geo';
-import { type RankedItem, summarizeTraffic } from './logic';
+import { GeoPanel } from './geo-panel';
+import type { RankedItem } from './logic';
 import { ObservationNotice } from './observation-ui';
 import {
   BarList,
   type BarListItem,
-  EmptyState,
   InsightsError,
+  LoadingOrEmpty,
   Question,
   useAppTraffic,
   useCarrierLabel,
 } from './shared';
+import { summarizeTraffic } from './traffic.logic';
 
 // 设备上报的 os 标签里鸿蒙写作 harmonyos，与应用平台的 harmony 不同
 const PLATFORM_LABEL: Record<string, string> = {
@@ -123,21 +124,17 @@ export const AudiencePanel = ({
             key={card.key}
           >
             <Question>{card.question}</Question>
-            <Spin spinning={traffic.isLoading}>
-              {card.items.length > 0 ? (
-                <BarList items={card.items} restLabel={card.restLabel} />
-              ) : (
-                <EmptyState>
-                  {traffic.isLoading
-                    ? ''
-                    : (card.emptyText ?? t('app_insights.no_observations'))}
-                </EmptyState>
-              )}
-            </Spin>
+            <LoadingOrEmpty
+              loading={traffic.isLoading}
+              empty={card.items.length === 0}
+              emptyText={card.emptyText}
+            >
+              <BarList items={card.items} restLabel={card.restLabel} />
+            </LoadingOrEmpty>
           </Card>
         ))}
       </div>
-      <RealtimeGeoPanel appKey={appKey} days={days} isAdmin={isAdmin} />
+      <GeoPanel appKey={appKey} days={days} isAdmin={isAdmin} />
     </div>
   );
 };

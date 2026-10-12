@@ -1,17 +1,23 @@
-import { Card, Radio, Spin } from 'antd';
+import { Card, Radio } from 'antd';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncColumn } from '@/components/lazy-chart';
-import { useThemeMode } from '@/utils/theme-mode';
-import { beijingToday, HOURLY_DAYS, summarizeTraffic } from './logic';
+import { beijingToday } from './logic';
 import { ObservationNotice } from './observation-ui';
 import { RealtimeSeriesPanel } from './realtime-series-panel';
-import { EmptyState, InsightsError, Question, useAppTraffic } from './shared';
+import {
+  InsightsError,
+  LoadingOrEmpty,
+  Question,
+  useAppTraffic,
+  useColumnChartBase,
+} from './shared';
+import { HOURLY_DAYS, summarizeTraffic } from './traffic.logic';
 
 /** 实时请求与小时分布；两者都有自己的时间范围，不跟随页面顶部的天数。 */
 export const TrafficPanel = ({ appKey }: { appKey: string | undefined }) => {
   const { t } = useTranslation();
-  const { isDark } = useThemeMode();
+  const columnBase = useColumnChartBase();
   const traffic = useAppTraffic(appKey, HOURLY_DAYS);
   const summary = useMemo(
     () => summarizeTraffic(traffic.data?.days, traffic.data?.window?.today),
@@ -57,22 +63,18 @@ export const TrafficPanel = ({ appKey }: { appKey: string | undefined }) => {
         }
       >
         <Question>{t('app_insights.hourly_question')}</Question>
-        <Spin spinning={traffic.isLoading}>
-          {hourlyData.some((point) => point.value > 0) ? (
-            <AsyncColumn
-              theme={isDark ? 'classicDark' : 'classic'}
-              data={hourlyData}
-              xField="hour"
-              yField="value"
-              height={260}
-              axis={{ x: { title: false }, y: { title: false } }}
-            />
-          ) : (
-            <EmptyState>
-              {traffic.isLoading ? '' : t('app_insights.no_observations')}
-            </EmptyState>
-          )}
-        </Spin>
+        <LoadingOrEmpty
+          loading={traffic.isLoading}
+          empty={!hourlyData.some((point) => point.value > 0)}
+        >
+          <AsyncColumn
+            {...columnBase}
+            data={hourlyData}
+            xField="hour"
+            yField="value"
+            height={260}
+          />
+        </LoadingOrEmpty>
       </Card>
     </div>
   );

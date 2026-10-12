@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { buildFunnelRows } from './logic';
+import { buildFunnelRows } from './funnel.logic';
 
 test('an explicit null observation object is unavailable, not legacy fallback', () => {
   // Exercise the actual JSON boundary, including a defensive null shape that

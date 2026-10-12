@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import dayjs from 'dayjs';
-import { buildTimeSeriesLineConfig, getRangePresets } from './charts';
+import {
+  buildTimeSeriesLineConfig,
+  getRangePresets,
+  getRangePresetWindow,
+} from './charts';
 
 const data = [
   { time: '2026-01-01T00:00:00.000Z', value: 1, category: 'a' },
@@ -164,5 +168,24 @@ describe('getRangePresets', () => {
 
   test('returns nothing for an empty table', () => {
     expect(getRangePresets(t, {}, now)).toEqual([]);
+  });
+});
+
+describe('getRangePresetWindow', () => {
+  const now = dayjs('2026-01-10T12:00:00.000Z');
+
+  test('maps a preset key to the window ending now', () => {
+    const window = getRangePresetWindow('7d', now);
+    expect(window?.[1]).toBe(now);
+    expect(window && now.diff(window[0], 'hour')).toBe(168);
+    expect(getRangePresetWindow('1h', now)?.[0].toISOString()).toBe(
+      now.subtract(1, 'hour').toISOString(),
+    );
+  });
+
+  test('returns undefined for unknown or missing keys', () => {
+    expect(getRangePresetWindow('2w', now)).toBeUndefined();
+    expect(getRangePresetWindow(null, now)).toBeUndefined();
+    expect(getRangePresetWindow(undefined, now)).toBeUndefined();
   });
 });

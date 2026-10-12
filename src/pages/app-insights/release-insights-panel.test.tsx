@@ -26,9 +26,21 @@ function show(releaseInsights?: ReleaseInsights, isAdmin = false) {
     versions: [],
     releaseInsights,
   });
+  // 与版本页一致：两张卡片分开渲染
   render(
     <QueryClientProvider client={client}>
-      <ReleaseInsightsPanel appKey="app" days={3} isAdmin={isAdmin} />
+      <ReleaseInsightsPanel
+        appKey="app"
+        days={3}
+        isAdmin={isAdmin}
+        section="rollout"
+      />
+      <ReleaseInsightsPanel
+        appKey="app"
+        days={3}
+        isAdmin={isAdmin}
+        section="hermes"
+      />
     </QueryClientProvider>,
   );
   return client;

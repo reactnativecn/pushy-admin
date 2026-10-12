@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'bun:test';
+import { summarizeBreakdown } from './breakdown.logic';
 import {
   buildFunnelRows,
   computeFunnelRates,
   rankFunnelRows,
-  summarizeBreakdown,
-  summarizeTraffic,
-} from './logic';
+} from './funnel.logic';
+import { summarizeTraffic } from './traffic.logic';
 import type {
   AppEventBreakdownDay,
   AppTrafficDay,

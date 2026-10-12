@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { type AppGeoDay, summarizeGeo } from './realtime-metrics-geo.logic';
+import type { AppGeoDay } from '@/services/api';
+import { summarizeGeo } from './geo.logic';
 
 const days: AppGeoDay[] = [
   {
@@ -15,22 +16,22 @@ describe('summarizeGeo', () => {
   it('sums only the days inside the window, newest first', () => {
     const today = summarizeGeo(days, 1);
     expect(today.total).toBe(20);
-    expect(today.top.map((item) => item.region)).toEqual([
+    expect(today.regions.map((item) => item.region)).toEqual([
       '广东',
       '北京',
       '未知',
     ]);
     // 空白地区名归入未知，未知参与总量并单独计数
     expect(today.unknown).toBe(4);
-    expect(today.top[0]?.percent).toBe(50);
+    expect(today.regions[0]?.percent).toBe(50);
 
     const week = summarizeGeo(days, 7);
     expect(week.total).toBe(25);
-    expect(week.top[0]).toEqual({ region: '广东', count: 12, percent: 48 });
-    expect(week.regionCount).toBe(4);
+    expect(week.regions[0]).toEqual({ region: '广东', count: 12, percent: 48 });
+    expect(week.regions).toHaveLength(4);
   });
 
-  it('folds everything past the limit into rest and breaks ties by name', () => {
+  it('ranks every region and breaks ties by name', () => {
     const summary = summarizeGeo(
       [
         {
@@ -40,14 +41,13 @@ describe('summarizeGeo', () => {
         },
       ],
       1,
-      2,
     );
-    expect(summary.top.map((item) => item.region)).toEqual(['a', 'b']);
-    expect(summary.rest).toEqual({
-      regions: 2,
-      count: 2,
-      percent: (2 / 6) * 100,
-    });
+    expect(summary.regions.map((item) => item.region)).toEqual([
+      'a',
+      'b',
+      'c',
+      'd',
+    ]);
   });
 
   it('sums by display label so codes and legacy names merge, unknown untouched', () => {
@@ -60,10 +60,9 @@ describe('summarizeGeo', () => {
         },
       ],
       1,
-      undefined,
       (region) => (region === 'ID' ? '印度尼西亚' : region),
     );
-    expect(summary.top.map((item) => [item.region, item.count])).toEqual([
+    expect(summary.regions.map((item) => [item.region, item.count])).toEqual([
       ['印度尼西亚', 7],
       ['广东', 2],
       ['未知', 1],
@@ -75,9 +74,7 @@ describe('summarizeGeo', () => {
     expect(summarizeGeo(undefined, 30)).toEqual({
       total: 0,
       unknown: 0,
-      regionCount: 0,
-      top: [],
-      rest: null,
+      regions: [],
     });
     expect(
       summarizeGeo(

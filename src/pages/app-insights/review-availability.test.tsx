@@ -4,8 +4,8 @@ import { cleanup, render, screen } from '@testing-library/react';
 import i18n from 'i18next';
 import '@/i18n';
 import { metricsKeys } from '@/utils/query-keys';
+import { summarizeBreakdown } from './breakdown.logic';
 import { FailuresPanel } from './failures-panel';
-import { summarizeBreakdown } from './logic';
 import { BreakdownAvailability } from './observation-ui';
 import type { AppEventBreakdownDay } from './types';
 

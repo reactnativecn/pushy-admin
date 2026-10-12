@@ -158,3 +158,19 @@ export function getRangePresets(
   }
   return presets;
 }
+
+/**
+ * 快捷项 key（如入口链接里的 range=7d）对应的"过去 N 小时/天"窗口，
+ * 以 now 为终点；不认识的 key 返回 undefined，由调用方决定默认窗口。
+ */
+export function getRangePresetWindow(
+  key: string | null | undefined,
+  now: Dayjs = dayjs(),
+): [Dayjs, Dayjs] | undefined {
+  const preset = RANGE_PRESET_DURATIONS.find(
+    ([presetKey]) => presetKey === key,
+  );
+  if (!preset) return undefined;
+  const [, amount, unit] = preset;
+  return [now.subtract(amount, unit), now];
+}

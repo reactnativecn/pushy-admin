@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Tooltip, Typography } from 'antd';
+import { Alert, Spin, Tooltip, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
@@ -7,7 +7,9 @@ import { RequestError } from '@/services/request';
 import { formatInteger } from '@/utils/format';
 import { cn } from '@/utils/helper';
 import { metricsKeys } from '@/utils/query-keys';
-import { isKnownCarrier, parseFailureReason, shortHash } from './logic';
+import { useThemeMode } from '@/utils/theme-mode';
+import { isKnownCarrier, parseFailureReason } from './breakdown.logic';
+import { shortHash } from './logic';
 import type { HitOutcome } from './types';
 
 const { Text } = Typography;
@@ -158,6 +160,46 @@ export const EmptyState = ({
     {children}
   </div>
 );
+
+/**
+ * 加载中转圈；没有数据时显示空状态（加载中不显示文字，免得先闪一下"暂无"）。
+ * emptyText 不传时用"暂无观测数据"。
+ */
+export const LoadingOrEmpty = ({
+  loading,
+  empty,
+  emptyText,
+  children,
+}: {
+  loading: boolean;
+  empty: boolean;
+  emptyText?: ReactNode;
+  children: ReactNode;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Spin spinning={loading}>
+      {empty ? (
+        <EmptyState>
+          {loading ? '' : (emptyText ?? t('app_insights.no_observations'))}
+        </EmptyState>
+      ) : (
+        children
+      )}
+    </Spin>
+  );
+};
+
+const NO_AXIS_TITLES = { x: { title: false }, y: { title: false } };
+
+/** 柱状图共用的主题与坐标轴：跟随暗色模式，坐标轴不显示标题。 */
+export const useColumnChartBase = () => {
+  const { isDark } = useThemeMode();
+  return {
+    theme: isDark ? 'classicDark' : 'classic',
+    axis: NO_AXIS_TITLES,
+  };
+};
 
 export interface BarListItem {
   key: string;

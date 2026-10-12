@@ -4,16 +4,12 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncColumn } from '@/components/lazy-chart';
 import { formatInteger } from '@/utils/format';
-import { useThemeMode } from '@/utils/theme-mode';
 import {
   buildFunnelRows,
   type FunnelRow,
-  type InsightView,
-  type RefusedPackageSummary,
   rankFunnelRows,
-  summarizeTraffic,
-  trafficWarnings,
-} from './logic';
+} from './funnel.logic';
+import type { InsightView } from './logic';
 import {
   ObservationNotice,
   observedInteger,
@@ -25,13 +21,20 @@ import {
   Footnote,
   HeaderHint,
   InsightsError,
+  LoadingOrEmpty,
   Question,
   StatTile,
   useAppTraffic,
   useAppVersionFunnel,
+  useColumnChartBase,
   useHitOutcomeLabel,
   VersionLabel,
 } from './shared';
+import {
+  type RefusedPackageSummary,
+  summarizeTraffic,
+  trafficWarnings,
+} from './traffic.logic';
 import { HIT_OUTCOMES } from './types';
 
 const RefusedPackages = ({
@@ -157,7 +160,7 @@ export const OverviewPanel = ({
   onNavigate: (view: InsightView) => void;
 }) => {
   const { t } = useTranslation();
-  const { isDark } = useThemeMode();
+  const columnBase = useColumnChartBase();
   const hitLabel = useHitOutcomeLabel();
   const glanceColumns = useGlanceColumns();
   const [dailyMetric, setDailyMetric] = useState<'requests' | 'dau'>(
@@ -282,25 +285,21 @@ export const OverviewPanel = ({
           </Radio.Group>
         }
       >
-        <Spin spinning={traffic.isLoading}>
-          {dailyData.length > 0 ? (
-            <AsyncColumn
-              theme={isDark ? 'classicDark' : 'classic'}
-              data={dailyData}
-              xField="date"
-              yField="value"
-              colorField="category"
-              stack={dailyMetric === 'requests'}
-              height={300}
-              axis={{ x: { title: false }, y: { title: false } }}
-              legend={{ color: { position: 'top' } }}
-            />
-          ) : (
-            <EmptyState>
-              {traffic.isLoading ? '' : t('app_insights.no_observations')}
-            </EmptyState>
-          )}
-        </Spin>
+        <LoadingOrEmpty
+          loading={traffic.isLoading}
+          empty={dailyData.length === 0}
+        >
+          <AsyncColumn
+            {...columnBase}
+            data={dailyData}
+            xField="date"
+            yField="value"
+            colorField="category"
+            stack={dailyMetric === 'requests'}
+            height={300}
+            legend={{ color: { position: 'top' } }}
+          />
+        </LoadingOrEmpty>
         <Footnote>{t('app_insights.daily_footnote')}</Footnote>
       </Card>
       <Card size="small" title={t('app_insights.outcome_title')}>
@@ -333,22 +332,16 @@ export const OverviewPanel = ({
           stale={!!funnel.error && !!funnel.data}
           compact
         />
-        <Spin spinning={funnel.isLoading}>
-          {rows.length > 0 ? (
-            <Table
-              size="small"
-              rowKey="hash"
-              columns={glanceColumns}
-              dataSource={rows}
-              pagination={false}
-              scroll={{ x: 'max-content' }}
-            />
-          ) : (
-            <EmptyState>
-              {funnel.isLoading ? '' : t('app_insights.no_observations')}
-            </EmptyState>
-          )}
-        </Spin>
+        <LoadingOrEmpty loading={funnel.isLoading} empty={rows.length === 0}>
+          <Table
+            size="small"
+            rowKey="hash"
+            columns={glanceColumns}
+            dataSource={rows}
+            pagination={false}
+            scroll={{ x: 'max-content' }}
+          />
+        </LoadingOrEmpty>
         <Footnote>{t('app_insights.events_not_funnel')}</Footnote>
       </Card>
     </div>

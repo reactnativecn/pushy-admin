@@ -13,9 +13,8 @@ import {
   lagShares,
   type PackageRow,
   servedTotal,
-  summarizeTraffic,
   versionTotals,
-} from './logic';
+} from './funnel.logic';
 import {
   ObservationNotice,
   observedInteger,
@@ -35,6 +34,7 @@ import {
   useAppVersionFunnel,
   VersionLabel,
 } from './shared';
+import { summarizeTraffic } from './traffic.logic';
 import type {
   FunnelEventCounts,
   LagBucket,

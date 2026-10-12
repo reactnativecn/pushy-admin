@@ -3,7 +3,6 @@ import type {
   AppTrafficResponse,
   VersionFunnelResponse,
 } from '@/pages/app-insights/types';
-import type { AppGeoResponse } from '@/pages/realtime-metrics-geo.logic';
 import type {
   AccountMember,
   ApiToken,
@@ -107,6 +106,19 @@ type OrderQuotes = {
   renewals: OrderQuoteOption[];
   upgrades: OrderQuoteOption[];
 };
+
+// 地区分布：服务端按北京时间自然日累加每个应用的完成请求地区，今日那一条边跑边涨。
+export interface AppGeoDay {
+  date: string;
+  requests: number;
+  regions: Record<string, number>;
+}
+
+export interface AppGeoResponse {
+  days: AppGeoDay[];
+  retentionDays: number;
+  regionResolver: boolean;
+}
 
 export type InternalMetricCounter = {
   labels: Record<string, string>;
