@@ -3,7 +3,7 @@ import { md5 } from 'hash-wasm';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
-import { setToken } from '@/services/request';
+import { setToken } from '@/services/session';
 import {
   confirmPasswordRule,
   passwordFormatRule,

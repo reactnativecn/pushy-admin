@@ -12,11 +12,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { rootRouterPath, router } from '@/router';
-import {
-  getRecentAppIds,
-  rememberRecentApp,
-  setManageAppDrawerPlacement,
-} from '@/utils/app-preferences';
+import { getRecentAppIds, rememberRecentApp } from '@/utils/app-preferences';
 import { type AppDrawerItem, useAppWorkspaceList } from '@/utils/app-workspace';
 import { cn } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
@@ -109,7 +105,6 @@ export function AppSwitcher({ compact }: { compact: boolean }) {
   const toggleAppDrawer = () => {
     const nextPlacement = isAppDrawerVisible ? 'hidden' : 'left';
     setAppDrawerPlacementState(nextPlacement);
-    setManageAppDrawerPlacement(nextPlacement);
   };
 
   useEffect(() => {

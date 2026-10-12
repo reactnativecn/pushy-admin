@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, Outlet } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
-import { hasSession } from '@/services/request';
+import { hasSession } from '@/services/session';
 import { userKeys } from '@/utils/query-keys';
 
 /**

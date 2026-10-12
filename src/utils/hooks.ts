@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
-import { hasSession } from '@/services/request';
+import { hasSession } from '@/services/session';
 import { getWorkspaceAccountId } from '@/services/workspace';
 import type { App, Package, VersionDiffSummary } from '@/types';
 import { findActiveWorkspace } from '@/utils/active-workspace';

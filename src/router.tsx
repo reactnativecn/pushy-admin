@@ -2,7 +2,7 @@ import { createHashRouter, redirect } from 'react-router-dom';
 import { AdminRoute } from './components/admin-route';
 import { ErrorBoundary } from './components/error-boundary';
 import MainLayout from './components/main-layout';
-import { hasSession } from './services/request';
+import { hasSession } from './services/session';
 import { FEATURES } from './utils/features';
 import {
   getUnauthenticatedRedirect,

@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import JsonEditor from '@/pages/manage/components/json-editor';
 import { adminApi } from '@/services/admin-api';
-import { RequestError } from '@/services/request';
+import { RequestError } from '@/services/response';
 import { adminKeys } from '@/utils/query-keys';
 import { useIsMobile } from '@/utils/responsive';
 import {

@@ -8,19 +8,6 @@ import { handleResponse, RequestError, type RequestOptions } from './response';
 import { getToken, usesCookieSession } from './session';
 import { getWorkspaceAccountId } from './workspace';
 
-// Session state lives in ./session; re-export the legacy surface so existing
-// importers (auth, router, hooks, tests) keep working unchanged.
-export {
-  clearSession,
-  getToken,
-  hasSession,
-  markCookieSession,
-  setToken,
-  usesCookieSession,
-} from './session';
-export type { RequestOptions };
-export { RequestError };
-
 const SERVER: { main: [string, ...string[]] } = {
   main:
     process.env.NODE_ENV === 'production'

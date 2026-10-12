@@ -1,7 +1,7 @@
 import { Button, Form, Input, Modal, message, Tag } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { clearSession } from '@/services/request';
+import { clearSession } from '@/services/session';
 import { clearWorkspace } from '@/services/workspace';
 import {
   isEndpointSelectionUnchanged,

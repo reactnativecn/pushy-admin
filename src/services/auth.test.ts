@@ -1,11 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import * as antdReal from 'antd';
 import {
-  clearSession,
-  markCookieSession,
-  RequestError,
-  setToken,
-} from '@/services/request';
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+} from 'bun:test';
+import * as antdReal from 'antd';
+import { RequestError } from '@/services/response';
+import * as session from '@/services/session';
 
 // In order to avoid environment setup issues with react-router-dom and other DOM dependencies during test execution
 // in bun, we can mock out the internal dependencies and the router directly.
@@ -80,6 +84,16 @@ mock.module('@/components/main-layout', () => ({
 // Now import the functions to test
 import { getUserEmail, login, logout, setUserEmail } from './auth';
 
+// 会话读写只观察调用，不真的写存储
+const setToken = spyOn(session, 'setToken').mockImplementation(() => {});
+const markCookieSession = spyOn(
+  session,
+  'markCookieSession',
+).mockImplementation(() => {});
+const clearSession = spyOn(session, 'clearSession').mockImplementation(
+  () => {},
+);
+
 describe('auth.ts runtime test', () => {
   let originalLocation: Location;
 
@@ -87,9 +101,9 @@ describe('auth.ts runtime test', () => {
     mockMessage.success.mockClear();
     mockMessage.error.mockClear();
     mockNavigate.mockClear();
-    (setToken as any).mockClear();
-    (markCookieSession as any).mockClear();
-    (clearSession as any).mockClear();
+    setToken.mockClear();
+    markCookieSession.mockClear();
+    clearSession.mockClear();
     mockApiObj.login.mockClear();
     setUserEmail('');
 

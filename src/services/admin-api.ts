@@ -9,7 +9,8 @@ import type {
   SystemNpmInfo,
 } from '@/types';
 import type { InternalMetricsResponse } from './api';
-import request, { type RequestOptions } from './request';
+import request from './request';
+import type { RequestOptions } from './response';
 
 export type WriteOperationDimension = 'path' | 'region' | 'client';
 

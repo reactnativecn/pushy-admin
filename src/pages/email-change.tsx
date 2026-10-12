@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
-import { clearSession, setToken } from '@/services/request';
+import { clearSession, setToken } from '@/services/session';
 import { clearWorkspace } from '@/services/workspace';
 import { emailChangeKeys } from '@/utils/query-keys';
 import { queryClient } from '@/utils/queryClient';

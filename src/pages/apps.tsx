@@ -3,16 +3,13 @@ import { Button, Card, Empty, Input, Spin, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import {
-  type AppDrawerItem,
-  AppDrawerLayout,
-  useAppWorkspaceList,
-} from '@/components/app-drawer';
+import { AppDrawerLayout } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { showCreateAppModal } from '@/components/create-app-modal';
 import PlatformIcon, { PLATFORM_LABELS } from '@/components/platform-icon';
 import { rootRouterPath } from '@/router';
 import { rememberRecentApp } from '@/utils/app-preferences';
+import { type AppDrawerItem, useAppWorkspaceList } from '@/utils/app-workspace';
 import { cn, filterAppsByQuery } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
 import { openManageApp } from '@/utils/open-manage-app';

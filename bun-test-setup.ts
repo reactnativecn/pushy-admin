@@ -21,28 +21,10 @@ global.StorageEvent = win.StorageEvent as any;
 mock.module('@/services/api', () => ({
   api: {},
 }));
-class MockRequestError extends Error {
-  status?: number;
-  constructor(message: string, status?: number) {
-    super(message);
-    this.name = 'RequestError';
-    this.status = status;
-  }
-}
-
-const mockSetToken = mock(() => {});
-const mockMarkCookieSession = mock(() => {});
-const mockClearSession = mock(() => {});
-
+// request 会在加载时探测线路，测试里换成空实现；会话与错误类型直接用真实模块
 mock.module('@/services/request', () => ({
-  getToken: () => '',
-  hasSession: () => false,
-  usesCookieSession: () => false,
-  setToken: mockSetToken,
-  markCookieSession: mockMarkCookieSession,
-  clearSession: mockClearSession,
-  RequestError: MockRequestError,
   default: {},
+  resolveApiBaseUrl: async () => '',
 }));
 mock.module('@/assets/logo-h.svg', () => ({
   default: 'logo',

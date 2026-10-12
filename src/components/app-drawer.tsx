@@ -20,12 +20,6 @@ import { useIsMobile } from '@/utils/responsive';
 import { useStoredPreference } from '@/utils/stored-preference';
 import PlatformIcon from './platform-icon';
 
-// 兼容旧的导入路径；应用列表的数据与类型放在 utils/app-workspace
-export {
-  type AppDrawerItem,
-  useAppWorkspaceList,
-} from '@/utils/app-workspace';
-
 function AppDrawer({
   apps,
   collapsed,

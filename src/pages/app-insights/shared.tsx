@@ -3,7 +3,7 @@ import { Alert, Spin, Tooltip, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
-import { RequestError } from '@/services/request';
+import { RequestError } from '@/services/response';
 import { formatInteger } from '@/utils/format';
 import { cn } from '@/utils/helper';
 import { metricsKeys } from '@/utils/query-keys';

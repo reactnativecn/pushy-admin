@@ -20,7 +20,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
-import { RequestError } from '@/services/request';
+import { RequestError } from '@/services/response';
 import { adminKeys } from '@/utils/query-keys';
 import { useIsMobile } from '@/utils/responsive';
 import { ConfigEditor } from './admin-config/config-editor';

@@ -7,10 +7,11 @@ import { useParams } from 'react-router-dom';
 import './manage.css';
 
 import { AppDetailHeader } from '@/components/app-detail-header';
-import { AppDrawerLayout, useAppWorkspaceList } from '@/components/app-drawer';
+import { AppDrawerLayout } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { appViewPath, rootRouterPath, router } from '@/router';
 import type { Package } from '@/types';
+import { useAppWorkspaceList } from '@/utils/app-workspace';
 import { useApp, useWorkspacePermissions } from '@/utils/hooks';
 import { openManageApp } from '@/utils/open-manage-app';
 import { useIsMobile } from '@/utils/responsive';

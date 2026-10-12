@@ -58,6 +58,14 @@ declare module 'bun:test' {
       fn?: T,
     ): T & { mockClear(): void; mockImplementationOnce(fn: T): void };
   };
+  export function spyOn<T extends object, K extends keyof T>(
+    obj: T,
+    key: K,
+  ): T[K] & {
+    mockClear(): void;
+    mockImplementation(fn: T[K]): T[K] & { mockClear(): void };
+    mockRestore(): void;
+  };
 }
 
 // ===== analytics (ported from cresc-admin) =====
