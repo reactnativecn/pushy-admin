@@ -48,7 +48,7 @@ import {
   parseMode,
   TOTAL_SERIES_LABEL,
 } from './admin-metrics.logic';
-import { UNKNOWN_REGION } from './realtime-metrics-geo.logic';
+import { UNKNOWN_REGION } from './app-insights/geo.logic';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
