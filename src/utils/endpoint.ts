@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { safeStorage } from '@/utils/storage';
+import {
+  createStoredPreference,
+  useStoredPreference,
+} from '@/utils/stored-preference';
 
-const CUSTOM_BASE_URL_STORAGE_KEY = 'pushy_custom_base_url';
 const LOCAL_HOSTNAMES = new Set([
   'localhost',
   '127.0.0.1',
@@ -9,7 +10,14 @@ const LOCAL_HOSTNAMES = new Set([
   '::1',
   '[::1]',
 ]);
-const customBaseUrlChangeEvent = 'pushy-custom-base-url-change';
+
+// 用户自选的接口地址；没选时为 null，走默认地址
+const customBaseUrlPreference = createStoredPreference<string | null>({
+  changeEvent: 'pushy-custom-base-url-change',
+  key: 'pushy_custom_base_url',
+  parse: (raw) => (raw ? raw.trim() : null),
+  serialize: (baseUrl) => baseUrl?.trim() || null,
+});
 
 /**
  * Canonicalize a custom API base URL and reject values that would either be
@@ -58,60 +66,15 @@ export function isEndpointSelectionUnchanged(
 }
 
 export function getCustomBaseUrl(): string | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const val = safeStorage.get(CUSTOM_BASE_URL_STORAGE_KEY);
-  return val ? val.trim() : null;
+  return customBaseUrlPreference.get();
 }
 
 export function setCustomBaseUrl(baseUrl: string | null): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-  if (baseUrl?.trim()) {
-    safeStorage.set(CUSTOM_BASE_URL_STORAGE_KEY, baseUrl.trim());
-  } else {
-    safeStorage.remove(CUSTOM_BASE_URL_STORAGE_KEY);
-  }
-  window.dispatchEvent(
-    new CustomEvent(customBaseUrlChangeEvent, {
-      detail: baseUrl ? baseUrl.trim() : null,
-    }),
-  );
+  customBaseUrlPreference.set(baseUrl);
 }
 
 export function useCustomBaseUrl(): string | null {
-  const [baseUrl, setBaseUrlState] = useState<string | null>(() =>
-    getCustomBaseUrl(),
-  );
-
-  useEffect(() => {
-    const handleCustomChange = (e: CustomEvent<string | null>) => {
-      setBaseUrlState(e.detail ?? getCustomBaseUrl());
-    };
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === CUSTOM_BASE_URL_STORAGE_KEY) {
-        setBaseUrlState(getCustomBaseUrl());
-      }
-    };
-
-    window.addEventListener(
-      customBaseUrlChangeEvent as any,
-      handleCustomChange as EventListener,
-    );
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener(
-        customBaseUrlChangeEvent as any,
-        handleCustomChange as EventListener,
-      );
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  return baseUrl;
+  return useStoredPreference(customBaseUrlPreference);
 }
 
 export async function testEndpointStatus(baseUrl: string): Promise<boolean> {

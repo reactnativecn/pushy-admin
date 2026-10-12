@@ -11,17 +11,14 @@ import { Button, Drawer, Empty, Input, Popover, Tag } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import {
-  type AppDrawerItem,
-  useAppWorkspaceList,
-} from '@/components/app-drawer';
 import { rootRouterPath, router } from '@/router';
 import {
-  cn,
   getRecentAppIds,
   rememberRecentApp,
   setManageAppDrawerPlacement,
-} from '@/utils/helper';
+} from '@/utils/app-preferences';
+import { type AppDrawerItem, useAppWorkspaceList } from '@/utils/app-workspace';
+import { cn } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
 import { useAppSettingsModal } from '../app-settings-modal';
 import { showCreateAppModal } from '../create-app-modal';

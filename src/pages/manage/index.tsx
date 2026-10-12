@@ -1,13 +1,5 @@
 import { DownOutlined, SearchOutlined } from '@ant-design/icons';
-import {
-  Checkbox,
-  Dropdown,
-  Grid,
-  Input,
-  Layout,
-  type MenuProps,
-  Tabs,
-} from 'antd';
+import { Checkbox, Dropdown, Input, Layout, type MenuProps, Tabs } from 'antd';
 
 import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +13,7 @@ import { appViewPath, rootRouterPath, router } from '@/router';
 import type { Package } from '@/types';
 import { useApp, useWorkspacePermissions } from '@/utils/hooks';
 import { openManageApp } from '@/utils/open-manage-app';
+import { useIsMobile } from '@/utils/responsive';
 import PackageList from './components/package-list';
 import VersionTable from './components/version-table';
 import { ManageProvider, useManageContext } from './hooks/useManageContext';
@@ -108,8 +101,7 @@ const PackageFilterControl = ({
 
 const ManageDashBoard = () => {
   const { t } = useTranslation();
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+  const isMobile = useIsMobile();
   const { packages, unusedPackages, packagesLoading, bindingsLoading } =
     useManageContext();
   const [packageFilter, setPackageFilter] = useState<PackageFilter>('all');

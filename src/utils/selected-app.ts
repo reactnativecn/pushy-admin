@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  type AppDrawerItem,
-  useAppWorkspaceList,
-} from '@/components/app-drawer';
-import { patchSearchParams, rememberRecentApp } from '@/utils/helper';
+import { rememberRecentApp } from '@/utils/app-preferences';
+import { type AppDrawerItem, useAppWorkspaceList } from '@/utils/app-workspace';
+import { patchSearchParams } from '@/utils/helper';
 
 /**
  * 以 URL 里的 appKey 为准的应用选择：指标页、健康度页共用。

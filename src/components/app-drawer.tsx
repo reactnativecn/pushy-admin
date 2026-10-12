@@ -5,53 +5,26 @@ import {
   SearchOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { Empty, Grid, Input, Radio, Tag } from 'antd';
+import { Empty, Input, Radio, Tag } from 'antd';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  cn,
-  filterAppsByQuery,
-  getManageAppDrawerCollapsed,
-  getManageAppDrawerPlacement,
   type ManageAppDrawerPlacement,
-  manageAppDrawerCollapsedChangeEvent,
-  manageAppDrawerPlacementChangeEvent,
-  setManageAppDrawerCollapsed,
-  setManageAppDrawerPlacement,
-} from '@/utils/helper';
-import { useAppList, useUserInfo } from '@/utils/hooks';
+  manageAppDrawerCollapsedPreference,
+  manageAppDrawerPlacementPreference,
+} from '@/utils/app-preferences';
+import type { AppDrawerItem } from '@/utils/app-workspace';
+import { cn, filterAppsByQuery } from '@/utils/helper';
+import { useIsMobile } from '@/utils/responsive';
+import { useStoredPreference } from '@/utils/stored-preference';
 import PlatformIcon from './platform-icon';
 
-export interface AppDrawerItem {
-  id: number;
-  name: string;
-  platform: 'android' | 'ios' | 'harmony';
-  status?: string | null;
-  appKey?: string | null;
-  checkCount?: number;
-  downloadUrl?: string | null;
-  ignoreBuildTime?: 'enabled' | 'disabled' | null;
-}
-
-export function useAppWorkspaceList(): {
-  apps: AppDrawerItem[];
-  isAdmin: boolean;
-  isLoading: boolean;
-  totalAppCount: number;
-} {
-  const { apps: userApps, isLoading: isLoadingUserApps } = useAppList();
-  const { user } = useUserInfo();
-  const isAdmin = user?.admin === true;
-
-  const apps: AppDrawerItem[] = userApps ?? [];
-  return {
-    apps,
-    isAdmin,
-    isLoading: isLoadingUserApps,
-    totalAppCount: apps.length,
-  };
-}
+// 兼容旧的导入路径；应用列表的数据与类型放在 utils/app-workspace
+export {
+  type AppDrawerItem,
+  useAppWorkspaceList,
+} from '@/utils/app-workspace';
 
 function AppDrawer({
   apps,
@@ -236,53 +209,13 @@ export function AppDrawerLayout({
   onSelect: (app: AppDrawerItem) => void;
   onSettings?: (app: AppDrawerItem) => void;
 }) {
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
-  const [appDrawerPlacement, setAppDrawerPlacementState] =
-    useState<ManageAppDrawerPlacement>(getManageAppDrawerPlacement);
-  const [isAppDrawerCollapsed, setIsAppDrawerCollapsedState] = useState(
-    getManageAppDrawerCollapsed,
+  const isMobile = useIsMobile();
+  const appDrawerPlacement = useStoredPreference(
+    manageAppDrawerPlacementPreference,
   );
-
-  useEffect(() => {
-    const syncDrawerState = () => {
-      setAppDrawerPlacementState(getManageAppDrawerPlacement());
-      setIsAppDrawerCollapsedState(getManageAppDrawerCollapsed());
-    };
-
-    window.addEventListener(
-      manageAppDrawerPlacementChangeEvent,
-      syncDrawerState,
-    );
-    window.addEventListener(
-      manageAppDrawerCollapsedChangeEvent,
-      syncDrawerState,
-    );
-    window.addEventListener('storage', syncDrawerState);
-    return () => {
-      window.removeEventListener(
-        manageAppDrawerPlacementChangeEvent,
-        syncDrawerState,
-      );
-      window.removeEventListener(
-        manageAppDrawerCollapsedChangeEvent,
-        syncDrawerState,
-      );
-      window.removeEventListener('storage', syncDrawerState);
-    };
-  }, []);
-
-  const handleAppDrawerPlacementChange = (
-    placement: ManageAppDrawerPlacement,
-  ) => {
-    setAppDrawerPlacementState(placement);
-    setManageAppDrawerPlacement(placement);
-  };
-
-  const handleAppDrawerCollapsedChange = (collapsed: boolean) => {
-    setIsAppDrawerCollapsedState(collapsed);
-    setManageAppDrawerCollapsed(collapsed);
-  };
+  const isAppDrawerCollapsed = useStoredPreference(
+    manageAppDrawerCollapsedPreference,
+  );
 
   const content = <div className={contentClassName}>{children}</div>;
 
@@ -297,8 +230,8 @@ export function AppDrawerLayout({
       currentAppId={currentAppId}
       currentAppKey={currentAppKey}
       isLoading={isLoading}
-      onCollapsedChange={handleAppDrawerCollapsedChange}
-      onPlacementChange={handleAppDrawerPlacementChange}
+      onCollapsedChange={manageAppDrawerCollapsedPreference.set}
+      onPlacementChange={manageAppDrawerPlacementPreference.set}
       onSelect={onSelect}
       onSettings={onSettings}
       placement={appDrawerPlacement}

@@ -1,5 +1,4 @@
 import type { NavigateOptions, SetURLSearchParams } from 'react-router-dom';
-import { safeStorage } from '@/utils/storage';
 
 export function isPasswordValid(password: string) {
   return /(?!^[0-9]+$)(?!^[a-z]+$)(?!^[^A-Z]+$)^.{6,16}$/.test(password);
@@ -133,100 +132,6 @@ export const patchSearchParams = (
 
     return next;
   }, navigateOptions);
-};
-
-export const RECENT_APP_STORAGE_KEY = 'pushy_recent_app_ids';
-export const MAX_RECENT_APP_COUNT = 6;
-const MANAGE_APP_DRAWER_PLACEMENT_STORAGE_KEY =
-  'pushy_manage_app_drawer_placement';
-const MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY =
-  'pushy_manage_app_drawer_collapsed';
-
-export type ManageAppDrawerPlacement = 'left' | 'right' | 'hidden';
-
-export const manageAppDrawerPlacementChangeEvent =
-  'manage-app-drawer-placement-change';
-export const manageAppDrawerCollapsedChangeEvent =
-  'manage-app-drawer-collapsed-change';
-
-export const getManageAppDrawerPlacement = (): ManageAppDrawerPlacement => {
-  if (typeof window === 'undefined') {
-    return 'left';
-  }
-
-  const stored = safeStorage.get(MANAGE_APP_DRAWER_PLACEMENT_STORAGE_KEY);
-  if (stored === 'right' || stored === 'hidden') {
-    return stored;
-  }
-  return 'left';
-};
-
-export const setManageAppDrawerPlacement = (
-  placement: ManageAppDrawerPlacement,
-) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  safeStorage.set(MANAGE_APP_DRAWER_PLACEMENT_STORAGE_KEY, placement);
-  window.dispatchEvent(
-    new CustomEvent(manageAppDrawerPlacementChangeEvent, {
-      detail: placement,
-    }),
-  );
-};
-
-export const getManageAppDrawerCollapsed = () => {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return safeStorage.get(MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY) === '1';
-};
-
-export const setManageAppDrawerCollapsed = (collapsed: boolean) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  safeStorage.set(
-    MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY,
-    collapsed ? '1' : '0',
-  );
-  window.dispatchEvent(
-    new CustomEvent(manageAppDrawerCollapsedChangeEvent, {
-      detail: collapsed,
-    }),
-  );
-};
-
-export const getRecentAppIds = () => {
-  if (typeof window === 'undefined') {
-    return [] as number[];
-  }
-
-  try {
-    const parsed = JSON.parse(safeStorage.get(RECENT_APP_STORAGE_KEY) ?? '[]');
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed.filter((value): value is number => Number.isInteger(value));
-  } catch {
-    return [];
-  }
-};
-
-export const rememberRecentApp = (appId: number) => {
-  if (typeof window === 'undefined' || !Number.isInteger(appId)) {
-    return [] as number[];
-  }
-
-  const next = [appId, ...getRecentAppIds().filter((id) => id !== appId)].slice(
-    0,
-    MAX_RECENT_APP_COUNT,
-  );
-  safeStorage.set(RECENT_APP_STORAGE_KEY, JSON.stringify(next));
-  return next;
 };
 
 export const isValidExternalUrl = (url: string) => {

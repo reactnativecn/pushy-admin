@@ -12,7 +12,8 @@ import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { showCreateAppModal } from '@/components/create-app-modal';
 import PlatformIcon, { PLATFORM_LABELS } from '@/components/platform-icon';
 import { rootRouterPath } from '@/router';
-import { cn, filterAppsByQuery, rememberRecentApp } from '@/utils/helper';
+import { rememberRecentApp } from '@/utils/app-preferences';
+import { cn, filterAppsByQuery } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
 import { openManageApp } from '@/utils/open-manage-app';
 

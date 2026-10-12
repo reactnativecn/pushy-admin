@@ -1,32 +1,11 @@
-import { useEffect, useState } from 'react';
-import {
-  getManageAppDrawerPlacement,
-  manageAppDrawerPlacementChangeEvent,
-} from '@/utils/helper';
+import { manageAppDrawerPlacementPreference } from '@/utils/app-preferences';
+import { useStoredPreference } from '@/utils/stored-preference';
 
 /**
- * Track the manage-page app drawer placement, staying in sync with changes
- * made in other components (via the custom event) and other tabs (via the
- * storage event).
+ * 管理页应用抽屉的位置：其他组件里改动（自定义事件）和其他标签页改动
+ * （storage 事件）都会同步过来。setter 会写入存储并通知所有订阅方。
  */
 export function useManageAppDrawerPlacement() {
-  const [placement, setPlacement] = useState(getManageAppDrawerPlacement);
-
-  useEffect(() => {
-    const syncPlacement = () => {
-      setPlacement(getManageAppDrawerPlacement());
-    };
-
-    window.addEventListener(manageAppDrawerPlacementChangeEvent, syncPlacement);
-    window.addEventListener('storage', syncPlacement);
-    return () => {
-      window.removeEventListener(
-        manageAppDrawerPlacementChangeEvent,
-        syncPlacement,
-      );
-      window.removeEventListener('storage', syncPlacement);
-    };
-  }, []);
-
-  return [placement, setPlacement] as const;
+  const placement = useStoredPreference(manageAppDrawerPlacementPreference);
+  return [placement, manageAppDrawerPlacementPreference.set] as const;
 }
