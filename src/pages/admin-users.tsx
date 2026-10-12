@@ -32,6 +32,7 @@ import { UserDetailDrawer } from '@/components/user-detail-drawer';
 import JsonEditor from '@/pages/manage/components/json-editor';
 import { adminApi } from '@/services/admin-api';
 import type { AdminUser, Quota, Tier } from '@/types';
+import { formatDateTime } from '@/utils/format';
 import { adminKeys } from '@/utils/query-keys';
 import { useModalWidth } from '@/utils/responsive';
 import {
@@ -324,8 +325,7 @@ export const Component = () => {
       width: 160,
       sorter: true,
       sortOrder: sortOrderOf('tierExpiresAt'),
-      render: (date: string | null) =>
-        date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
+      render: (date: string | null) => formatDateTime(date),
     },
     {
       title: t('admin_users.col_custom_quota'),

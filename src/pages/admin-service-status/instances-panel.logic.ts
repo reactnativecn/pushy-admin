@@ -19,14 +19,6 @@ export function isDeployBusy(
   return status != null && status.status !== 'failed';
 }
 
-export function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return '-';
-  }
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString();
-}
-
 /** 把心跳里的部署状态挂到对应实例上,按 id 排序让表格顺序稳定 */
 export function buildInstanceRows(
   data:

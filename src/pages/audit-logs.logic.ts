@@ -3,6 +3,7 @@ import { UAParser } from 'ua-parser-js';
 import type { AuditLog } from '@/types';
 import type { CsvValue } from '@/utils/csv';
 import dayjs from '@/utils/dayjs';
+import { formatDateTime } from '@/utils/format';
 
 /**
  * 审计日志页的纯逻辑:动作归一化、筛选、日期范围约束、CSV 行。
@@ -364,7 +365,7 @@ export const buildAuditCsvRow = (
   const { browser, os } = getUserAgentSummary(log.userAgent);
 
   return [
-    dayjs(log.createdAt).format('YYYY-MM-DD HH:mm:ss'),
+    formatDateTime(log.createdAt, { seconds: true }),
     getActionLabel(actionMap, log.method, log.path),
     log.method.toUpperCase(),
     log.path,

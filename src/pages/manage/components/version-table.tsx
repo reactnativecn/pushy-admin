@@ -23,7 +23,6 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnType } from 'antd/lib/table';
-import dayjs from 'dayjs';
 import {
   type ComponentProps,
   lazy,
@@ -40,6 +39,7 @@ import type { TextContent } from 'vanilla-jsoneditor';
 import { TEST_QR_CODE_DOC } from '@/constants/links';
 import { useDeleteVersions, useUpdateVersion } from '@/services/mutations';
 import type { Version } from '@/types';
+import { formatDateTime } from '@/utils/format';
 import { useVersions, useWorkspacePermissions } from '@/utils/hooks';
 import { useIsMobile } from '@/utils/responsive';
 import { safeStorage } from '@/utils/storage';
@@ -770,7 +770,7 @@ const TextColumn = ({
   isEditable = isEditable && canPublish;
   let value = record[key] as string;
   if (key === 'createdAt') {
-    value = dayjs(value).format('YYYY-MM-DD HH:mm');
+    value = formatDateTime(value);
   }
 
   const popoverContent = (

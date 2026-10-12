@@ -24,17 +24,16 @@ import { useTranslation } from 'react-i18next';
 import { DEPLOY_STATUS_LABEL_KEY } from '@/constants/i18n-keys';
 import { adminApi, type NodeTelemetrySnapshot } from '@/services/admin-api';
 import type { SystemDeployStatus } from '@/types';
+import { formatBytes, formatDateTime } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
 import {
   buildInstanceRows,
-  formatDateTime,
   getNodeVersion,
   type InstanceRow,
   isDeployBusy,
   pickNodeDeployStatus,
 } from './instances-panel.logic';
 import {
-  formatBytes,
   formatUptime,
   SERVICE_STATUS_AGGREGATOR_BASE_URL,
   type ServiceStatusTarget,
@@ -87,7 +86,7 @@ export function InstancesPanel({
         {status.version ? ` → ${status.version}` : ''}
       </div>
       {status.message && <div>{status.message}</div>}
-      <div>{formatDateTime(status.updatedAt)}</div>
+      <div>{formatDateTime(status.updatedAt, { seconds: true })}</div>
     </>
   );
 
@@ -126,7 +125,7 @@ export function InstancesPanel({
               <Tag>{t('admin_deploy.current_tag')}</Tag>
             )}
             <Text type="secondary" className="text-xs">
-              {formatDateTime(entry.publishedAt)}
+              {formatDateTime(entry.publishedAt, { seconds: true })}
             </Text>
           </Space>
         ),
@@ -185,7 +184,7 @@ export function InstancesPanel({
       key: 'uptime',
       responsive: ['md'],
       render: (_, row) => (
-        <Tooltip title={formatDateTime(row.startTime)}>
+        <Tooltip title={formatDateTime(row.startTime, { seconds: true })}>
           <span>{formatUptime(row.uptimeSeconds)}</span>
         </Tooltip>
       ),

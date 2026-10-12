@@ -20,7 +20,6 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -28,6 +27,7 @@ import {
   type CustomOrder,
   type CustomOrderStatus,
 } from '@/services/admin-api';
+import { formatDateTime } from '@/utils/format';
 import { adminKeys } from '@/utils/query-keys';
 import { useModalWidth } from '@/utils/responsive';
 
@@ -147,7 +147,7 @@ export const Component = () => {
       dataIndex: 'createdAt',
       key: 'createdAt',
       responsive: ['md'],
-      render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm'),
+      render: (value: string) => formatDateTime(value),
     },
     {
       title: t('admin_custom_orders.col_pay_time'),

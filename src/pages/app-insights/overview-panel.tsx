@@ -3,6 +3,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncColumn } from '@/components/lazy-chart';
+import { formatInteger } from '@/utils/format';
 import { useThemeMode } from '@/utils/theme-mode';
 import {
   buildFunnelRows,
@@ -22,7 +23,6 @@ import {
   BarList,
   EmptyState,
   Footnote,
-  formatInteger,
   HeaderHint,
   InsightsError,
   Question,

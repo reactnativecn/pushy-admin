@@ -3,7 +3,19 @@ import {
   AppleFilled,
   HarmonyOSOutlined,
 } from '@ant-design/icons';
+import type { App } from '@/types';
 import { cn } from '@/utils/helper';
+
+export const PLATFORM_LABELS: Record<App['platform'], string> = {
+  ios: 'iOS',
+  android: 'Android',
+  harmony: 'HarmonyOS',
+};
+
+/** 表格筛选、下拉选择用的平台选项，顺序与 PLATFORM_LABELS 一致。 */
+export const PLATFORM_OPTIONS = Object.entries(PLATFORM_LABELS).map(
+  ([value, label]) => ({ value, label }),
+);
 
 export default function PlatformIcon({
   platform,

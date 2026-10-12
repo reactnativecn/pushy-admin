@@ -1,6 +1,7 @@
 import { Card, Segmented, Spin } from 'antd';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PLATFORM_LABELS } from '@/components/platform-icon';
 import { RealtimeGeoPanel } from '../realtime-metrics-geo';
 import { type RankedItem, summarizeTraffic } from './logic';
 import { ObservationNotice } from './observation-ui';
@@ -14,11 +15,10 @@ import {
   useCarrierLabel,
 } from './shared';
 
+// 设备上报的 os 标签里鸿蒙写作 harmonyos，与应用平台的 harmony 不同
 const PLATFORM_LABEL: Record<string, string> = {
-  android: 'Android',
-  ios: 'iOS',
-  harmony: 'HarmonyOS',
-  harmonyos: 'HarmonyOS',
+  ...PLATFORM_LABELS,
+  harmonyos: PLATFORM_LABELS.harmony,
 };
 
 /** "android 14" → "Android 14"；无法识别的保持原样。 */

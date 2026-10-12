@@ -2,6 +2,7 @@ import { Card, Select, Spin, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatInteger } from '@/utils/format';
 import {
   type DimensionRow,
   FAILURE_EVENT_TYPES,
@@ -17,7 +18,6 @@ import {
 import {
   EmptyState,
   Footnote,
-  formatInteger,
   formatShare,
   HeaderHint,
   InsightsError,
@@ -153,7 +153,7 @@ export const FailuresPanel = ({
       title: t('app_insights.col_count'),
       dataIndex: 'count',
       align: 'right',
-      render: formatInteger,
+      render: (value: number | null) => formatInteger(value),
     },
     {
       title: t('app_insights.col_share'),

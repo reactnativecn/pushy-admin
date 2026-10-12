@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import type { SystemDeployStatus, SystemInstance } from '@/types';
 import {
   buildInstanceRows,
-  formatDateTime,
   getNodeVersion,
   isDeployBusy,
   pickNodeDeployStatus,
@@ -31,20 +30,6 @@ describe('isDeployBusy', () => {
     expect(isDeployBusy(makeStatus('restarting', 't'))).toBe(true);
     expect(isDeployBusy(makeStatus('failed', 't'))).toBe(false);
     expect(isDeployBusy(undefined)).toBe(false);
-  });
-});
-
-describe('formatDateTime', () => {
-  test('dashes for empty or unparsable input', () => {
-    expect(formatDateTime(null)).toBe('-');
-    expect(formatDateTime(undefined)).toBe('-');
-    expect(formatDateTime('')).toBe('-');
-    expect(formatDateTime('not a date')).toBe('-');
-  });
-
-  test('formats a valid timestamp with the runtime locale', () => {
-    const value = '2026-04-05T06:07:08Z';
-    expect(formatDateTime(value)).toBe(new Date(value).toLocaleString());
   });
 });
 

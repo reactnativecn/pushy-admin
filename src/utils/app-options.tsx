@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import PlatformIcon from '@/components/platform-icon';
+import PlatformIcon, { PLATFORM_LABELS } from '@/components/platform-icon';
 import { api } from '@/services/api';
-import type { App } from '@/types';
 import { appKeys } from '@/utils/query-keys';
 
 export interface AppOption {
@@ -11,12 +10,6 @@ export interface AppOption {
   /** 纯文本名称，供 Select 搜索（showSearch.optionFilterProp）使用 */
   name: string;
 }
-
-const platformLabels: Record<App['platform'], string> = {
-  android: 'Android',
-  ios: 'iOS',
-  harmony: 'HarmonyOS',
-};
 
 /** 选应用时搜索按名称匹配（label 带图标不是纯文本） */
 export const APP_OPTION_SEARCH = { optionFilterProp: 'name' };
@@ -40,7 +33,7 @@ export function useAppOptions({ enabled = true }: { enabled?: boolean } = {}) {
         <PlatformIcon platform={app.platform} />
         <span>{app.name}</span>
         <span className="text-xs text-gray-400">
-          {platformLabels[app.platform]}
+          {PLATFORM_LABELS[app.platform]}
         </span>
       </span>
     ),
@@ -50,7 +43,7 @@ export function useAppOptions({ enabled = true }: { enabled?: boolean } = {}) {
   const appNameById = new Map(
     apps.map((app) => [
       app.id,
-      `${app.name} (${platformLabels[app.platform]})`,
+      `${app.name} (${PLATFORM_LABELS[app.platform]})`,
     ]),
   );
   return { appOptions, appNameById };

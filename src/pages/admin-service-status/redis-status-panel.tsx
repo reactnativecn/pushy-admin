@@ -16,8 +16,9 @@ import dayjs from 'dayjs';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminApi, type RedisStatusSnapshot } from '@/services/admin-api';
+import { formatBytes, formatCount, formatPercent } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
-import { formatCount, formatPercent, formatUptime } from './metrics';
+import { formatUptime } from './metrics';
 import {
   formatExpiringShare,
   formatKBps,
@@ -26,7 +27,6 @@ import {
   usageLevel,
   usageRatio,
 } from './redis-status-panel.logic';
-import { formatStorageBytes } from './storage-usage-panel.logic';
 
 const { Text } = Typography;
 
@@ -137,20 +137,18 @@ export const RedisStatusPanel = () => {
           <Card size="small">
             <Statistic
               title={t('redis_status.memory')}
-              value={formatStorageBytes(memory.usedBytes)}
+              value={formatBytes(memory.usedBytes)}
               suffix={
                 memory.maxBytes > 0 ? (
-                  <Text type="secondary">
-                    / {formatStorageBytes(memory.maxBytes)}
-                  </Text>
+                  <Text type="secondary">/ {formatBytes(memory.maxBytes)}</Text>
                 ) : undefined
               }
             />
             <UsageBar ratio={memoryRatio} />
             <Detail>
               {t('redis_status.memory_detail', {
-                peak: formatStorageBytes(memory.peakBytes),
-                rss: formatStorageBytes(memory.rssBytes),
+                peak: formatBytes(memory.peakBytes),
+                rss: formatBytes(memory.rssBytes),
               })}
             </Detail>
             <Detail>
@@ -208,7 +206,7 @@ export const RedisStatusPanel = () => {
           <Card size="small">
             <Statistic
               title={t('redis_status.hit_rate')}
-              value={stats.hitRate == null ? '-' : formatPercent(stats.hitRate)}
+              value={formatPercent(stats.hitRate, 2)}
             />
             <Detail>
               {t('redis_status.hit_detail', {

@@ -10,8 +10,8 @@ import {
   WARNING_ROLLBACK,
 } from '@/constants/metric-thresholds';
 import { adminApi } from '@/services/admin-api';
+import { formatCount, formatPercent } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
-import { formatCount, formatPercent } from './metrics';
 
 const { Text } = Typography;
 
@@ -93,16 +93,14 @@ export const VersionHealthOverviewPanel = () => {
     {
       align: 'right',
       dataIndex: 'rollbackRate',
-      render: (value: number | null) =>
-        value === null ? '-' : formatPercent(value),
+      render: (value: number | null) => formatPercent(value, 2),
       title: t('user_analytics.vh_col_rollback'),
       width: 100,
     },
     {
       align: 'right',
       dataIndex: 'downloadFailRate',
-      render: (value: number | null) =>
-        value === null ? '-' : formatPercent(value),
+      render: (value: number | null) => formatPercent(value, 2),
       title: t('user_analytics.vh_col_download_fail'),
       width: 110,
     },

@@ -15,7 +15,6 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncLine } from '@/components/lazy-chart';
@@ -26,6 +25,12 @@ import {
   type InternalMetricsResponse,
 } from '@/services/api';
 import { buildTimeSeriesLineConfig } from '@/utils/charts';
+import {
+  formatBytes,
+  formatCount,
+  formatDateTime,
+  formatPercent,
+} from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
 import { useThemeMode } from '@/utils/theme-mode';
 import { InstancesPanel } from './instances-panel';
@@ -38,10 +43,7 @@ import {
   buildRequestSeries,
   type EndpointRow,
   estimatePercentile,
-  formatBytes,
-  formatCount,
   formatMs,
-  formatPercent,
   getAverageMs,
   getCounterLabels,
   type SeriesPoint,
@@ -126,7 +128,7 @@ function getEndpointColumns(
     {
       align: 'right',
       dataIndex: 'errorRate',
-      render: (value: number) => formatPercent(value),
+      render: (value: number) => formatPercent(value, 2),
       title: t('admin_service_status.col_error_rate'),
       width: 110,
     },
@@ -153,7 +155,7 @@ function getApi5xxEventColumns(
   return [
     {
       dataIndex: 'time',
-      render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm:ss'),
+      render: (time: string) => formatDateTime(time, { seconds: true }),
       title: t('admin_service_status.col_time'),
       width: 180,
     },
@@ -303,7 +305,7 @@ export function ServiceStatusPanel({
             <Tag>{target.host}</Tag>
             {snapshot?.generatedAt && (
               <Tag>
-                {dayjs(snapshot.generatedAt).format('YYYY-MM-DD HH:mm:ss')}
+                {formatDateTime(snapshot.generatedAt, { seconds: true })}
               </Tag>
             )}
             {nodeSnapshot?.hostname && <Tag>{nodeSnapshot.hostname}</Tag>}
@@ -350,7 +352,7 @@ export function ServiceStatusPanel({
             />
             <Text type={totalErrors > 0 ? 'danger' : 'secondary'}>
               5xx {formatCount(totalErrors)} /{' '}
-              {formatPercent(totalErrors / totalRequests)}
+              {formatPercent(totalErrors / totalRequests, 2)}
             </Text>
           </Card>
           <Card>
@@ -368,7 +370,7 @@ export function ServiceStatusPanel({
           <Card>
             <Statistic
               title={t('admin_service_status.cache_hit')}
-              value={formatPercent(cacheHitRate)}
+              value={formatPercent(cacheHitRate, 2)}
             />
             <Text type="secondary">
               L1 {formatCount(l1Hits)} / Redis {formatCount(redisHits)} / Stale{' '}

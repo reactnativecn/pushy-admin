@@ -12,6 +12,7 @@ import { RANGE_PRESET_LABEL_KEY } from '@/constants/i18n-keys';
 import { appViewPath, rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { buildTimeSeriesLineConfig, getRangePresets } from '@/utils/charts';
+import { formatPercent } from '@/utils/format';
 import { rememberRecentApp } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
 import { metricsKeys } from '@/utils/query-keys';
@@ -85,13 +86,6 @@ function parseEventCategory(raw: string): {
   } catch {
     return null;
   }
-}
-
-function formatRate(rate: number | null) {
-  if (rate === null) {
-    return '-';
-  }
-  return `${(rate * 100).toFixed(1)}%`;
 }
 
 export const Component = () => {
@@ -271,7 +265,7 @@ export const Component = () => {
       align: 'right' as const,
       width: 120,
       render: (_: unknown, row: VersionHealthRow) => {
-        const label = formatRate(row.rollbackRate);
+        const label = formatPercent(row.rollbackRate);
         if (row.rollbackRate !== null && row.rollbackRate >= 0.5) {
           return <Tag color="error">{label}</Tag>;
         }
@@ -287,7 +281,7 @@ export const Component = () => {
       align: 'right' as const,
       width: 130,
       render: (_: unknown, row: VersionHealthRow) =>
-        formatRate(row.downloadFailRate),
+        formatPercent(row.downloadFailRate),
     },
   ];
 

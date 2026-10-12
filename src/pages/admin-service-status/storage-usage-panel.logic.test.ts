@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { StorageUsageTable } from '@/services/admin-api';
-import {
-  buildTableRows,
-  formatShare,
-  formatStorageBytes,
-} from './storage-usage-panel.logic';
+import { buildTableRows } from './storage-usage-panel.logic';
 
 const table = (name: string, dataBytes: number, indexBytes = 0) =>
   ({
@@ -15,30 +11,6 @@ const table = (name: string, dataBytes: number, indexBytes = 0) =>
     freeBytes: 0,
     totalBytes: dataBytes + indexBytes,
   }) satisfies StorageUsageTable;
-
-describe('formatStorageBytes', () => {
-  test('scales across units', () => {
-    expect(formatStorageBytes(0)).toBe('0 B');
-    expect(formatStorageBytes(512)).toBe('512 B');
-    expect(formatStorageBytes(16 * 1024)).toBe('16.0 KB');
-    expect(formatStorageBytes(1.5 * 1024 ** 3)).toBe('1.50 GB');
-    expect(formatStorageBytes(300 * 1024 ** 4)).toBe('300 TB');
-  });
-
-  test('hides missing or invalid values', () => {
-    expect(formatStorageBytes(undefined)).toBe('-');
-    expect(formatStorageBytes(null)).toBe('-');
-    expect(formatStorageBytes(Number.NaN)).toBe('-');
-    expect(formatStorageBytes(-1)).toBe('-');
-  });
-});
-
-describe('formatShare', () => {
-  test('formats a percentage and guards a zero total', () => {
-    expect(formatShare(1, 4)).toBe('25.0%');
-    expect(formatShare(1, 0)).toBe('-');
-  });
-});
 
 describe('buildTableRows', () => {
   test('keeps every table when under the limit, sorted by size', () => {

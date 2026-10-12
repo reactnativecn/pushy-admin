@@ -1,32 +1,5 @@
 import type { StorageUsageTable } from '@/services/admin-api';
 
-const UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-
-/** 1024 进制，覆盖从单页表（16 KB）到整桶（TB）的跨度。 */
-export function formatStorageBytes(value: number | null | undefined) {
-  if (value == null || !Number.isFinite(value) || value < 0) {
-    return '-';
-  }
-  let scaled = value;
-  let unit = 0;
-  while (scaled >= 1024 && unit < UNITS.length - 1) {
-    scaled /= 1024;
-    unit += 1;
-  }
-  if (unit === 0) {
-    return `${scaled} B`;
-  }
-  return `${scaled.toFixed(scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2)} ${UNITS[unit]}`;
-}
-
-/** 占比保留一位小数；分母为 0 时不显示。 */
-export function formatShare(part: number, total: number) {
-  if (!(total > 0) || !Number.isFinite(part)) {
-    return '-';
-  }
-  return `${((part / total) * 100).toFixed(1)}%`;
-}
-
 export type StorageTableRow = StorageUsageTable & {
   share: number;
   /** 合并后的「其他」行，不是真实表名。 */

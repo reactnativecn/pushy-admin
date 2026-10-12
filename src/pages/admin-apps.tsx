@@ -25,14 +25,15 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { PLATFORM_OPTIONS } from '@/components/platform-icon';
 import { UserDetailDrawer } from '@/components/user-detail-drawer';
 import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
 import type { AdminApp } from '@/types';
+import { formatDateTime } from '@/utils/format';
 import { adminKeys } from '@/utils/query-keys';
 import { useModalWidth } from '@/utils/responsive';
 import {
@@ -238,11 +239,10 @@ export const Component = () => {
       sorter: true,
       sortOrder: sortOrderOf('platform'),
       filterMultiple: false,
-      filters: [
-        { text: 'iOS', value: 'ios' },
-        { text: 'Android', value: 'android' },
-        { text: 'HarmonyOS', value: 'harmony' },
-      ],
+      filters: PLATFORM_OPTIONS.map(({ value, label }) => ({
+        text: label,
+        value,
+      })),
       filteredValue: platformFilter ? [platformFilter] : null,
       render: (platform: string) => (
         <span
@@ -382,8 +382,7 @@ export const Component = () => {
       width: 160,
       sorter: true,
       sortOrder: sortOrderOf('createdAt'),
-      render: (date: string | undefined) =>
-        date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
+      render: (date: string | undefined) => formatDateTime(date),
     },
     {
       title: t('admin_apps.col_actions'),
@@ -503,13 +502,7 @@ export const Component = () => {
               label={t('admin_apps.form_platform')}
               className="mb-0!"
             >
-              <Select
-                options={[
-                  { value: 'ios', label: 'iOS' },
-                  { value: 'android', label: 'Android' },
-                  { value: 'harmony', label: 'HarmonyOS' },
-                ]}
-              />
+              <Select options={PLATFORM_OPTIONS} />
             </Form.Item>
             <Form.Item
               name="userId"

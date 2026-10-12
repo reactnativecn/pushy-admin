@@ -10,7 +10,7 @@ import {
 } from '@/components/app-drawer';
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { showCreateAppModal } from '@/components/create-app-modal';
-import PlatformIcon from '@/components/platform-icon';
+import PlatformIcon, { PLATFORM_LABELS } from '@/components/platform-icon';
 import { rootRouterPath, router } from '@/router';
 import { cn, filterAppsByQuery, rememberRecentApp } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
@@ -18,12 +18,6 @@ import { useWorkspacePermissions } from '@/utils/hooks';
 const { Title } = Typography;
 
 type AppItem = AppDrawerItem;
-
-const platformLabels: Record<AppItem['platform'], string> = {
-  android: 'Android',
-  ios: 'iOS',
-  harmony: 'HarmonyOS',
-};
 
 const formatAppKey = (
   appKey: string | null | undefined,
@@ -180,7 +174,7 @@ function AppCard({ app }: { app: AppItem }) {
                 {app.name}
               </div>
               <div className="mt-0.5 text-gray-500 text-xs">
-                {platformLabels[app.platform]}
+                {PLATFORM_LABELS[app.platform]}
               </div>
             </div>
           </div>

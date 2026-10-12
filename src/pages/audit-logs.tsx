@@ -26,6 +26,7 @@ import { UAParser } from 'ua-parser-js';
 import type { AuditLog } from '@/types';
 import { downloadCsv } from '@/utils/csv';
 import dayjs from '@/utils/dayjs';
+import { DATE_TIME_SECONDS_FORMAT, formatDateTime } from '@/utils/format';
 import { patchSearchParams } from '@/utils/helper';
 import { useAuditLogs } from '@/utils/hooks';
 import {
@@ -188,7 +189,7 @@ const AuditLogs = () => {
         const date = dayjs(createdAt);
         return (
           <div className="whitespace-nowrap">
-            <div>{date.format('YYYY-MM-DD HH:mm:ss')}</div>
+            <div>{date.format(DATE_TIME_SECONDS_FORMAT)}</div>
             <Text type="secondary" className="text-xs">
               {date.fromNow()}
             </Text>
@@ -502,9 +503,9 @@ const AuditLogs = () => {
                 {
                   key: 'time',
                   label: t('audit_logs.detail_time'),
-                  children: dayjs(selectedLog.createdAt).format(
-                    'YYYY-MM-DD HH:mm:ss',
-                  ),
+                  children: formatDateTime(selectedLog.createdAt, {
+                    seconds: true,
+                  }),
                 },
                 {
                   key: 'action',

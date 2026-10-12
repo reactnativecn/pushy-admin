@@ -12,10 +12,10 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, type ClientErrorIssueSummary } from '@/services/api';
+import { formatDateTime } from '@/utils/format';
 import { clientErrorKeys } from '@/utils/query-keys';
 
 const { Paragraph, Text } = Typography;
@@ -122,7 +122,7 @@ export function VersionHealthErrors({
         title: t('version_health.error_column_last_seen'),
         dataIndex: 'lastSeenAt',
         width: 160,
-        render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm'),
+        render: (value: string) => formatDateTime(value),
       },
     ],
     [t],
@@ -219,7 +219,7 @@ export function VersionHealthErrors({
                 {
                   key: 'time',
                   label: t('version_health.error_seen'),
-                  children: `${dayjs(detail.firstSeenAt).format('YYYY-MM-DD HH:mm:ss')} – ${dayjs(detail.lastSeenAt).format('YYYY-MM-DD HH:mm:ss')} · ${t('version_health.error_total', { count: detail.occurrenceCount })}`,
+                  children: `${formatDateTime(detail.firstSeenAt, { seconds: true })} – ${formatDateTime(detail.lastSeenAt, { seconds: true })} · ${t('version_health.error_total', { count: detail.occurrenceCount })}`,
                 },
                 {
                   key: 'fingerprint',

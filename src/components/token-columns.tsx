@@ -3,6 +3,7 @@ import { Button, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { ReactNode } from 'react';
+import { DATE_TIME_FORMAT, formatDateTime } from '@/utils/format';
 
 /** API Key 与 MCP 连接共有的字段，表格公共列只依赖这些 */
 export interface TokenRow {
@@ -58,7 +59,7 @@ export function getTokenColumns<T extends TokenRow>({
   icon,
   appNameById,
   onRevoke,
-  expiresFormat = 'YYYY-MM-DD HH:mm',
+  expiresFormat = DATE_TIME_FORMAT,
   allAppsTagColor,
 }: TokenColumnsOptions) {
   const name: ColumnType<T> = {
@@ -120,9 +121,7 @@ export function getTokenColumns<T extends TokenRow>({
     key: 'lastUsedAt',
     responsive: ['lg'],
     render: (lastUsedAt: string | null) =>
-      lastUsedAt
-        ? dayjs(lastUsedAt).format('YYYY-MM-DD HH:mm')
-        : texts.neverUsed,
+      formatDateTime(lastUsedAt, { missing: texts.neverUsed }),
   };
 
   const action: ColumnType<T> = {

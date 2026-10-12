@@ -4,9 +4,7 @@ import {
   buildEndpointRows,
   buildServiceStatusSummary,
   estimatePercentile,
-  formatBytes,
   formatMs,
-  formatPercent,
   formatUptime,
   getAverageMs,
   SERVICE_STATUS_TARGETS,
@@ -181,12 +179,6 @@ describe('buildServiceStatusSummary', () => {
 });
 
 describe('formatters', () => {
-  it('formats byte sizes into MB/GB', () => {
-    expect(formatBytes(undefined)).toBe('-');
-    expect(formatBytes(50 * 1024 * 1024)).toBe('50.0 MB');
-    expect(formatBytes(2.5 * 1024 * 1024 * 1024)).toBe('2.50 GB');
-  });
-
   it('formats durations into ms/s with overflow marker', () => {
     expect(formatMs(null)).toBe('-');
     expect(formatMs(250)).toBe('250ms');
@@ -194,8 +186,7 @@ describe('formatters', () => {
     expect(formatMs(Number.POSITIVE_INFINITY)).toBe('>10s');
   });
 
-  it('formats percentages and uptime', () => {
-    expect(formatPercent(0.1234)).toBe('12.34%');
+  it('formats uptime', () => {
     expect(formatUptime(90_000)).toBe('1d 1h');
     expect(formatUptime(3900)).toBe('1h 5m');
     expect(formatUptime(120)).toBe('2m');

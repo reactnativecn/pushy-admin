@@ -2,6 +2,7 @@ import { Alert, Card, Spin, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatInteger } from '@/utils/format';
 import { cn } from '@/utils/helper';
 import {
   buildFunnelRows,
@@ -25,7 +26,6 @@ import {
   BarList,
   EmptyState,
   Footnote,
-  formatInteger,
   formatShare,
   HeaderHint,
   InsightsError,
@@ -213,7 +213,7 @@ const LagTable = ({
               title: t('app_insights.col_count'),
               dataIndex: 'count',
               align: 'right',
-              render: formatInteger,
+              render: (value: number | null) => formatInteger(value),
             },
             {
               title: t('app_insights.col_share'),

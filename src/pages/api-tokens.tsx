@@ -27,6 +27,7 @@ import { API_TOKEN_SCOPES } from '@/constants/token-scopes';
 import { api } from '@/services/api';
 import type { ApiToken } from '@/types';
 import { useAppOptions } from '@/utils/app-options';
+import { formatDateTime } from '@/utils/format';
 import { apiTokenKeys } from '@/utils/query-keys';
 import { useIsMobile } from '@/utils/responsive';
 
@@ -175,8 +176,7 @@ function ApiTokensPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       responsive: ['lg'],
-      render: (createdAt: string) =>
-        dayjs(createdAt).format('YYYY-MM-DD HH:mm'),
+      render: (createdAt: string) => formatDateTime(createdAt),
     },
     tokenColumns.action,
   ];

@@ -25,16 +25,10 @@ import {
 import { useWorkspacePermissions } from '@/utils/hooks';
 import { useAppSettingsModal } from '../app-settings-modal';
 import { showCreateAppModal } from '../create-app-modal';
-import PlatformIcon from '../platform-icon';
+import PlatformIcon, { PLATFORM_LABELS } from '../platform-icon';
 import { useManageAppDrawerPlacement } from './use-app-drawer-placement';
 
 type AppItem = AppDrawerItem;
-
-const platformLabels: Record<AppItem['platform'], string> = {
-  android: 'Android',
-  ios: 'iOS',
-  harmony: 'HarmonyOS',
-};
 
 export function AppSwitcher({ compact }: { compact: boolean }) {
   const { t } = useTranslation();
@@ -384,7 +378,7 @@ function AppRow({
               )}
             </span>
             <span className="mt-0.5 flex min-w-0 items-center gap-2 text-gray-500 text-xs">
-              <span>{platformLabels[app.platform]}</span>
+              <span>{PLATFORM_LABELS[app.platform]}</span>
               {appKeyLabel && (
                 <span
                   className="truncate font-mono"
