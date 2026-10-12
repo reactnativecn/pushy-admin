@@ -167,7 +167,7 @@ export const Component = () => {
             isAdmin={isAdmin}
           />
         ) : view === 'traffic' ? (
-          <TrafficPanel appKey={selectedAppKey} isAdmin={isAdmin} />
+          <TrafficPanel appKey={selectedAppKey} />
         ) : view === 'audience' ? (
           <AudiencePanel
             appKey={selectedAppKey}

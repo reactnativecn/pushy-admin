@@ -19,14 +19,15 @@ const toDayjsLocale = (language: string) =>
  * times ("3 hours ago") and formatted dates localize correctly. Called once at
  * startup and again whenever the language changes.
  */
-export const syncDayjsLocale = (language?: string) => {
+const syncDayjsLocale = (language?: string) => {
   dayjs.locale(
     toDayjsLocale(language ?? i18n.resolvedLanguage ?? i18n.language),
   );
 };
 
-// Sync locale after i18n finishes initialization (not at import time)
-i18n.on('initialized', syncDayjsLocale);
+// i18n 带着内置 resources 同步初始化，import 到这里时 initialized /
+// 首次 languageChanged 早已触发，所以启动时要主动同步一次。
+syncDayjsLocale();
 i18n.on('languageChanged', syncDayjsLocale);
 
 export default dayjs;

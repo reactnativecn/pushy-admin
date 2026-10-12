@@ -6,13 +6,11 @@ import {
   getManageAppDrawerCollapsed,
   getManageAppDrawerPlacement,
   getRecentAppIds,
-  isExpVersion,
   isPasswordValid,
   MAX_RECENT_APP_COUNT,
   packageSupportsForceBoot,
   parseDepVersion,
   patchSearchParams,
-  promiseAny,
   RECENT_APP_STORAGE_KEY,
   rememberRecentApp,
   setManageAppDrawerCollapsed,
@@ -105,57 +103,6 @@ describe('cn', () => {
 
   test('filters empty string arguments (falsy)', () => {
     expect(cn('', 'a')).toBe('a');
-  });
-});
-
-// ─── promiseAny ─────────────────────────────────────────────────────
-
-describe('promiseAny', () => {
-  test('resolves with the first fulfilled promise', async () => {
-    const result = await promiseAny([
-      Promise.reject('err1'),
-      Promise.resolve('winner'),
-      Promise.resolve('late'),
-    ]);
-    expect(result).toBe('winner');
-  });
-
-  test('resolves when any promise resolves even if others reject', async () => {
-    const result = await promiseAny([
-      Promise.reject(new Error('fail')),
-      Promise.resolve(42),
-    ]);
-    expect(result).toBe(42);
-  });
-
-  test('rejects when all promises reject', async () => {
-    await expect(
-      promiseAny([
-        Promise.reject('err1'),
-        Promise.reject('err2'),
-        Promise.reject('err3'),
-      ]),
-    ).rejects.toThrow('All promises were rejected');
-  });
-
-  test('rejects for empty array', async () => {
-    const p = promiseAny([]);
-    const result = Promise.race([
-      p,
-      new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
-    ]);
-    expect(await result).toBe('timeout');
-  });
-
-  test('resolves with first even if slow promises also resolve', async () => {
-    const fast = new Promise((resolve) =>
-      setTimeout(() => resolve('fast'), 10),
-    );
-    const slow = new Promise((resolve) =>
-      setTimeout(() => resolve('slow'), 100),
-    );
-    const result = await promiseAny([slow, fast]);
-    expect(result).toBe('fast');
   });
 });
 
@@ -311,57 +258,6 @@ describe('patchSearchParams', () => {
     });
 
     patchSearchParams(setter, { a: 'b' }, customOpts);
-  });
-});
-
-// ─── isExpVersion (expanded) ────────────────────────────────────────
-
-describe('isExpVersion', () => {
-  test('should return false when config is null', () => {
-    expect(isExpVersion(null, '1.0.0')).toBe(false);
-  });
-
-  test('should return false when config is undefined', () => {
-    expect(isExpVersion(undefined, '1.0.0')).toBe(false);
-  });
-
-  test('should return false when config.rollout is missing', () => {
-    expect(isExpVersion({}, '1.0.0')).toBe(false);
-  });
-
-  test('should return false when rollout config for version is missing', () => {
-    expect(isExpVersion({ rollout: {} }, '1.0.0')).toBe(false);
-  });
-
-  test('should return false when rollout config for version is null', () => {
-    expect(isExpVersion({ rollout: { '1.0.0': null } }, '1.0.0')).toBe(false);
-  });
-
-  test('should return true when rollout is less than 100', () => {
-    expect(isExpVersion({ rollout: { '1.0.0': 50 } }, '1.0.0')).toBe(true);
-    expect(isExpVersion({ rollout: { '1.0.0': 0 } }, '1.0.0')).toBe(true);
-  });
-
-  test('should return false when rollout is 100', () => {
-    expect(isExpVersion({ rollout: { '1.0.0': 100 } }, '1.0.0')).toBe(false);
-  });
-
-  test('should return false when rollout is greater than 100', () => {
-    expect(isExpVersion({ rollout: { '1.0.0': 110 } }, '1.0.0')).toBe(false);
-  });
-
-  test('should return true for rollout 1 (boundary)', () => {
-    expect(isExpVersion({ rollout: { '1.0.0': 1 } }, '1.0.0')).toBe(true);
-  });
-
-  test('should return true for rollout 99 (boundary)', () => {
-    expect(isExpVersion({ rollout: { '1.0.0': 99 } }, '1.0.0')).toBe(true);
-  });
-
-  test('should not be affected by other versions in rollout', () => {
-    const config = { rollout: { '1.0.0': 50, '2.0.0': 100 } };
-    expect(isExpVersion(config, '1.0.0')).toBe(true);
-    expect(isExpVersion(config, '2.0.0')).toBe(false);
   });
 });
 

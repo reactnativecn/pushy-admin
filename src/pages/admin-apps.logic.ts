@@ -14,8 +14,8 @@ export const SORTABLE_COLUMNS = new Set([
   'createdAt',
 ]);
 
-export const PLATFORM_VALUES = ['ios', 'android', 'harmony'];
-export const STATUS_VALUES = ['normal', 'paused'];
+const PLATFORM_VALUES = ['ios', 'android', 'harmony'];
+const STATUS_VALUES = ['normal', 'paused'];
 
 // 表头筛选列,值同步到同名 URL 参数
 export const FILTER_KEYS = ['platform', 'status', 'userId'] as const;

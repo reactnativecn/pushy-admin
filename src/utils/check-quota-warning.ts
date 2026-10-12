@@ -7,7 +7,7 @@ export type CheckQuotaWarningLevel = 'normal' | 'low' | 'exceeded';
  * 前景色走 antd CSS 变量（cssVar 模式下运行时注入），与全站主题联动；
  * 轨道色是与之匹配的浅色底，antd 未暴露成单一 token，故集中定义在此。
  */
-export const CHECK_QUOTA_COLORS: Record<
+const CHECK_QUOTA_COLORS: Record<
   CheckQuotaWarningLevel,
   { stroke: string; trail: string }
 > = {

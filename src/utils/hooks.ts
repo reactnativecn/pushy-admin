@@ -463,13 +463,13 @@ export const usePackageMetricWarnings = ({
 };
 
 /** 审计日志只保留 180 天,默认从这个下限开始拉 */
-export const AUDIT_LOG_RETENTION_DAYS = 180;
+const AUDIT_LOG_RETENTION_DAYS = 180;
 
 /**
  * 一次最多向服务端要多少条。服务端还有自己的上限(Go 版是 100),
  * 真正拿到多少以响应为准,页面按 total 与实际条数的差判断是否被截断。
  */
-export const AUDIT_LOG_FETCH_LIMIT = 1000;
+const AUDIT_LOG_FETCH_LIMIT = 1000;
 
 /**
  * 审计日志:日期范围交给服务端过滤,关键字 / 动作 / 状态码这些服务端不支持的

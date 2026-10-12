@@ -7,10 +7,7 @@ export interface InstanceRow extends SystemInstance {
 }
 
 // installing/restarting 是进行中，failed 只作为事后提示
-export const DEPLOY_STATUS_PRIORITY: Record<
-  SystemDeployStatus['status'],
-  number
-> = {
+const DEPLOY_STATUS_PRIORITY: Record<SystemDeployStatus['status'], number> = {
   installing: 0,
   restarting: 1,
   failed: 2,

@@ -12,7 +12,7 @@ import {
   shouldLoadDiffStatus,
 } from './useManageContext.logic';
 
-export const defaultManageContext = {
+const defaultManageContext = {
   appId: 0,
   app: undefined,
   packages: [],
@@ -23,7 +23,7 @@ export const defaultManageContext = {
   diffStatusByVersion: new Map(),
 };
 
-export const ManageContext = createContext<{
+const ManageContext = createContext<{
   appId: number;
   app?: App;
   packages: Package[];

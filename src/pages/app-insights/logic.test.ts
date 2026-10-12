@@ -293,8 +293,6 @@ describe('package observations and refusals', () => {
       }),
     ]);
     expect(trafficWarnings(result.hit)).toEqual(['blocked', 'unknown_package']);
-    expect(result.updatePercent).toBe(70);
-    expect(result.refusedPercent).toBe(30);
     expect(result.refused.blocked).toEqual([
       { packageVersion: '1.0', requests: 2 },
     ]);

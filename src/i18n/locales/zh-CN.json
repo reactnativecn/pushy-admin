@@ -1,15 +1,4 @@
 {
-  "notice": {
-    "v8_deprecation_title": "通知：react-native-update 即将停止支持 v8 以下版本",
-    "v8_deprecation_p1_before": "从",
-    "v8_deprecation_date": "2025年8月10日",
-    "v8_deprecation_p1_after": "起低于 v8 版本的原生包和热更包将无法上传，请尽快升级到 v8 及以上版本。已上传的版本不受影响。",
-    "v8_deprecation_p2": "跨大版本更新时需要重新打原生包，并请充分测试。",
-    "v8_deprecation_p3": "v5 - v9 版本代码基本兼容，v10 版本代码与之前版本不兼容。",
-    "v8_deprecation_p4": "升级相关的技术问题，请在 QQ 群 729013783 中咨询技术支持。",
-    "ok": "我知道了",
-    "dont_show_again": "不再显示"
-  },
   "login": {
     "slogan": "极速热更新框架 for React Native",
     "email_placeholder": "邮箱",
@@ -52,7 +41,8 @@
   "activate": {
     "activating": "激活中，请稍等",
     "success": "激活成功",
-    "go_login": "请登录"
+    "go_login": "请登录",
+    "link_invalid": "激活链接无效，请重新打开邮件中的链接"
   },
   "inactivated": {
     "email_sent": "邮件发送成功，请注意查收",
@@ -87,18 +77,13 @@
     "upgrade_purchase": "升级购买",
     "upgrade_hint_free": "选择目标版本及开通时长后开通服务。",
     "upgrade_hint_paid": "补差价由后端按剩余有效期报价，未超过优惠阈值按月费差额折算，超过后按年费优惠折算。",
-    "purchase_after_pay": "购买后从支付日起开通服务",
     "monthly_pay": "月付",
     "annual_pay": "年付",
     "annual_pay_tab": "年付（约6.7折，送 Token）",
     "per_month_unit": "/ 月",
     "per_year_unit": "/ 年",
-    "duration_slider_hint": "滑动选择开通时长：",
-    "month_short": "个月",
     "purchase_monthly_desc": "支付后即刻生效，按月计费",
     "purchase_annual_desc": "支付后即刻生效，按年计费",
-    "proration": "补差价",
-    "days_unit": "天",
     "check_quota_daily": "检查次数每日",
     "app_count": "应用个数",
     "native_pkg_count": "原生包数",
@@ -427,7 +412,6 @@
     "package_prefix": "原生包:",
     "bundle": "热更包",
     "package": "原生包",
-    "checks_suffix": "次",
     "time": "时间",
     "select_app": "选择应用",
     "title": "数据分析",
@@ -907,7 +891,6 @@
     "cancel": "取消",
     "save": "保存",
     "form_name": "名称",
-    "form_app_key": "App Key",
     "form_platform": "平台",
     "form_user_id": "用户ID",
     "form_download_url": "下载链接",
@@ -1092,9 +1075,7 @@
     "section_unknown_error": "未知渲染错误",
     "retry_section": "重试组件",
     "chart_error": "图表渲染异常",
-    "line_chart_error": "折线图渲染异常",
-    "pie_chart_error": "饼图渲染异常",
-    "dual_axes_chart_error": "双轴图表渲染异常"
+    "line_chart_error": "折线图渲染异常"
   },
   "daily_check_quota": {
     "tier": "套餐：",
@@ -1105,24 +1086,10 @@
     "checks": "次",
     "over_quota": "已超出：",
     "avg_remaining": "7 日平均剩余额度：",
-    "quota_not_available": "暂无今日检查额度数据。额度用于客户端查询是否有可用热更新，按账户下所有应用汇总。",
     "quota_exhausted": "今日检查额度已用尽，请升级套餐或等待每日额度重置。",
     "quota_exceeded": "今日检查额度已超出 {{count}} 次，客户端检查可能返回空数据。",
-    "quota_low": "今日检查额度只剩 {{count}} 次，低于 {{percent}}%，请留意客户端检查频率。",
-    "quota_healthy": "今日检查额度状态正常。",
-    "title": "每日检查额度",
-    "description": "客户端检查热更新时消耗，按账户下所有应用合并计算，每日重置。",
     "status_exhausted": "已用尽",
-    "status_low": "偏低",
-    "status_healthy": "正常",
-    "status_exceeded": "已超额",
-    "remaining_label": "今日剩余额度",
-    "daily_limit": "每日上限",
-    "status_label": "状态",
-    "exceeded_info": "已超出 {{count}} 次",
-    "percent_remaining": "{{percent}}% 剩余",
-    "hint": "鼠标悬停进度条可查看套餐、到期时间和最近 7 日平均剩余额度。",
-    "no_data": "无"
+    "status_exceeded": "已超额"
   },
   "footer": {
     "copyright": "React Native 中文网 © {{year}} 武汉青罗网络科技有限公司"
@@ -1143,7 +1110,6 @@
     "qr_deep_link_invalid": "Deep Link 格式未通过，当前二维码仍为普通 JSON",
     "qr_no_deep_link": "未使用 Deep Link 时，二维码内容为普通 JSON",
     "use_deep_link": "用 Deep Link 打开 App",
-    "deep_link_placeholder": "例如 pushy://",
     "deep_link_not_url": "这里不是网页地址，请填写 App 的自定义 Scheme，例如 pushy://",
     "deep_link_format": "这里只填写 Scheme 前缀，格式为 scheme://，不要带路径、参数或版本信息",
     "deep_link_scheme": "Scheme 需以字母开头，只能包含字母、数字、+、-、.",
@@ -1181,7 +1147,6 @@
   "commit": {
     "title": "最近提交",
     "description": "需要 cli v1.42.0+ 版本上传，并使用 git 管理代码以查看提交记录",
-    "title_with_commit": "最近提交",
     "author": "作者：",
     "time": "时间：",
     "summary": "摘要："
@@ -1255,30 +1220,18 @@
   },
   "setting_modal": {
     "app_id": "App ID",
-    "app_key": "App Key",
-    "app_name": "应用名",
-    "download_url": "原生包下载地址（当用户端的原生版本过期时，会使用此地址下载）",
     "hot_updates": "启用热更新",
     "enabled": "已启用",
     "paused": "已暂停",
-    "ignore_timestamp": "忽略时间戳/内容指纹检查",
     "disabled": "已禁用",
-    "delete_app": "删除应用",
-    "delete_confirm": "应用删除后无法恢复",
-    "delete_ok": "确认删除",
-    "delete_button": "删除",
-    "delete_title": "确认删除该应用",
-    "delete_desc": "此操作不可逆！删除应用将清除该应用下所有的更新包版本、依赖及配置历史。",
-    "delete_permanent": "确认永久删除"
+    "delete_confirm": "应用删除后无法恢复"
   },
   "common": {
     "cancel": "取消",
     "delete": "删除",
-    "save": "保存",
     "edit": "编辑",
     "yes": "是",
     "no": "否",
-    "loading": "加载中...",
     "copied": "已复制",
     "none": "无",
     "search": "搜索",
@@ -1286,8 +1239,7 @@
   },
   "language": {
     "switch": "语言",
-    "zh": "中文",
-    "en": "English"
+    "zh": "中文"
   },
   "publish_feature_table": {
     "version_header_line1": "react-native-update 版本",
@@ -1365,7 +1317,6 @@
     "range_3d": "近3天",
     "range_7d": "近7天",
     "sdk_requirement_title": "健康度数据仅支持 SDK v10.47.0 及以上版本",
-    "sdk_requirement_description": "v10.47.0 是首个上报热更新生命周期事件的版本；更早版本的设备不会出现在启动成功率、下载失败率和回滚率统计中。",
     "window_hint": "实时数据保留 7 天",
     "no_data": "暂无数据",
     "error_title": "JavaScript 报错",
@@ -1530,7 +1481,6 @@
     "quota_kind_usage_drop": "用量骤降",
     "quota_kind_usage_spike": "用量暴涨",
     "quota_col_user": "用户",
-    "quota_col_tier": "套餐",
     "quota_col_usage": "昨日用量/配额",
     "quota_col_trend": "7日均值(近/前)",
     "vh_title": "版本健康总览(近 7 天,跨应用)",

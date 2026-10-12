@@ -84,5 +84,3 @@ export default function SetPassword() {
     </Form>
   );
 }
-
-export const Component = SetPassword;

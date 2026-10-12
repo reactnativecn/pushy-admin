@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 import i18n from '@/i18n';
 import { api } from '@/services/api';
 import type { Quota, Tier } from '@/types';
-import { ANNUAL_BILLING_MONTHS } from '@/utils/billing';
 import { isValidExternalUrl } from '@/utils/helper';
 import { userKeys } from '@/utils/query-keys';
 import { type products, quotas } from '../../constants/quotas';
@@ -15,6 +14,16 @@ export type OrderQuotes = NonNullable<
   Awaited<ReturnType<typeof api.getOrderQuotes>>
 >;
 
+export const ANNUAL_BILLING_MONTHS = 12;
+
+// 报价接口没给月付价时的兜底：月付单价 = 年付价 / 8，与服务端默认系数一致。
+const DEFAULT_MONTHLY_PRICE_FACTOR = 8;
+
+export function resolveMonthlyPrice(annualPrice: number) {
+  const monthly = annualPrice / DEFAULT_MONTHLY_PRICE_FACTOR;
+  return Math.round((monthly + Number.EPSILON) * 100) / 100;
+}
+
 const PURCHASABLE_TIER_KEYS: PurchasableTier[] = [
   'standard',
   'premium',
@@ -24,7 +33,7 @@ const PURCHASABLE_TIER_KEYS: PurchasableTier[] = [
   'vip3',
 ];
 
-export const getPurchasableTiers = (
+const getPurchasableTiers = (
   t: (key: string) => string,
 ): Array<{
   label: string;
@@ -59,10 +68,7 @@ export function useOrderBillingConfig() {
     retry: false,
     staleTime: 5 * 60_000,
   });
-  return {
-    annualBillingMonths: data?.annualBillingMonths ?? ANNUAL_BILLING_MONTHS,
-    checkUpdateAddon: data?.checkUpdateAddon,
-  };
+  return { checkUpdateAddon: data?.checkUpdateAddon };
 }
 
 export function formatMoney(value: number) {

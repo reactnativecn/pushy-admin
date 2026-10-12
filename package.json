@@ -16,6 +16,7 @@
     "size": "node scripts/check-bundle-size.mjs"
   },
   "dependencies": {
+    "@ant-design/cssinjs": "^2.1.2",
     "@ant-design/icons": "6.3.4",
     "@ant-design/plots": "^2.6.8",
     "@tanstack/react-query": "^5.102.8",

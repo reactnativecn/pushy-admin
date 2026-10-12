@@ -1,5 +1,4 @@
 import type { NavigateOptions, SetURLSearchParams } from 'react-router-dom';
-import type { VersionConfig } from '@/types';
 import { safeStorage } from '@/utils/storage';
 
 export function isPasswordValid(password: string) {
@@ -10,24 +9,7 @@ export function cn(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-export function promiseAny<T>(promises: Promise<T>[]) {
-  return new Promise<T>((resolve, reject) => {
-    let count = 0;
-
-    for (const promise of promises) {
-      Promise.resolve(promise)
-        .then(resolve)
-        .catch(() => {
-          count++;
-          if (count === promises.length) {
-            reject(Error('All promises were rejected'));
-          }
-        });
-    }
-  });
-}
-
-export const ping = async (url: string, signal?: AbortSignal) => {
+const ping = async (url: string, signal?: AbortSignal) => {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await (Promise.race([
@@ -133,18 +115,6 @@ export const testUrls = async (
   });
 };
 
-export const isExpVersion = (
-  config: VersionConfig | null | undefined,
-  packageVersion: string,
-): boolean => {
-  if (!config?.rollout) return false;
-
-  const rollout = config.rollout[packageVersion];
-  if (rollout === null || rollout === undefined) return false;
-
-  return rollout < 100;
-};
-
 export const patchSearchParams = (
   setSearchParams: SetURLSearchParams,
   patch: Record<string, string | null | undefined>,
@@ -211,14 +181,7 @@ export const getManageAppDrawerCollapsed = () => {
     return false;
   }
 
-  const stored = safeStorage.get(MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY);
-  if (stored === '1') {
-    return true;
-  }
-  if (stored === '0') {
-    return false;
-  }
-  return false;
+  return safeStorage.get(MANAGE_APP_DRAWER_COLLAPSED_STORAGE_KEY) === '1';
 };
 
 export const setManageAppDrawerCollapsed = (collapsed: boolean) => {
@@ -302,7 +265,7 @@ export function parseDepVersion(raw?: string): [number, number, number] | null {
   return [Number(matched[1]), Number(matched[2]), Number(matched[3])];
 }
 
-export function compareDepVersions(
+function compareDepVersions(
   a: [number, number, number],
   b: [number, number, number],
 ) {

@@ -131,7 +131,7 @@ export function previewValue(item: ConfigSchemaItem): string {
 }
 
 /** Reads a nested value by a form name path (relative to the config value). */
-export function valueAtPath(value: unknown, path: NamePath): unknown {
+function valueAtPath(value: unknown, path: NamePath): unknown {
   let node = value;
   for (const segment of path) {
     if (node === null || typeof node !== 'object') return undefined;

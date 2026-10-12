@@ -1,6 +1,5 @@
 import { message } from 'antd';
 import i18n from '@/i18n';
-import { getVersionHealthDevMock } from '@/services/version-health-dev-mock';
 import { getCustomBaseUrl } from '@/utils/endpoint';
 import { FEATURES } from '@/utils/features';
 import { testUrls } from '@/utils/helper';
@@ -63,6 +62,10 @@ export default async function request<T extends Record<any, any>>(
   requestOptions: RequestOptions = {},
 ) {
   if (FEATURES.versionHealthMock) {
+    // 动态引入：生产构建里 versionHealthMock 恒为 false，mock 数据不进主包
+    const { getVersionHealthDevMock } = await import(
+      '@/services/version-health-dev-mock'
+    );
     const mock = getVersionHealthDevMock(method, path);
     if (mock !== null) {
       return mock as unknown as T;

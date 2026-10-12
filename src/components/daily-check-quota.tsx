@@ -1,17 +1,14 @@
 import { WarningOutlined } from '@ant-design/icons';
-import { Alert, Progress, Tag, Tooltip, Typography } from 'antd';
+import { Progress, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { quotas } from '@/constants/quotas';
 import {
-  CHECK_QUOTA_LOW_RATIO,
   getCheckQuotaColors,
   getCheckQuotaWarningState,
 } from '@/utils/check-quota-warning';
 import dayjs from '@/utils/dayjs';
 import { cn } from '@/utils/helper';
 import { useUserInfo } from '@/utils/hooks';
-
-const { Text } = Typography;
 
 const getTierTitle = (
   tier: string | undefined,
@@ -27,10 +24,6 @@ const getTierTitle = (
   }
   return customTitle ?? tier;
 };
-
-interface DailyCheckQuotaProps {
-  variant: 'account';
-}
 
 const useDailyCheckQuotaState = () => {
   const { t } = useTranslation();
@@ -204,148 +197,4 @@ export function DailyCheckQuotaUserTrigger({
   }
 
   return <Tooltip title={quotaState.tooltip}>{content}</Tooltip>;
-}
-
-export default function DailyCheckQuota(_props: DailyCheckQuotaProps) {
-  const { t } = useTranslation();
-  const quotaState = useDailyCheckQuotaState();
-  const { user } = quotaState;
-  if (!user) {
-    return null;
-  }
-
-  if (!quotaState.hasData) {
-    return (
-      <Text type="secondary">{t('daily_check_quota.quota_not_available')}</Text>
-    );
-  }
-
-  const message = quotaState.isExceeded
-    ? quotaState.remaining < 0
-      ? t('daily_check_quota.quota_exceeded', {
-          count: Math.abs(quotaState.remaining).toLocaleString(),
-        })
-      : t('daily_check_quota.quota_exhausted')
-    : quotaState.isLow
-      ? t('daily_check_quota.quota_low', {
-          count: quotaState.remaining.toLocaleString(),
-          percent: Math.round(CHECK_QUOTA_LOW_RATIO * 100),
-        })
-      : t('daily_check_quota.quota_healthy');
-  const panelClassName = quotaState.isExceeded
-    ? 'border-red-300 bg-red-50 shadow-[0_0_0_3px_rgba(239,68,68,0.10)]'
-    : quotaState.isLow
-      ? 'border-amber-300 bg-amber-50 shadow-[0_0_0_3px_rgba(245,158,11,0.12)]'
-      : 'border-slate-200 bg-slate-50';
-  const remainingClassName = quotaState.isExceeded
-    ? 'text-red-700'
-    : quotaState.isLow
-      ? 'text-amber-700'
-      : 'text-slate-900';
-  const quotaTag =
-    quotaState.isExceeded && quotaState.remaining < 0
-      ? t('daily_check_quota.status_exceeded')
-      : quotaState.isExceeded
-        ? t('daily_check_quota.status_exhausted')
-        : quotaState.isLow
-          ? t('daily_check_quota.status_low')
-          : t('daily_check_quota.status_healthy');
-  const progressColors = getCheckQuotaColors(quotaState.level);
-
-  return (
-    <div className="space-y-3">
-      <div className={cn('rounded-lg border p-4', panelClassName)}>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-start gap-2">
-            {quotaState.isWarning && (
-              <WarningOutlined
-                className={cn(
-                  'mt-0.5 shrink-0 text-lg',
-                  quotaState.isExceeded
-                    ? 'animate-pulse text-red-600'
-                    : 'text-amber-500',
-                )}
-              />
-            )}
-            <div>
-              <div className="font-medium">{t('daily_check_quota.title')}</div>
-              <div className="text-gray-500 text-sm">
-                {t('daily_check_quota.description')}
-              </div>
-            </div>
-          </div>
-          <Tag
-            color={
-              quotaState.isExceeded
-                ? 'red'
-                : quotaState.isLow
-                  ? 'orange'
-                  : 'green'
-            }
-            className="m-0"
-          >
-            {quotaTag}
-          </Tag>
-        </div>
-        <div className="mb-3 grid gap-2 rounded-md bg-container/75 p-3 sm:grid-cols-3">
-          <div>
-            <div className="text-[11px] text-gray-500">
-              {t('daily_check_quota.remaining_label')}
-            </div>
-            <div
-              className={cn(
-                'mt-0.5 font-semibold text-lg tabular-nums',
-                remainingClassName,
-              )}
-            >
-              {quotaState.remaining.toLocaleString()}
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] text-gray-500">
-              {t('daily_check_quota.daily_limit')}
-            </div>
-            <div className="mt-0.5 font-medium text-slate-700 tabular-nums">
-              {quotaState.dailyQuota.toLocaleString()}
-              {t('daily_check_quota.checks')}
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] text-gray-500">
-              {t('daily_check_quota.status_label')}
-            </div>
-            <div className="text-gray-500 text-sm">
-              {quotaState.remaining < 0
-                ? t('daily_check_quota.exceeded_info', {
-                    count: Math.abs(quotaState.remaining).toLocaleString(),
-                  })
-                : t('daily_check_quota.percent_remaining', {
-                    percent: quotaState.percent.toFixed(0),
-                  })}
-            </div>
-          </div>
-        </div>
-        <Tooltip title={quotaState.tooltip}>
-          <Progress
-            percent={quotaState.percent}
-            showInfo={false}
-            status={quotaState.progressStatus}
-            strokeColor={progressColors.stroke}
-            strokeLinecap="round"
-            trailColor={quotaState.isWarning ? progressColors.trail : undefined}
-          />
-        </Tooltip>
-        <div className="mt-2 text-gray-500 text-xs">
-          {t('daily_check_quota.hint')}
-        </div>
-      </div>
-      {(quotaState.isExceeded || quotaState.isLow) && (
-        <Alert
-          showIcon
-          type={quotaState.isExceeded ? 'error' : 'warning'}
-          message={message}
-        />
-      )}
-    </div>
-  );
 }

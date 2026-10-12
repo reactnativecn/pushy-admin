@@ -9,13 +9,7 @@ import { RealtimeSeriesPanel } from './realtime-series-panel';
 import { EmptyState, InsightsError, Question, useAppTraffic } from './shared';
 
 /** 实时请求与小时分布；两者都有自己的时间范围，不跟随页面顶部的天数。 */
-export const TrafficPanel = ({
-  appKey,
-  isAdmin,
-}: {
-  appKey: string | undefined;
-  isAdmin: boolean;
-}) => {
+export const TrafficPanel = ({ appKey }: { appKey: string | undefined }) => {
   const { t } = useTranslation();
   const { isDark } = useThemeMode();
   const traffic = useAppTraffic(appKey, HOURLY_DAYS);
@@ -34,7 +28,7 @@ export const TrafficPanel = ({
   const today = traffic.data?.window?.today ?? beijingToday();
   return (
     <div className="space-y-4">
-      <RealtimeSeriesPanel appKey={appKey} isAdmin={isAdmin} />
+      <RealtimeSeriesPanel appKey={appKey} />
       {!!traffic.error && <InsightsError error={traffic.error} />}
       <ObservationNotice
         window={traffic.data?.window}

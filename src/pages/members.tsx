@@ -23,7 +23,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PageContainer } from '@/components';
+import { PageContainer } from '@/components/page-container';
 import {
   MEMBER_ROLE_DESC_KEY,
   MEMBER_ROLE_LABEL_KEY,

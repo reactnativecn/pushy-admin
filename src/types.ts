@@ -142,22 +142,6 @@ export interface Version {
   hermesBaseDetail?: string;
 }
 
-export interface AppDetail extends App {
-  appKey: string;
-  appSecret: string;
-  downloadUrl?: string;
-}
-
-export interface ContentProps {
-  app: App;
-}
-
-export interface VersionConfig {
-  rollout?: {
-    [packageVersion: string]: number | null;
-  };
-}
-
 export type BindingType = 'full' | 'exp';
 
 export interface Binding {

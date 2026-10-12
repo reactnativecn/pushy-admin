@@ -73,7 +73,7 @@ function getDeepLinkError(deepLink: string, t: (key: string) => string) {
 // 沿用 ManageContext 时期的 key，老用户已存的 deep link 不会丢
 const deepLinkStorageKey = (appId: number) => `${appId}_deeplink`;
 
-export const TestQrCodeModal = ({
+const TestQrCodeModal = ({
   open,
   onClose,
   name,

@@ -3,9 +3,9 @@ import { Button, Popover, Segmented, Tag, Tooltip } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Quota, Tier } from '@/types';
-import { ANNUAL_BILLING_MONTHS, resolveMonthlyPrice } from '@/utils/billing';
 import { cn } from '@/utils/helper';
 import {
+  ANNUAL_BILLING_MONTHS,
   canPurchaseCheckUpdateAddon,
   formatDiscount,
   formatExpireDate,
@@ -21,6 +21,7 @@ import {
   type OrderQuotes,
   purchase,
   purchaseCheckUpdateAddon,
+  resolveMonthlyPrice,
   type useOrderBillingConfig,
 } from './billing';
 

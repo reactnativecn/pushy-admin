@@ -1,4 +1,4 @@
-import { DownOutlined, JavaScriptOutlined } from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Modal, Spin } from 'antd';
 import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -213,30 +213,5 @@ export const DepsModal = ({
         )}
       </div>
     </Modal>
-  );
-};
-
-export const DepsTable = ({
-  deps,
-  name,
-}: {
-  deps?: Record<string, string>;
-  name?: string;
-}) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <Button
-        type="link"
-        icon={<JavaScriptOutlined />}
-        onClick={() => setOpen(true)}
-      />
-      <DepsModal
-        open={open}
-        onClose={() => setOpen(false)}
-        deps={deps}
-        name={name}
-      />
-    </>
   );
 };

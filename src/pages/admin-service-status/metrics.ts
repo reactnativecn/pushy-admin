@@ -5,7 +5,7 @@ import type {
 } from '@/services/api';
 
 export const API_5XX_EVENT_PAGE_SIZE = 20;
-export const DEFAULT_DURATION_BUCKETS_MS = [
+const DEFAULT_DURATION_BUCKETS_MS = [
   10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000,
 ];
 

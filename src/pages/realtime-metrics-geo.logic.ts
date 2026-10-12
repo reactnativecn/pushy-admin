@@ -16,7 +16,7 @@ export interface AppGeoResponse {
 
 // 一次拉满 30 天，切换天数只在前端重新求和。
 export const GEO_FETCH_DAYS = 30;
-export const GEO_TOP_LIMIT = 12;
+const GEO_TOP_LIMIT = 12;
 
 // 服务端解析不到地区时写入的字面量（normalizeCountry），界面上单独翻译。
 export const UNKNOWN_REGION = '未知';

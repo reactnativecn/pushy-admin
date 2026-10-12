@@ -1,15 +1,4 @@
 {
-  "notice": {
-    "v8_deprecation_title": "Notice: react-native-update will drop support for versions below v8",
-    "v8_deprecation_p1_before": "Starting ",
-    "v8_deprecation_date": "August 10, 2025",
-    "v8_deprecation_p1_after": ", native and OTA packages below v8 can no longer be uploaded. Please upgrade to v8 or later as soon as possible. Already-uploaded versions are unaffected.",
-    "v8_deprecation_p2": "Major version upgrades require rebuilding the native package — please test thoroughly.",
-    "v8_deprecation_p3": "Code for v5–v9 is largely compatible; v10 is not compatible with earlier versions.",
-    "v8_deprecation_p4": "For upgrade-related technical questions, please ask in the QQ group 729013783.",
-    "ok": "Got it",
-    "dont_show_again": "Don't show again"
-  },
   "login": {
     "slogan": "Lightning-fast OTA Framework for React Native",
     "email_placeholder": "Email",
@@ -52,7 +41,8 @@
   "activate": {
     "activating": "Activating your account...",
     "success": "Activation successful",
-    "go_login": "Log in"
+    "go_login": "Log in",
+    "link_invalid": "This activation link is invalid. Please open the link from your email again."
   },
   "inactivated": {
     "email_sent": "Email sent successfully, please check your inbox",
@@ -87,18 +77,13 @@
     "upgrade_purchase": "Upgrade & Purchase",
     "upgrade_hint_free": "Select a target plan and billing duration to activate service.",
     "upgrade_hint_paid": "Price difference is calculated by the backend based on remaining validity.",
-    "purchase_after_pay": "Service starts from payment date",
     "monthly_pay": "Monthly",
     "annual_pay": "Annual",
     "annual_pay_tab": "Annual (Discounted, free Token)",
     "per_month_unit": "/ mo",
     "per_year_unit": "/ yr",
-    "duration_slider_hint": "Slide to select duration:",
-    "month_short": " mo",
     "purchase_monthly_desc": "Effective immediately upon payment, billed monthly",
     "purchase_annual_desc": "Effective immediately upon payment, billed annually",
-    "proration": "Prorated",
-    "days_unit": "days",
     "check_quota_daily": "Daily check quota",
     "app_count": "Apps",
     "native_pkg_count": "Native packages",
@@ -427,7 +412,6 @@
     "package_prefix": "Package:",
     "bundle": "Bundle",
     "package": "Package",
-    "checks_suffix": " checks",
     "time": "Time",
     "select_app": "Select an app",
     "title": "Analytics",
@@ -907,7 +891,6 @@
     "cancel": "Cancel",
     "save": "Save",
     "form_name": "Name",
-    "form_app_key": "App Key",
     "form_platform": "Platform",
     "form_user_id": "User ID",
     "form_download_url": "Download URL",
@@ -1092,9 +1075,7 @@
     "section_unknown_error": "Unknown render error",
     "retry_section": "Retry section",
     "chart_error": "Chart failed to render",
-    "line_chart_error": "Line chart failed to render",
-    "pie_chart_error": "Pie chart failed to render",
-    "dual_axes_chart_error": "Dual-axis chart failed to render"
+    "line_chart_error": "Line chart failed to render"
   },
   "daily_check_quota": {
     "tier": "Plan:",
@@ -1105,24 +1086,10 @@
     "checks": " checks",
     "over_quota": "Exceeded:",
     "avg_remaining": "7-day avg remaining:",
-    "quota_not_available": "Today's check quota data is not yet available. The quota is shared by all apps and used when clients check for OTA updates.",
     "quota_exhausted": "Today's check quota is exhausted. Upgrade your plan or wait for the daily reset.",
     "quota_exceeded": "Today's check quota exceeded by {{count}}. Client checks may return empty data.",
-    "quota_low": "Today's check quota has {{count}} remaining, below {{percent}}%. Watch check frequency.",
-    "quota_healthy": "Today's check quota is healthy.",
-    "title": "Daily Check Quota",
-    "description": "Used when clients check for OTA updates. Shared across all apps, resets daily.",
     "status_exhausted": "Exhausted",
-    "status_low": "Low",
-    "status_healthy": "Healthy",
-    "status_exceeded": "Exceeded",
-    "remaining_label": "Remaining Today",
-    "daily_limit": "Daily Limit",
-    "status_label": "Status",
-    "exceeded_info": "Exceeded by {{count}}",
-    "percent_remaining": "{{percent}}% remaining",
-    "hint": "Hover over the progress bar to see plan details, expiry, and 7-day average.",
-    "no_data": "None"
+    "status_exceeded": "Exceeded"
   },
   "footer": {
     "copyright": "React Native Chinese Community © {{year}} Wuhan Qingluo Network Technology Co., Ltd."
@@ -1143,7 +1110,6 @@
     "qr_deep_link_invalid": "Deep Link format is invalid, QR code is still plain JSON",
     "qr_no_deep_link": "Without Deep Link, QR code content is plain JSON",
     "use_deep_link": "Use Deep Link",
-    "deep_link_placeholder": "e.g. pushy://",
     "deep_link_not_url": "This is not a URL. Enter the app's custom scheme, e.g. pushy://",
     "deep_link_format": "Enter only the scheme prefix in format scheme://, no paths or params",
     "deep_link_scheme": "Scheme must start with a letter and contain only letters, numbers, +, -, .",
@@ -1181,7 +1147,6 @@
   "commit": {
     "title": "Recent Commit",
     "description": "Requires cli v1.42.0+ to upload, and git-managed code to view commit history",
-    "title_with_commit": "Recent Commit",
     "author": "Author:",
     "time": "Time:",
     "summary": "Summary:"
@@ -1255,30 +1220,18 @@
   },
   "setting_modal": {
     "app_id": "App ID",
-    "app_key": "App Key",
-    "app_name": "App Name",
-    "download_url": "Native Package Download URL (used when the installed native package is expired)",
     "hot_updates": "Enable Hot Updates",
     "enabled": "Enabled",
     "paused": "Paused",
-    "ignore_timestamp": "Ignore timestamp / bundle hash check",
     "disabled": "Disabled",
-    "delete_app": "Delete App",
-    "delete_confirm": "This app cannot be recovered after deletion.",
-    "delete_ok": "Delete App",
-    "delete_button": "Delete",
-    "delete_title": "Confirm App Deletion",
-    "delete_desc": "This action cannot be undone! Deleting this app will permanently purge all package versions, dependencies, and configuration history.",
-    "delete_permanent": "Permanently Delete App"
+    "delete_confirm": "This app cannot be recovered after deletion."
   },
   "common": {
     "cancel": "Cancel",
     "delete": "Delete",
-    "save": "Save",
     "edit": "Edit",
     "yes": "Yes",
     "no": "No",
-    "loading": "Loading...",
     "copied": "Copied",
     "none": "None",
     "search": "Search",
@@ -1298,8 +1251,7 @@
   },
   "language": {
     "switch": "Language",
-    "zh": "中文",
-    "en": "English"
+    "zh": "中文"
   },
   "workspace": {
     "own_account": "My Account",
@@ -1365,7 +1317,6 @@
     "range_3d": "Last 3 days",
     "range_7d": "Last 7 days",
     "sdk_requirement_title": "Health data requires SDK v10.47.0+",
-    "sdk_requirement_description": "v10.47.0 is the first SDK release that reports OTA lifecycle events. Devices on earlier versions are excluded from startup success, download failure, and rollback rates.",
     "window_hint": "Realtime data is kept for 7 days",
     "no_data": "No data",
     "error_title": "JavaScript error issues",
@@ -1530,7 +1481,6 @@
     "quota_kind_usage_drop": "Usage drop",
     "quota_kind_usage_spike": "Usage spike",
     "quota_col_user": "User",
-    "quota_col_tier": "Tier",
     "quota_col_usage": "Yesterday / quota",
     "quota_col_trend": "7d avg (recent/prev)",
     "vh_title": "Version health (7 days, all apps)",

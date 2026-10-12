@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { login } from '@/services/auth';
 import { ReactComponent as Logo } from '../assets/logo.svg';
 
-export const Login = () => {
+const Login = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');

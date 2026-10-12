@@ -53,5 +53,3 @@ export default function SendEmail() {
     </Form>
   );
 }
-
-export const Component = SendEmail;

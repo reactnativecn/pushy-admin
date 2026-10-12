@@ -11,7 +11,7 @@ const body = {
   '3': <Success />,
 };
 
-export const ResetPassword = () => {
+const ResetPassword = () => {
   const { t } = useTranslation();
   const { step = '0' } = useParams() as { step?: keyof typeof body };
   return (

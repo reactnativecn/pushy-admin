@@ -7,7 +7,7 @@ import { rootRouterPath } from '@/router';
 import { api } from '@/services/api';
 import { activateKeys } from '@/utils/query-keys';
 
-export const Activate = () => {
+const Activate = () => {
   const { t } = useTranslation();
   const { search } = useLocation();
   const token = new URLSearchParams(search).get('code') || '';
@@ -16,6 +16,9 @@ export const Activate = () => {
     queryFn: () => api.activate({ token }),
     enabled: !!token,
   });
+  if (!token) {
+    return <Result status="error" title={t('activate.link_invalid')} />;
+  }
   if (error) {
     return <Result status="error" title={error.message} />;
   }

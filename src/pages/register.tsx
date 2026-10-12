@@ -10,7 +10,7 @@ import { ReactComponent as Logo } from '../assets/logo.svg';
 import { rootRouterPath, router } from '../router';
 import { isPasswordValid } from '../utils/helper';
 
-export const Register = () => {
+const Register = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState<boolean>(false);
 

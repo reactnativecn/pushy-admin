@@ -52,7 +52,7 @@ export const parseInsightView = (value: string | null): InsightView =>
 export const beijingToday = (now: number = Date.now()): string =>
   new Date(now + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export const validCount = (value: unknown): value is number =>
+const validCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0;
 
 const countOf = (value: unknown): number => (validCount(value) ? value : 0);
@@ -67,7 +67,7 @@ export const observationCount = (
 
 /** A legacy zero UUID count may mean missing/expired collection, not zero
  * devices. An explicit observed zero is valid and participates in the mean. */
-export const deviceObservationCount = (
+const deviceObservationCount = (
   value: number | null | undefined,
   status?: ObservationStatus,
 ): number | null =>
@@ -143,12 +143,9 @@ export interface TrafficSummary {
   peakDau: number | null;
   averageDau: number | null;
   hit: Record<HitOutcome, number>;
-  refusedPercent: number;
-  updatePercent: number;
   /** 最近 7 天各自的 24 小时分布，按日期升序；不跨天相加。 */
   hourlyDays: HourlyDay[];
   ipVersion: RankedItem[];
-  hosts: RankedItem[];
   carriers: RankedItem[];
   /** 平台（os 标签的第一个词）与系统版本（完整 os 标签）。 */
   platforms: RankedItem[];
@@ -258,7 +255,6 @@ export const summarizeTraffic = (
   const hit = emptyHit();
   const hourlyDays: HourlyDay[] = [];
   const ipVersion: Record<string, number> = {};
-  const hosts: Record<string, number> = {};
   const carriers: Record<string, number> = {};
   const platforms: Record<string, number> = {};
   const osVersions: Record<string, number> = {};
@@ -308,7 +304,6 @@ export const summarizeTraffic = (
     });
     hourlyDays.push({ date: day.date, hourly });
     addCounts(ipVersion, day.ipVersion);
-    addCounts(hosts, day.hosts);
     addCounts(carriers, day.carriers);
     if (day.os) hasClientInfo = true;
     for (const [label, count] of Object.entries(day.os ?? {})) {
@@ -394,13 +389,10 @@ export const summarizeTraffic = (
     averageDau: dauSampleDays > 0 ? completedDau / dauSampleDays : null,
     peakDau,
     hit,
-    refusedPercent: percentOf(hit.blocked + hit.unknown_package, requests),
-    updatePercent: percentOf(hit.hdiff + hit.pdiff + hit.full, requests),
     hourlyDays: hourlyDays
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(-HOURLY_DAYS),
     ipVersion: rankCounts(ipVersion),
-    hosts: rankCounts(hosts),
     carriers: rankCounts(carriers),
     platforms: rankCounts(platforms),
     osVersions: rankCounts(osVersions),
@@ -446,7 +438,6 @@ export const servedTotal = (served: ServedCounts | undefined) =>
 
 // Legacy enum identifiers for shared key mappings; rollback reports ONLY.
 export type FunnelHealth = 'healthy' | 'warning' | 'critical' | null;
-export { MIN_EVENT_SAMPLES };
 
 export interface FunnelRates {
   downloadSuccessRate: number | null;
@@ -780,7 +771,6 @@ export interface BreakdownSummary {
   totalDays: number;
   availableDays: number;
   unavailableDays: number;
-  legacyDays: number;
   failures: number;
   reasons: ReasonRow[];
   os: DimensionRow[];
@@ -806,9 +796,7 @@ export const summarizeBreakdown = (
   let failures = 0;
   let availableDays = 0;
   let unavailableDays = 0;
-  let legacyDays = 0;
   for (const day of days ?? []) {
-    if (day.status === undefined) legacyDays += 1;
     const legacyHasReports = [
       ...(day.byReason ?? []),
       ...(day.byOS ?? []),
@@ -880,7 +868,6 @@ export const summarizeBreakdown = (
     totalDays: days?.length ?? 0,
     availableDays,
     unavailableDays,
-    legacyDays,
     failures,
     reasons: Array.from(reasons, ([reason, entry]) => ({
       reason,
@@ -901,7 +888,7 @@ export const summarizeBreakdown = (
   };
 };
 
-export const KNOWN_FAILURE_REASONS = [
+const KNOWN_FAILURE_REASONS = [
   'empty',
   'crc_mismatch',
   'patch_apply',
@@ -923,7 +910,7 @@ export const parseFailureReason = (
     ? { kind: 'known', reason: reason as KnownFailureReason }
     : { kind: 'other' };
 
-export const KNOWN_CARRIERS = [
+const KNOWN_CARRIERS = [
   '电信',
   '联通',
   '移动',

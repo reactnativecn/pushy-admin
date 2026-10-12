@@ -9,7 +9,7 @@ const LOCAL_HOSTNAMES = new Set([
   '::1',
   '[::1]',
 ]);
-export const customBaseUrlChangeEvent = 'pushy-custom-base-url-change';
+const customBaseUrlChangeEvent = 'pushy-custom-base-url-change';
 
 /**
  * Canonicalize a custom API base URL and reject values that would either be

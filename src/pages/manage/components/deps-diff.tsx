@@ -19,16 +19,5 @@ export const DepsDiff = ({
     return null;
   }
   const diff = differ.diff(oldDeps, newDeps);
-  return (
-    <Viewer
-      diff={diff} // required
-      // indent={4}                 // default `2`
-      // lineNumbers={true}         // default `false`
-      highlightInlineDiff={true} // default `false`
-      // inlineDiffOptions={{
-      //   mode: "word", // default `"char"`, but `"word"` may be more useful
-      //   wordSeparator: ".", // default `""`, but `" "` is more useful for sentences
-      // }}
-    />
-  );
+  return <Viewer diff={diff} highlightInlineDiff />;
 };
