@@ -11,9 +11,10 @@ import {
 import { useAppSettingsModal } from '@/components/app-settings-modal';
 import { showCreateAppModal } from '@/components/create-app-modal';
 import PlatformIcon, { PLATFORM_LABELS } from '@/components/platform-icon';
-import { rootRouterPath, router } from '@/router';
+import { rootRouterPath } from '@/router';
 import { cn, filterAppsByQuery, rememberRecentApp } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
+import { openManageApp } from '@/utils/open-manage-app';
 
 const { Title } = Typography;
 
@@ -47,10 +48,7 @@ export const Component = () => {
 
   const createApp = () => {
     showCreateAppModal({
-      onCreated: (id) => {
-        rememberRecentApp(id);
-        return router.navigate(rootRouterPath.versions(String(id)));
-      },
+      onCreated: openManageApp,
     });
   };
 
@@ -130,10 +128,7 @@ export const Component = () => {
     <AppDrawerLayout
       apps={apps}
       isLoading={isLoading}
-      onSelect={(app) => {
-        rememberRecentApp(app.id);
-        router.navigate(rootRouterPath.versions(String(app.id)));
-      }}
+      onSelect={(app) => openManageApp(app.id)}
       onSettings={canManageApp ? openAppSettings : undefined}
     >
       {contextHolder}

@@ -1,9 +1,11 @@
-import type { Binding, Package } from '@/types';
+import type { Binding, Package, Version } from '@/types';
 
 /** 管理页上下文里的纯推导:哪些原生包还没绑过任何热更版本 */
 
 // 旧数据把版本直接挂在 package.versions 上,没有 binding 记录也算已绑定
-export function hasLegacyVersionBinding(pkg: Package) {
+export function hasLegacyVersionBinding(
+  pkg: Package,
+): pkg is Package & { versions: Version } {
   return pkg.versions !== null && pkg.versions !== undefined;
 }
 
