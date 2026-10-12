@@ -3,9 +3,12 @@ import { md5 } from 'hash-wasm';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
-import { rootRouterPath, router } from '../../../router';
-import { isPasswordValid } from '../../../utils/helper';
+import {
+  confirmPasswordRule,
+  passwordFormatRule,
+} from '@/utils/password-rules';
 
 export default function SetPassword() {
   const { t } = useTranslation();
@@ -33,18 +36,7 @@ export default function SetPassword() {
       <Form.Item
         hasFeedback
         name="newPwd"
-        rules={[
-          () => ({
-            validator(_, value: string) {
-              if (value && !isPasswordValid(value)) {
-                return Promise.reject(
-                  Error(t('reset_password.password_rules')),
-                );
-              }
-              return Promise.resolve();
-            },
-          }),
-        ]}
+        rules={[passwordFormatRule(t('reset_password.password_rules'))]}
       >
         <Input
           type="password"
@@ -57,15 +49,10 @@ export default function SetPassword() {
         hasFeedback
         name="pwd2"
         rules={[
-          ({ getFieldValue }) => ({
-            validator(_, value: string) {
-              if (getFieldValue('newPwd') !== value) {
-                return Promise.reject(
-                  Error(t('reset_password.password_mismatch')),
-                );
-              }
-              return Promise.resolve();
-            },
+          confirmPasswordRule({
+            field: 'newPwd',
+            message: t('reset_password.password_mismatch'),
+            allowEmpty: false,
           }),
         ]}
       >

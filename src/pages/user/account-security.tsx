@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import { setToken } from '@/services/request';
-import { isPasswordValid } from '@/utils/helper';
+import {
+  confirmPasswordRule,
+  passwordFormatRule,
+} from '@/utils/password-rules';
 
 interface EmailChangeValues {
   newEmail: string;
@@ -154,12 +157,7 @@ export function PasswordChangeButton() {
             name="newPassword"
             rules={[
               { required: true, message: t('user.new_password_required') },
-              {
-                validator: (_, value: string) =>
-                  !value || isPasswordValid(value)
-                    ? Promise.resolve()
-                    : Promise.reject(Error(t('user.password_rules'))),
-              },
+              passwordFormatRule(t('user.password_rules')),
               ({ getFieldValue }) => ({
                 validator: (_, value: string) =>
                   value && value === getFieldValue('currentPassword')
@@ -176,11 +174,10 @@ export function PasswordChangeButton() {
             dependencies={['newPassword']}
             rules={[
               { required: true, message: t('user.confirm_password_required') },
-              ({ getFieldValue }) => ({
-                validator: (_, value: string) =>
-                  !value || value === getFieldValue('newPassword')
-                    ? Promise.resolve()
-                    : Promise.reject(Error(t('user.password_mismatch'))),
+              confirmPasswordRule({
+                field: 'newPassword',
+                message: t('user.password_mismatch'),
+                allowEmpty: true,
               }),
             ]}
           >

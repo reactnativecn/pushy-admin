@@ -1,37 +1,14 @@
-import { useMutation } from '@tanstack/react-query';
-import { Button, message, Result } from 'antd';
-import { useEffect } from 'react';
+import { Button, Result } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { activationEmailResendCooldownStorageKey } from '@/constants/local-storage';
-import { api } from '@/services/api';
-import { getUserEmail } from '@/services/auth';
-import { useLocalStorageCooldown } from '@/utils/hooks';
-import { rootRouterPath, router } from '../router';
+import { useResendActivationEmail } from '@/pages/auth/use-resend-activation-email';
 
 const Welcome = () => {
   const { t } = useTranslation();
-  useEffect(() => {
-    if (!getUserEmail()) {
-      router.navigate(rootRouterPath.login);
-    }
-  }, []);
-
-  const { isCoolingDown, remainingSeconds, startCooldown } =
-    useLocalStorageCooldown({
-      storageKey: activationEmailResendCooldownStorageKey,
-      durationMs: 60_000,
+  const { sendEmail, isPending, isCoolingDown, remainingSeconds } =
+    useResendActivationEmail({
+      sentMessage: t('welcome.email_sent'),
+      failedMessage: t('welcome.send_failed'),
     });
-
-  const { mutate: sendEmail, isPending } = useMutation({
-    mutationFn: () => api.sendEmail({ email: getUserEmail() }),
-    onSuccess: () => {
-      startCooldown();
-      message.info(t('welcome.email_sent'));
-    },
-    onError: () => {
-      message.error(t('welcome.send_failed'));
-    },
-  });
 
   return (
     <Result
@@ -49,7 +26,7 @@ const Welcome = () => {
       extra={
         <Button
           type="primary"
-          onClick={() => sendEmail()}
+          onClick={sendEmail}
           loading={isPending}
           disabled={isCoolingDown}
         >

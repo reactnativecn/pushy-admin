@@ -1,14 +1,16 @@
 import { Button, Checkbox, Form, Input, message, Row } from 'antd';
 import { md5 } from 'hash-wasm';
-import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { AuthFormShell } from '@/pages/auth/auth-form-shell';
+import { rootRouterPath, router } from '@/router';
 import { api } from '@/services/api';
 import { setUserEmail } from '@/services/auth';
-import { ReactComponent as Logo } from '../assets/logo.svg';
-import { rootRouterPath, router } from '../router';
-import { isPasswordValid } from '../utils/helper';
+import {
+  confirmPasswordRule,
+  passwordFormatRule,
+} from '@/utils/password-rules';
 
 const Register = () => {
   const { t } = useTranslation();
@@ -30,12 +32,8 @@ const Register = () => {
   }
 
   return (
-    <div style={style.body}>
-      <Form style={style.form} onFinish={(values) => submit(values)}>
-        <div style={style.logo}>
-          <Logo className="mx-auto" />
-          <div style={style.slogan}>{t('register.slogan')}</div>
-        </div>
+    <AuthFormShell slogan={t('register.slogan')}>
+      <Form onFinish={(values) => submit(values)}>
         <Form.Item name="name" hasFeedback>
           <Input
             placeholder={t('register.username_placeholder')}
@@ -55,15 +53,7 @@ const Register = () => {
           hasFeedback
           name="pwd"
           validateTrigger="onBlur"
-          rules={[
-            () => ({
-              async validator(_, value: string) {
-                if (value && !isPasswordValid(value)) {
-                  throw t('register.password_rules');
-                }
-              },
-            }),
-          ]}
+          rules={[passwordFormatRule(t('register.password_rules'))]}
         >
           <Input
             type="password"
@@ -78,12 +68,10 @@ const Register = () => {
           name="pwd2"
           validateTrigger="onBlur"
           rules={[
-            ({ getFieldValue }) => ({
-              async validator(_, value: string) {
-                if (getFieldValue('pwd') !== value) {
-                  throw t('register.password_mismatch');
-                }
-              },
+            confirmPasswordRule({
+              field: 'pwd',
+              message: t('register.password_mismatch'),
+              allowEmpty: false,
             }),
           ]}
         >
@@ -139,25 +127,8 @@ const Register = () => {
           </Row>
         </Form.Item>
       </Form>
-    </div>
+    </AuthFormShell>
   );
 };
 
 export const Component = Register;
-
-const style: Record<'body' | 'form' | 'logo' | 'slogan', CSSProperties> = {
-  body: { display: 'flex', flexDirection: 'column', height: '100%' },
-  form: {
-    width: '100%',
-    maxWidth: 360,
-    margin: 'auto',
-    padding: '16px 16px 0',
-    flex: 1,
-  },
-  logo: { textAlign: 'center', margin: '48px 0' },
-  slogan: {
-    marginTop: 16,
-    color: 'var(--ant-color-text-secondary)',
-    fontSize: 18,
-  },
-};

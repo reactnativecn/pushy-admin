@@ -1,37 +1,16 @@
-import { useMutation } from '@tanstack/react-query';
-import { Button, message, Result } from 'antd';
-import { useEffect } from 'react';
+import { Button, Result } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { activationEmailResendCooldownStorageKey } from '@/constants/local-storage';
-import { api } from '@/services/api';
-import { getUserEmail } from '@/services/auth';
-import { useLocalStorageCooldown } from '@/utils/hooks';
-import { rootRouterPath, router } from '../router';
+import { useResendActivationEmail } from '@/pages/auth/use-resend-activation-email';
+import { rootRouterPath } from '@/router';
 
 const Inactivated = () => {
   const { t } = useTranslation();
-  useEffect(() => {
-    if (!getUserEmail()) {
-      router.navigate(rootRouterPath.login);
-    }
-  }, []);
-
-  const { isCoolingDown, remainingSeconds, startCooldown } =
-    useLocalStorageCooldown({
-      storageKey: activationEmailResendCooldownStorageKey,
-      durationMs: 60_000,
+  const { sendEmail, isPending, isCoolingDown, remainingSeconds } =
+    useResendActivationEmail({
+      sentMessage: t('inactivated.email_sent'),
+      failedMessage: t('inactivated.send_failed'),
     });
 
-  const { mutate: sendEmail, isPending } = useMutation({
-    mutationFn: () => api.sendEmail({ email: getUserEmail() }),
-    onSuccess: () => {
-      startCooldown();
-      message.info(t('inactivated.email_sent'));
-    },
-    onError: () => {
-      message.error(t('inactivated.send_failed'));
-    },
-  });
   return (
     <Result
       title={t('inactivated.title')}
@@ -40,7 +19,7 @@ const Inactivated = () => {
         <Button
           key="resend"
           type="primary"
-          onClick={() => sendEmail()}
+          onClick={sendEmail}
           loading={isPending}
           disabled={isCoolingDown}
         >
