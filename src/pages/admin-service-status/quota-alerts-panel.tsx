@@ -1,12 +1,13 @@
 import { AlertOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Space, Table, Tag, Typography } from 'antd';
+import { Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { QUOTA_ALERT_KIND_LABEL_KEY } from '@/constants/i18n-keys';
 import { adminApi } from '@/services/admin-api';
 import { formatCount } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
+import { StatusSection } from './status-section';
 
 const { Text } = Typography;
 
@@ -26,9 +27,6 @@ export const QuotaAlertsPanel = () => {
   });
 
   const alerts = alertsQuery.data?.data?.alerts ?? [];
-  if (alertsQuery.isError || alerts.length === 0) {
-    return null;
-  }
 
   const columns: ColumnsType<QuotaAlert> = [
     {
@@ -72,14 +70,12 @@ export const QuotaAlertsPanel = () => {
   ];
 
   return (
-    <Card
-      className="mt-4"
-      title={
-        <Space>
-          <AlertOutlined />
-          {t('user_analytics.quota_title')}
-        </Space>
-      }
+    // 不传 loading：没有告警（含加载中）时整块不出现
+    <StatusSection
+      empty={alerts.length === 0}
+      error={alertsQuery.isError}
+      icon={<AlertOutlined />}
+      title={t('user_analytics.quota_title')}
     >
       <Table
         columns={columns}
@@ -88,6 +84,6 @@ export const QuotaAlertsPanel = () => {
         rowKey={(row) => `${row.userId}-${row.kind}`}
         size="small"
       />
-    </Card>
+    </StatusSection>
   );
 };

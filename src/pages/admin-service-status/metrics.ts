@@ -368,6 +368,45 @@ export function buildEndpointRows(
   return [...totals.values()].sort((left, right) => right.total - left.total);
 }
 
+export type ServiceCounters = {
+  totalRequests: number;
+  totalErrors: number;
+  l1Hits: number;
+  redisHits: number;
+  staleHits: number;
+  handlerMisses: number;
+  redisFallbacks: number;
+  redisShortCircuits: number;
+  redisCircuitOpens: number;
+  /** 缓存命中率（0~1）；没有缓存访问时为 0 */
+  cacheHitRate: number;
+};
+
+/** 节点快照里的计数器汇总（原始数值），卡片摘要和节点详情共用。 */
+export function computeServiceCounters(
+  snapshot?: InternalMetricsResponse,
+): ServiceCounters {
+  const counters = snapshot?.counters;
+  const l1Hits = sumCounters(counters, 'cache.l1.hit');
+  const redisHits = sumCounters(counters, 'cache.redis.hit');
+  const staleHits = sumCounters(counters, 'cache.stale.hit');
+  const handlerMisses = sumCounters(counters, 'cache.handler.miss');
+  const cacheServed = l1Hits + redisHits + staleHits;
+  const cacheTotal = cacheServed + handlerMisses;
+  return {
+    totalRequests: sumCounters(counters, 'api.request.total'),
+    totalErrors: sumCounters(counters, 'api.request.error'),
+    l1Hits,
+    redisHits,
+    staleHits,
+    handlerMisses,
+    redisFallbacks: sumCounters(counters, 'redis.operation.fallback'),
+    redisShortCircuits: sumCounters(counters, 'redis.operation.short_circuit'),
+    redisCircuitOpens: sumCounters(counters, 'redis.circuit.open'),
+    cacheHitRate: cacheTotal > 0 ? cacheServed / cacheTotal : 0,
+  };
+}
+
 export function buildServiceStatusSummary(
   snapshot?: InternalMetricsResponse,
 ): ServiceStatusSummary {
@@ -379,20 +418,13 @@ export function buildServiceStatusSummary(
     };
   }
 
-  const totalRequests = sumCounters(snapshot.counters, 'api.request.total');
-  const totalErrors = sumCounters(snapshot.counters, 'api.request.error');
+  const { totalRequests, totalErrors, cacheHitRate } =
+    computeServiceCounters(snapshot);
   const apiDuration = aggregateDurations(
     snapshot.durations,
     snapshot.config,
     (entry) => entry.name === 'api.request.duration',
   );
-  const l1Hits = sumCounters(snapshot.counters, 'cache.l1.hit');
-  const redisHits = sumCounters(snapshot.counters, 'cache.redis.hit');
-  const staleHits = sumCounters(snapshot.counters, 'cache.stale.hit');
-  const handlerMisses = sumCounters(snapshot.counters, 'cache.handler.miss');
-  const cacheServed = l1Hits + redisHits + staleHits;
-  const cacheTotal = cacheServed + handlerMisses;
-  const cacheHitRate = cacheTotal > 0 ? cacheServed / cacheTotal : 0;
 
   return {
     delayText: formatMs(getAverageMs(apiDuration)),

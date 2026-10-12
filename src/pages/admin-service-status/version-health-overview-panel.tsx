@@ -1,6 +1,6 @@
 import { HeartOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Space, Table, Tag, Typography } from 'antd';
+import { Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -12,6 +12,7 @@ import {
 import { adminApi } from '@/services/admin-api';
 import { formatCount, formatPercent } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
+import { StatusSection } from './status-section';
 
 const { Text } = Typography;
 
@@ -38,12 +39,6 @@ export const VersionHealthOverviewPanel = () => {
   });
 
   const rows = overviewQuery.data?.data ?? [];
-  if (
-    overviewQuery.isError ||
-    (!overviewQuery.isLoading && rows.length === 0)
-  ) {
-    return null;
-  }
 
   const columns: ColumnsType<VersionHealthOverviewRow> = [
     {
@@ -107,15 +102,12 @@ export const VersionHealthOverviewPanel = () => {
   ];
 
   return (
-    <Card
-      className="mt-4"
+    <StatusSection
+      empty={rows.length === 0}
+      error={overviewQuery.isError}
+      icon={<HeartOutlined />}
       loading={overviewQuery.isLoading}
-      title={
-        <Space>
-          <HeartOutlined />
-          {t('user_analytics.vh_title')}
-        </Space>
-      }
+      title={t('user_analytics.vh_title')}
     >
       <Table
         columns={columns}
@@ -125,6 +117,6 @@ export const VersionHealthOverviewPanel = () => {
         rowKey={(row) => `${row.appKey}-${row.hash}-${row.packageVersion}`}
         size="small"
       />
-    </Card>
+    </StatusSection>
   );
 };

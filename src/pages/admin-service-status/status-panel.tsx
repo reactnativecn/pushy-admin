@@ -4,16 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import {
-  Button,
-  Card,
-  Empty,
-  Spin,
-  Statistic,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import { Button, Card, Empty, Spin, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +32,7 @@ import {
   buildEndpointRows,
   buildRedisSeries,
   buildRequestSeries,
+  computeServiceCounters,
   type EndpointRow,
   estimatePercentile,
   formatMs,
@@ -48,8 +40,8 @@ import {
   getCounterLabels,
   type SeriesPoint,
   type ServiceStatusTarget,
-  sumCounters,
 } from './metrics';
+import { StatCard } from './status-section';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -273,27 +265,17 @@ export function ServiceStatusPanel({
   );
   const endpointRows = useMemo(() => buildEndpointRows(snapshot), [snapshot]);
 
-  const totalRequests = sumCounters(snapshot?.counters, 'api.request.total');
-  const totalErrors = sumCounters(snapshot?.counters, 'api.request.error');
-  const l1Hits = sumCounters(snapshot?.counters, 'cache.l1.hit');
-  const redisHits = sumCounters(snapshot?.counters, 'cache.redis.hit');
-  const staleHits = sumCounters(snapshot?.counters, 'cache.stale.hit');
-  const handlerMisses = sumCounters(snapshot?.counters, 'cache.handler.miss');
-  const redisFallbacks = sumCounters(
-    snapshot?.counters,
-    'redis.operation.fallback',
-  );
-  const redisShortCircuits = sumCounters(
-    snapshot?.counters,
-    'redis.operation.short_circuit',
-  );
-  const redisCircuitOpens = sumCounters(
-    snapshot?.counters,
-    'redis.circuit.open',
-  );
-  const cacheServed = l1Hits + redisHits + staleHits;
-  const cacheTotal = cacheServed + handlerMisses;
-  const cacheHitRate = cacheTotal > 0 ? cacheServed / cacheTotal : 0;
+  const {
+    totalRequests,
+    totalErrors,
+    l1Hits,
+    redisHits,
+    staleHits,
+    redisFallbacks,
+    redisShortCircuits,
+    redisCircuitOpens,
+    cacheHitRate,
+  } = computeServiceCounters(snapshot);
   return (
     <>
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -345,49 +327,32 @@ export function ServiceStatusPanel({
 
       <Spin spinning={isFetching && !snapshot}>
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card>
-            <Statistic
-              title={t('admin_service_status.api_requests')}
-              value={formatCount(totalRequests)}
-            />
-            <Text type={totalErrors > 0 ? 'danger' : 'secondary'}>
-              5xx {formatCount(totalErrors)} /{' '}
-              {formatPercent(totalErrors / totalRequests, 2)}
-            </Text>
-          </Card>
-          <Card>
-            <Statistic
-              title={t('admin_service_status.api_latency')}
-              value={formatMs(getAverageMs(apiDuration))}
-            />
-            <Text type="secondary">
-              p95{' '}
-              {formatMs(
-                estimatePercentile(apiDuration, snapshot?.config, 0.95),
-              )}
-            </Text>
-          </Card>
-          <Card>
-            <Statistic
-              title={t('admin_service_status.cache_hit')}
-              value={formatPercent(cacheHitRate, 2)}
-            />
-            <Text type="secondary">
-              L1 {formatCount(l1Hits)} / Redis {formatCount(redisHits)} / Stale{' '}
-              {formatCount(staleHits)}
-            </Text>
-          </Card>
-          <Card>
-            <Statistic
-              title={t('admin_service_status.redis_degrade')}
-              value={formatCount(redisFallbacks + redisShortCircuits)}
-            />
-            <Text type={redisCircuitOpens > 0 ? 'warning' : 'secondary'}>
-              fallback {formatCount(redisFallbacks)} / short{' '}
-              {formatCount(redisShortCircuits)} / open{' '}
-              {formatCount(redisCircuitOpens)}
-            </Text>
-          </Card>
+          <StatCard
+            detail={`5xx ${formatCount(totalErrors)} / ${formatPercent(totalErrors / totalRequests, 2)}`}
+            detailType={totalErrors > 0 ? 'danger' : 'secondary'}
+            size="default"
+            title={t('admin_service_status.api_requests')}
+            value={formatCount(totalRequests)}
+          />
+          <StatCard
+            detail={`p95 ${formatMs(estimatePercentile(apiDuration, snapshot?.config, 0.95))}`}
+            size="default"
+            title={t('admin_service_status.api_latency')}
+            value={formatMs(getAverageMs(apiDuration))}
+          />
+          <StatCard
+            detail={`L1 ${formatCount(l1Hits)} / Redis ${formatCount(redisHits)} / Stale ${formatCount(staleHits)}`}
+            size="default"
+            title={t('admin_service_status.cache_hit')}
+            value={formatPercent(cacheHitRate, 2)}
+          />
+          <StatCard
+            detail={`fallback ${formatCount(redisFallbacks)} / short ${formatCount(redisShortCircuits)} / open ${formatCount(redisCircuitOpens)}`}
+            detailType={redisCircuitOpens > 0 ? 'warning' : 'secondary'}
+            size="default"
+            title={t('admin_service_status.redis_degrade')}
+            value={formatCount(redisFallbacks + redisShortCircuits)}
+          />
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">

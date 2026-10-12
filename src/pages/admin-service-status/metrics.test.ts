@@ -3,6 +3,7 @@ import {
   aggregateDurations,
   buildEndpointRows,
   buildServiceStatusSummary,
+  computeServiceCounters,
   estimatePercentile,
   formatMs,
   formatUptime,
@@ -174,6 +175,62 @@ describe('buildServiceStatusSummary', () => {
       delayText: '-',
       hitText: '-',
       requestText: '-',
+    });
+  });
+});
+
+describe('computeServiceCounters', () => {
+  it('returns zeros without a snapshot', () => {
+    const counters = computeServiceCounters(undefined);
+    expect(counters.totalRequests).toBe(0);
+    expect(counters.cacheHitRate).toBe(0);
+  });
+
+  it('sums counters and derives the cache hit rate', () => {
+    const counter = (name: string, value: number) => ({
+      labels: {},
+      name,
+      value,
+    });
+    const counters = computeServiceCounters({
+      config: { bucketCount: 0, bucketMs: 0, durationBucketsMs: [] },
+      counters: [
+        counter('api.request.total', 100),
+        counter('api.request.total', 20),
+        counter('api.request.error', 3),
+        counter('cache.l1.hit', 50),
+        counter('cache.redis.hit', 20),
+        counter('cache.stale.hit', 5),
+        counter('cache.handler.miss', 25),
+        counter('redis.operation.fallback', 2),
+        counter('redis.operation.short_circuit', 1),
+        counter('redis.circuit.open', 4),
+      ],
+      durations: [],
+      generatedAt: '',
+      process: {
+        memory: {
+          arrayBuffers: 0,
+          external: 0,
+          heapTotal: 0,
+          heapUsed: 0,
+          rss: 0,
+        },
+        pid: 1,
+        uptimeSeconds: 0,
+      },
+    });
+    expect(counters).toEqual({
+      cacheHitRate: 0.75,
+      handlerMisses: 25,
+      l1Hits: 50,
+      redisCircuitOpens: 4,
+      redisFallbacks: 2,
+      redisHits: 20,
+      redisShortCircuits: 1,
+      staleHits: 5,
+      totalErrors: 3,
+      totalRequests: 120,
     });
   });
 });

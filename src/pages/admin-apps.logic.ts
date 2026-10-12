@@ -1,4 +1,4 @@
-import { parseOptionalPositiveInt } from '@/utils/table-state';
+import { parseOptionalPositiveInt, pickAllowed } from '@/utils/table-state';
 
 /** 应用管理页的纯逻辑:表格 URL 配置与筛选值归一化 */
 
@@ -27,12 +27,6 @@ export const normalizeFilter = (key: string, value: string | undefined) => {
   }
   const userId = parseOptionalPositiveInt(value ?? null);
   return userId ? String(userId) : undefined;
-};
-
-// URL 里的枚举值可能被手改,不在白名单内的当作没筛
-const pickAllowed = (value: string | null, allowed: readonly string[]) => {
-  const param = value ?? undefined;
-  return param && allowed.includes(param) ? param : undefined;
 };
 
 export const parsePlatformFilter = (value: string | null) =>

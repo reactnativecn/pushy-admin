@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import type { MemberRole, Workspace } from '@/types';
-import { canManageMember, getMemberPermissions } from './members.logic';
+import {
+  canManageMember,
+  getMemberPermissions,
+  getRoleOptions,
+} from './members.logic';
 
 const makeWorkspace = (
   accountId: number,
@@ -79,5 +83,22 @@ describe('canManageMember', () => {
 
   test('non-managers cannot manage at all', () => {
     expect(canManageMember('viewer', viewer)).toBe(false);
+  });
+});
+
+describe('getRoleOptions', () => {
+  test('lists every assignable role with the given label', () => {
+    expect(getRoleOptions(true, (role) => `#${role}`)).toEqual([
+      { label: '#admin', value: 'admin', disabled: false },
+      { label: '#developer', value: 'developer', disabled: false },
+      { label: '#viewer', value: 'viewer', disabled: false },
+    ]);
+  });
+
+  test('only the owner can appoint admins', () => {
+    const options = getRoleOptions(false, (role) => role);
+    expect(options.filter((option) => option.disabled)).toEqual([
+      { label: 'admin', value: 'admin', disabled: true },
+    ]);
   });
 });

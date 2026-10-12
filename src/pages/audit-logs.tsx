@@ -22,7 +22,6 @@ import {
 import type { ColumnType } from 'antd/lib/table';
 import type { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { UAParser } from 'ua-parser-js';
 import type { AuditLog } from '@/types';
 import { downloadCsv } from '@/utils/csv';
 import dayjs from '@/utils/dayjs';
@@ -35,9 +34,8 @@ import {
   useUrlTableState,
 } from '@/utils/table-state';
 import {
+  type AuditFilters,
   buildAuditCsvRow,
-  buildSearchText,
-  getActionKey,
   getActionLabel,
   getActionMap,
   getActionOptions,
@@ -49,12 +47,10 @@ import {
   getDateRangePatch,
   getPreviewData,
   getStatusFilterOptions,
+  getUserAgentSummary,
   isAuditDateDisabled,
   isMemberAction,
-  matchesActor,
-  matchesApiToken,
-  matchesDateRange,
-  matchesStatusFilter,
+  matchesAuditFilters,
   parseDateRange,
   parseStatusFilter,
 } from './audit-logs.logic';
@@ -62,21 +58,14 @@ import {
 const { RangePicker } = DatePicker;
 const { Paragraph, Text, Title } = Typography;
 
-export const getUA = (userAgent: string) => {
-  if (userAgent.startsWith('react-native-update-cli')) {
-    return <div>cli {userAgent.split('/')[1]}</div>;
-  }
-
-  const { browser, os } = UAParser(userAgent);
+// CLI 只显示一行版本；浏览器分浏览器 / 系统两行
+const UserAgentLines = ({ userAgent }: { userAgent: string }) => {
+  const { browser, os } = getUserAgentSummary(userAgent);
   return (
-    <>
-      <div>
-        {browser.name} {browser.version}
-      </div>
-      <div>
-        {os.name} {os.version}
-      </div>
-    </>
+    <div>
+      <div>{browser}</div>
+      {os !== '-' && <div>{os}</div>}
+    </div>
   );
 };
 
@@ -93,7 +82,6 @@ const AuditLogs = () => {
     handleTableChange,
   } = tableState;
 
-  const query = searchQuery.toLowerCase();
   const selectedAction = searchParams.get('action') ?? undefined;
   const selectedApiToken = searchParams.get('apiKey') ?? undefined;
   const selectedActor = searchParams.get('actor') ?? undefined;
@@ -114,32 +102,17 @@ const AuditLogs = () => {
   const apiTokenOptions = getApiTokenOptions(auditLogs, selectedApiToken);
   const actorOptions = getActorOptions(auditLogs, selectedActor);
 
-  const filteredAuditLogs = auditLogs.filter((log) => {
-    if (
-      selectedAction &&
-      getActionKey(log.method, log.path) !== selectedAction
-    ) {
-      return false;
-    }
-
-    if (!matchesStatusFilter(log.statusCode, statusFilter)) {
-      return false;
-    }
-
-    if (!matchesApiToken(log, selectedApiToken)) {
-      return false;
-    }
-
-    if (!matchesActor(log, selectedActor)) {
-      return false;
-    }
-
-    if (query && !buildSearchText(actionMap, log).includes(query)) {
-      return false;
-    }
-
-    return matchesDateRange(log.createdAt, dateRange);
-  });
+  const filters: AuditFilters = {
+    action: selectedAction,
+    status: statusFilter,
+    apiToken: selectedApiToken,
+    actor: selectedActor,
+    query: searchQuery.toLowerCase(),
+    dateRange,
+  };
+  const filteredAuditLogs = auditLogs.filter((log) =>
+    matchesAuditFilters(log, filters, actionMap),
+  );
 
   usePageClamp(
     tableState,
@@ -309,7 +282,7 @@ const AuditLogs = () => {
 
         return (
           <div>
-            {userAgent && <div>{getUA(userAgent)}</div>}
+            {userAgent && <UserAgentLines userAgent={userAgent} />}
             {record.ip && (
               <div className="mt-1 text-xs text-gray-500">
                 {t('audit_logs.ip_prefix')} {record.ip}

@@ -15,6 +15,7 @@ import {
   formatPercent,
 } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
+import { StatusSection } from './status-section';
 import {
   buildTableRows,
   type StorageTableRow,
@@ -48,10 +49,6 @@ export const StorageUsagePanel = () => {
     retry: false,
   });
 
-  // 旧版服务端没有这个接口时整块隐藏，与其他运维面板一致。
-  if (usageQuery.isError) {
-    return null;
-  }
   const usage = usageQuery.data;
   const database = usage?.database;
   const oss = usage?.oss;
@@ -121,8 +118,9 @@ export const StorageUsagePanel = () => {
   ];
 
   return (
-    <Card
-      className="mt-4"
+    // 旧版服务端没有这个接口时整块隐藏，与其他运维面板一致。
+    <StatusSection
+      error={usageQuery.isError}
       extra={
         usage && (
           <Text type="secondary">
@@ -132,13 +130,9 @@ export const StorageUsagePanel = () => {
           </Text>
         )
       }
+      icon={<DatabaseOutlined />}
       loading={usageQuery.isLoading}
-      title={
-        <Space>
-          <DatabaseOutlined />
-          {t('storage_usage.title')}
-        </Space>
-      }
+      title={t('storage_usage.title')}
     >
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card
@@ -240,6 +234,6 @@ export const StorageUsagePanel = () => {
       <Text className="mt-2 block text-xs" type="secondary">
         {t('storage_usage.note')}
       </Text>
-    </Card>
+    </StatusSection>
   );
 };

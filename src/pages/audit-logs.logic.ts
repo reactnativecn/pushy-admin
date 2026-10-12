@@ -265,6 +265,46 @@ export const matchesDateRange = (
   return true;
 };
 
+export type AuditFilters = {
+  /** getActionKey 得到的操作 key */
+  action?: string;
+  status: AuditStatusFilter;
+  /** API Key 后缀 */
+  apiToken?: string;
+  /** 操作人 id */
+  actor?: string;
+  /** 关键字，调用方需先转成小写 */
+  query: string;
+  dateRange: AuditDateRange;
+};
+
+/** 列表页的本地筛选：所有条件同时满足才保留 */
+export const matchesAuditFilters = (
+  log: AuditLog,
+  filters: AuditFilters,
+  actionMap: ActionMap,
+) => {
+  if (filters.action && getActionKey(log.method, log.path) !== filters.action) {
+    return false;
+  }
+  if (!matchesStatusFilter(log.statusCode, filters.status)) {
+    return false;
+  }
+  if (!matchesApiToken(log, filters.apiToken)) {
+    return false;
+  }
+  if (!matchesActor(log, filters.actor)) {
+    return false;
+  }
+  if (
+    filters.query &&
+    !buildSearchText(actionMap, log).includes(filters.query)
+  ) {
+    return false;
+  }
+  return matchesDateRange(log.createdAt, filters.dateRange);
+};
+
 /**
  * RangePicker 的 disabledDate:不能选未来或 180 天前;
  * 已选了一头时,另一头只能落在离它 180 天以内。
@@ -337,7 +377,7 @@ export const getDateRangePatch = (
   };
 };
 
-/** 导出用的 UA 摘要:CLI 只有版本号,浏览器则拆成浏览器 / 系统两列 */
+/** UA 摘要(列表展示与导出共用):CLI 只有版本号,浏览器则拆成浏览器 / 系统两列 */
 export const getUserAgentSummary = (userAgent?: string) => {
   let browserInfo = '-';
   let osInfo = '-';

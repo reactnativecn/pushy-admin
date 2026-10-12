@@ -1,10 +1,8 @@
 import { KeyOutlined } from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
   Checkbox,
   Form,
-  message,
   Radio,
   Select,
   Space,
@@ -30,12 +28,12 @@ import { useAppOptions } from '@/utils/app-options';
 import { formatDateTime } from '@/utils/format';
 import { apiTokenKeys } from '@/utils/query-keys';
 import { useIsMobile } from '@/utils/responsive';
+import { useTokenCrud } from '@/utils/use-token-crud';
 
 const { Paragraph } = Typography;
 
 function ApiTokensPage() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
@@ -46,30 +44,17 @@ function ApiTokensPage() {
     enabled: createModalVisible,
   });
 
-  const { data, isLoading } = useQuery({
+  const { tokens, isLoading, create, isCreating, revoke } = useTokenCrud({
     queryKey: apiTokenKeys.all(),
-    queryFn: api.listApiTokens,
-  });
-
-  // 失败提示由 MutationCache 兜底；失败时不关弹窗，让用户改完重试
-  const createMutation = useMutation({
-    mutationFn: api.createApiToken,
-    onSuccess: (result) => {
-      if (result?.token) {
-        setNewToken(result.token);
-        setCreateModalVisible(false);
-        message.success(t('api_tokens.create_success'));
-        queryClient.invalidateQueries({ queryKey: apiTokenKeys.all() });
-        form.resetFields();
-      }
-    },
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: api.revokeApiToken,
-    onSuccess: () => {
-      message.success(t('api_tokens.revoke_success'));
-      queryClient.invalidateQueries({ queryKey: apiTokenKeys.all() });
+    list: api.listApiTokens,
+    create: api.createApiToken,
+    revoke: api.revokeApiToken,
+    createSuccessText: t('api_tokens.create_success'),
+    revokeSuccessText: t('api_tokens.revoke_success'),
+    onCreated: (token) => {
+      setNewToken(token);
+      setCreateModalVisible(false);
+      form.resetFields();
     },
   });
 
@@ -86,7 +71,7 @@ function ApiTokensPage() {
       : undefined;
     const appIds = values.appIds?.length ? values.appIds : undefined;
     if (values.mode === 'scoped') {
-      createMutation.mutate({
+      create({
         name: values.name,
         scopes: values.scopes,
         appIds,
@@ -94,7 +79,7 @@ function ApiTokensPage() {
       });
       return;
     }
-    createMutation.mutate({
+    create({
       name: values.name,
       permissions: {
         read: values.permissions?.includes('read'),
@@ -109,7 +94,7 @@ function ApiTokensPage() {
   const tokenColumns = getTokenColumns<ApiToken>({
     icon: <KeyOutlined />,
     appNameById,
-    onRevoke: (id) => revokeMutation.mutate(id),
+    onRevoke: (id) => revoke(id),
     texts: {
       colName: t('api_tokens.col_name'),
       revoked: t('api_tokens.revoked'),
@@ -209,7 +194,7 @@ function ApiTokensPage() {
       </div>
       <Table
         columns={columns}
-        dataSource={data?.data}
+        dataSource={tokens}
         loading={isLoading}
         rowKey="id"
         size={isMobile ? 'small' : 'middle'}
@@ -224,7 +209,7 @@ function ApiTokensPage() {
         onCancel={() => setCreateModalVisible(false)}
         form={form}
         onFinish={handleCreate}
-        loading={createMutation.isPending}
+        loading={isCreating}
         submitText={t('api_tokens.create_button')}
         nameLabel={t('api_tokens.token_name')}
         nameRequired={t('api_tokens.token_name_required')}

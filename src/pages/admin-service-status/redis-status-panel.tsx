@@ -5,7 +5,6 @@ import {
   Card,
   Progress,
   Space,
-  Statistic,
   Table,
   Tag,
   Typography,
@@ -27,6 +26,7 @@ import {
   usageLevel,
   usageRatio,
 } from './redis-status-panel.logic';
+import { StatCard, StatusSection } from './status-section';
 
 const { Text } = Typography;
 
@@ -66,10 +66,6 @@ export const RedisStatusPanel = () => {
     retry: false,
   });
 
-  // 旧版服务端没有这个接口时整块隐藏，与其他运维面板一致。
-  if (statusQuery.isError) {
-    return null;
-  }
   const status = statusQuery.data;
   const server = status?.server;
 
@@ -134,16 +130,15 @@ export const RedisStatusPanel = () => {
     return (
       <>
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card size="small">
-            <Statistic
-              title={t('redis_status.memory')}
-              value={formatBytes(memory.usedBytes)}
-              suffix={
-                memory.maxBytes > 0 ? (
-                  <Text type="secondary">/ {formatBytes(memory.maxBytes)}</Text>
-                ) : undefined
-              }
-            />
+          <StatCard
+            title={t('redis_status.memory')}
+            value={formatBytes(memory.usedBytes)}
+            suffix={
+              memory.maxBytes > 0 ? (
+                <Text type="secondary">/ {formatBytes(memory.maxBytes)}</Text>
+              ) : undefined
+            }
+          >
             <UsageBar ratio={memoryRatio} />
             <Detail>
               {t('redis_status.memory_detail', {
@@ -159,17 +154,16 @@ export const RedisStatusPanel = () => {
                   : '-',
               })}
             </Detail>
-          </Card>
-          <Card size="small">
-            <Statistic
-              title={t('redis_status.clients')}
-              value={formatCount(clients.connected)}
-              suffix={
-                clients.max > 0 ? (
-                  <Text type="secondary">/ {formatCount(clients.max)}</Text>
-                ) : undefined
-              }
-            />
+          </StatCard>
+          <StatCard
+            title={t('redis_status.clients')}
+            value={formatCount(clients.connected)}
+            suffix={
+              clients.max > 0 ? (
+                <Text type="secondary">/ {formatCount(clients.max)}</Text>
+              ) : undefined
+            }
+          >
             <UsageBar ratio={clientRatio} />
             <Detail>
               {t('redis_status.clients_detail', {
@@ -184,13 +178,12 @@ export const RedisStatusPanel = () => {
                 })}
               </Text>
             )}
-          </Card>
-          <Card size="small">
-            <Statistic
-              title={t('redis_status.throughput')}
-              value={formatCount(stats.opsPerSec)}
-              suffix={<Text type="secondary">ops/s</Text>}
-            />
+          </StatCard>
+          <StatCard
+            title={t('redis_status.throughput')}
+            value={formatCount(stats.opsPerSec)}
+            suffix={<Text type="secondary">ops/s</Text>}
+          >
             <Detail>
               {t('redis_status.throughput_detail', {
                 input: formatKBps(stats.inputKbps),
@@ -202,12 +195,11 @@ export const RedisStatusPanel = () => {
                 count: formatCount(stats.totalCommands),
               })}
             </Detail>
-          </Card>
-          <Card size="small">
-            <Statistic
-              title={t('redis_status.hit_rate')}
-              value={formatPercent(stats.hitRate, 2)}
-            />
+          </StatCard>
+          <StatCard
+            title={t('redis_status.hit_rate')}
+            value={formatPercent(stats.hitRate, 2)}
+          >
             <Detail>
               {t('redis_status.hit_detail', {
                 hits: formatCount(stats.keyspaceHits),
@@ -228,7 +220,7 @@ export const RedisStatusPanel = () => {
             ) : (
               <Detail>{t('redis_status.no_evictions')}</Detail>
             )}
-          </Card>
+          </StatCard>
         </div>
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card size="small" title={t('redis_status.keyspace')}>
@@ -324,8 +316,9 @@ export const RedisStatusPanel = () => {
   };
 
   return (
-    <Card
-      className="mt-4"
+    // 旧版服务端没有这个接口时整块隐藏，与其他运维面板一致。
+    <StatusSection
+      error={statusQuery.isError}
       extra={
         status && (
           <Text type="secondary">
@@ -339,14 +332,10 @@ export const RedisStatusPanel = () => {
           </Text>
         )
       }
+      icon={<ThunderboltOutlined />}
       loading={statusQuery.isLoading}
-      title={
-        <Space wrap>
-          <ThunderboltOutlined />
-          {t('redis_status.title')}
-          {serverSummary()}
-        </Space>
-      }
+      title={t('redis_status.title')}
+      titleExtra={serverSummary()}
     >
       {status &&
         (status.available ? (
@@ -363,6 +352,6 @@ export const RedisStatusPanel = () => {
       <Text className="mt-2 block text-xs" type="secondary">
         {t('redis_status.note')}
       </Text>
-    </Card>
+    </StatusSection>
   );
 };

@@ -1,11 +1,10 @@
 import { ApiOutlined } from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
   Button,
   Form,
   Input,
-  message,
   Select,
   Space,
   Table,
@@ -31,6 +30,7 @@ import { useAppOptions } from '@/utils/app-options';
 import { useCustomBaseUrl } from '@/utils/endpoint';
 import { endpointKeys, mcpTokenKeys } from '@/utils/query-keys';
 import { useIsMobile } from '@/utils/responsive';
+import { useTokenCrud } from '@/utils/use-token-crud';
 
 const DEFAULT_SCOPES = ['pushy:apps:read', 'pushy:diagnose'];
 // 服务端硬上限 365 天,不传默认 90 天
@@ -40,7 +40,6 @@ const { Paragraph, Text } = Typography;
 
 function McpConnectionsPage() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
@@ -58,30 +57,17 @@ function McpConnectionsPage() {
     enabled: createModalVisible,
   });
 
-  const { data, isLoading } = useQuery({
+  const { tokens, isLoading, create, isCreating, revoke } = useTokenCrud({
     queryKey: mcpTokenKeys.all(),
-    queryFn: api.listMcpTokens,
-  });
-
-  // 失败提示由 MutationCache 兜底；失败时不关弹窗，让用户改完重试
-  const createMutation = useMutation({
-    mutationFn: api.createMcpToken,
-    onSuccess: (result) => {
-      if (result?.token) {
-        setNewToken(result.token);
-        setCreateModalVisible(false);
-        message.success(t('mcp.create_success'));
-        queryClient.invalidateQueries({ queryKey: mcpTokenKeys.all() });
-        form.resetFields();
-      }
-    },
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: api.revokeMcpToken,
-    onSuccess: () => {
-      message.success(t('mcp.revoke_success'));
-      queryClient.invalidateQueries({ queryKey: mcpTokenKeys.all() });
+    list: api.listMcpTokens,
+    create: api.createMcpToken,
+    revoke: api.revokeMcpToken,
+    createSuccessText: t('mcp.create_success'),
+    revokeSuccessText: t('mcp.revoke_success'),
+    onCreated: (token) => {
+      setNewToken(token);
+      setCreateModalVisible(false);
+      form.resetFields();
     },
   });
 
@@ -92,7 +78,7 @@ function McpConnectionsPage() {
     appIds?: number[];
     expiresIn: number;
   }) => {
-    createMutation.mutate({
+    create({
       name: values.name,
       clientId: values.clientId,
       scopes: values.scopes?.length ? values.scopes : undefined,
@@ -104,7 +90,7 @@ function McpConnectionsPage() {
   const tokenColumns = getTokenColumns<McpToken>({
     icon: <ApiOutlined />,
     appNameById,
-    onRevoke: (id) => revokeMutation.mutate(id),
+    onRevoke: (id) => revoke(id),
     expiresFormat: 'YYYY-MM-DD',
     allAppsTagColor: 'orange',
     texts: {
@@ -207,7 +193,7 @@ function McpConnectionsPage() {
 
       <Table
         columns={columns}
-        dataSource={data?.data}
+        dataSource={tokens}
         loading={isLoading}
         rowKey="id"
         size={isMobile ? 'small' : 'middle'}
@@ -222,7 +208,7 @@ function McpConnectionsPage() {
         onCancel={() => setCreateModalVisible(false)}
         form={form}
         onFinish={handleCreate}
-        loading={createMutation.isPending}
+        loading={isCreating}
         submitText={t('mcp.create_button')}
         nameLabel={t('mcp.token_name')}
         nameRequired={t('mcp.token_name_required')}

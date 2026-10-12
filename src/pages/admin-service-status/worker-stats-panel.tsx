@@ -1,12 +1,13 @@
 import { HistoryOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
 import { formatBytes, formatCount } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
 import { formatMs } from './metrics';
+import { StatCard, StatusSection } from './status-section';
 
 const { Text } = Typography;
 
@@ -39,6 +40,23 @@ const distText = (
     ? `${format(dist.avg)} / ${format(dist.p50)} / ${format(dist.p95)} / ${format(dist.max)}`
     : '-';
 
+/** 今日分布卡片：主值 p50 / p95，说明行 avg · max */
+const DistributionStatCard = ({
+  dist,
+  format,
+  title,
+}: {
+  dist: WorkerStatsDistribution | null;
+  format: (value: number) => string;
+  title: string;
+}) => (
+  <StatCard
+    detail={`avg ${dist ? format(dist.avg) : '-'} · max ${dist ? format(dist.max) : '-'}`}
+    title={`${title} p50 / p95`}
+    value={dist ? `${format(dist.p50)} / ${format(dist.p95)}` : '-'}
+  />
+);
+
 export const WorkerStatsPanel = () => {
   const { t } = useTranslation();
   const statsQuery = useQuery({
@@ -50,10 +68,6 @@ export const WorkerStatsPanel = () => {
 
   const days = statsQuery.data?.data ?? [];
   const today = days[0];
-
-  if (statsQuery.isError || (!statsQuery.isLoading && days.length === 0)) {
-    return null;
-  }
 
   const resultTags = (distribution: Record<string, number>) => (
     <Space size={4} wrap>
@@ -135,69 +149,33 @@ export const WorkerStatsPanel = () => {
   ];
 
   return (
-    <Card
-      className="mt-4"
+    <StatusSection
+      empty={days.length === 0}
+      error={statsQuery.isError}
+      icon={<HistoryOutlined />}
       loading={statsQuery.isLoading}
-      title={
-        <Space>
-          <HistoryOutlined />
-          {t('worker_stats.title')}
-        </Space>
-      }
+      title={t('worker_stats.title')}
     >
       {today && (
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card size="small">
-            <Statistic
-              title={t('worker_stats.today_count')}
-              value={today.count}
-            />
+          <StatCard title={t('worker_stats.today_count')} value={today.count}>
             {resultTags(today.byResult)}
-          </Card>
-          <Card size="small">
-            <Statistic
-              title={`${t('worker_stats.today_duration')} p50 / p95`}
-              value={
-                today.durationMs
-                  ? `${formatMs(today.durationMs.p50)} / ${formatMs(today.durationMs.p95)}`
-                  : '-'
-              }
-            />
-            <Text type="secondary">
-              avg {today.durationMs ? formatMs(today.durationMs.avg) : '-'} ·
-              max {today.durationMs ? formatMs(today.durationMs.max) : '-'}
-            </Text>
-          </Card>
-          <Card size="small">
-            <Statistic
-              title={`${t('worker_stats.today_patch')} p50 / p95`}
-              value={
-                today.patchBytes
-                  ? `${formatBytes(today.patchBytes.p50)} / ${formatBytes(today.patchBytes.p95)}`
-                  : '-'
-              }
-            />
-            <Text type="secondary">
-              avg {today.patchBytes ? formatBytes(today.patchBytes.avg) : '-'} ·
-              max {today.patchBytes ? formatBytes(today.patchBytes.max) : '-'}
-            </Text>
-          </Card>
-          <Card size="small">
-            <Statistic
-              title={`${t('worker_stats.today_artifact')} p50 / p95`}
-              value={
-                today.artifactBytes
-                  ? `${formatBytes(today.artifactBytes.p50)} / ${formatBytes(today.artifactBytes.p95)}`
-                  : '-'
-              }
-            />
-            <Text type="secondary">
-              avg{' '}
-              {today.artifactBytes ? formatBytes(today.artifactBytes.avg) : '-'}{' '}
-              · max{' '}
-              {today.artifactBytes ? formatBytes(today.artifactBytes.max) : '-'}
-            </Text>
-          </Card>
+          </StatCard>
+          <DistributionStatCard
+            dist={today.durationMs}
+            format={formatMs}
+            title={t('worker_stats.today_duration')}
+          />
+          <DistributionStatCard
+            dist={today.patchBytes}
+            format={formatBytes}
+            title={t('worker_stats.today_patch')}
+          />
+          <DistributionStatCard
+            dist={today.artifactBytes}
+            format={formatBytes}
+            title={t('worker_stats.today_artifact')}
+          />
         </div>
       )}
       {today && Object.keys(today.byFailure ?? {}).length > 0 && (
@@ -215,6 +193,6 @@ export const WorkerStatsPanel = () => {
         rowKey="date"
         size="small"
       />
-    </Card>
+    </StatusSection>
   );
 };

@@ -2,6 +2,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { quotas } from '@/constants/quotas';
 import type { AdminUser, Quota } from '@/types';
+import { pickAllowed } from '@/utils/table-state';
 
 /** 用户管理页的纯逻辑:表格 URL 配置、状态展示、配额 JSON 解析、到期时间快捷键 */
 
@@ -34,16 +35,33 @@ export const statusMeta = (
   return { cls: 'text-green-600', label: t('admin_users.status_normal') };
 };
 
-export const getTierOptions = (t: (key: string) => string) => [
-  { value: 'free', label: t('admin_users.tier_free') },
-  { value: 'standard', label: t('admin_users.tier_standard') },
-  { value: 'premium', label: t('admin_users.tier_premium') },
-  { value: 'pro', label: t('admin_users.tier_pro') },
-  { value: 'vip1', label: t('admin_users.tier_vip1') },
-  { value: 'vip2', label: t('admin_users.tier_vip2') },
-  { value: 'vip3', label: t('admin_users.tier_vip3') },
-  { value: 'custom', label: t('admin_users.tier_custom') },
-];
+// 状态筛选的可选值，顺序即表头筛选菜单的顺序
+export const USER_STATUS_VALUES = ['normal', 'unverified', 'dormant'] as const;
+
+const TIER_LABEL_KEYS = {
+  free: 'admin_users.tier_free',
+  standard: 'admin_users.tier_standard',
+  premium: 'admin_users.tier_premium',
+  pro: 'admin_users.tier_pro',
+  vip1: 'admin_users.tier_vip1',
+  vip2: 'admin_users.tier_vip2',
+  vip3: 'admin_users.tier_vip3',
+  custom: 'admin_users.tier_custom',
+} as const;
+
+export const TIER_VALUES = Object.keys(TIER_LABEL_KEYS) as Array<
+  keyof typeof TIER_LABEL_KEYS
+>;
+
+export const getTierOptions = (t: (key: string) => string) =>
+  TIER_VALUES.map((value) => ({ value, label: t(TIER_LABEL_KEYS[value]) }));
+
+// URL 里的筛选值可能被手改，不认识的值不发给接口
+export const parseUserStatusFilter = (value: string | null) =>
+  pickAllowed(value, USER_STATUS_VALUES);
+
+export const parseTierFilter = (value: string | null) =>
+  pickAllowed(value, TIER_VALUES);
 
 export const defaultPremiumQuotaText = JSON.stringify(quotas.premium, null, 2);
 export const expiryShortcutDays = [7, 30, 365] as const;

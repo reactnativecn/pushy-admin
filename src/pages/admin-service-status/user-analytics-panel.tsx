@@ -1,11 +1,12 @@
 import { GlobalOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { Card, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
-import { formatCount } from '@/utils/format';
+import { formatCount, formatPercent } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
+import { StatCard, StatusSection } from './status-section';
 
 const { Text } = Typography;
 
@@ -40,13 +41,6 @@ export const UserAnalyticsPanel = () => {
   const days = overviewQuery.data?.data ?? [];
   const today = days[0];
   const latestGrowth = growthQuery.data?.data?.[0];
-
-  if (
-    overviewQuery.isError ||
-    (!overviewQuery.isLoading && days.length === 0)
-  ) {
-    return null;
-  }
 
   const columns: ColumnsType<GlobalAnalyticsDay> = [
     { dataIndex: 'date', title: t('user_analytics.col_date'), width: 110 },
@@ -86,47 +80,39 @@ export const UserAnalyticsPanel = () => {
   ];
 
   return (
-    <Card
-      className="mt-4"
+    <StatusSection
+      empty={days.length === 0}
+      error={overviewQuery.isError}
+      icon={<GlobalOutlined />}
       loading={overviewQuery.isLoading}
-      title={
-        <Space>
-          <GlobalOutlined />
-          {t('user_analytics.title')}
-        </Space>
-      }
+      title={t('user_analytics.title')}
     >
       {today && (
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card size="small">
-            <Statistic
-              title={t('user_analytics.today_dau')}
-              value={today.dau}
-            />
-            {latestGrowth && (
-              <Text type="secondary">
-                {t('user_analytics.mau')} {formatCount(latestGrowth.mauGlobal)}
-                {latestGrowth.newDevicesGlobal !== null && (
-                  <>
-                    {' '}
-                    · {t('user_analytics.new_devices')}{' '}
-                    {formatCount(latestGrowth.newDevicesGlobal)}
-                  </>
-                )}
-              </Text>
-            )}
-          </Card>
-          <Card size="small">
-            <Statistic
-              title={t('user_analytics.hit_rate')}
-              value={
-                hitRate(today.hit) === null
-                  ? '-'
-                  : `${((hitRate(today.hit) as number) * 100).toFixed(1)}%`
-              }
-            />
-            <Text type="secondary">{t('user_analytics.hit_rate_hint')}</Text>
-          </Card>
+          <StatCard
+            detail={
+              latestGrowth && (
+                <>
+                  {t('user_analytics.mau')}{' '}
+                  {formatCount(latestGrowth.mauGlobal)}
+                  {latestGrowth.newDevicesGlobal !== null && (
+                    <>
+                      {' '}
+                      · {t('user_analytics.new_devices')}{' '}
+                      {formatCount(latestGrowth.newDevicesGlobal)}
+                    </>
+                  )}
+                </>
+              )
+            }
+            title={t('user_analytics.today_dau')}
+            value={today.dau}
+          />
+          <StatCard
+            detail={t('user_analytics.hit_rate_hint')}
+            title={t('user_analytics.hit_rate')}
+            value={formatPercent(hitRate(today.hit))}
+          />
           <Card className="md:col-span-2" size="small">
             <Text type="secondary">{t('user_analytics.col_countries')}</Text>
             <div className="mt-2">
@@ -148,6 +134,6 @@ export const UserAnalyticsPanel = () => {
         rowKey="date"
         size="small"
       />
-    </Card>
+    </StatusSection>
   );
 };

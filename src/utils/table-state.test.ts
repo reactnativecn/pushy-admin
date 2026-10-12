@@ -8,6 +8,7 @@ import {
   parseOptionalPositiveInt,
   parsePositiveInt,
   parseSortState,
+  pickAllowed,
 } from './table-state';
 
 describe('parsePositiveInt', () => {
@@ -33,6 +34,21 @@ describe('parseOptionalPositiveInt', () => {
     expect(parseOptionalPositiveInt('')).toBeUndefined();
     expect(parseOptionalPositiveInt('0')).toBeUndefined();
     expect(parseOptionalPositiveInt('abc')).toBeUndefined();
+  });
+});
+
+describe('pickAllowed', () => {
+  const allowed = ['normal', 'paused'] as const;
+
+  test('keeps whitelisted values', () => {
+    expect(pickAllowed('paused', allowed)).toBe('paused');
+  });
+
+  test('drops missing, empty or unknown values', () => {
+    expect(pickAllowed(null, allowed)).toBeUndefined();
+    expect(pickAllowed('', allowed)).toBeUndefined();
+    expect(pickAllowed('PAUSED', allowed)).toBeUndefined();
+    expect(pickAllowed('deleted', allowed)).toBeUndefined();
   });
 });
 

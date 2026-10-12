@@ -38,7 +38,11 @@ import { APP_OPTION_SEARCH, useAppOptions } from '@/utils/app-options';
 import { useUserInfo } from '@/utils/hooks';
 import { memberKeys } from '@/utils/query-keys';
 import { useIsMobile } from '@/utils/responsive';
-import { canManageMember, getMemberPermissions } from './members.logic';
+import {
+  canManageMember,
+  getMemberPermissions,
+  getRoleOptions,
+} from './members.logic';
 
 const ROLE_COLORS: Record<MemberRole, string> = {
   admin: 'gold',
@@ -172,12 +176,8 @@ function MembersPage() {
             value={record.role}
             style={{ width: 140 }}
             onChange={(role) => updateMutation.mutate({ id: record.id, role })}
-            options={(['admin', 'developer', 'viewer'] as MemberRole[]).map(
-              (role) => ({
-                label: t(MEMBER_ROLE_LABEL_KEY[role]),
-                value: role,
-                disabled: role === 'admin' && !isOwner,
-              }),
+            options={getRoleOptions(isOwner, (role) =>
+              t(MEMBER_ROLE_LABEL_KEY[role]),
             )}
           />
         );
@@ -386,12 +386,10 @@ function MembersPage() {
             rules={[{ required: true }]}
           >
             <Select
-              options={(['admin', 'developer', 'viewer'] as MemberRole[]).map(
-                (role) => ({
-                  label: `${t(MEMBER_ROLE_LABEL_KEY[role])} — ${t(MEMBER_ROLE_DESC_KEY[role])}`,
-                  value: role,
-                  disabled: role === 'admin' && !isOwner,
-                }),
+              options={getRoleOptions(
+                isOwner,
+                (role) =>
+                  `${t(MEMBER_ROLE_LABEL_KEY[role])} — ${t(MEMBER_ROLE_DESC_KEY[role])}`,
               )}
             />
           </Form.Item>

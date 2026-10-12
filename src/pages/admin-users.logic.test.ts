@@ -10,8 +10,11 @@ import {
   getInitialQuotaValue,
   getTierOptions,
   parseQuotaInput,
+  parseTierFilter,
+  parseUserStatusFilter,
   SORTABLE_COLUMNS,
   statusMeta,
+  USER_STATUS_VALUES,
 } from './admin-users.logic';
 
 const t = (key: string) => key;
@@ -53,6 +56,22 @@ describe('table config', () => {
       'custom',
     ]);
     expect(expiryShortcutDays).toEqual([7, 30, 365]);
+  });
+});
+
+describe('URL filter parsing', () => {
+  test('status filter only accepts known statuses', () => {
+    expect(USER_STATUS_VALUES).toEqual(['normal', 'unverified', 'dormant']);
+    expect(parseUserStatusFilter('dormant')).toBe('dormant');
+    expect(parseUserStatusFilter('deleted')).toBeUndefined();
+    expect(parseUserStatusFilter(null)).toBeUndefined();
+  });
+
+  test('tier filter only accepts known tiers', () => {
+    expect(parseTierFilter('vip2')).toBe('vip2');
+    expect(parseTierFilter('custom')).toBe('custom');
+    expect(parseTierFilter('gold')).toBeUndefined();
+    expect(parseTierFilter('')).toBeUndefined();
   });
 });
 

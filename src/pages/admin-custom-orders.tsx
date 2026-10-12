@@ -28,8 +28,14 @@ import {
   type CustomOrderStatus,
 } from '@/services/admin-api';
 import { formatDateTime } from '@/utils/format';
+import { patchSearchParams } from '@/utils/helper';
 import { adminKeys } from '@/utils/query-keys';
 import { useModalWidth } from '@/utils/responsive';
+import {
+  getTablePagination,
+  usePageClamp,
+  useUrlTableState,
+} from '@/utils/table-state';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -50,12 +56,12 @@ export const Component = () => {
   const queryClient = useQueryClient();
   const modalWidth = useModalWidth(560);
   const [form] = Form.useForm<CreateForm>();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const tableState = useUrlTableState();
+  const { page, pageSize, setSearchParams, handleTableChange } = tableState;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [created, setCreated] = useState<CustomOrder | null>(null);
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, isPlaceholderData } = useQuery({
     queryKey: adminKeys.customOrders(page, pageSize),
     queryFn: () =>
       adminApi.listCustomOrders({
@@ -64,6 +70,8 @@ export const Component = () => {
       }),
     placeholderData: keepPreviousData,
   });
+  const total = data?.count ?? 0;
+  usePageClamp(tableState, total, data !== undefined && !isPlaceholderData);
 
   const createMutation = useMutation({
     mutationFn: (values: CreateForm) =>
@@ -77,7 +85,7 @@ export const Component = () => {
       setIsCreateOpen(false);
       form.resetFields();
       setCreated(order);
-      setPage(1);
+      patchSearchParams(setSearchParams, { page: '1' });
       queryClient.invalidateQueries({ queryKey: adminKeys.customOrders() });
     },
   });
@@ -218,16 +226,8 @@ export const Component = () => {
           dataSource={data?.data ?? []}
           loading={isLoading || isFetching}
           scroll={{ x: 'max-content' }}
-          pagination={{
-            current: page,
-            pageSize,
-            total: data?.count ?? 0,
-            showSizeChanger: true,
-            onChange: (nextPage, nextPageSize) => {
-              setPage(nextPageSize === pageSize ? nextPage : 1);
-              setPageSize(nextPageSize);
-            },
-          }}
+          onChange={handleTableChange}
+          pagination={getTablePagination(tableState, total)}
         />
       </Card>
 

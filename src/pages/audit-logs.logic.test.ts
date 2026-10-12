@@ -22,6 +22,7 @@ import {
   isMemberAction,
   matchesActor,
   matchesApiToken,
+  matchesAuditFilters,
   matchesDateRange,
   matchesStatusFilter,
   normalizePath,
@@ -448,5 +449,62 @@ describe('API Key / actor filters', () => {
     expect(isMemberAction(makeLog())).toBe(false);
     expect(getActorLabel(memberLog)).toBe('Dev');
     expect(getActorLabel(makeLog())).toBeUndefined();
+  });
+});
+
+describe('matchesAuditFilters', () => {
+  const actionMap = getActionMap(t);
+  const noFilters = {
+    status: 'all' as const,
+    query: '',
+    dateRange: null,
+  };
+  const log = makeLog({
+    actorId: 9,
+    apiTokens: { name: 'CI', tokenSuffix: 'ab12' },
+    ip: '10.0.0.8',
+  });
+
+  test('keeps everything without filters', () => {
+    expect(matchesAuditFilters(log, noFilters, actionMap)).toBe(true);
+  });
+
+  test('applies each filter', () => {
+    const actionKey = getActionKey(log.method, log.path);
+    expect(
+      matchesAuditFilters(log, { ...noFilters, action: actionKey }, actionMap),
+    ).toBe(true);
+    expect(
+      matchesAuditFilters(log, { ...noFilters, action: 'other' }, actionMap),
+    ).toBe(false);
+    expect(
+      matchesAuditFilters(
+        log,
+        { ...noFilters, status: 'client-error' },
+        actionMap,
+      ),
+    ).toBe(false);
+    expect(
+      matchesAuditFilters(log, { ...noFilters, apiToken: 'zz99' }, actionMap),
+    ).toBe(false);
+    expect(
+      matchesAuditFilters(log, { ...noFilters, actor: '9' }, actionMap),
+    ).toBe(true);
+    expect(
+      matchesAuditFilters(log, { ...noFilters, actor: '7' }, actionMap),
+    ).toBe(false);
+    expect(
+      matchesAuditFilters(log, { ...noFilters, query: '10.0.0.8' }, actionMap),
+    ).toBe(true);
+    expect(
+      matchesAuditFilters(log, { ...noFilters, query: 'nope' }, actionMap),
+    ).toBe(false);
+    expect(
+      matchesAuditFilters(
+        log,
+        { ...noFilters, dateRange: [dayjs('2026-05-02'), null] },
+        actionMap,
+      ),
+    ).toBe(false);
   });
 });

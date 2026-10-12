@@ -30,6 +30,15 @@ export const parseOptionalPositiveInt = (value: string | null) => {
   return value && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 };
 
+/** URL 里的枚举值可能被手改,不在白名单内的当作没筛 */
+export const pickAllowed = <T extends string>(
+  value: string | null,
+  allowed: readonly T[],
+): T | undefined =>
+  value && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : undefined;
+
 /** 移动端一屏放不下太多行,默认每页少一点 */
 export const getDefaultPageSize = (isMobile: boolean) => (isMobile ? 10 : 20);
 
@@ -253,7 +262,8 @@ export const getTablePagination = (
     pageSize,
   }: Pick<UrlTableState, 'isMobile' | 'page' | 'pageSize'>,
   total: number,
-  showTotal: (count: number) => string,
+  /** 不传则不显示总数 */
+  showTotal?: (count: number) => string,
 ): TablePaginationConfig => ({
   current: page,
   pageSize,

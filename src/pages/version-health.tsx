@@ -18,75 +18,16 @@ import { useWorkspacePermissions } from '@/utils/hooks';
 import { metricsKeys } from '@/utils/query-keys';
 import { useSelectedAppFromUrl } from '@/utils/selected-app';
 import { useThemeMode } from '@/utils/theme-mode';
+import {
+  buildVersionHealth,
+  EVENT_TYPES,
+  type EventType,
+  FAIL_TYPES,
+  type VersionHealthRow,
+} from './version-health.logic';
 import { VersionHealthErrors } from './version-health-errors';
 
 const { RangePicker } = DatePicker;
-
-const CATEGORY_SEPARATOR = '\u001f';
-
-const EVENT_TYPES = [
-  'download_success',
-  'download_fail',
-  'patch_fail',
-  'rollback',
-  'mark_success',
-] as const;
-
-type EventType = (typeof EVENT_TYPES)[number];
-
-const FAIL_TYPES: ReadonlySet<EventType> = new Set([
-  'download_fail',
-  'patch_fail',
-  'rollback',
-]);
-
-interface VersionHealthRow {
-  version: string;
-  packageVersion: string;
-  counts: Record<EventType, number>;
-  rollbackRate: number | null;
-  downloadFailRate: number | null;
-  total: number;
-}
-
-interface TrendPoint {
-  time: string;
-  value: number;
-  category: string;
-}
-
-function parseEventCategory(raw: string): {
-  type: EventType;
-  version: string;
-  packageVersion: string;
-} | null {
-  const firstSeparator = raw.indexOf(CATEGORY_SEPARATOR);
-  if (firstSeparator < 0) {
-    return null;
-  }
-  const secondSeparator = raw.indexOf(CATEGORY_SEPARATOR, firstSeparator + 1);
-  const type = raw.slice(0, firstSeparator) as EventType;
-  const version = raw.slice(
-    firstSeparator + 1,
-    secondSeparator < 0 ? undefined : secondSeparator,
-  );
-  if (!EVENT_TYPES.includes(type) || !version) {
-    return null;
-  }
-  if (secondSeparator < 0) {
-    return { type, version, packageVersion: 'unknown' };
-  }
-  try {
-    return {
-      type,
-      version,
-      packageVersion:
-        decodeURIComponent(raw.slice(secondSeparator + 1)) || 'unknown',
-    };
-  } catch {
-    return null;
-  }
-}
 
 export const Component = () => {
   const { t } = useTranslation();
@@ -132,92 +73,10 @@ export const Component = () => {
     [t],
   );
 
-  const { rows, trendData } = useMemo(() => {
-    const versionCounts = new Map<
-      string,
-      {
-        version: string;
-        packageVersion: string;
-        counts: Record<EventType, number>;
-      }
-    >();
-    const trendTotals = new Map<string, Map<EventType, number>>();
-    if (data?.data && data.dict) {
-      for (const bucket of data.data) {
-        for (const [dictIndex, count] of bucket.data) {
-          const parsed = parseEventCategory(data.dict[dictIndex] || '');
-          if (!parsed) {
-            continue;
-          }
-          const rowKey = JSON.stringify([
-            parsed.version,
-            parsed.packageVersion,
-          ]);
-          let versionEntry = versionCounts.get(rowKey);
-          if (!versionEntry) {
-            versionEntry = {
-              version: parsed.version,
-              packageVersion: parsed.packageVersion,
-              counts: {
-                download_success: 0,
-                download_fail: 0,
-                patch_fail: 0,
-                rollback: 0,
-                mark_success: 0,
-              },
-            };
-            versionCounts.set(rowKey, versionEntry);
-          }
-          versionEntry.counts[parsed.type] += count;
-
-          let bucketTotals = trendTotals.get(bucket.time);
-          if (!bucketTotals) {
-            bucketTotals = new Map();
-            trendTotals.set(bucket.time, bucketTotals);
-          }
-          bucketTotals.set(
-            parsed.type,
-            (bucketTotals.get(parsed.type) || 0) + count,
-          );
-        }
-      }
-    }
-
-    const healthRows: VersionHealthRow[] = [...versionCounts.values()].map(
-      ({ version, packageVersion, counts }) => {
-        const startSamples = counts.rollback + counts.mark_success;
-        const downloadSamples = counts.download_fail + counts.download_success;
-        return {
-          version,
-          packageVersion,
-          counts,
-          rollbackRate:
-            startSamples > 0 ? counts.rollback / startSamples : null,
-          downloadFailRate:
-            downloadSamples > 0 ? counts.download_fail / downloadSamples : null,
-          total: EVENT_TYPES.reduce((sum, type) => sum + counts[type], 0),
-        };
-      },
-    );
-    healthRows.sort(
-      (a, b) =>
-        (b.rollbackRate ?? -1) - (a.rollbackRate ?? -1) || b.total - a.total,
-    );
-
-    const points: TrendPoint[] = [];
-    for (const [time, bucketTotals] of trendTotals) {
-      for (const [type, value] of bucketTotals) {
-        points.push({
-          time,
-          value,
-          category: eventTypeLabels[type],
-        });
-      }
-    }
-    points.sort((a, b) => a.time.localeCompare(b.time));
-
-    return { rows: healthRows, trendData: points };
-  }, [data, eventTypeLabels]);
+  const { rows, trendData } = useMemo(
+    () => buildVersionHealth(data, eventTypeLabels),
+    [data, eventTypeLabels],
+  );
 
   // 事件类型只有五条线，tooltip 不合并、图例不做默认筛选
   const lineConfig = buildTimeSeriesLineConfig({

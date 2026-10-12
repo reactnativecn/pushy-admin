@@ -48,8 +48,11 @@ import {
   getInitialQuotaValue,
   getTierOptions,
   parseQuotaInput,
+  parseTierFilter,
+  parseUserStatusFilter,
   SORTABLE_COLUMNS,
   statusMeta,
+  USER_STATUS_VALUES,
 } from './admin-users.logic';
 
 const { Title } = Typography;
@@ -94,12 +97,12 @@ export const Component = () => {
   const [quotaValue, setQuotaValue] = useState('');
 
   const tierOptions = getTierOptions(t);
-  const tierLabelMap = new Map(
+  const tierLabelMap = new Map<string, string>(
     tierOptions.map((option) => [option.value, option.label]),
   );
 
-  const statusFilter = searchParams.get('status') ?? undefined;
-  const tierFilter = searchParams.get('tier') ?? undefined;
+  const statusFilter = parseUserStatusFilter(searchParams.get('status'));
+  const tierFilter = parseTierFilter(searchParams.get('tier'));
 
   const { data, isLoading, isPlaceholderData } = useQuery({
     queryKey: [
@@ -279,11 +282,10 @@ export const Component = () => {
       sorter: true,
       sortOrder: sortOrderOf('status'),
       filterMultiple: false,
-      filters: [
-        { text: t('admin_users.status_normal'), value: 'normal' },
-        { text: t('admin_users.status_unverified'), value: 'unverified' },
-        { text: t('admin_users.status_dormant'), value: 'dormant' },
-      ],
+      filters: USER_STATUS_VALUES.map((value) => ({
+        text: statusMeta(value, t).label,
+        value,
+      })),
       filteredValue: statusFilter ? [statusFilter] : null,
       render: (status: string | null) => {
         const meta = statusMeta(status, t);
