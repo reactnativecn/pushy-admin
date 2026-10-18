@@ -47,7 +47,7 @@ export function getExternalItems(
       key: 'issues',
       icon: <CommentOutlined />,
       label: (
-        <ExtLink href="https://github.com/reactnativecn/react-native-pushy/issues">
+        <ExtLink href="https://github.com/reactnativecn/react-native-update/issues">
           {t('nav.issues')}
         </ExtLink>
       ),
