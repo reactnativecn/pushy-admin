@@ -1,4 +1,5 @@
 import {
+  afterAll,
   afterEach,
   beforeEach,
   describe,
@@ -93,6 +94,13 @@ const markCookieSession = spyOn(
 const clearSession = spyOn(session, 'clearSession').mockImplementation(
   () => {},
 );
+// spyOn 改的是共享的模块对象：不恢复的话，同一进程里后跑的 session.test.ts
+// 拿到的就是空实现（CI 的文件顺序恰好如此）
+afterAll(() => {
+  setToken.mockRestore();
+  markCookieSession.mockRestore();
+  clearSession.mockRestore();
+});
 
 describe('auth.ts runtime test', () => {
   let originalLocation: Location;
