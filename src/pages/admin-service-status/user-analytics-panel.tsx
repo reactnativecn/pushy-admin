@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { appViewPath, rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
 import { formatCount, formatPercent } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
@@ -69,9 +71,14 @@ export const UserAnalyticsPanel = () => {
       render: (apps: GlobalAnalyticsDay['topApps']) => (
         <Space size={4} wrap>
           {apps.slice(0, 5).map((app) => (
-            <Tag color="blue" key={app.appKey}>
-              {app.appKey.slice(0, 10)}… {formatCount(app.dau)}
-            </Tag>
+            <Link
+              key={app.appKey}
+              to={appViewPath(rootRouterPath.realtimeMetrics, app.appKey)}
+            >
+              <Tag className="cursor-pointer" color="blue">
+                {app.appKey.slice(0, 10)}… {formatCount(app.dau)}
+              </Tag>
+            </Link>
           ))}
         </Space>
       ),
