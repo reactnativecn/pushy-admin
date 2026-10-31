@@ -85,6 +85,8 @@ export interface EventOSCount {
   name: string | null;
   os: string;
   count: number;
+  // Distinct devices behind this day's failure rows; null when unknown.
+  devices?: number | null;
 }
 
 export interface EventReasonCount {
@@ -93,6 +95,7 @@ export interface EventReasonCount {
   name: string | null;
   reason: string;
   count: number;
+  devices?: number | null;
 }
 
 export interface EventCarrierCount {
@@ -107,6 +110,22 @@ export interface AppEventBreakdownDay {
   byOS: EventOSCount[];
   byReason: EventReasonCount[];
   byCarrier: EventCarrierCount[];
+  devicesLimited?: boolean;
+}
+
+// Distinct devices over the whole window (one device that failed on several
+// days, versions or failure types counts once). Failures unite download and
+// patch failures; null means no device was observed, not zero.
+export interface AppFailureDevicesResponse {
+  status: ObservationStatus;
+  limited: boolean;
+  failures: number | null;
+  rollbacks: number | null;
+  byOS: { os: string; failures: number | null; rollbacks: number | null }[];
+  byReason: { reason: string; devices: number | null }[];
+  retentionDays: number;
+  window?: ObservationWindow | null;
+  contract?: ObservationContract;
 }
 
 export interface AppEventBreakdownResponse {

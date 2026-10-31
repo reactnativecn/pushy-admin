@@ -435,6 +435,8 @@ function payload(url) {
       };
     case '/metrics/app/events/breakdown':
       return { days: window.map((row) => row.breakdown), retentionDays: 35 };
+    case '/metrics/app/events/devices':
+      return failureDevices(window, url.searchParams.get('hash'));
     case '/metrics/app/versions':
       return {
         releaseInsights: releaseInsights(days, selected),
@@ -531,6 +533,54 @@ function payload(url) {
       return null;
   }
 }
+// Fictional window-wide device unions: retries make devices fewer than
+// reports, so each dimension keeps about 40% of its failure reports.
+const failureDevices = (window, hash) => {
+  const os = new Map();
+  const reasons = new Map();
+  const devicesOf = (count) =>
+    count > 0 ? Math.max(1, Math.round(count * 0.4)) : null;
+  for (const { breakdown } of window) {
+    for (const item of breakdown.byOS) {
+      if (hash && item.hash !== hash) continue;
+      const kind =
+        item.type === 'rollback'
+          ? 'rollbacks'
+          : item.type === 'download_fail' || item.type === 'patch_fail'
+            ? 'failures'
+            : null;
+      if (!kind) continue;
+      const entry = os.get(item.os) ?? { failures: 0, rollbacks: 0 };
+      entry[kind] += item.count;
+      os.set(item.os, entry);
+    }
+    for (const item of breakdown.byReason) {
+      if (hash && item.hash !== hash) continue;
+      reasons.set(item.reason, (reasons.get(item.reason) ?? 0) + item.count);
+    }
+  }
+  const byOS = Array.from(os, ([name, entry]) => ({
+    os: name,
+    failures: devicesOf(entry.failures),
+    rollbacks: devicesOf(entry.rollbacks),
+  }));
+  // A device counts once across platforms, so the total is the sum.
+  const total = (key) =>
+    byOS.reduce((sum, row) => sum + (row[key] ?? 0), 0) || null;
+  return {
+    status: 'observed',
+    limited: false,
+    failures: total('failures'),
+    rollbacks: total('rollbacks'),
+    byOS,
+    byReason: Array.from(reasons, ([reason, count]) => ({
+      reason,
+      devices: devicesOf(count),
+    })),
+    retentionDays: 35,
+  };
+};
+
 const server = createServer(async (req, res) => {
   const origin = req.headers.origin;
   const allowed = [`http://127.0.0.1:${uiPort}`, `http://localhost:${uiPort}`];

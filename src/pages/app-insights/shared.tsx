@@ -42,6 +42,19 @@ export const useAppEventBreakdown = (
     refetchInterval: LIVE_REFETCH_MS,
   });
 
+export const useAppFailureDevices = (
+  appKey: string | undefined,
+  days: number,
+  hash: string | undefined,
+) =>
+  useQuery({
+    queryKey: metricsKeys.appFailureDevices(appKey, days, hash),
+    queryFn: () => api.getAppFailureDevices({ appKey: appKey!, days, hash }),
+    enabled: !!appKey,
+    retry: retryUnlessUnavailable,
+    refetchInterval: LIVE_REFETCH_MS,
+  });
+
 export const useAppVersionFunnel = (appKey: string | undefined, days: number) =>
   useQuery({
     queryKey: metricsKeys.appVersionFunnel(appKey, days),

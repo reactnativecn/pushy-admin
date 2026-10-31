@@ -65,6 +65,11 @@ export const metricsKeys = {
     ['appTraffic', appKey, days] as const,
   appEventBreakdown: (appKey: string | undefined, days: number) =>
     ['appEventBreakdown', appKey, days] as const,
+  appFailureDevices: (
+    appKey: string | undefined,
+    days: number,
+    hash: string | undefined,
+  ) => ['appFailureDevices', appKey, days, hash ?? null] as const,
   appVersionFunnel: (appKey: string | undefined, days: number) =>
     ['appVersionFunnel', appKey, days] as const,
   packageWarnings: (

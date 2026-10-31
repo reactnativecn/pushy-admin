@@ -450,6 +450,24 @@ export function getVersionHealthDevMock(method: string, path: string) {
   if (path.startsWith('/metrics/app/events/breakdown?')) {
     return { days: buildBreakdownDays(daysParam(path)), retentionDays: 35 };
   }
+  if (path.startsWith('/metrics/app/events/devices?')) {
+    return {
+      status: 'observed',
+      limited: false,
+      failures: 42,
+      rollbacks: 3,
+      byOS: [
+        { os: 'android 36', failures: 18, rollbacks: 2 },
+        { os: 'android 35', failures: 12, rollbacks: null },
+        { os: 'ios 18.5', failures: 6, rollbacks: 1 },
+      ],
+      byReason: [
+        { reason: 'network', devices: 20 },
+        { reason: 'zip', devices: 1 },
+      ],
+      retentionDays: 35,
+    };
+  }
   if (path.startsWith('/metrics/app/events?')) {
     return { dict, data: buildSeries() };
   }

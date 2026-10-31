@@ -1,5 +1,6 @@
 import type {
   AppEventBreakdownResponse,
+  AppFailureDevicesResponse,
   AppTrafficResponse,
   VersionFunnelResponse,
 } from '@/pages/app-insights/types';
@@ -500,6 +501,17 @@ export const api = {
     request<AppEventBreakdownResponse>(
       'get',
       `/metrics/app/events/breakdown?appKey=${encodeURIComponent(params.appKey)}&days=${params.days}`,
+      undefined,
+      { suppressErrorToast: true },
+    ),
+  getAppFailureDevices: (params: {
+    appKey: string;
+    days: number;
+    hash?: string;
+  }) =>
+    request<AppFailureDevicesResponse>(
+      'get',
+      `/metrics/app/events/devices?appKey=${encodeURIComponent(params.appKey)}&days=${params.days}${params.hash ? `&hash=${encodeURIComponent(params.hash)}` : ''}`,
       undefined,
       { suppressErrorToast: true },
     ),

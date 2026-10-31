@@ -6,7 +6,9 @@ import { formatInteger } from '@/utils/format';
 import {
   type DimensionRow,
   FAILURE_EVENT_TYPES,
+  failureDeviceLookup,
   highestFailureDimension,
+  type OSDevices,
   type ReasonRow,
   summarizeBreakdown,
 } from './breakdown.logic';
@@ -25,6 +27,7 @@ import {
   Question,
   StatTile,
   useAppEventBreakdown,
+  useAppFailureDevices,
   useCarrierLabel,
   useEventTypeLabel,
   useFailureReasonHint,
@@ -39,11 +42,13 @@ const DimensionTable = ({
   labelOf,
   keyTitle,
   emptyText,
+  devices,
 }: {
   rows: DimensionRow[];
   labelOf: (key: string) => string;
   keyTitle: string;
   emptyText: string;
+  devices?: Map<string, OSDevices>;
 }) => {
   const { t } = useTranslation();
   const eventLabel = useEventTypeLabel();
@@ -65,6 +70,20 @@ const DimensionTable = ({
         </span>
       ),
     })),
+    ...(devices
+      ? (['failures', 'rollbacks'] as const).map((kind) => ({
+          title: (
+            <HeaderHint
+              label={t(`app_insights.col_${kind}_devices`)}
+              hint={t('app_insights.devices_hint')}
+            />
+          ),
+          key: `${kind}Devices`,
+          align: 'right' as const,
+          render: (_: unknown, row: DimensionRow) =>
+            formatInteger(devices.get(row.key)?.[kind]),
+        }))
+      : []),
     {
       title: (
         <HeaderHint
@@ -131,6 +150,15 @@ export const FailuresPanel = ({
         : summarizeBreakdown(breakdown.data?.days, versionFilter),
     [all, breakdown.data, versionFilter],
   );
+  const failureDevices = useAppFailureDevices(
+    appKey,
+    days,
+    versionFilter === ALL ? undefined : versionFilter,
+  );
+  const devices = useMemo(
+    () => failureDeviceLookup(failureDevices.data),
+    [failureDevices.data],
+  );
   const hasAvailableDays = summary.availableDays > 0;
   const emptyText = t(
     hasAvailableDays
@@ -155,6 +183,17 @@ export const FailuresPanel = ({
       dataIndex: 'count',
       align: 'right',
       render: (value: number | null) => formatInteger(value),
+    },
+    {
+      title: (
+        <HeaderHint
+          label={t('app_insights.col_devices')}
+          hint={t('app_insights.devices_hint')}
+        />
+      ),
+      key: 'devices',
+      align: 'right',
+      render: (_, row) => formatInteger(devices.reasons.get(row.reason)),
     },
     {
       title: t('app_insights.col_share'),
@@ -229,11 +268,20 @@ export const FailuresPanel = ({
         />
       </div>
       <Spin spinning={breakdown.isLoading}>
-        <div className="grid gap-2 md:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-4">
           <StatTile
             label={t('app_insights.failure_events', { days })}
             value={formatInteger(hasAvailableDays ? summary.failures : null)}
             hint={t('app_insights.failure_events_hint')}
+          />
+          <StatTile
+            label={t('app_insights.failure_devices', { days })}
+            value={formatInteger(devices.failures)}
+            hint={t(
+              failureDevices.data?.limited
+                ? 'app_insights.failure_devices_limited'
+                : 'app_insights.failure_devices_hint',
+            )}
           />
           <StatTile
             label={t('app_insights.top_reason')}
@@ -289,6 +337,7 @@ export const FailuresPanel = ({
           emptyText={emptyText}
           keyTitle={t('app_insights.col_os')}
           labelOf={(key) => key}
+          devices={devices.os}
         />
       </Card>
       <Card size="small" title={t('app_insights.carrier_events_title')}>
@@ -304,6 +353,7 @@ export const FailuresPanel = ({
         )}
       </Card>
       <Footnote>{t('app_insights.breakdown_footnote')}</Footnote>
+      <Footnote>{t('app_insights.devices_footnote')}</Footnote>
     </div>
   );
 };

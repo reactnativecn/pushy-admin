@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import {
+  failureDeviceLookup,
   highestFailureDimension,
   isKnownCarrier,
   parseFailureReason,
@@ -139,5 +140,43 @@ describe('diagnostic report shares, not attempt failure rates', () => {
     ]);
     expect(result.failures).toBe(4);
     expect(result.reasons.map((row) => row.reason)).toEqual(['crc_mismatch']);
+  });
+});
+
+describe('failureDeviceLookup', () => {
+  it('keeps window-wide device unions without adding them up', () => {
+    const lookup = failureDeviceLookup({
+      status: 'observed',
+      limited: false,
+      failures: 3,
+      rollbacks: null,
+      byOS: [
+        { os: 'android 36', failures: 2, rollbacks: 1 },
+        { os: 'android 35', failures: 0, rollbacks: null },
+      ],
+      byReason: [
+        { reason: 'zip', devices: 2 },
+        { reason: 'mystery_a', devices: 1 },
+        { reason: 'mystery_b', devices: 1 },
+      ],
+      retentionDays: 35,
+    });
+    expect(lookup.failures).toBe(3);
+    expect(lookup.rollbacks).toBeNull();
+    expect(lookup.os.get('android 36')).toEqual({ failures: 2, rollbacks: 1 });
+    // Zero is an expired key, not an observed fleet without failures.
+    expect(lookup.os.get('android 35')).toEqual({
+      failures: null,
+      rollbacks: null,
+    });
+    expect(lookup.reasons.get('zip')).toBe(2);
+    // Two unknown labels fold into "other"; their union is unknown.
+    expect(lookup.reasons.get('other')).toBeNull();
+  });
+
+  it('treats a missing response as unknown', () => {
+    const lookup = failureDeviceLookup(undefined);
+    expect(lookup.failures).toBeNull();
+    expect(lookup.os.size).toBe(0);
   });
 });
