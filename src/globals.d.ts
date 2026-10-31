@@ -50,6 +50,7 @@ declare module 'bun:test' {
   export function expect<T>(actual: T): ExpectMatchers;
   export function beforeEach(fn: () => void | Promise<void>): void;
   export function afterEach(fn: () => void | Promise<void>): void;
+  export function afterAll(fn: () => void | Promise<void>): void;
   export function setSystemTime(time: Date | number | null): void;
   export const mock: {
     module(path: string, factory: () => any): void;
@@ -63,7 +64,9 @@ declare module 'bun:test' {
     key: K,
   ): T[K] & {
     mockClear(): void;
-    mockImplementation(fn: T[K]): T[K] & { mockClear(): void };
+    mockImplementation(
+      fn: T[K],
+    ): T[K] & { mockClear(): void; mockRestore(): void };
     mockRestore(): void;
   };
 }
