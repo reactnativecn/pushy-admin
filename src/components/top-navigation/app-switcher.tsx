@@ -4,6 +4,8 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   PlusOutlined,
+  PushpinFilled,
+  PushpinOutlined,
   SearchOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
@@ -12,7 +14,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { rootRouterPath, router } from '@/router';
-import { getRecentAppIds, rememberRecentApp } from '@/utils/app-preferences';
+import {
+  getRecentAppIds,
+  rememberRecentApp,
+  togglePinnedApp,
+  usePinnedAppIds,
+} from '@/utils/app-preferences';
 import { type AppDrawerItem, useAppWorkspaceList } from '@/utils/app-workspace';
 import { cn } from '@/utils/helper';
 import { useWorkspacePermissions } from '@/utils/hooks';
@@ -232,6 +239,7 @@ function AppSwitcherContent({
 }: AppSwitcherContentProps) {
   const { t } = useTranslation();
   const hasSearch = query.trim().length > 0;
+  const pinnedAppIds = usePinnedAppIds();
 
   return (
     <div className={isSheet ? 'w-full' : 'w-[min(460px,calc(100vw-32px))]'}>
@@ -293,6 +301,7 @@ function AppSwitcherContent({
               <AppRow
                 app={app}
                 isActive={app.id === currentAppId}
+                isPinned={pinnedAppIds.includes(app.id)}
                 key={app.id}
                 onSelect={onNavigateToApp}
                 onSettings={onSettings}
@@ -335,11 +344,13 @@ function AppSwitcherContent({
 function AppRow({
   app,
   isActive,
+  isPinned,
   onSelect,
   onSettings,
 }: {
   app: AppItem;
   isActive: boolean;
+  isPinned: boolean;
   onSelect: (appId: number) => void;
   onSettings?: (app: AppItem) => void;
 }) {
@@ -397,6 +408,23 @@ function AppRow({
             </Tag>
           )}
         </span>
+      </button>
+      <button
+        aria-label={t(isPinned ? 'nav.unpin_app' : 'nav.pin_app')}
+        aria-pressed={isPinned}
+        className={cn(
+          'flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 transition-colors last:mr-2 hover:bg-container hover:text-primary',
+          isPinned ? 'text-primary' : 'text-slate-400',
+        )}
+        onClick={() => togglePinnedApp(app.id)}
+        title={t(isPinned ? 'nav.unpin_app' : 'nav.pin_app')}
+        type="button"
+      >
+        {isPinned ? (
+          <PushpinFilled className="text-base" />
+        ) : (
+          <PushpinOutlined className="text-base" />
+        )}
       </button>
       {onSettings && (
         <button

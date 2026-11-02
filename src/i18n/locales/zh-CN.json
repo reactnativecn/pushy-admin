@@ -1053,6 +1053,8 @@
     "checks": "检查次数",
     "app_settings": "应用设置",
     "open_app_settings": "打开 {{name}} 应用设置",
+    "pin_app": "置顶",
+    "unpin_app": "取消置顶",
     "paused": "暂停",
     "language": "语言",
     "language_en": "English",
@@ -1066,6 +1068,7 @@
     "custom_orders": "收款链接"
   },
   "app_drawer": {
+    "drag_to_sort": "拖动可调整置顶顺序",
     "expand": "展开应用列表",
     "collapse": "收起应用列表",
     "app_list": "应用列表",
@@ -1079,6 +1082,8 @@
     "app_settings": "应用设置",
     "checks": "次检查",
     "open_app_settings": "打开 {{name}} 应用设置",
+    "pin_app": "置顶",
+    "unpin_app": "取消置顶",
     "check_count": "{{count}} 次检查"
   },
   "app_detail_header": {

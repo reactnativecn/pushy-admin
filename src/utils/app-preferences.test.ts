@@ -2,12 +2,17 @@ import { describe, expect, mock, test } from 'bun:test';
 import {
   getManageAppDrawerCollapsed,
   getManageAppDrawerPlacement,
+  getPinnedAppIds,
   getRecentAppIds,
   MAX_RECENT_APP_COUNT,
+  movePinnedApp,
+  PINNED_APP_STORAGE_KEY,
   RECENT_APP_STORAGE_KEY,
   rememberRecentApp,
   setManageAppDrawerCollapsed,
   setManageAppDrawerPlacement,
+  sortAppsByPinned,
+  togglePinnedApp,
 } from './app-preferences';
 
 // ─── RecentAppIds (expanded) ────────────────────────────────────────
@@ -327,5 +332,80 @@ describe('ManageAppDrawerCollapsed', () => {
     (global as any).window = undefined;
     setManageAppDrawerCollapsed(true);
     (global as any).window = originalWindow;
+  });
+});
+
+// ─── PinnedApps ─────────────────────────────────────────────────────
+
+describe('PinnedApps', () => {
+  const originalWindow = (global as any).window;
+
+  const installStorage = (initial: string | null) => {
+    const store = new Map<string, string>();
+    if (initial !== null) {
+      store.set(PINNED_APP_STORAGE_KEY, initial);
+    }
+    (global as any).window = {
+      localStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => store.set(key, value),
+        removeItem: (key: string) => store.delete(key),
+      },
+      dispatchEvent: mock(() => true),
+    };
+  };
+
+  test('togglePinnedApp 新置顶的排最前，再次切换则取消', () => {
+    installStorage(null);
+    togglePinnedApp(1);
+    togglePinnedApp(2);
+    expect(getPinnedAppIds()).toEqual([2, 1]);
+    togglePinnedApp(2);
+    expect(getPinnedAppIds()).toEqual([1]);
+    (global as any).window = originalWindow;
+  });
+
+  test('movePinnedApp 向上向下都挪到目标位置', () => {
+    installStorage(JSON.stringify([1, 2, 3, 4]));
+    movePinnedApp(4, 2);
+    expect(getPinnedAppIds()).toEqual([1, 4, 2, 3]);
+    movePinnedApp(1, 2);
+    expect(getPinnedAppIds()).toEqual([4, 2, 1, 3]);
+    (global as any).window = originalWindow;
+  });
+
+  test('movePinnedApp 任一方未置顶或目标是自己时不变', () => {
+    installStorage(JSON.stringify([1, 2]));
+    movePinnedApp(1, 99);
+    movePinnedApp(99, 1);
+    movePinnedApp(1, 1);
+    expect(getPinnedAppIds()).toEqual([1, 2]);
+    (global as any).window = originalWindow;
+  });
+
+  test('getPinnedAppIds 遇到损坏的存储值返回空数组', () => {
+    installStorage('invalid json');
+    expect(getPinnedAppIds()).toEqual([]);
+    (global as any).window = originalWindow;
+  });
+
+  test('sortAppsByPinned 置顶在前，其余保持原有顺序', () => {
+    const apps = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+    expect(sortAppsByPinned(apps, [3, 2])).toEqual([
+      { id: 3 },
+      { id: 2 },
+      { id: 1 },
+      { id: 4 },
+    ]);
+  });
+
+  test('sortAppsByPinned 没有置顶时返回原数组', () => {
+    const apps = [{ id: 1 }];
+    expect(sortAppsByPinned(apps, [])).toBe(apps);
+  });
+
+  test('sortAppsByPinned 忽略不存在的和重复的 id', () => {
+    const apps = [{ id: 1 }, { id: 2 }];
+    expect(sortAppsByPinned(apps, [99, 2, 2])).toEqual([{ id: 2 }, { id: 1 }]);
   });
 });

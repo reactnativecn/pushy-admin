@@ -1053,6 +1053,8 @@
     "checks": "checks",
     "app_settings": "App Settings",
     "open_app_settings": "Open {{name}} settings",
+    "pin_app": "Pin to top",
+    "unpin_app": "Unpin",
     "paused": "Paused",
     "language": "Language",
     "language_en": "English",
@@ -1066,6 +1068,7 @@
     "custom_orders": "Payment Links"
   },
   "app_drawer": {
+    "drag_to_sort": "Drag to reorder pinned apps",
     "expand": "Expand app list",
     "collapse": "Collapse app list",
     "app_list": "App List",
@@ -1079,6 +1082,8 @@
     "app_settings": "App Settings",
     "checks": "checks",
     "open_app_settings": "Open {{name}} settings",
+    "pin_app": "Pin to top",
+    "unpin_app": "Unpin",
     "check_count": "{{count}} checks"
   },
   "app_detail_header": {
