@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
 import { serviceStatusKeys } from '@/utils/query-keys';
+import { CdnStatusPanel } from './cdn-status-panel';
 import {
   buildServiceStatusSummary,
   SERVICE_STATUS_AGGREGATOR_BASE_URL,
@@ -74,6 +75,7 @@ export const Component = () => {
       <QuotaAlertsPanel />
       <WorkerStatsPanel />
       <RedisStatusPanel />
+      <CdnStatusPanel />
       <StorageUsagePanel />
 
       <Modal

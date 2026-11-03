@@ -157,6 +157,54 @@ export type RedisStatusSnapshot = {
   };
 };
 
+// GET /admin/system/cdn：自建下载 CDN 节点每分钟上报的状态与流量，时间是 Unix 秒。
+// Redis 不可用时仍返回 200，available=false。
+export type CdnStatsWindow = {
+  coveredSeconds: number;
+  requests: number;
+  getRequests: number;
+  headRequests: number;
+  bytesSent: number;
+  cacheHits: number;
+  cacheMisses: number;
+  hitBytes: number;
+  status2xx: number;
+  status3xx: number;
+  status4xx: number;
+  status5xx: number;
+  getTimeMsSum: number;
+  txBytes: number;
+  rxBytes: number;
+  peakTxMbps: number;
+};
+
+export type CdnNodeStats = {
+  host: string;
+  stale: boolean;
+  collectedAt: number;
+  generatedAt: number;
+  nginx: string;
+  shedMonitor: string;
+  shedActive: boolean;
+  shedOnLastHour: number;
+  activeConnections: number;
+  cacheUsedBytes: number;
+  cacheTotalBytes: number;
+  certNotAfter: number;
+  windows: {
+    last5m: CdnStatsWindow;
+    last1h: CdnStatsWindow;
+    last24h: CdnStatsWindow;
+  };
+};
+
+export type CdnStatsSnapshot = {
+  generatedAt: string;
+  available: boolean;
+  error?: 'unavailable';
+  nodes: CdnNodeStats[];
+};
+
 export type CustomOrderStatus = 'pending' | 'done' | 'cancelled';
 
 export type CustomOrder = {
@@ -203,6 +251,10 @@ export const adminApi = {
     }),
   getRedisStatus: () =>
     request<RedisStatusSnapshot>('get', '/admin/system/redis', undefined, {
+      suppressErrorToast: true,
+    }),
+  getCdnStats: () =>
+    request<CdnStatsSnapshot>('get', '/admin/system/cdn', undefined, {
       suppressErrorToast: true,
     }),
   getAnalyticsOverview: (days = 7) =>
