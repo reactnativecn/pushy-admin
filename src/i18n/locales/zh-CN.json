@@ -1484,9 +1484,8 @@
   },
   "cdn_status": {
     "title": "CDN 节点",
-    "reporting": "上报正常",
-    "stale": "数据已过期，最后上报于 {{time}}",
-    "unavailable": "暂时读不到节点数据（Redis 不可用）。",
+    "updated_at": "数据时间 {{time}}",
+    "unreachable": "节点 {{host}} 查询失败。",
     "shed_monitor_down": "分流脚本：{{state}}",
     "shedding": "正在分流",
     "bandwidth": "近 5 分钟带宽",

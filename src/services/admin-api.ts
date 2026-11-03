@@ -157,8 +157,8 @@ export type RedisStatusSnapshot = {
   };
 };
 
-// GET /admin/system/cdn：自建下载 CDN 节点每分钟上报的状态与流量，时间是 Unix 秒。
-// Redis 不可用时仍返回 200，available=false。
+// GET /admin/system/cdn：应答的 origin 实时查询各自建 CDN 节点，时间是 Unix 秒。
+// 查询失败的节点带 error，其余字段为空。
 export type CdnStatsWindow = {
   coveredSeconds: number;
   requests: number;
@@ -180,8 +180,7 @@ export type CdnStatsWindow = {
 
 export type CdnNodeStats = {
   host: string;
-  stale: boolean;
-  collectedAt: number;
+  error?: 'unreachable';
   generatedAt: number;
   nginx: string;
   shedMonitor: string;
@@ -200,8 +199,6 @@ export type CdnNodeStats = {
 
 export type CdnStatsSnapshot = {
   generatedAt: string;
-  available: boolean;
-  error?: 'unavailable';
   nodes: CdnNodeStats[];
 };
 

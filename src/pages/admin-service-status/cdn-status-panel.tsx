@@ -31,6 +31,18 @@ const CERT_WARNING_DAYS = 14;
 
 type WindowRow = CdnStatsWindow & { key: string; label: string };
 
+const UnreachableNode = ({ host }: { host: string }) => {
+  const { t } = useTranslation();
+  return (
+    <Alert
+      className="mb-4 last:mb-0"
+      showIcon
+      message={t('cdn_status.unreachable', { host })}
+      type="error"
+    />
+  );
+};
+
 const NodeStats = ({ node }: { node: CdnNodeStats }) => {
   const { t } = useTranslation();
   const { last5m, last1h, last24h } = node.windows;
@@ -114,15 +126,11 @@ const NodeStats = ({ node }: { node: CdnNodeStats }) => {
       title={
         <Space size={4} wrap>
           <Text code>{node.host}</Text>
-          {node.stale ? (
-            <Tag color="error">
-              {t('cdn_status.stale', {
-                time: dayjs.unix(node.collectedAt).format('MM-DD HH:mm:ss'),
-              })}
-            </Tag>
-          ) : (
-            <Tag color="success">{t('cdn_status.reporting')}</Tag>
-          )}
+          <Tag color="success">
+            {t('cdn_status.updated_at', {
+              time: dayjs.unix(node.generatedAt).format('HH:mm:ss'),
+            })}
+          </Tag>
           {node.nginx !== 'active' && (
             <Tag color="error">nginx: {node.nginx}</Tag>
           )}
@@ -211,7 +219,7 @@ export const CdnStatusPanel = () => {
   const statsQuery = useQuery({
     queryKey: serviceStatusKeys.cdnStats(),
     queryFn: () => adminApi.getCdnStats(),
-    // 节点每分钟上报一次，刷新得更快也看不到新数据。
+    // 节点每分钟汇总一次，刷新得更快也看不到新数据。
     refetchInterval: 60_000,
     retry: false,
   });
@@ -219,18 +227,19 @@ export const CdnStatusPanel = () => {
 
   return (
     <StatusSection
-      empty={!!stats?.available && stats.nodes.length === 0}
+      empty={stats?.nodes.length === 0}
       error={statsQuery.isError}
       icon={<CloudServerOutlined />}
       loading={statsQuery.isLoading}
       title={t('cdn_status.title')}
     >
-      {stats?.available === false && (
-        <Alert showIcon message={t('cdn_status.unavailable')} type="warning" />
+      {stats?.nodes.map((node) =>
+        node.error ? (
+          <UnreachableNode host={node.host} key={node.host} />
+        ) : (
+          <NodeStats key={node.host} node={node} />
+        ),
       )}
-      {stats?.nodes.map((node) => (
-        <NodeStats key={node.host} node={node} />
-      ))}
     </StatusSection>
   );
 };

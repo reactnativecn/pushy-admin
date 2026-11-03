@@ -1484,9 +1484,8 @@
   },
   "cdn_status": {
     "title": "CDN nodes",
-    "reporting": "Reporting",
-    "stale": "Stale, last reported {{time}}",
-    "unavailable": "Node data is unavailable right now (Redis is unreachable).",
+    "updated_at": "Data from {{time}}",
+    "unreachable": "Could not query node {{host}}.",
     "shed_monitor_down": "Shed monitor: {{state}}",
     "shedding": "Shedding",
     "bandwidth": "Bandwidth, last 5 minutes",
