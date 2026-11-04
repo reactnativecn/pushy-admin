@@ -117,6 +117,8 @@ export const serviceStatusKeys = {
   storageUsage: () => ['serviceStatus', 'global', 'storageUsage'] as const,
   redisStatus: () => ['serviceStatus', 'global', 'redisStatus'] as const,
   cdnStats: () => ['serviceStatus', 'global', 'cdnStats'] as const,
+  cdnWindow: (window: string) =>
+    ['serviceStatus', 'global', 'cdnStats', window] as const,
   target: (target: string) => ['serviceStatus', target] as const,
   metrics: (target: string) => ['serviceStatus', target, 'metrics'] as const,
   api5xxEvents: (target: string, offset: number) =>

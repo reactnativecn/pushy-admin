@@ -192,7 +192,6 @@ export type CdnNodeStats = {
   certNotAfter: number;
   windows: {
     last5m: CdnStatsWindow;
-    last1h: CdnStatsWindow;
     last24h: CdnStatsWindow;
   };
 };
@@ -200,6 +199,20 @@ export type CdnNodeStats = {
 export type CdnStatsSnapshot = {
   generatedAt: string;
   nodes: CdnNodeStats[];
+};
+
+export type CdnWindowName =
+  | 'last1h'
+  | 'today'
+  | 'last7d'
+  | 'last30d'
+  | 'last90d';
+
+// GET /admin/system/cdn?window=：只查一个时段，切换 Tab 时才请求。
+export type CdnWindowSnapshot = {
+  generatedAt: string;
+  window: CdnWindowName;
+  nodes: { host: string; error?: 'unreachable'; window: CdnStatsWindow }[];
 };
 
 export type CustomOrderStatus = 'pending' | 'done' | 'cancelled';
@@ -254,6 +267,13 @@ export const adminApi = {
     request<CdnStatsSnapshot>('get', '/admin/system/cdn', undefined, {
       suppressErrorToast: true,
     }),
+  getCdnWindow: (window: CdnWindowName) =>
+    request<CdnWindowSnapshot>(
+      'get',
+      `/admin/system/cdn?window=${window}`,
+      undefined,
+      { suppressErrorToast: true },
+    ),
   getAnalyticsOverview: (days = 7) =>
     request<{ data: GlobalAnalyticsDay[] }>(
       'get',

@@ -2,7 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import {
   averageGetMs,
   averageMbps,
+  cdnWindowConfig,
   certDaysLeft,
+  coverageShortfall,
   formatMbps,
   safeRatio,
 } from './cdn-status-panel.logic';
@@ -49,5 +51,42 @@ describe('certDaysLeft', () => {
 
   test('读不到证书时返回 null', () => {
     expect(certDaysLeft(0, 0)).toBeNull();
+  });
+});
+
+describe('coverageShortfall', () => {
+  test('覆盖完整的时段不提示，差一个采集周期也算完整', () => {
+    expect(coverageShortfall(3600, 3600)).toBeNull();
+    expect(coverageShortfall(3540, 3600)).toBeNull();
+  });
+
+  test('长度不固定的时段不提示', () => {
+    expect(coverageShortfall(60, undefined)).toBeNull();
+  });
+
+  test('不足两天按小时报，否则按整天报', () => {
+    expect(coverageShortfall(44_640, 7_776_000)).toEqual({
+      unit: 'hours',
+      value: 12.4,
+    });
+    expect(coverageShortfall(3 * 86_400 + 100, 7_776_000)).toEqual({
+      unit: 'days',
+      value: 3,
+    });
+  });
+});
+
+describe('cdnWindowConfig', () => {
+  test('长时段刷新得比短时段慢', () => {
+    expect(cdnWindowConfig('last90d').refreshMs).toBeGreaterThan(
+      cdnWindowConfig('last1h').refreshMs,
+    );
+    expect(cdnWindowConfig('last7d').refreshMs).toBeGreaterThan(
+      cdnWindowConfig('today').refreshMs,
+    );
+  });
+
+  test('今日长度不固定，不提示覆盖不足', () => {
+    expect(cdnWindowConfig('today').seconds).toBeUndefined();
   });
 });
