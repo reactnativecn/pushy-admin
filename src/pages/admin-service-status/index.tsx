@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Modal, Typography } from 'antd';
+import { Modal, Tabs, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/services/admin-api';
@@ -22,7 +22,7 @@ import { WorkerStatsPanel } from './worker-stats-panel';
 
 const { Text, Title } = Typography;
 
-export const Component = () => {
+const ServerStatusTab = () => {
   // null = 未选中：节点面板默认不渲染（连带停掉它的轮询）
   const [openTargetKey, setOpenTargetKey] =
     useState<ServiceStatusTargetKey | null>(null);
@@ -62,17 +62,8 @@ export const Component = () => {
   });
 
   return (
-    <div className="page-section">
-      <div className="mb-4">
-        <Title level={4} className="m-0!">
-          {t('admin_service_status.title')}
-        </Title>
-        <Text type="secondary">{t('admin_service_status.description')}</Text>
-      </div>
+    <>
       <ServiceTargetCards items={targetItems} onSelect={setOpenTargetKey} />
-      <UserAnalyticsPanel />
-      <VersionHealthOverviewPanel />
-      <QuotaAlertsPanel />
       <WorkerStatsPanel />
       <RedisStatusPanel />
       <CdnStatusPanel />
@@ -105,6 +96,46 @@ export const Component = () => {
           />
         )}
       </Modal>
+    </>
+  );
+};
+
+const BusinessStatusTab = () => (
+  <>
+    <UserAnalyticsPanel />
+    <VersionHealthOverviewPanel />
+    <QuotaAlertsPanel />
+  </>
+);
+
+export const Component = () => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="page-section">
+      <div className="mb-4">
+        <Title level={4} className="m-0!">
+          {t('admin_service_status.title')}
+        </Title>
+        <Text type="secondary">{t('admin_service_status.description')}</Text>
+      </div>
+      {/* 隐藏的 Tab 卸载，不在后台轮询；切回来时查询缓存里的数据还在。 */}
+      <Tabs
+        defaultActiveKey="server"
+        destroyOnHidden
+        items={[
+          {
+            children: <ServerStatusTab />,
+            key: 'server',
+            label: t('admin_service_status.tab_server'),
+          },
+          {
+            children: <BusinessStatusTab />,
+            key: 'business',
+            label: t('admin_service_status.tab_business'),
+          },
+        ]}
+      />
     </div>
   );
 };

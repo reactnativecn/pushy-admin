@@ -810,7 +810,9 @@
     "info_recent": "Recent",
     "info_capacity": "Capacity",
     "info_filtered": "Filtered",
-    "info_log_window": "Log"
+    "info_log_window": "Log",
+    "tab_server": "Server status",
+    "tab_business": "Business status"
   },
   "admin_deploy": {
     "title": "Instances & Deploy",

@@ -810,7 +810,9 @@
     "info_recent": "最近",
     "info_capacity": "容量",
     "info_filtered": "过滤",
-    "info_log_window": "日志"
+    "info_log_window": "日志",
+    "tab_server": "服务器状态",
+    "tab_business": "业务状态"
   },
   "admin_deploy": {
     "title": "实例与部署",
