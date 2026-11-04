@@ -42,7 +42,15 @@
     "activating": "激活中，请稍等",
     "success": "激活成功",
     "go_login": "请登录",
-    "link_invalid": "激活链接无效，请重新打开邮件中的链接"
+    "link_invalid": "激活链接无效，请重新打开邮件中的链接",
+    "set_password_title": "设置登录密码",
+    "set_password_hint": "验证邮箱后需要设置密码，此前注册时填写的密码将失效。如果不是您本人注册，请直接关闭此页面。",
+    "password_placeholder": "请输入密码",
+    "confirm_placeholder": "请再次输入密码",
+    "password_mismatch": "两次输入的密码不一致",
+    "submit_button": "设置密码并激活",
+    "already_active": "账号已激活，请用原密码登录",
+    "password_rules": "密码中需要同时包含大、小写字母和数字，且长度不少于6位"
   },
   "inactivated": {
     "email_sent": "邮件发送成功，请注意查收",

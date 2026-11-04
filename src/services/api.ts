@@ -254,8 +254,13 @@ export const api = {
     }),
   logout: () =>
     request('post', '/user/logout', undefined, { suppressErrorToast: true }),
-  activate: (params: { token: string }) =>
-    request('post', '/user/activate', params),
+  activate: (params: { token: string; pwd?: string }) =>
+    request<{ userId: number; alreadyActive?: boolean }>(
+      'post',
+      '/user/activate',
+      params,
+      { suppressErrorToast: true },
+    ),
   me: () => request<User>('get', '/user/me'),
   // 不鉴权、也不弹错误提示：页脚少一个版本号不值得打扰任何人。
   serverStatus: () =>
