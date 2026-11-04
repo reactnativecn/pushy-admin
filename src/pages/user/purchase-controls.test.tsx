@@ -4,6 +4,7 @@ import { ConfigProvider } from 'antd';
 import i18n from 'i18next';
 import '@/i18n';
 import type { OrderQuotes } from './billing';
+import { getPopoverContentMaxHeight } from './purchase-action-popover';
 import {
   RenewalPurchaseButton,
   UpgradePurchaseControls,
@@ -210,5 +211,19 @@ describe('RenewalPurchaseButton', () => {
     fireEvent.click(screen.getByRole('button'));
 
     expect(screen.queryByText(/Token/)).toBeNull();
+  });
+});
+
+describe('getPopoverContentMaxHeight', () => {
+  test('按钮下方空间更大时按下方空间限高', () => {
+    expect(getPopoverContentMaxHeight({ top: 334, bottom: 366 }, 907)).toBe(
+      907 - 366 - 56,
+    );
+  });
+
+  test('按钮靠近页面底部时按上方空间限高', () => {
+    expect(getPopoverContentMaxHeight({ top: 760, bottom: 792 }, 907)).toBe(
+      760 - 56,
+    );
   });
 });

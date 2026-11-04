@@ -1,6 +1,6 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Popover, Tag } from 'antd';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/helper';
 
@@ -21,6 +21,22 @@ export function useRunningKey<K>() {
     }
   };
   return { run, runningKey };
+}
+
+// 弹层相对内容多占的高度：与按钮的间距、弹层内边距，再留一点到视口边缘的余量。
+const POPOVER_CHROME_HEIGHT = 56;
+
+/**
+ * 弹层挂在 body 上，超出视口会撑高整个文档：出现页面滚动条、内容区变窄、按钮横移。
+ * 因此把内容高度限制在按钮上下较大的一侧之内，弹层放不下时由 antd 翻转到这一侧。
+ */
+export function getPopoverContentMaxHeight(
+  trigger: Pick<DOMRect, 'top' | 'bottom'>,
+  viewportHeight: number,
+) {
+  const spaceAbove = trigger.top;
+  const spaceBelow = viewportHeight - trigger.bottom;
+  return Math.max(spaceAbove, spaceBelow) - POPOVER_CHROME_HEIGHT;
 }
 
 export type PurchaseMenuOption = {
@@ -62,13 +78,45 @@ export function PurchaseActionPopover({
 }) {
   const { t } = useTranslation();
   const resolvedEmptyText = emptyText ?? t('user.addon_empty');
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [contentMaxHeight, setContentMaxHeight] = useState<number>();
+
+  // 打开期间页面滚动或窗口缩放都会改变按钮位置，需要跟着重新计算。
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const trigger = triggerRef.current;
+      if (trigger) {
+        setContentMaxHeight(
+          getPopoverContentMaxHeight(
+            trigger.getBoundingClientRect(),
+            window.innerHeight,
+          ),
+        );
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open]);
 
   const content = (
     <div
       className={cn(
-        'max-h-[70vh] max-w-[calc(100vw-32px)] overflow-y-auto pr-1',
+        'max-w-[calc(100vw-32px)] overflow-y-auto overscroll-contain pr-1',
         widthClassName,
       )}
+      style={{
+        maxHeight:
+          contentMaxHeight === undefined
+            ? '70vh'
+            : `min(70vh, ${contentMaxHeight}px)`,
+      }}
     >
       {title && (
         <div className="px-2">
@@ -190,10 +238,15 @@ export function PurchaseActionPopover({
   return (
     <Popover
       content={content}
+      onOpenChange={setOpen}
       placement="bottomLeft"
       trigger={['hover', 'click']}
     >
-      <Button className={purchaseButtonClassName} loading={loading}>
+      <Button
+        className={purchaseButtonClassName}
+        loading={loading}
+        ref={triggerRef}
+      >
         <span className="inline-flex items-center gap-2">
           {buttonLabel}
           <DownOutlined className="text-[10px]" />
