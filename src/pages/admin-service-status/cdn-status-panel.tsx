@@ -159,6 +159,9 @@ const NodeStats = ({
   const diskRatio = usageRatio(node.cacheUsedBytes, node.cacheTotalBytes);
   const certDays = certDaysLeft(node.certNotAfter, Date.now());
   const diskLevel = usageLevel(diskRatio);
+  // 节点还没升级时没有这些字段，整张卡片不显示。
+  const memoryUsed = node.memoryTotalBytes - node.memoryAvailableBytes;
+  const memoryRatio = usageRatio(memoryUsed, node.memoryTotalBytes);
 
   return (
     <Card
@@ -186,7 +189,7 @@ const NodeStats = ({
         </Space>
       }
     >
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <StatCard
           detail={t('cdn_status.bandwidth_detail', {
             connections: formatCount(node.activeConnections),
@@ -195,6 +198,36 @@ const NodeStats = ({
           title={t('cdn_status.bandwidth')}
           value={formatMbps(averageMbps(last5m.txBytes, last5m.coveredSeconds))}
         />
+        {node.memoryTotalBytes > 0 && (
+          <StatCard
+            detail={t('cdn_status.load_detail', {
+              cores: node.cpuCount,
+              load1: node.load1.toFixed(2),
+              load5: node.load5.toFixed(2),
+              load15: node.load15.toFixed(2),
+            })}
+            title={t('cdn_status.cpu')}
+            value={formatPercent(node.cpuPercent / 100)}
+          >
+            <div>
+              <Text type="secondary">
+                {t('cdn_status.memory', {
+                  total: formatBytes(node.memoryTotalBytes),
+                  used: formatBytes(memoryUsed),
+                })}
+              </Text>
+            </div>
+            {memoryRatio != null && (
+              <Progress
+                percent={Math.min(100, Number((memoryRatio * 100).toFixed(1)))}
+                size="small"
+                status={
+                  usageLevel(memoryRatio) === 'danger' ? 'exception' : 'normal'
+                }
+              />
+            )}
+          </StatCard>
+        )}
         <StatCard
           title={t('cdn_status.cache_disk')}
           value={formatBytes(node.cacheUsedBytes)}

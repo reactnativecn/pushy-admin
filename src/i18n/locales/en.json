@@ -1512,7 +1512,10 @@
     "window_90d": "Last 90 days",
     "coverage_hours": "This node is new: only the last {{value}} hours of this period have data.",
     "coverage_days": "This node is new: only the last {{value}} days of this period have data.",
-    "window_failed": "Could not query this period. It will retry shortly."
+    "window_failed": "Could not query this period. It will retry shortly.",
+    "cpu": "CPU (last minute)",
+    "load_detail": "Load {{load1}} / {{load5}} / {{load15}}, {{cores}} cores",
+    "memory": "Memory {{used}} / {{total}}"
   },
   "redis_status": {
     "title": "Redis",

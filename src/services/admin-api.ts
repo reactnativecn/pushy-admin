@@ -190,6 +190,13 @@ export type CdnNodeStats = {
   cacheUsedBytes: number;
   cacheTotalBytes: number;
   certNotAfter: number;
+  cpuCount: number;
+  cpuPercent: number;
+  load1: number;
+  load5: number;
+  load15: number;
+  memoryTotalBytes: number;
+  memoryAvailableBytes: number;
   windows: {
     last5m: CdnStatsWindow;
     last24h: CdnStatsWindow;
