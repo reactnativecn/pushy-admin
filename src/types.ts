@@ -27,6 +27,7 @@ export interface AdminUser {
   email: string;
   name: string;
   status: 'normal' | 'unverified' | 'dormant' | null;
+  suspended?: boolean;
   tier: Tier;
   tierExpiresAt?: string | null;
   quota?: Quota | null;

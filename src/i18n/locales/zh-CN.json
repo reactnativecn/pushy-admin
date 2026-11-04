@@ -925,7 +925,16 @@
     "bulk_matched": "匹配到 {{count}} 个账户,将被删除。",
     "bulk_delete_now": "删除 {{count}} 个账户",
     "bulk_confirm_title": "永久删除 {{count}} 个休眠账户?",
-    "bulk_deleted": "已删除 {{count}} 个休眠账户"
+    "bulk_deleted": "已删除 {{count}} 个休眠账户",
+    "status_suspended": "已封禁",
+    "suspend": "封禁",
+    "unsuspend": "解封",
+    "suspended": "已封禁该用户",
+    "unsuspended": "已解封该用户",
+    "suspend_confirm_title": "封禁用户 {{email}}?",
+    "suspend_confirm_desc": "立即拒绝该账号的登录和全部接口访问，现有登录会话永久失效，无法通过激活或重新注册恢复。应用和发版数据保留。",
+    "unsuspend_confirm_title": "解封用户 {{email}}?",
+    "unsuspend_confirm_desc": "恢复到封禁前的状态：已激活的账号恢复正常，API token 重新可用，但需要重新登录；未激活的账号仍需通过邮件激活。"
   },
   "admin_apps": {
     "app_updated": "应用信息已更新",

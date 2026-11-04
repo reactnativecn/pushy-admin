@@ -356,6 +356,16 @@ export const adminApi = {
       query ? `/admin/users?${query}` : '/admin/users',
     );
   },
+  suspendUser: (id: number) =>
+    request<{ id: number; suspended: boolean }>(
+      'post',
+      `/admin/users/${id}/suspend`,
+    ),
+  unsuspendUser: (id: number) =>
+    request<{ id: number; suspended: boolean }>(
+      'post',
+      `/admin/users/${id}/unsuspend`,
+    ),
   deleteUser: (id: number) =>
     request<{ id: number; email: string; appCount: number; deleted: boolean }>(
       'delete',

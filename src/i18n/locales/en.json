@@ -925,7 +925,16 @@
     "bulk_matched": "{{count}} account(s) match and will be deleted.",
     "bulk_delete_now": "Delete {{count}} accounts",
     "bulk_confirm_title": "Permanently delete {{count}} dormant accounts?",
-    "bulk_deleted": "Deleted {{count}} dormant accounts"
+    "bulk_deleted": "Deleted {{count}} dormant accounts",
+    "status_suspended": "Suspended",
+    "suspend": "Suspend",
+    "unsuspend": "Unsuspend",
+    "suspended": "User suspended",
+    "unsuspended": "User unsuspended",
+    "suspend_confirm_title": "Suspend {{email}}?",
+    "suspend_confirm_desc": "Sign-in and all API access are refused at once and existing sessions end for good. Activating or registering again will not restore the account. Its apps and releases are kept.",
+    "unsuspend_confirm_title": "Unsuspend {{email}}?",
+    "unsuspend_confirm_desc": "The account returns to its state before the suspension: an activated account works again and its API tokens resume, but it must sign in again; one that was never activated still has to activate by email."
   },
   "admin_apps": {
     "app_updated": "App updated",

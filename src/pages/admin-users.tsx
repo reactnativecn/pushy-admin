@@ -1,8 +1,10 @@
 import {
+  CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
   SearchOutlined,
+  StopOutlined,
 } from '@ant-design/icons';
 import {
   keepPreviousData,
@@ -168,6 +170,38 @@ export const Component = () => {
     },
   });
 
+  const suspensionMutation = useMutation({
+    mutationFn: ({ id, suspend }: { id: number; suspend: boolean }) =>
+      suspend ? adminApi.suspendUser(id) : adminApi.unsuspendUser(id),
+    onSuccess: (_, { suspend }) => {
+      message.success(
+        t(suspend ? 'admin_users.suspended' : 'admin_users.unsuspended'),
+      );
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+    },
+  });
+
+  const handleSuspension = (record: AdminUser) => {
+    const suspend = !record.suspended;
+    Modal.confirm({
+      title: t(
+        suspend
+          ? 'admin_users.suspend_confirm_title'
+          : 'admin_users.unsuspend_confirm_title',
+        { email: record.email },
+      ),
+      content: t(
+        suspend
+          ? 'admin_users.suspend_confirm_desc'
+          : 'admin_users.unsuspend_confirm_desc',
+      ),
+      okText: t(suspend ? 'admin_users.suspend' : 'admin_users.unsuspend'),
+      okButtonProps: { danger: suspend },
+      cancelText: t('admin_users.cancel'),
+      onOk: () => suspensionMutation.mutateAsync({ id: record.id, suspend }),
+    });
+  };
+
   const handleDelete = (record: { id: number; email: string }) => {
     Modal.confirm({
       title: t('admin_users.delete_confirm_title', { email: record.email }),
@@ -287,8 +321,8 @@ export const Component = () => {
         value,
       })),
       filteredValue: statusFilter ? [statusFilter] : null,
-      render: (status: string | null) => {
-        const meta = statusMeta(status, t);
+      render: (status: string | null, record: AdminUser) => {
+        const meta = statusMeta(status, t, record.suspended);
         return <span className={meta.cls}>{meta.label}</span>;
       },
     },
@@ -360,6 +394,18 @@ export const Component = () => {
             onClick={() => handleEdit(record)}
           >
             {t('admin_users.edit')}
+          </Button>
+          <Button
+            type="link"
+            danger={!record.suspended}
+            icon={record.suspended ? <CheckCircleOutlined /> : <StopOutlined />}
+            onClick={() => handleSuspension(record)}
+          >
+            {t(
+              record.suspended
+                ? 'admin_users.unsuspend'
+                : 'admin_users.suspend',
+            )}
           </Button>
           {(record.status === 'dormant' || record.status === 'unverified') && (
             <Button

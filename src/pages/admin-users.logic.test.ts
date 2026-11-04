@@ -76,6 +76,15 @@ describe('URL filter parsing', () => {
 });
 
 describe('statusMeta', () => {
+  test('a suspended account reads as suspended whatever its status', () => {
+    for (const status of ['unverified', 'normal', null] as const) {
+      expect(statusMeta(status, t, true)).toEqual({
+        cls: 'text-red-500',
+        label: 'admin_users.status_suspended',
+      });
+    }
+  });
+
   test('maps status to colour class and label', () => {
     expect(statusMeta('unverified', t)).toEqual({
       cls: 'text-orange-500',

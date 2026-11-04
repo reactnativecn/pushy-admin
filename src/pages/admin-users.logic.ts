@@ -22,7 +22,11 @@ export const FILTER_KEYS = ['status', 'tier'] as const;
 export const statusMeta = (
   status: string | null | undefined,
   t: (key: string) => string,
+  suspended = false,
 ) => {
+  if (suspended) {
+    return { cls: 'text-red-500', label: t('admin_users.status_suspended') };
+  }
   if (status === 'unverified') {
     return {
       cls: 'text-orange-500',
