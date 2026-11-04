@@ -301,7 +301,8 @@ export const CdnStatusPanel = () => {
       );
     }
     const node = windowQuery.data?.nodes.find((item) => item.host === host);
-    if (!node || node.error) {
+    // 旧版服务端忽略 window 参数，返回的节点没有 window 字段。
+    if (!node?.window || node.error) {
       return (
         <Alert
           showIcon
