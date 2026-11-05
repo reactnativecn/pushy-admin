@@ -44,6 +44,7 @@ import {
 } from '@/utils/table-state';
 import {
   defaultPremiumQuotaText,
+  editableStatusValues,
   expiryShortcutDays,
   FILTER_KEYS,
   getExtendedTierExpiry,
@@ -407,7 +408,9 @@ export const Component = () => {
                 : 'admin_users.suspend',
             )}
           </Button>
-          {(record.status === 'dormant' || record.status === 'unverified') && (
+          {(record.status === 'dormant' ||
+            record.status === 'unverified' ||
+            record.status === 'suspended') && (
             <Button
               type="link"
               danger
@@ -527,20 +530,13 @@ export const Component = () => {
               className="mb-0!"
             >
               <Select
-                options={[
-                  {
-                    value: 'normal',
-                    label: t('admin_users.form_status_normal'),
-                  },
-                  {
-                    value: 'unverified',
-                    label: t('admin_users.form_status_unverified'),
-                  },
-                  {
-                    value: 'dormant',
-                    label: t('admin_users.form_status_dormant'),
-                  },
-                ]}
+                disabled={editingUser?.status === 'suspended'}
+                options={editableStatusValues(editingUser?.status).map(
+                  (value) => ({
+                    value,
+                    label: statusMeta(value, t).label,
+                  }),
+                )}
               />
             </Form.Item>
             <Form.Item

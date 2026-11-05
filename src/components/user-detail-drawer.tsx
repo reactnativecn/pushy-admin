@@ -12,6 +12,7 @@ import {
 } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { statusMeta } from '@/pages/admin-users.logic';
 import { rootRouterPath } from '@/router';
 import { adminApi } from '@/services/admin-api';
 import { formatDateTime } from '@/utils/format';
@@ -115,7 +116,8 @@ export const UserDetailDrawer = ({
       extra={
         detail?.user &&
         (detail.user.status === 'dormant' ||
-          detail.user.status === 'unverified') ? (
+          detail.user.status === 'unverified' ||
+          detail.user.status === 'suspended') ? (
           <Button
             danger
             icon={<DeleteOutlined />}
@@ -148,18 +150,20 @@ export const UserDetailDrawer = ({
               <Descriptions.Item label={translate('admin_users.col_status')}>
                 <Badge
                   status={
-                    detail.user.status === 'normal'
-                      ? 'success'
-                      : detail.user.status === 'dormant'
-                        ? 'default'
-                        : 'warning'
+                    detail.user.suspended || detail.user.status === 'suspended'
+                      ? 'error'
+                      : detail.user.status === 'normal'
+                        ? 'success'
+                        : detail.user.status === 'dormant'
+                          ? 'default'
+                          : 'warning'
                   }
                   text={
-                    detail.user.status === 'normal'
-                      ? translate('admin_users.status_normal')
-                      : detail.user.status === 'dormant'
-                        ? translate('admin_users.status_dormant')
-                        : translate('admin_users.status_unverified')
+                    statusMeta(
+                      detail.user.status,
+                      translate,
+                      detail.user.suspended,
+                    ).label
                   }
                 />
               </Descriptions.Item>

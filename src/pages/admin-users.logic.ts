@@ -24,7 +24,7 @@ export const statusMeta = (
   t: (key: string) => string,
   suspended = false,
 ) => {
-  if (suspended) {
+  if (suspended || status === 'suspended') {
     return { cls: 'text-red-500', label: t('admin_users.status_suspended') };
   }
   if (status === 'unverified') {
@@ -40,7 +40,23 @@ export const statusMeta = (
 };
 
 // 状态筛选的可选值，顺序即表头筛选菜单的顺序
-export const USER_STATUS_VALUES = ['normal', 'unverified', 'dormant'] as const;
+export const USER_STATUS_VALUES = [
+  'normal',
+  'unverified',
+  'dormant',
+  'suspended',
+] as const;
+
+// 编辑表单可选的状态：封禁只能走封禁/解封操作，账号也不能退回未验证，
+// 所以这两个状态只在账号当前就是该状态时才出现。
+export const editableStatusValues = (status: string | null | undefined) => {
+  if (status === 'suspended') {
+    return ['suspended'] as const;
+  }
+  return status === 'unverified'
+    ? (['normal', 'unverified', 'dormant'] as const)
+    : (['normal', 'dormant'] as const);
+};
 
 const TIER_LABEL_KEYS = {
   free: 'admin_users.tier_free',
