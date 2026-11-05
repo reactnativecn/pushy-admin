@@ -44,7 +44,7 @@
     "go_login": "Log in",
     "link_invalid": "This activation link is invalid. Please open the link from your email again.",
     "set_password_title": "Set your password",
-    "set_password_hint": "Now that your email is verified, choose a password. The one entered at registration will stop working. If you did not sign up, close this page.",
+    "set_password_hint": "Your email is verified. Choose a password to start using your account. If you did not sign up, close this page.",
     "password_placeholder": "Enter a password",
     "confirm_placeholder": "Enter the password again",
     "password_mismatch": "The passwords do not match",
