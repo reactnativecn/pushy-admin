@@ -32,6 +32,12 @@ export const CDN_WINDOWS: CdnWindowConfig[] = [
     refreshMs: SHORT_REFRESH_MS,
   },
   {
+    key: 'yesterday',
+    labelKey: 'cdn_status.window_yesterday',
+    seconds: DAY_SECONDS,
+    refreshMs: LONG_REFRESH_MS,
+  },
+  {
     key: 'last7d',
     labelKey: 'cdn_status.window_7d',
     seconds: 7 * DAY_SECONDS,

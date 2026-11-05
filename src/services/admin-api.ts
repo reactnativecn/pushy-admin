@@ -211,6 +211,7 @@ export type CdnStatsSnapshot = {
 export type CdnWindowName =
   | 'last1h'
   | 'today'
+  | 'yesterday'
   | 'last7d'
   | 'last30d'
   | 'last90d';

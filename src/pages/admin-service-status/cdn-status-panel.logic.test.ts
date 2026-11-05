@@ -89,4 +89,11 @@ describe('cdnWindowConfig', () => {
   test('今日长度不固定，不提示覆盖不足', () => {
     expect(cdnWindowConfig('today').seconds).toBeUndefined();
   });
+
+  test('昨日是完整的一天，已经不再变化，按长时段刷新', () => {
+    expect(cdnWindowConfig('yesterday').seconds).toBe(86_400);
+    expect(cdnWindowConfig('yesterday').refreshMs).toBe(
+      cdnWindowConfig('last7d').refreshMs,
+    );
+  });
 });
