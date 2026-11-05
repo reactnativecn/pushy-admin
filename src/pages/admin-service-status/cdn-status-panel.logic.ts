@@ -1,4 +1,4 @@
-import type { CdnWindowName } from '@/services/admin-api';
+import type { CdnNodeStats, CdnWindowName } from '@/services/admin-api';
 
 const DAY_SECONDS = 86_400;
 const HOUR_SECONDS = 3600;
@@ -111,3 +111,13 @@ export function certDaysLeft(notAfter: number, nowMs: number) {
   }
   return Math.floor((notAfter - nowMs / 1000) / DAY_SECONDS);
 }
+
+/** 节点 Tab 上的状态点：查询失败或服务异常算错误，分流只是提醒。 */
+export const nodeHealth = (
+  node: Pick<CdnNodeStats, 'error' | 'nginx' | 'shedActive' | 'shedMonitor'>,
+): 'error' | 'success' | 'warning' => {
+  if (node.error || node.nginx !== 'active' || node.shedMonitor !== 'active') {
+    return 'error';
+  }
+  return node.shedActive ? 'warning' : 'success';
+};

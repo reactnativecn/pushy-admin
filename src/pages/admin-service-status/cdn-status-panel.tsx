@@ -2,6 +2,7 @@ import { CloudServerOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
+  Badge,
   Card,
   Progress,
   Space,
@@ -31,6 +32,7 @@ import {
   certDaysLeft,
   coverageShortfall,
   formatMbps,
+  nodeHealth,
   safeRatio,
 } from './cdn-status-panel.logic';
 import {
@@ -50,7 +52,6 @@ const UnreachableNode = ({ host }: { host: string }) => {
   const { t } = useTranslation();
   return (
     <Alert
-      className="mb-4 last:mb-0"
       showIcon
       message={t('cdn_status.unreachable', { host })}
       type="error"
@@ -172,11 +173,9 @@ const NodeStats = ({
 
   return (
     <Card
-      className="mb-4 last:mb-0"
       size="small"
       title={
         <Space size={4} wrap>
-          <Text code>{node.host}</Text>
           <Tag color="success">
             {t('cdn_status.updated_at', {
               time: dayjs.unix(node.generatedAt).format('HH:mm:ss'),
@@ -329,23 +328,29 @@ export const CdnStatusPanel = () => {
       loading={statsQuery.isLoading}
       title={t('cdn_status.title')}
     >
-      {stats?.nodes.map((node) =>
-        node.error ? (
-          <UnreachableNode host={node.host} key={node.host} />
-        ) : (
-          <NodeStats key={node.host} node={node}>
-            <Tabs
-              activeKey={activeWindow}
-              items={CDN_WINDOWS.map((window) => ({
-                key: window.key,
-                label: t(window.labelKey),
-              }))}
-              onChange={(key) => setActiveWindow(key as CdnWindowName)}
-            />
-            {renderWindow(node.host)}
-          </NodeStats>
-        ),
-      )}
+      <Tabs
+        destroyOnHidden
+        items={stats?.nodes.map((node) => ({
+          children: node.error ? (
+            <UnreachableNode host={node.host} />
+          ) : (
+            <NodeStats node={node}>
+              <Tabs
+                activeKey={activeWindow}
+                items={CDN_WINDOWS.map((window) => ({
+                  key: window.key,
+                  label: t(window.labelKey),
+                }))}
+                onChange={(key) => setActiveWindow(key as CdnWindowName)}
+              />
+              {renderWindow(node.host)}
+            </NodeStats>
+          ),
+          key: node.host,
+          // 异常节点不在当前 Tab 时也要能看到。
+          label: <Badge status={nodeHealth(node)} text={node.host} />,
+        }))}
+      />
     </StatusSection>
   );
 };

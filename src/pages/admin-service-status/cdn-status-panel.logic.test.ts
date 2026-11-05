@@ -6,6 +6,7 @@ import {
   certDaysLeft,
   coverageShortfall,
   formatMbps,
+  nodeHealth,
   safeRatio,
 } from './cdn-status-panel.logic';
 
@@ -95,5 +96,25 @@ describe('cdnWindowConfig', () => {
     expect(cdnWindowConfig('yesterday').refreshMs).toBe(
       cdnWindowConfig('last7d').refreshMs,
     );
+  });
+});
+
+describe('nodeHealth', () => {
+  const healthy = { nginx: 'active', shedActive: false, shedMonitor: 'active' };
+
+  test('服务正常且没有分流', () => {
+    expect(nodeHealth(healthy)).toBe('success');
+  });
+
+  test('分流只是提醒', () => {
+    expect(nodeHealth({ ...healthy, shedActive: true })).toBe('warning');
+  });
+
+  test('查询失败或服务异常算错误，优先于分流', () => {
+    expect(nodeHealth({ ...healthy, error: 'unreachable' })).toBe('error');
+    expect(nodeHealth({ ...healthy, nginx: 'failed' })).toBe('error');
+    expect(
+      nodeHealth({ ...healthy, shedActive: true, shedMonitor: 'inactive' }),
+    ).toBe('error');
   });
 });
