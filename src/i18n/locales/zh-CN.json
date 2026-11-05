@@ -1523,6 +1523,7 @@
     "col_rx": "接收流量",
     "col_hit": "命中率",
     "col_duration": "平均下载耗时",
+    "col_median": "下载耗时中位数",
     "col_shed": "302 分流",
     "hit_bytes": "命中下载量",
     "window_today": "今日",

@@ -175,6 +175,10 @@ export type CdnStatsWindow = {
   getTimeMsSum: number;
   txBytes: number;
   rxBytes: number;
+  // 只算有响应体的 GET，不含分流的 302。节点升级前的流量不计入，全为 0 时展示为「-」。
+  downloads: number;
+  downloadTimeMsSum: number;
+  medianDownloadMs: number;
   peakTxMbps: number;
 };
 

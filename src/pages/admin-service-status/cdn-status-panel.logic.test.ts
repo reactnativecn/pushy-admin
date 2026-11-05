@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  averageGetMs,
+  averageDownloadMs,
   averageMbps,
   cdnWindowConfig,
   certDaysLeft,
@@ -37,10 +37,10 @@ describe('safeRatio', () => {
   });
 });
 
-describe('averageGetMs', () => {
+describe('averageDownloadMs', () => {
   test('没有下载时返回 null', () => {
-    expect(averageGetMs(0, 0)).toBeNull();
-    expect(averageGetMs(300, 3)).toBe(100);
+    expect(averageDownloadMs(0, 0)).toBeNull();
+    expect(averageDownloadMs(300, 3)).toBe(100);
   });
 });
 

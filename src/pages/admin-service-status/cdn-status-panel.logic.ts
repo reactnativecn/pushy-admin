@@ -100,8 +100,8 @@ export function safeRatio(part: number, total: number) {
   return total > 0 ? part / total : null;
 }
 
-export function averageGetMs(sumMs: number, getRequests: number) {
-  return getRequests > 0 ? sumMs / getRequests : null;
+export function averageDownloadMs(sumMs: number, downloads: number) {
+  return downloads > 0 ? sumMs / downloads : null;
 }
 
 /** certNotAfter 为 0 表示节点读不到证书。向下取整，临近过期时宁可少报。 */

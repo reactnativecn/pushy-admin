@@ -1523,6 +1523,7 @@
     "col_rx": "Received",
     "col_hit": "Hit rate",
     "col_duration": "Average download time",
+    "col_median": "Median download time",
     "col_shed": "302 shed",
     "hit_bytes": "Served from cache",
     "window_today": "Today",

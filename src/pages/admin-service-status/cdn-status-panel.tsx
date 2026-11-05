@@ -24,7 +24,7 @@ import {
 import { formatBytes, formatCount, formatPercent } from '@/utils/format';
 import { serviceStatusKeys } from '@/utils/query-keys';
 import {
-  averageGetMs,
+  averageDownloadMs,
   averageMbps,
   CDN_WINDOWS,
   cdnWindowConfig,
@@ -96,8 +96,15 @@ const WindowStats = ({
       align: 'right',
       key: 'duration',
       render: (_, row) =>
-        formatLatency(averageGetMs(row.getTimeMsSum, row.getRequests)),
+        formatLatency(averageDownloadMs(row.downloadTimeMsSum, row.downloads)),
       title: t('cdn_status.col_duration'),
+    },
+    {
+      align: 'right',
+      key: 'median',
+      render: (_, row) =>
+        formatLatency(row.downloads > 0 ? row.medianDownloadMs : null),
+      title: t('cdn_status.col_median'),
     },
     count('status2xx', '2xx'),
     count('status3xx', t('cdn_status.col_shed')),
